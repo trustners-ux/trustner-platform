@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trustner Core Fintech Platform - System Architecture</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            overflow-x: auto;
+        }
+        
+        .nav-tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 16px;
+            font-weight: 600;
+            color: #495057;
+            transition: all 0.3s;
+            white-space: nowrap;
+            position: relative;
+        }
+        
+        .nav-tab:hover {
+            background: #e9ecef;
+        }
+        
+        .nav-tab.active {
+            color: #1e3c72;
+            background: white;
+        }
+        
+        .nav-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #1e3c72;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .architecture-diagram {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .layer {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .layer h3 {
+            color: #1e3c72;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #1e3c72;
+        }
+        
+        .layer-item {
+            background: white;
+            padding: 10px 15px;
+            margin: 8px 0;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+            font-size: 14px;
+        }
+        
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .module-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .module-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+        
+        .module-card h3 {
+            color: #1e3c72;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .module-card .icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+        
+        .module-card ul {
+            list-style: none;
+            margin-top: 15px;
+        }
+        
+        .module-card li {
+            padding: 5px 0;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .module-card li::before {
+            content: "✓ ";
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .tech-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+            margin-top: 20px;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: #667eea;
+            transform: translateX(-50%);
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin: 30px 0;
+            padding: 0 20px;
+        }
+        
+        .timeline-item:nth-child(odd) {
+            text-align: right;
+            padding-right: calc(50% + 40px);
+        }
+        
+        .timeline-item:nth-child(even) {
+            text-align: left;
+            padding-left: calc(50% + 40px);
+        }
+        
+        .timeline-content {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            width: 20px;
+            height: 20px;
+            background: #667eea;
+            border: 4px solid white;
+            border-radius: 50%;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 0 0 4px #667eea;
+        }
+        
+        .db-schema {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+        
+        .table-card {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .table-card h4 {
+            color: #1e3c72;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .table-fields {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        
+        .field-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .field-name {
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .field-type {
+            color: #999;
+        }
+        
+        .api-list {
+            margin-top: 20px;
+        }
+        
+        .api-endpoint {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .api-method {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 12px;
+        }
+        
+        .method-get { background: #28a745; color: white; }
+        .method-post { background: #007bff; color: white; }
+        .method-put { background: #ffc107; color: black; }
+        .method-delete { background: #dc3545; color: white; }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .status-ready { background: #d4edda; color: #155724; }
+        .status-progress { background: #fff3cd; color: #856404; }
+        .status-planned { background: #cce5ff; color: #004085; }
+        
+        @media (max-width: 768px) {
+            .timeline::before {
+                left: 20px;
+            }
+            
+            .timeline-item:nth-child(odd),
+            .timeline-item:nth-child(even) {
+                text-align: left;
+                padding-left: 60px;
+                padding-right: 20px;
+            }
+            
+            .timeline-item::before {
+                left: 20px;
+                transform: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏦 TRUSTNER CORE FINTECH PLATFORM</h1>
+            <p>Complete System Architecture & Design - Scope 1</p>
+        </header>
+        
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('overview')">Overview</button>
+            <button class="nav-tab" onclick="showTab('architecture')">Architecture</button>
+            <button class="nav-tab" onclick="showTab('modules')">Modules</button>
+            <button class="nav-tab" onclick="showTab('database')">Database</button>
+            <button class="nav-tab" onclick="showTab('apis')">API Design</button>
+            <button class="nav-tab" onclick="showTab('tech')">Tech Stack</button>
+            <button class="nav-tab" onclick="showTab('timeline')">Delivery Timeline</button>
+            <button class="nav-tab" onclick="showTab('deployment')">Deployment</button>
+        </div>
+        
+        <div class="content">
+            <!-- Overview Tab -->
+            <div id="overview" class="tab-content active">
+                <h2>🎯 Platform Overview</h2>
+                <p style="margin: 20px 0; font-size: 18px; line-height: 1.6;">
+                    Trustner is a fintech-led insurance broking platform with human advisory layer. 
+                    This Scope 1 delivers a non-transactional but production-grade foundation ready for 
+                    transactional expansion in Scope 2.
+                </p>
+                
+                <div class="module-grid">
+                    <div class="module-card">
+                        <h3>
+                            <div class="icon">🎯</div>
+                            Business Objective
+                        </h3>
+                        <ul>
+                            <li>Automate repetitive tasks</li>
+                            <li>Focus advisors on relationships</li>
+                            <li>Enable regulatory confidence</li>
+                            <li>Achieve operational efficiency</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="module-card">
+                        <h3>
+                            <div class="icon">✅</div>
+                            In Scope - Scope 1
+                        </h3>
+                        <ul>
+                            <li>User & POSP Management</li>
+                            <li>Product Catalog</li>
+                            <li>Quote & Comparison Engine</li>
+                            <li>Lead & Case Management</li>
+                            <li>Renewal/Endorsement Readiness</li>
+                            <li>Admin & MIS Dashboards</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="module-card">
+                        <h3>
+                            <div class="icon">🚫</div>
+                            Out of Scope - Scope 1
+                        </h3>
+                        <ul>
+                            <li>Payment Gateway Integration</li>
+                            <li>Premium Collection</li>
+                            <li>Policy Issuance</li>
+                            <li>Commission Payout</li>
+                            <li style="color: #28a745;">✓ Architecture ready for Scope 2</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="module-card">
+                        <h3>
+                            <div class="icon">🔒</div>
+                            Security & Compliance
+                        </h3>
+                        <ul>
+                            <li>OTP-based Authentication</li>
+                            <li>Role-based Access Control</li>
+                            <li>Immutable Audit Logs</li>
+                            <li>Consent Management</li>
+                            <li>Data Masking</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Architecture Tab -->
+            <div id="architecture" class="tab-content">
+                <h2>🏗️ System Architecture</h2>
+                <div class="architecture-diagram">
+                    <div class="layer">
+                        <h3>Frontend Layer</h3>
+                        <div class="layer-item">React 18 SPA</div>
+                        <div class="layer-item">Redux Toolkit (State)</div>
+                        <div class="layer-item">Material-UI / Tailwind</div>
+                        <div class="layer-item">React Router v6</div>
+                        <div class="layer-item">Axios (HTTP Client)</div>
+                    </div>
+                    
+                    <div class="layer">
+                        <h3>API Gateway</h3>
+                        <div class="layer-item">Express Gateway</div>
+                        <div class="layer-item">Rate Limiting</div>
+                        <div class="layer-item">API Versioning (v1, v2)</div>
+                        <div class="layer-item">Request Validation</div>
+                        <div class="layer-item">JWT Verification</div>
+                    </div>
+                    
+                    <div class="layer">
+                        <h3>Microservices</h3>
+                        <div class="layer-item">User Service</div>
+                        <div class="layer-item">Product Service</div>
+                        <div class="layer-item">Quote Service</div>
+                        <div class="layer-item">Lead Service</div>
+                        <div class="layer-item">Operations Service</div>
+                        <div class="layer-item">Compliance Service</div>
+                    </div>
+                    
+                    <div class="layer">
+                        <h3>Data Layer</h3>
+                        <div class="layer-item">PostgreSQL (Primary DB)</div>
+                        <div class="layer-item">Redis (Cache & Sessions)</div>
+                        <div class="layer-item">S3 (Document Storage)</div>
+                        <div class="layer-item">Elasticsearch (Search)</div>
+                    </div>
+                    
+                    <div class="layer">
+                        <h3>Integration Layer</h3>
+                        <div class="layer-item">Insurer Connector</div>
+                        <div class="layer-item">Vaahan Integration</div>
+                        <div class="layer-item">SMS Gateway</div>
+                        <div class="layer-item">Email Service</div>
+                        <div class="layer-item">WhatsApp API</div>
+                    </div>
+                    
+                    <div class="layer">
+                        <h3>Infrastructure</h3>
+                        <div class="layer-item">AWS / Azure Cloud</div>
+                        <div class="layer-item">Docker Containers</div>
+                        <div class="layer-item">Kubernetes (Optional)</div>
+                        <div class="layer-item">CI/CD Pipeline</div>
+                        <div class="layer-item">Monitoring & Logging</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modules Tab -->
+            <div id="modules" class="tab-content">
+                <h2>📦 Core Modules</h2>
+                <div class="module-grid">
+                    <div class="module-card">
+                        <h3>
+                            <div class="icon">👤</div>
+                            User Management
+                        </h3>
+                        <ul>
+                            <li>Customer Master Profile</li>
+                            <li>KYC Document Vault</li>
+                            <li>Communication Preferences</li>
+                            <li>OTP Authentication</li>
+                            <li>Consent Management</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="module-card">
+                        <h3>
+                            <div class="icon">🎓</div>
+                            POSP/Advisor Module
+                        </h3>
+                        <ul>
+                            <li>POSP Registration</li>
+                            <li>Certification Tracking</li>
+                            <li>License Management</li>
+                            <li>Hierarchy (SP/BQP/RM)</li>
+                            <li>Compliance Status</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="module-card">
+                        <h3>
+                            <div class="icon">📋</div>
+                            Product Catalog
+                        </h3>
+                        <ul>
+                            <li>Motor Insurance Products</li>
+                            <li>Health Insurance Products</li>
+                            <li>Life Insurance Ready</li>
+                            <li>Insurer-wise Normalization</li>
+                            <li>Feature Comparison Matrix</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="module-card">
+                        <h3>
+                            <div class="icon">💰</div>
+                            Quote Engine
+                        </h3>
+                        <ul>
+                            <li>Parallel Quote Fetching</li>
+                            <li>Timeout & Retry Handling</li>
+                            <li>Quote Comparison</li>
+                            <li>Validity Tracking</li>
+                            <li>Disclosure Management</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="module-card">
+                        <h3>
+                            <div class="icon">📊</div>
+                            Lead Management
+                        </h3>
+                        <ul>
+                            <li>Lead Capture with Context</li>
+                            <li>Journey Resume</li>
+                            <li>Case Lifecycle Tracking</li>
+                            <li>Advisor Allocation</li>
+                            <li>Manual Override & Audit</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="module-card">
+                        <h3>
+                            <div class="icon">🔄</div>
+                            Renewal Management
+                        </h3>
+                        <ul>
+                            <li>Policy Metadata Storage</li>
+                            <li>Expiry Date Tracking</li>
+                            <li>Grace Period Indicators</li>
+                            <li>Renewal Eligibility Logic</li>
+                            <li>Automated Reminder Hooks</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="module-card">
+                        <h3>
+                            <div class="icon">✏️</div>
+                            Endorsement Module
+                        </h3>
+                        <ul>
+                            <li>Endorsement Request Entity</li>
+                            <li>Financial vs Non-financial</li>
+                            <li>Document Collection</li>
+                            <li>Status Tracking</li>
+                            <li>Audit Logging</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="module-card">
+                        <h3>
+                            <div class="icon">🛡️</div>
+                            Claims Readiness
+                        </h3>
+                        <ul>
+                            <li>Claims Initiation Capture</li>
+                            <li>Reference Number Tracking</li>
+                            <li>Document Upload Facility</li>
+                            <li>Status Polling Hooks</li>
+                            <li>Insurer Communication Log</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="module-card">
+                        <h3>
+                            <div class="icon">⚙️</div>
+                            Admin & Operations
+                        </h3>
+                        <ul>
+                            <li>Operational Dashboard</li>
+                            <li>Product Enable/Disable</li>
+                            <li>Insurer Configuration</li>
+                            <li>User Role Management</li>
+                            <li>System Configuration</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="module-card">
+                        <h3>
+                            <div class="icon">📈</div>
+                            MIS & Analytics
+                        </h3>
+                        <ul>
+                            <li>Quote-to-Lead Conversion</li>
+                            <li>Advisor Productivity</li>
+                            <li>Funnel Analytics</li>
+                            <li>Drop-off Analysis</li>
+                            <li>Compliance Reports</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="module-card">
+                        <h3>
+                            <div class="icon">🔗</div>
+                            Integration Framework
+                        </h3>
+                        <ul>
+                            <li>Insurer Connector Layer</li>
+                            <li>Vaahan Integration</li>
+                            <li>Self-inspection SDKs</li>
+                            <li>Bulk Data Ingestion</li>
+                            <li>ERP Readiness</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="module-card">
+                        <h3>
+                            <div class="icon">🔐</div>
+                            Compliance & Audit
+                        </h3>
+                        <ul>
+                            <li>Immutable Audit Logs</li>
+                            <li>Consent Capture & Storage</li>
+                            <li>Data Masking</li>
+                            <li>Regulatory Reporting</li>
+                            <li>Access Control Logs</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Database Tab -->
+            <div id="database" class="tab-content">
+                <h2>🗄️ Database Schema Design</h2>
+                <div class="db-schema">
+                    <div class="table-card">
+                        <h4>users</h4>
+                        <div class="table-fields">
+                            <div class="field-row">
+                                <span class="field-name">id</span>
+                                <span class="field-type">UUID PRIMARY KEY</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">email</span>
+                                <span class="field-type">VARCHAR(255) UNIQUE</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">phone</span>
+                                <span class="field-type">VARCHAR(15) UNIQUE</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">first_name</span>
+                                <span class="field-type">VARCHAR(100)</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">last_name</span>
+                                <span class="field-type">VARCHAR(100)</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">role</span>
+                                <span class="field-type">ENUM('customer', 'posp', 'advisor', 'admin')</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">is_active</span>
+                                <span class="field-type">BOOLEAN DEFAULT TRUE</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">created_at</span>
+                                <span class="field-type">TIMESTAMP</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-card">
+                        <h4>posp_profiles</h4>
+                        <div class="table-fields">
+                            <div class="field-row">
+                                <span class="field-name">id</span>
+                                <span class="field-type">UUID PRIMARY KEY</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">user_id</span>
+                                <span class="field-type">UUID FOREIGN KEY -> users(id)</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">posp_code</span>
+                                <span class="field-type">VARCHAR(50) UNIQUE</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">certification_status</span>
+                                <span class="field-type">ENUM('pending', 'certified', 'expired')</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">license_number</span>
+                                <span class="field-type">VARCHAR(100)</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">license_expiry</span>
+                                <span class="field-type">DATE</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">hierarchy_level</span>
+                                <span class="field-type">ENUM('SP', 'BQP', 'RM')</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">parent_id</span>
+                                <span class="field-type">UUID FOREIGN KEY -> posp_profiles(id)</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-card">
+                        <h4>products</h4>
+                        <div class="table-fields">
+                            <div class="field-row">
+                                <span class="field-name">id</span>
+                                <span class="field-type">UUID PRIMARY KEY</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">product_code</span>
+                                <span class="field-type">VARCHAR(50) UNIQUE</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">name</span>
+                                <span class="field-type">VARCHAR(255)</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">category</span>
+                                <span class="field-type">ENUM('motor', 'health', 'life')</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">insurer_id</span>
+                                <span class="field-type">UUID FOREIGN KEY -> insurers(id)</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">features</span>
+                                <span class="field-type">JSONB</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">is_active</span>
+                                <span class="field-type">BOOLEAN DEFAULT TRUE</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-card">
+                        <h4>quotes</h4>
+                        <div class="table-fields">
+                            <div class="field-row">
+                                <span class="field-name">id</span>
+                                <span class="field-type">UUID PRIMARY KEY</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">quote_number</span>
+                                <span class="field-type">VARCHAR(50) UNIQUE</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">user_id</span>
+                                <span class="field-type">UUID FOREIGN KEY -> users(id)</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">product_id</span>
+                                <span class="field-type">UUID FOREIGN KEY -> products(id)</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">premium_amount</span>
+                                <span class="field-type">DECIMAL(10,2)</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">sum_insured</span>
+                                <span class="field-type">DECIMAL(12,2)</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">valid_until</span>
+                                <span class="field-type">TIMESTAMP</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">status</span>
+                                <span class="field-type">ENUM('active', 'expired', 'converted')</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-card">
+                        <h4>leads</h4>
+                        <div class="table-fields">
+                            <div class="field-row">
+                                <span class="field-name">id</span>
+                                <span class="field-type">UUID PRIMARY KEY</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">lead_number</span>
+                                <span class="field-type">VARCHAR(50) UNIQUE</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">user_id</span>
+                                <span class="field-type">UUID FOREIGN KEY -> users(id)</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">quote_id</span>
+                                <span class="field-type">UUID FOREIGN KEY -> quotes(id)</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">assigned_to</span>
+                                <span class="field-type">UUID FOREIGN KEY -> users(id)</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">status</span>
+                                <span class="field-type">ENUM('new', 'in_progress', 'converted', 'closed')</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">source</span>
+                                <span class="field-type">VARCHAR(100)</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">context_data</span>
+                                <span class="field-type">JSONB</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-card">
+                        <h4>policies (Renewal Readiness)</h4>
+                        <div class="table-fields">
+                            <div class="field-row">
+                                <span class="field-name">id</span>
+                                <span class="field-type">UUID PRIMARY KEY</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">policy_number</span>
+                                <span class="field-type">VARCHAR(100) UNIQUE</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">user_id</span>
+                                <span class="field-type">UUID FOREIGN KEY -> users(id)</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">product_id</span>
+                                <span class="field-type">UUID FOREIGN KEY -> products(id)</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">start_date</span>
+                                <span class="field-type">DATE</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">expiry_date</span>
+                                <span class="field-type">DATE</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">grace_period_days</span>
+                                <span class="field-type">INTEGER</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">renewal_eligible</span>
+                                <span class="field-type">BOOLEAN</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-card">
+                        <h4>audit_logs</h4>
+                        <div class="table-fields">
+                            <div class="field-row">
+                                <span class="field-name">id</span>
+                                <span class="field-type">UUID PRIMARY KEY</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">user_id</span>
+                                <span class="field-type">UUID FOREIGN KEY -> users(id)</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">action</span>
+                                <span class="field-type">VARCHAR(100)</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">entity_type</span>
+                                <span class="field-type">VARCHAR(50)</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">entity_id</span>
+                                <span class="field-type">UUID</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">old_values</span>
+                                <span class="field-type">JSONB</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">new_values</span>
+                                <span class="field-type">JSONB</span>
+                            </div>
+                            <div class="field-row">
+                                <span class="field-name">timestamp</span>
+                                <span class="field-type">TIMESTAMP (immutable)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- APIs Tab -->
+            <div id="apis" class="tab-content">
+                <h2>🔌 API Design</h2>
+                <div class="api-list">
+                    <h3 style="margin: 20px 0;">User Management APIs</h3>
+                    <div class="api-endpoint">
+                        <span class="api-method method-post">POST</span>
+                        <span>/api/v1/auth/register</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                    <div class="api-endpoint">
+                        <span class="api-method method-post">POST</span>
+                        <span>/api/v1/auth/login</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                    <div class="api-endpoint">
+                        <span class="api-method method-post">POST</span>
+                        <span>/api/v1/auth/verify-otp</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                    <div class="api-endpoint">
+                        <span class="api-method method-get">GET</span>
+                        <span>/api/v1/users/:id</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                    <div class="api-endpoint">
+                        <span class="api-method method-put">PUT</span>
+                        <span>/api/v1/users/:id</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                    
+                    <h3 style="margin: 20px 0;">POSP Management APIs</h3>
+                    <div class="api-endpoint">
+                        <span class="api-method method-post">POST</span>
+                        <span>/api/v1/posp/register</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                    <div class="api-endpoint">
+                        <span class="api-method method-get">GET</span>
+                        <span>/api/v1/posp/:id/certification</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                    <div class="api-endpoint">
+                        <span class="api-method method-put">PUT</span>
+                        <span>/api/v1/posp/:id/license</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                    <div class="api-endpoint">
+                        <span class="api-method method-get">GET</span>
+                        <span>/api/v1/posp/:id/hierarchy</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                    
+                    <h3 style="margin: 20px 0;">Product Catalog APIs</h3>
+                    <div class="api-endpoint">
+                        <span class="api-method method-get">GET</span>
+                        <span>/api/v1/products?category=motor</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                    <div class="api-endpoint">
+                        <span class="api-method method-get">GET</span>
+                        <span>/api/v1/products/:id</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                    <div class="api-endpoint">
+                        <span class="api-method method-get">GET</span>
+                        <span>/api/v1/products/:id/compare</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                    
+                    <h3 style="margin: 20px 0;">Quote Engine APIs</h3>
+                    <div class="api-endpoint">
+                        <span class="api-method method-post">POST</span>
+                        <span>/api/v1/quotes/generate</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                    <div class="api-endpoint">
+                        <span class="api-method method-get">GET</span>
+                        <span>/api/v1/quotes/:id</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                    <div class="api-endpoint">
+                        <span class="api-method method-post">POST</span>
+                        <span>/api/v1/quotes/compare</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                    <div class="api-endpoint">
+                        <span class="api-method method-get">GET</span>
+                        <span>/api/v1/quotes/:id/validity</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                    
+                    <h3 style="margin: 20px 0;">Lead Management APIs</h3>
+                    <div class="api-endpoint">
+                        <span class="api-method method-post">POST</span>
+                        <span>/api/v1/leads</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                    <div class="api-endpoint">
+                        <span class="api-method method-get">GET</span>
+                        <span>/api/v1/leads/:id</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                    <div class="api-endpoint">
+                        <span class="api-method method-put">PUT</span>
+                        <span>/api/v1/leads/:id/assign</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                    <div class="api-endpoint">
+                        <span class="api-method method-put">PUT</span>
+                        <span>/api/v1/leads/:id/status</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                    
+                    <h3 style="margin: 20px 0;">Renewal & Policy APIs</h3>
+                    <div class="api-endpoint">
+                        <span class="api-method method-get">GET</span>
+                        <span>/api/v1/policies/expiring?days=30</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                    <div class="api-endpoint">
+                        <span class="api-method method-get">GET</span>
+                        <span>/api/v1/policies/:id/renewal-eligibility</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                    
+                    <h3 style="margin: 20px 0;">Admin & MIS APIs</h3>
+                    <div class="api-endpoint">
+                        <span class="api-method method-get">GET</span>
+                        <span>/api/v1/admin/dashboard/metrics</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                    <div class="api-endpoint">
+                        <span class="api-method method-get">GET</span>
+                        <span>/api/v1/admin/reports/conversion</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                    <div class="api-endpoint">
+                        <span class="api-method method-get">GET</span>
+                        <span>/api/v1/admin/audit-logs</span>
+                        <span class="status-badge status-ready">Ready</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tech Stack Tab -->
+            <div id="tech" class="tab-content">
+                <h2>💻 Technology Stack</h2>
+                
+                <h3 style="margin: 20px 0;">Frontend</h3>
+                <div class="tech-stack">
+                    <div class="tech-item">React 18</div>
+                    <div class="tech-item">Redux Toolkit</div>
+                    <div class="tech-item">Material-UI</div>
+                    <div class="tech-item">Tailwind CSS</div>
+                    <div class="tech-item">React Router v6</div>
+                    <div class="tech-item">Axios</div>
+                    <div class="tech-item">React Query</div>
+                    <div class="tech-item">Formik + Yup</div>
+                </div>
+                
+                <h3 style="margin: 30px 0 20px 0;">Backend</h3>
+                <div class="tech-stack">
+                    <div class="tech-item">Node.js 20 LTS</div>
+                    <div class="tech-item">Express.js</div>
+                    <div class="tech-item">TypeScript</div>
+                    <div class="tech-item">PostgreSQL 15</div>
+                    <div class="tech-item">Redis 7</div>
+                    <div class="tech-item">Prisma ORM</div>
+                    <div class="tech-item">JWT Auth</div>
+                    <div class="tech-item">Bull Queue</div>
+                </div>
+                
+                <h3 style="margin: 30px 0 20px 0;">Cloud & Infrastructure</h3>
+                <div class="tech-stack">
+                    <div class="tech-item">AWS / Azure</div>
+                    <div class="tech-item">Docker</div>
+                    <div class="tech-item">Nginx</div>
+                    <div class="tech-item">GitHub Actions</div>
+                    <div class="tech-item">AWS S3</div>
+                    <div class="tech-item">CloudWatch</div>
+                    <div class="tech-item">Elasticsearch</div>
+                </div>
+                
+                <h3 style="margin: 30px 0 20px 0;">Development & Testing</h3>
+                <div class="tech-stack">
+                    <div class="tech-item">Jest</div>
+                    <div class="tech-item">React Testing Library</div>
+                    <div class="tech-item">Supertest</div>
+                    <div class="tech-item">ESLint</div>
+                    <div class="tech-item">Prettier</div>
+                    <div class="tech-item">Husky</div>
+                </div>
+                
+                <h3 style="margin: 30px 0 20px 0;">Integration & Communication</h3>
+                <div class="tech-stack">
+                    <div class="tech-item">Twilio (SMS)</div>
+                    <div class="tech-item">SendGrid (Email)</div>
+                    <div class="tech-item">WhatsApp Business API</div>
+                    <div class="tech-item">Vaahan API</div>
+                    <div class="tech-item">Insurer APIs</div>
+                </div>
+            </div>
+            
+            <!-- Timeline Tab -->
+            <div id="timeline" class="tab-content">
+                <h2>📅 Delivery Timeline</h2>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <h3>Week 1-2: Foundation Setup</h3>
+                            <p><strong>Duration:</strong> 2 weeks</p>
+                            <ul style="margin-top: 10px;">
+                                <li>Project setup & repository structure</li>
+                                <li>Database schema design & creation</li>
+                                <li>Core authentication module</li>
+                                <li>API gateway setup</li>
+                                <li>Dev environment configuration</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <h3>Week 3-4: User & POSP Management</h3>
+                            <p><strong>Duration:</strong> 2 weeks</p>
+                            <ul style="margin-top: 10px;">
+                                <li>User registration & authentication</li>
+                                <li>POSP lifecycle management</li>
+                                <li>Document vault implementation</li>
+                                <li>Role-based access control</li>
+                                <li>Hierarchy management</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <h3>Week 5-6: Product Catalog & Quote Engine</h3>
+                            <p><strong>Duration:</strong> 2 weeks</p>
+                            <ul style="margin-top: 10px;">
+                                <li>Product catalog module</li>
+                                <li>Quote orchestration engine</li>
+                                <li>Insurer connector framework</li>
+                                <li>Comparison logic</li>
+                                <li>Quote validity tracking</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <h3>Week 7-8: Lead & Case Management</h3>
+                            <p><strong>Duration:</strong> 2 weeks</p>
+                            <ul style="margin-top: 10px;">
+                                <li>Lead capture & context storage</li>
+                                <li>Case lifecycle management</li>
+                                <li>Advisor allocation logic</li>
+                                <li>Journey resume functionality</li>
+                                <li>Manual override with audit</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <h3>Week 9-10: Renewal, Endorsement & Claims</h3>
+                            <p><strong>Duration:</strong> 2 weeks</p>
+                            <ul style="margin-top: 10px;">
+                                <li>Renewal readiness module</li>
+                                <li>Endorsement request handling</li>
+                                <li>Claims initiation capture</li>
+                                <li>Automated reminder hooks</li>
+                                <li>Document management</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <h3>Week 11-12: Admin, MIS & Integration</h3>
+                            <p><strong>Duration:</strong> 2 weeks</p>
+                            <ul style="margin-top: 10px;">
+                                <li>Admin dashboard</li>
+                                <li>MIS & analytics module</li>
+                                <li>Compliance reporting</li>
+                                <li>Integration framework</li>
+                                <li>Vaahan integration</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <h3>Week 13-14: Testing & UAT</h3>
+                            <p><strong>Duration:</strong> 2 weeks</p>
+                            <ul style="margin-top: 10px;">
+                                <li>Unit testing (80%+ coverage)</li>
+                                <li>Integration testing</li>
+                                <li>UAT environment setup</li>
+                                <li>User acceptance testing</li>
+                                <li>Bug fixes & refinements</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-content">
+                            <h3>Week 15-16: Production Deployment</h3>
+                            <p><strong>Duration:</strong> 2 weeks</p>
+                            <ul style="margin-top: 10px;">
+                                <li>Production environment setup</li>
+                                <li>Data migration</li>
+                                <li>Security audit</li>
+                                <li>Production deployment</li>
+                                <li>Documentation & handover</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                    <h3 style="color: #1e3c72;">Total Delivery Timeline</h3>
+                    <p style="font-size: 24px; font-weight: bold; color: #667eea; margin-top: 10px;">
+                        16 Weeks (4 Months)
+                    </p>
+                    <p style="margin-top: 10px;">From project kickoff to production-ready deployment</p>
+                </div>
+            </div>
+            
+            <!-- Deployment Tab -->
+            <div id="deployment" class="tab-content">
+                <h2>🚀 Deployment Architecture</h2>
+                
+                <div class="module-grid">
+                    <div class="module-card">
+                        <h3>
+                            <div class="icon">🌐</div>
+                            Environment Strategy
+                        </h3>
+                        <ul>
+                            <li>Development (Dev)</li>
+                            <li>User Acceptance Testing (UAT)</li>
+                            <li>Production (Prod)</li>
+                            <li>Disaster Recovery (DR)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="module-card">
+                        <h3>
+                            <div class="icon">🐳</div>
+                            Containerization
+                        </h3>
+                        <ul>
+                            <li>Docker for all services</li>
+                            <li>Docker Compose for local dev</li>
+                            <li>Multi-stage builds</li>
+                            <li>Image optimization</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="module-card">
+                        <h3>
+                            <div class="icon">☁️</div>
+                            Cloud Infrastructure
+                        </h3>
+                        <ul>
+                            <li>AWS / Azure cloud platform</li>
+                            <li>Load balancer (ALB/NLB)</li>
+                            <li>Auto-scaling groups</li>
+                            <li>CDN for static assets</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="module-card">
+                        <h3>
+                            <div class="icon">🔄</div>
+                            CI/CD Pipeline
+                        </h3>
+                        <ul>
+                            <li>GitHub Actions</li>
+                            <li>Automated testing</li>
+                            <li>Code quality checks</li>
+                            <li>Automated deployments</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="module-card">
+                        <h3>
+                            <div class="icon">📊</div>
+                            Monitoring & Logging
+                        </h3>
+                        <ul>
+                            <li>CloudWatch / Azure Monitor</li>
+                            <li>Application Performance Monitoring</li>
+                            <li>Error tracking (Sentry)</li>
+                            <li>Custom metrics dashboard</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="module-card">
+                        <h3>
+                            <div class="icon">🔒</div>
+                            Security Measures
+                        </h3>
+                        <ul>
+                            <li>SSL/TLS encryption</li>
+                            <li>WAF (Web Application Firewall)</li>
+                            <li>DDoS protection</li>
+                            <li>Regular security audits</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="module-card">
+                        <h3>
+                            <div class="icon">💾</div>
+                            Backup & Recovery
+                        </h3>
+                        <ul>
+                            <li>Automated daily backups</li>
+                            <li>Point-in-time recovery</li>
+                            <li>Cross-region replication</li>
+                            <li>Disaster recovery plan</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="module-card">
+                        <h3>
+                            <div class="icon">📈</div>
+                            Scalability
+                        </h3>
+                        <ul>
+                            <li>Horizontal scaling</li>
+                            <li>Database read replicas</li>
+                            <li>Caching layer (Redis)</li>
+                            <li>Queue-based processing</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 40px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; color: white;">
+                    <h3>✅ Deployment Readiness Checklist</h3>
+                    <ul style="margin-top: 15px; list-style: none;">
+                        <li style="padding: 8px 0;">✓ All environments configured (Dev, UAT, Prod)</li>
+                        <li style="padding: 8px 0;">✓ Database migrations tested</li>
+                        <li style="padding: 8px 0;">✓ SSL certificates installed</li>
+                        <li style="padding: 8px 0;">✓ Monitoring & alerting active</li>
+                        <li style="padding: 8px 0;">✓ Backup strategy validated</li>
+                        <li style="padding: 8px 0;">✓ Security audit completed</li>
+                        <li style="padding: 8px 0;">✓ Load testing passed</li>
+                        <li style="padding: 8px 0;">✓ Documentation delivered</li>
+                        <li style="padding: 8px 0;">✓ Team training completed</li>
+                        <li style="padding: 8px 0;">✓ Go-live runbook prepared</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function showTab(tabName) {
+            // Hide all tab contents
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+            
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.nav-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

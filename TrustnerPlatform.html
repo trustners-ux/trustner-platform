@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trustner Insurance Brokers</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const h = React.createElement;
+const { useState } = React;
+
+// ════════════════════════════════════════════════════════════════
+// TRUSTNER INSURANCE BROKERS - Complete Platform
+// ════════════════════════════════════════════════════════════════
+
+// ─── LANDING PAGE ───────────────────────────────────────────────
+const LandingPage = ({ onNavigate }) => {
+  return h('div', { className: 'min-h-screen bg-white' },
+    h('section', { className: 'bg-gradient-to-br from-blue-700 via-blue-600 to-blue-800 text-white py-20 px-4' },
+      h('div', { className: 'max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center' },
+        h('div', null,
+          h('h1', { className: 'text-5xl font-bold mb-6 leading-tight' }, 'Your Trusted Insurance Partner'),
+          h('p', { className: 'text-xl text-blue-100 mb-8' }, 'Compare Health, Life & Motor insurance from 20+ insurers. Best coverage at the lowest price.'),
+          h('div', { className: 'flex gap-4 flex-wrap' },
+            h('button', { onClick: () => onNavigate('health'), className: 'bg-white text-blue-700 px-8 py-3 rounded-lg font-bold hover:bg-gray-100 transition' }, 'Get Started →'),
+            h('button', { className: 'border-2 border-white text-white px-8 py-3 rounded-lg font-bold hover:bg-white hover:text-blue-700 transition' }, 'Learn More')
+          )
+        ),
+        h('div', { className: 'hidden md:block' },
+          h('div', { className: 'bg-white bg-opacity-10 rounded-2xl p-8 border border-white border-opacity-20 space-y-6' },
+            [['✅ Instant Comparison', 'Compare 100+ plans in seconds'], ['💰 Best Prices', 'Save up to 40% on premiums'], ['⚡ Online Purchase', 'Get insured in 5 minutes']].map(function(item, i) {
+              return h('div', { key: i, className: 'flex items-center gap-4' },
+                h('div', { className: 'text-3xl' }, item[0].split(' ')[0]),
+                h('div', null,
+                  h('p', { className: 'font-semibold' }, item[0].split(' ').slice(1).join(' ')),
+                  h('p', { className: 'text-sm text-blue-100' }, item[1])
+                )
+              );
+            })
+          )
+        )
+      )
+    ),
+
+    h('section', { className: 'py-16 px-4 bg-gray-50' },
+      h('div', { className: 'max-w-6xl mx-auto' },
+        h('h2', { className: 'text-4xl font-bold text-center mb-4 text-gray-900' }, 'What Would You Like to Insure?'),
+        h('p', { className: 'text-center text-gray-600 mb-12' }, 'Choose from our wide range of insurance products'),
+        h('div', { className: 'grid md:grid-cols-3 gap-8' },
+          [
+            { id: 'health', icon: '❤️', title: 'Health Insurance', desc: 'Complete health coverage with cashless treatment at 12,000+ hospitals', color: 'bg-red-50 border-red-200', btn: 'bg-red-600 hover:bg-red-700' },
+            { id: 'life', icon: '🛡️', title: 'Life Insurance', desc: 'Secure your family\'s future with plans starting at just ₹25/day', color: 'bg-blue-50 border-blue-200', btn: 'bg-blue-600 hover:bg-blue-700' },
+            { id: 'motor', icon: '🚗', title: 'Motor Insurance', desc: 'Hassle-free car and bike insurance with quick claim settlement', color: 'bg-green-50 border-green-200', btn: 'bg-green-600 hover:bg-green-700' }
+          ].map(function(cat) {
+            return h('div', { key: cat.id, className: cat.color + ' border-2 rounded-2xl p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2' },
+              h('div', { className: 'text-5xl mb-4' }, cat.icon),
+              h('h3', { className: 'text-2xl font-bold text-gray-900 mb-3' }, cat.title),
+              h('p', { className: 'text-gray-700 mb-6' }, cat.desc),
+              h('button', { onClick: function() { onNavigate(cat.id); }, className: 'w-full ' + cat.btn + ' text-white py-3 rounded-lg font-bold transition' }, 'Get Quote →')
+            );
+          })
+        )
+      )
+    ),
+
+    h('section', { className: 'py-16 px-4' },
+      h('div', { className: 'max-w-6xl mx-auto' },
+        h('h2', { className: 'text-4xl font-bold text-center mb-12 text-gray-900' }, 'How It Works'),
+        h('div', { className: 'grid md:grid-cols-4 gap-8' },
+          [['1', '📋', 'Compare Plans', 'Browse multiple insurance plans'], ['2', '💬', 'Get Quotes', 'Instant quotes from 20+ insurers'], ['3', '✅', 'Choose Best', 'Select the best value plan'], ['4', '🎉', 'Buy Online', 'Complete purchase in minutes']].map(function(item, i) {
+            return h('div', { key: i, className: 'text-center' },
+              h('div', { className: 'bg-blue-600 rounded-full w-16 h-16 flex items-center justify-center text-white text-2xl font-bold mb-4 mx-auto' }, item[0]),
+              h('div', { className: 'text-3xl mb-3' }, item[1]),
+              h('h3', { className: 'text-xl font-bold text-gray-900 mb-2' }, item[2]),
+              h('p', { className: 'text-gray-600' }, item[3])
+            );
+          })
+        )
+      )
+    ),
+
+    h('section', { className: 'bg-gradient-to-r from-blue-700 to-blue-800 text-white py-16 px-4' },
+      h('div', { className: 'max-w-6xl mx-auto grid md:grid-cols-3 gap-12 text-center' },
+        [['50,000+', '👥', 'Happy Customers'], ['20+', '🏢', 'Insurance Partners'], ['98%', '✅', 'Claim Settlement']].map(function(item, i) {
+          return h('div', { key: i },
+            h('div', { className: 'text-4xl mb-3' }, item[1]),
+            h('p', { className: 'text-5xl font-bold mb-2' }, item[0]),
+            h('p', { className: 'text-blue-100 text-lg' }, item[2])
+          );
+        })
+      )
+    ),
+
+    h('section', { className: 'py-16 px-4 bg-gray-50' },
+      h('div', { className: 'max-w-6xl mx-auto' },
+        h('h2', { className: 'text-4xl font-bold text-center mb-12 text-gray-900' }, 'What Our Customers Say'),
+        h('div', { className: 'grid md:grid-cols-3 gap-8' },
+          [
+            { name: 'Rajesh Kumar', city: 'Mumbai', text: 'Found the perfect health insurance within 15 minutes. Great savings!' },
+            { name: 'Priya Sharma', city: 'Bangalore', text: 'The process was smooth and transparent. Got my policy in 2 days!' },
+            { name: 'Amit Patel', city: 'Delhi', text: 'Excellent customer support and the cheapest premium I could find.' }
+          ].map(function(t, i) {
+            return h('div', { key: i, className: 'bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition' },
+              h('div', { className: 'flex items-center gap-1 mb-4 text-yellow-400 text-xl' }, '⭐⭐⭐⭐⭐'),
+              h('p', { className: 'text-gray-700 mb-6 italic' }, '"' + t.text + '"'),
+              h('p', { className: 'font-semibold text-gray-900' }, t.name),
+              h('p', { className: 'text-sm text-gray-600' }, t.city)
+            );
+          })
+        )
+      )
+    ),
+
+    h('section', { className: 'bg-gradient-to-br from-blue-700 to-blue-800 text-white py-20 px-4 text-center' },
+      h('h2', { className: 'text-5xl font-bold mb-6' }, 'Ready to Protect What Matters?'),
+      h('p', { className: 'text-xl text-blue-100 mb-8' }, 'Get instant quotes from 20+ insurers. Save up to 40%.'),
+      h('button', { onClick: function() { onNavigate('health'); }, className: 'bg-white text-blue-700 px-10 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition' }, 'Compare Plans Now')
+    )
+  );
+};
+
+// ─── QUOTE WIZARD (Reusable) ────────────────────────────────────
+const QuoteWizard = ({ title, icon, stepsData, plans, onNavigate }) => {
+  const [step, setStep] = useState(1);
+  const total = stepsData.length + 1;
+  return h('div', { className: 'min-h-screen bg-gray-50 py-8 px-4' },
+    h('div', { className: 'max-w-4xl mx-auto' },
+      h('div', { className: 'mb-6 flex justify-between items-center' },
+        h('h1', { className: 'text-3xl font-bold text-gray-900 flex items-center gap-3' }, icon + ' ' + title),
+        h('button', { onClick: function() { onNavigate('home'); }, className: 'text-blue-600 font-semibold' }, '← Back')
+      ),
+      h('div', { className: 'mb-6' },
+        h('div', { className: 'flex justify-between mb-2' },
+          Array.from({ length: total }, function(_, i) {
+            return h('span', { key: i, className: 'text-sm flex-1 text-center ' + (step >= i + 1 ? 'text-blue-600 font-bold' : 'text-gray-400') }, 'Step ' + (i + 1));
+          })
+        ),
+        h('div', { className: 'w-full bg-gray-200 rounded-full h-2' },
+          h('div', { className: 'bg-blue-600 h-2 rounded-full transition-all', style: { width: ((step / total) * 100) + '%' } })
+        )
+      ),
+      step <= stepsData.length
+        ? h('div', { className: 'bg-white rounded-2xl shadow-lg p-8 mb-6' }, stepsData[step - 1])
+        : h('div', { className: 'space-y-4' },
+            h('h2', { className: 'text-2xl font-bold text-gray-900 mb-4' }, '🏆 Recommended Plans'),
+            plans.map(function(plan) {
+              return h('div', { key: plan.id, className: 'bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-blue-500 hover:shadow-lg transition' },
+                h('div', { className: 'flex flex-wrap items-center justify-between gap-4' },
+                  h('div', { className: 'min-w-40' },
+                    h('p', { className: 'text-xl font-bold text-gray-900' }, plan.insurer),
+                    h('p', { className: 'text-sm text-gray-600' }, plan.name),
+                    h('div', { className: 'flex items-center gap-1 mt-1 text-yellow-400' }, '⭐ ' + plan.rating)
+                  ),
+                  h('div', null,
+                    h('p', { className: 'text-sm text-gray-600' }, 'Premium'),
+                    h('p', { className: 'text-2xl font-bold text-blue-600' }, plan.premium)
+                  ),
+                  h('div', null,
+                    h('p', { className: 'text-sm text-gray-600' }, 'Cover'),
+                    h('p', { className: 'text-lg font-bold' }, plan.cover)
+                  ),
+                  h('ul', { className: 'space-y-1 max-w-xs' },
+                    plan.features.map(function(f, i) {
+                      return h('li', { key: i, className: 'flex items-center gap-2 text-sm text-gray-700' }, '✅ ' + f);
+                    })
+                  ),
+                  h('button', { className: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition' }, 'Buy Now')
+                )
+              );
+            })
+          ),
+      step <= stepsData.length && h('div', { className: 'flex justify-between' },
+        h('button', { onClick: function() { setStep(Math.max(1, step - 1)); }, disabled: step === 1, className: 'px-6 py-3 rounded-lg border-2 border-gray-300 font-semibold disabled:opacity-50' }, '← Back'),
+        h('button', { onClick: function() { setStep(step + 1); }, className: 'px-6 py-3 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700 transition' }, step === stepsData.length ? 'View Plans →' : 'Next →')
+      )
+    )
+  );
+};
+
+// ─── HEALTH QUOTE ───────────────────────────────────────────────
+const HealthQuote = ({ onNavigate }) => {
+  const [f, sf] = useState({ name: '', age: '', gender: '', city: '', conditions: [], si: '10L', smoker: false });
+  const u = function(k, v) { sf(function(p) { var n = {}; for (var x in p) n[x] = p[x]; n[k] = v; return n; }); };
+  var plans = [
+    { id: 1, insurer: 'Star Health', name: 'Comprehensive Plan', premium: '₹15,450/yr', cover: '₹10,00,000', features: ['99% Cashless', 'No Waiting', '24/7 Support'], rating: '4.8' },
+    { id: 2, insurer: 'HDFC Ergo', name: 'Optima Health', premium: '₹14,200/yr', cover: '₹10,00,000', features: ['Quick Settlement', 'Family Floater', 'Pre-hospitalization'], rating: '4.6' },
+    { id: 3, insurer: 'ICICI Lombard', name: 'Complete Health', premium: '₹16,800/yr', cover: '₹10,00,000', features: ['Best Coverage', 'No Co-payment', 'Maternity'], rating: '4.7' },
+    { id: 4, insurer: 'Care Health', name: 'Premier Plus', premium: '₹13,500/yr', cover: '₹10,00,000', features: ['Affordable', 'Good Coverage', 'Easy Claims'], rating: '4.5' },
+    { id: 5, insurer: 'Niva Bupa', name: 'ReAssure 2.0', premium: '₹12,800/yr', cover: '₹10,00,000', features: ['Lowest Price', 'Cashless', 'No Sub-Limits'], rating: '4.4' }
+  ];
+  var stepsData = [
+    h('div', { key: 's1' },
+      h('h2', { className: 'text-2xl font-bold mb-6' }, 'Personal Details'),
+      h('div', { className: 'grid md:grid-cols-2 gap-6' },
+        h('div', null, h('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 'Full Name'), h('input', { placeholder: 'Enter your name', value: f.name, onChange: function(e) { u('name', e.target.value); }, className: 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-600 focus:outline-none' })),
+        h('div', null, h('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 'Age'), h('input', { type: 'number', placeholder: 'Age', value: f.age, onChange: function(e) { u('age', e.target.value); }, className: 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-600 focus:outline-none' })),
+        h('div', null, h('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 'Gender'), h('select', { value: f.gender, onChange: function(e) { u('gender', e.target.value); }, className: 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg' }, h('option', { value: '' }, 'Select'), h('option', null, 'Male'), h('option', null, 'Female'))),
+        h('div', null, h('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 'City'), h('input', { placeholder: 'City', value: f.city, onChange: function(e) { u('city', e.target.value); }, className: 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-600 focus:outline-none' }))
+      )
+    ),
+    h('div', { key: 's2' },
+      h('h2', { className: 'text-2xl font-bold mb-6' }, 'Health & Coverage'),
+      h('label', { className: 'block text-sm font-semibold text-gray-700 mb-3' }, 'Pre-existing Conditions'),
+      h('div', { className: 'grid md:grid-cols-3 gap-3' },
+        ['Diabetes', 'Hypertension', 'Thyroid', 'Asthma', 'Heart Condition', 'None'].map(function(c) {
+          return h('label', { key: c, className: 'flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-gray-50' },
+            h('input', { type: 'checkbox', className: 'w-5 h-5', checked: f.conditions.indexOf(c) >= 0, onChange: function() { u('conditions', f.conditions.indexOf(c) >= 0 ? f.conditions.filter(function(x) { return x !== c; }) : f.conditions.concat([c])); } }),
+            h('span', null, c)
+          );
+        })
+      ),
+      h('label', { className: 'flex items-center cursor-pointer gap-3 mt-6 p-2' },
+        h('input', { type: 'checkbox', className: 'w-5 h-5', checked: f.smoker, onChange: function(e) { u('smoker', e.target.checked); } }),
+        h('span', { className: 'font-semibold' }, 'Smoker?')
+      )
+    ),
+    h('div', { key: 's3' },
+      h('h2', { className: 'text-2xl font-bold mb-6' }, 'Sum Insured'),
+      h('div', { className: 'grid grid-cols-5 gap-3' },
+        ['3L', '5L', '10L', '15L', '25L'].map(function(a) {
+          return h('button', { key: a, onClick: function() { u('si', a); }, className: 'py-4 rounded-lg font-bold text-lg transition ' + (f.si === a ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200') }, '₹' + a);
+        })
+      )
+    )
+  ];
+  return h(QuoteWizard, { title: 'Health Insurance', icon: '❤️', stepsData: stepsData, plans: plans, onNavigate: onNavigate });
+};
+
+// ─── LIFE QUOTE ─────────────────────────────────────────────────
+const LifeQuote = ({ onNavigate }) => {
+  const [f, sf] = useState({ name: '', income: '', type: 'term', amount: '50L', term: 20 });
+  const u = function(k, v) { sf(function(p) { var n = {}; for (var x in p) n[x] = p[x]; n[k] = v; return n; }); };
+  var plans = [
+    { id: 1, insurer: 'LIC of India', name: 'Jeevan Bima', premium: '₹8,500/yr', cover: '₹50,00,000', features: ['Guaranteed Returns', 'Maturity Benefit', 'Best Settlement'], rating: '4.9' },
+    { id: 2, insurer: 'HDFC Life', name: 'Click 2 Secure', premium: '₹7,800/yr', cover: '₹50,00,000', features: ['Online Purchase', 'Transparent', 'Flexible'], rating: '4.7' },
+    { id: 3, insurer: 'ICICI Prudential', name: 'iProtect Smart', premium: '₹6,500/yr', cover: '₹50,00,000', features: ['Most Affordable', 'Quick Approval', 'No Tests'], rating: '4.6' },
+    { id: 4, insurer: 'Max Life', name: 'Secure Max', premium: '₹9,200/yr', cover: '₹50,00,000', features: ['Superior Coverage', 'Waiver of Premium', 'Critical Illness'], rating: '4.8' },
+    { id: 5, insurer: 'SBI Life', name: 'SmartShield', premium: '₹7,100/yr', cover: '₹50,00,000', features: ['Quick Settlement', 'Reliable', 'Accident Rider'], rating: '4.7' }
+  ];
+  var stepsData = [
+    h('div', { key: 's1' },
+      h('h2', { className: 'text-2xl font-bold mb-6' }, 'Personal Info'),
+      h('div', { className: 'grid md:grid-cols-2 gap-6' },
+        h('div', null, h('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 'Full Name'), h('input', { value: f.name, onChange: function(e) { u('name', e.target.value); }, className: 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-600 focus:outline-none', placeholder: 'Full name' })),
+        h('div', null, h('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 'Annual Income'), h('select', { value: f.income, onChange: function(e) { u('income', e.target.value); }, className: 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg' }, h('option', { value: '' }, 'Select'), h('option', null, '₹2-5 Lakhs'), h('option', null, '₹5-10 Lakhs'), h('option', null, '₹10-20 Lakhs'), h('option', null, '₹20+ Lakhs')))
+      )
+    ),
+    h('div', { key: 's2' },
+      h('h2', { className: 'text-2xl font-bold mb-6' }, 'Coverage'),
+      h('div', { className: 'space-y-6' },
+        h('div', null, h('label', { className: 'block text-sm font-semibold text-gray-700 mb-3' }, 'Plan Type'),
+          h('div', { className: 'grid grid-cols-3 gap-3' },
+            [['term', 'Term Life'], ['whole', 'Whole Life'], ['ulip', 'ULIP']].map(function(item) {
+              return h('button', { key: item[0], onClick: function() { u('type', item[0]); }, className: 'py-3 rounded-lg font-bold transition ' + (f.type === item[0] ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200') }, item[1]);
+            })
+          )
+        ),
+        h('div', null, h('label', { className: 'block text-sm font-semibold text-gray-700 mb-3' }, 'Cover Amount'),
+          h('div', { className: 'grid grid-cols-4 gap-3' },
+            ['50L', '1Cr', '2Cr', '5Cr'].map(function(a) {
+              return h('button', { key: a, onClick: function() { u('amount', a); }, className: 'py-3 rounded-lg font-bold transition ' + (f.amount === a ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200') }, '₹' + a);
+            })
+          )
+        ),
+        h('div', null, h('label', { className: 'block text-sm font-semibold text-gray-700 mb-3' }, 'Term'),
+          h('div', { className: 'grid grid-cols-3 gap-3' },
+            [10, 20, 30].map(function(y) {
+              return h('button', { key: y, onClick: function() { u('term', y); }, className: 'py-3 rounded-lg font-bold transition ' + (f.term === y ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200') }, y + ' Years');
+            })
+          )
+        )
+      )
+    )
+  ];
+  return h(QuoteWizard, { title: 'Life Insurance', icon: '🛡️', stepsData: stepsData, plans: plans, onNavigate: onNavigate });
+};
+
+// ─── MOTOR QUOTE ────────────────────────────────────────────────
+const MotorQuote = ({ onNavigate }) => {
+  const [f, sf] = useState({ vType: 'car', regNo: '', fuel: 'petrol', ncb: '0', zeroDep: false, engine: false, roadside: false });
+  const u = function(k, v) { sf(function(p) { var n = {}; for (var x in p) n[x] = p[x]; n[k] = v; return n; }); };
+  var plans = [
+    { id: 1, insurer: 'Bajaj Allianz', name: 'Comprehensive', premium: '₹6,800/yr', cover: '₹8,00,000', features: ['99% Cashless', '24/7 Roadside', 'Quick Settlement'], rating: '4.7' },
+    { id: 2, insurer: 'HDFC Ergo', name: 'Complete Motor', premium: '₹6,200/yr', cover: '₹8,00,000', features: ['Instant Policy', 'Hassle-Free Claims', 'Theft Cover'], rating: '4.6' },
+    { id: 3, insurer: 'ICICI Lombard', name: 'Comprehensive Car', premium: '₹7,100/yr', cover: '₹8,00,000', features: ['Best Premium', 'Personal Accident', 'Consumable Covered'], rating: '4.8' },
+    { id: 4, insurer: 'New India', name: 'Motor Complete', premium: '₹5,900/yr', cover: '₹8,00,000', features: ['Most Affordable', 'Wide Network', 'Govt Insurer'], rating: '4.5' },
+    { id: 5, insurer: 'Tata AIG', name: 'Complete Cover', premium: '₹6,500/yr', cover: '₹8,00,000', features: ['Flexible Plans', 'Quick Approval', 'Competitive Rates'], rating: '4.6' }
+  ];
+  var stepsData = [
+    h('div', { key: 's1' },
+      h('h2', { className: 'text-2xl font-bold mb-6' }, 'Vehicle Details'),
+      h('label', { className: 'block text-sm font-semibold text-gray-700 mb-3' }, 'Vehicle Type'),
+      h('div', { className: 'flex gap-4 mb-6' },
+        [['car', '🚗 Car'], ['bike', '🏍️ Bike']].map(function(item) {
+          return h('button', { key: item[0], onClick: function() { u('vType', item[0]); }, className: 'flex-1 py-4 rounded-lg font-bold text-lg transition ' + (f.vType === item[0] ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200') }, item[1]);
+        })
+      ),
+      h('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 'Registration Number'),
+      h('input', { value: f.regNo, onChange: function(e) { u('regNo', e.target.value.toUpperCase()); }, className: 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-600 focus:outline-none', placeholder: 'e.g., DL01AB1234' })
+    ),
+    h('div', { key: 's2' },
+      h('h2', { className: 'text-2xl font-bold mb-6' }, 'Vehicle Info'),
+      h('label', { className: 'block text-sm font-semibold text-gray-700 mb-3' }, 'Fuel Type'),
+      h('div', { className: 'grid grid-cols-4 gap-3 mb-6' },
+        ['Petrol', 'Diesel', 'CNG', 'Electric'].map(function(x) {
+          return h('button', { key: x, onClick: function() { u('fuel', x.toLowerCase()); }, className: 'py-3 rounded-lg font-bold transition ' + (f.fuel === x.toLowerCase() ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200') }, x);
+        })
+      ),
+      h('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 'NCB %'),
+      h('select', { value: f.ncb, onChange: function(e) { u('ncb', e.target.value); }, className: 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg' },
+        h('option', { value: '0' }, '0%'), h('option', { value: '20' }, '20%'), h('option', { value: '25' }, '25%'), h('option', { value: '35' }, '35%'), h('option', { value: '45' }, '45%'), h('option', { value: '50' }, '50%')
+      )
+    ),
+    h('div', { key: 's3' },
+      h('h2', { className: 'text-2xl font-bold mb-6' }, 'Add-ons'),
+      h('div', { className: 'space-y-4' },
+        [['zeroDep', '🔧 Zero Depreciation', 'Full claim without depreciation', '+₹3,200/yr'], ['engine', '⚙️ Engine Protection', 'Covers engine damage from water/oil', '+₹2,100/yr'], ['roadside', '🚨 Roadside Assistance', 'Emergency towing and repairs', '+₹800/yr']].map(function(item) {
+          return h('div', { key: item[0], className: 'border-2 rounded-lg p-6 cursor-pointer transition ' + (f[item[0]] ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'), onClick: function() { u(item[0], !f[item[0]]); } },
+            h('label', { className: 'flex items-start cursor-pointer gap-4' },
+              h('input', { type: 'checkbox', checked: f[item[0]], readOnly: true, className: 'w-5 h-5 mt-1' }),
+              h('div', null,
+                h('p', { className: 'font-bold' }, item[1]),
+                h('p', { className: 'text-sm text-gray-600' }, item[2]),
+                h('p', { className: 'text-sm font-bold text-blue-600 mt-1' }, item[3])
+              )
+            )
+          );
+        })
+      )
+    )
+  ];
+  return h(QuoteWizard, { title: 'Motor Insurance', icon: '🚗', stepsData: stepsData, plans: plans, onNavigate: onNavigate });
+};
+
+// ─── CUSTOMER DASHBOARD ─────────────────────────────────────────
+const CustomerDash = ({ onNavigate }) => {
+  var policies = [
+    { insurer: 'Star Health', type: '❤️ Health', pno: 'SH-2024-001', si: '₹10,00,000', prem: '₹15,450/yr', exp: '2025-12-31', status: 'Active' },
+    { insurer: 'HDFC Life', type: '🛡️ Life', pno: 'HL-2023-456', si: '₹50,00,000', prem: '₹8,500/yr', exp: '2034-06-15', status: 'Active' },
+    { insurer: 'Bajaj Allianz', type: '🚗 Motor', pno: 'BA-2024-789', si: '₹8,50,000', prem: '₹6,800/yr', exp: '2025-08-20', status: 'Active' }
+  ];
+  return h('div', { className: 'min-h-screen bg-gray-50' },
+    h('div', { className: 'bg-gradient-to-r from-blue-700 to-blue-600 text-white py-8 px-4' },
+      h('div', { className: 'max-w-7xl mx-auto' }, h('h1', { className: 'text-3xl font-bold mb-1' }, 'Welcome, Rajesh! 👋'), h('p', { className: 'text-blue-100' }, 'Manage all your insurance policies'))
+    ),
+    h('div', { className: 'max-w-7xl mx-auto px-4 py-8' },
+      h('div', { className: 'grid md:grid-cols-4 gap-6 mb-8' },
+        [['📋 Active Policies', '3', 'bg-blue-100 text-blue-600'], ['⏰ Pending Renewals', '1', 'bg-yellow-100 text-yellow-600'], ['✅ Active Claims', '0', 'bg-green-100 text-green-600'], ['💰 Premium Due', '₹12,450', 'bg-red-100 text-red-600']].map(function(item, i) {
+          return h('div', { key: i, className: 'bg-white rounded-xl shadow-lg p-6' },
+            h('div', { className: 'w-12 h-12 rounded-lg ' + item[2] + ' flex items-center justify-center mb-4 text-2xl' }, item[0].split(' ')[0]),
+            h('p', { className: 'text-gray-600 text-sm font-semibold mb-1' }, item[0].split(' ').slice(1).join(' ')),
+            h('p', { className: 'text-3xl font-bold text-gray-900' }, item[1])
+          );
+        })
+      ),
+      h('div', { className: 'grid md:grid-cols-4 gap-4 mb-8' },
+        [['📋 File Claim', 'bg-blue-600'], ['📄 Download Policy', 'bg-green-600'], ['💬 Contact Advisor', 'bg-purple-600'], ['🔄 Renew Policy', 'bg-orange-600']].map(function(item, i) {
+          return h('button', { key: i, className: item[1] + ' text-white font-bold py-4 rounded-xl transition hover:opacity-90' }, item[0]);
+        })
+      ),
+      h('div', { className: 'bg-white rounded-xl shadow-lg overflow-hidden' },
+        h('table', { className: 'w-full text-sm' },
+          h('thead', { className: 'bg-gray-100' },
+            h('tr', null, ['Insurer', 'Policy No', 'Sum Insured', 'Premium', 'Expires', 'Status'].map(function(hd) { return h('th', { key: hd, className: 'px-6 py-4 text-left font-bold text-gray-900' }, hd); }))
+          ),
+          h('tbody', null,
+            policies.map(function(p, i) {
+              return h('tr', { key: i, className: i % 2 === 0 ? 'bg-white' : 'bg-gray-50' },
+                h('td', { className: 'px-6 py-4' }, h('p', { className: 'font-semibold' }, p.insurer), h('p', { className: 'text-xs text-gray-500' }, p.type)),
+                h('td', { className: 'px-6 py-4 font-mono' }, p.pno),
+                h('td', { className: 'px-6 py-4 font-semibold' }, p.si),
+                h('td', { className: 'px-6 py-4 font-semibold' }, p.prem),
+                h('td', { className: 'px-6 py-4' }, p.exp),
+                h('td', { className: 'px-6 py-4' }, h('span', { className: 'bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold' }, p.status))
+              );
+            })
+          )
+        )
+      )
+    )
+  );
+};
+
+// ─── AGENT DASHBOARD ────────────────────────────────────────────
+const AgentDash = ({ onNavigate }) => {
+  var today = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  var revenueData = [{ m: 'Nov', p: 1500 }, { m: 'Dec', p: 1850 }, { m: 'Jan', p: 1680 }, { m: 'Feb', p: 2010 }, { m: 'Mar', p: 1920 }, { m: 'Apr', p: 2150 }];
+  var activities = [
+    ['✅ New lead from website', 'Amit Kumar', '2h ago'], ['🔄 Policy renewed', 'Priya Sharma', '4h ago'], ['💰 Commission ₹4,500', 'System', '6h ago'],
+    ['📋 Claim approved', 'Rajiv Patel', '8h ago'], ['📄 Quote generated', 'Neha Singh', '10h ago'], ['🎉 Lead converted', 'Vikram Desai', '1d ago']
+  ];
+  return h('div', { className: 'min-h-screen bg-gray-50' },
+    h('div', { className: 'bg-gradient-to-r from-blue-700 to-blue-600 text-white px-6 py-8' },
+      h('div', { className: 'max-w-7xl mx-auto flex justify-between items-center flex-wrap gap-4' },
+        h('div', null, h('h1', { className: 'text-3xl font-bold mb-1' }, 'Good Morning, Rajesh'), h('p', { className: 'text-blue-100' }, today)),
+        h('div', { className: 'flex gap-3' },
+          h('button', { onClick: function() { onNavigate('agent-leads'); }, className: 'bg-white text-blue-700 px-4 py-2 rounded-lg font-bold hover:bg-blue-50' }, '+ Add Lead'),
+          h('button', { onClick: function() { onNavigate('health'); }, className: 'bg-blue-500 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-400' }, 'Generate Quote')
+        )
+      )
+    ),
+    h('div', { className: 'max-w-7xl mx-auto p-6' },
+      h('div', { className: 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8' },
+        [['Total Policies', '342', 'bg-blue-50 text-blue-700 border-blue-200'], ['Active Leads', '28', 'bg-green-50 text-green-700 border-green-200'], ['Monthly Premium', '₹18.45L', 'bg-purple-50 text-purple-700 border-purple-200'], ['Commission', '₹2.35L', 'bg-orange-50 text-orange-700 border-orange-200'], ['Conversion', '34%', 'bg-red-50 text-red-700 border-red-200'], ['Renewals Due', '12', 'bg-yellow-50 text-yellow-700 border-yellow-200']].map(function(item, i) {
+          return h('div', { key: i, className: item[2] + ' border rounded-lg p-4' }, h('h3', { className: 'text-xs font-bold text-gray-700 uppercase mb-2' }, item[0]), h('p', { className: 'text-2xl font-bold' }, item[1]));
+        })
+      ),
+      h('div', { className: 'grid lg:grid-cols-3 gap-6 mb-8' },
+        h('div', { className: 'lg:col-span-2 bg-white rounded-lg border p-6' },
+          h('h2', { className: 'text-lg font-bold text-gray-900 mb-4' }, '📊 Premium Collected (6 Months)'),
+          h('div', { className: 'flex items-end justify-around gap-2', style: { height: '200px' } },
+            revenueData.map(function(d, i) {
+              return h('div', { key: i, className: 'flex-1 text-center' },
+                h('div', { className: 'bg-blue-500 rounded-t mx-auto', style: { height: Math.round(d.p / 2150 * 160) + 'px', minWidth: '30px' } }),
+                h('p', { className: 'text-xs font-bold mt-2' }, d.m),
+                h('p', { className: 'text-xs text-gray-500' }, '₹' + (d.p/100).toFixed(0) + 'K')
+              );
+            })
+          )
+        ),
+        h('div', { className: 'bg-white rounded-lg border p-6' },
+          h('h2', { className: 'text-lg font-bold text-gray-900 mb-4' }, '📈 Policy Distribution'),
+          [{ n: 'Health', p: 45, c: 'bg-red-500' }, { n: 'Life', p: 30, c: 'bg-blue-500' }, { n: 'Motor', p: 25, c: 'bg-yellow-500' }].map(function(d) {
+            return h('div', { key: d.n, className: 'mb-4' },
+              h('div', { className: 'flex justify-between mb-1' }, h('span', { className: 'text-sm font-semibold' }, d.n), h('span', { className: 'text-sm text-blue-600 font-bold' }, d.p + '%')),
+              h('div', { className: 'w-full bg-gray-200 rounded-full h-3' }, h('div', { className: d.c + ' h-3 rounded-full', style: { width: d.p + '%' } }))
+            );
+          })
+        )
+      ),
+      h('div', { className: 'grid lg:grid-cols-2 gap-6' },
+        h('div', { className: 'bg-white rounded-lg border p-6' },
+          h('h2', { className: 'text-lg font-bold text-gray-900 mb-4' }, '📝 Recent Activity'),
+          h('div', { className: 'space-y-3' },
+            activities.map(function(a, i) {
+              return h('div', { key: i, className: 'flex items-start gap-3 pb-3 border-b border-gray-100 last:border-0' },
+                h('div', null, h('p', { className: 'text-sm font-semibold text-gray-900' }, a[0]), h('p', { className: 'text-xs text-gray-500' }, a[1] + ' - ' + a[2]))
+              );
+            })
+          )
+        ),
+        h('div', { className: 'bg-white rounded-lg border p-6' },
+          h('h2', { className: 'text-lg font-bold text-gray-900 mb-4' }, '⭐ Top Products'),
+          h('table', { className: 'w-full text-sm' },
+            h('thead', null, h('tr', { className: 'border-b' }, ['Product', 'Insurer', 'Sold', 'Comm %'].map(function(hd) { return h('th', { key: hd, className: 'text-left py-2 font-semibold text-gray-700' }, hd); }))),
+            h('tbody', null,
+              [['Health Plus', 'Max Bupa', '48', '6.5%'], ['Active Life', 'HDFC Life', '35', '5.2%'], ['Motor Premier', 'ICICI Lombard', '42', '7.8%'], ['Family Secure', 'Bajaj Allianz', '38', '4.8%']].map(function(r, i) {
+                return h('tr', { key: i, className: 'border-b border-gray-100 hover:bg-blue-50' },
+                  h('td', { className: 'py-2 font-medium' }, r[0]), h('td', { className: 'py-2 text-gray-600' }, r[1]), h('td', { className: 'py-2 font-semibold' }, r[2]), h('td', { className: 'py-2 font-bold text-blue-600' }, r[3])
+                );
+              })
+            )
+          )
+        )
+      )
+    )
+  );
+};
+
+// ─── LEAD MANAGEMENT ────────────────────────────────────────────
+const LeadMgmt = ({ onNavigate }) => {
+  var allLeads = [
+    { id: 'L001', name: 'Amit Kumar', phone: '9876543210', type: 'Health', source: 'Website', status: 'New', last: '2h ago' },
+    { id: 'L002', name: 'Priya Sharma', phone: '9123456789', type: 'Life', source: 'Referral', status: 'Contacted', last: '4h ago' },
+    { id: 'L003', name: 'Neha Singh', phone: '8765432109', type: 'Motor', source: 'Website', status: 'Quoted', last: '1d ago' },
+    { id: 'L004', name: 'Rajiv Patel', phone: '9234567890', type: 'Health', source: 'Walk-in', status: 'Negotiation', last: '2d ago' },
+    { id: 'L005', name: 'Sanjana Roy', phone: '9345678901', type: 'Life', source: 'Social', status: 'Won', last: '3d ago' },
+    { id: 'L006', name: 'Vikram Desai', phone: '8456789012', type: 'Health', source: 'Website', status: 'Won', last: '5d ago' },
+    { id: 'L007', name: 'Aditya Verma', phone: '9567890123', type: 'Motor', source: 'Referral', status: 'New', last: '6d ago' },
+    { id: 'L008', name: 'Karan Nair', phone: '8678901234', type: 'Health', source: 'Website', status: 'Lost', last: '1w ago' },
+    { id: 'L009', name: 'Pooja Menon', phone: '9789012345', type: 'Life', source: 'Walk-in', status: 'Contacted', last: '1w ago' },
+    { id: 'L010', name: 'Rohit Singh', phone: '8890123456', type: 'Motor', source: 'Website', status: 'Quoted', last: '1w ago' }
+  ];
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState('');
+  const [sel, setSel] = useState(null);
+  var filtered = allLeads.filter(function(l) { return (!filter || l.status === filter) && (l.name.toLowerCase().indexOf(search.toLowerCase()) >= 0 || l.phone.indexOf(search) >= 0); });
+  var pipeline = ['New', 'Contacted', 'Quoted', 'Negotiation', 'Won', 'Lost'];
+  var sc = { New: 'bg-blue-100 text-blue-800', Contacted: 'bg-purple-100 text-purple-800', Quoted: 'bg-orange-100 text-orange-800', Negotiation: 'bg-yellow-100 text-yellow-800', Won: 'bg-green-100 text-green-800', Lost: 'bg-red-100 text-red-800' };
+  return h('div', { className: 'min-h-screen bg-gray-50' },
+    h('div', { className: 'bg-white border-b px-6 py-6' },
+      h('div', { className: 'max-w-7xl mx-auto' },
+        h('h1', { className: 'text-3xl font-bold text-gray-900 mb-4' }, '👥 Lead Management'),
+        h('div', { className: 'flex gap-4' },
+          h('div', { className: 'flex-1 relative' },
+            h('input', { value: search, onChange: function(e) { setSearch(e.target.value); }, placeholder: '🔍 Search leads...', className: 'w-full pl-4 pr-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500' })
+          ),
+          h('select', { value: filter, onChange: function(e) { setFilter(e.target.value); }, className: 'px-4 py-2 border rounded-lg' },
+            h('option', { value: '' }, 'All Status'),
+            pipeline.map(function(s) { return h('option', { key: s }, s); })
+          )
+        )
+      )
+    ),
+    h('div', { className: 'max-w-7xl mx-auto p-6' },
+      h('div', { className: 'grid grid-cols-6 gap-3 mb-6' },
+        pipeline.map(function(s) {
+          var cnt = allLeads.filter(function(l) { return l.status === s; }).length;
+          return h('div', { key: s, onClick: function() { setFilter(s === filter ? '' : s); }, className: sc[s] + ' rounded-lg p-4 text-center cursor-pointer hover:shadow-md transition ' + (filter === s ? 'ring-2 ring-blue-500' : '') },
+            h('p', { className: 'text-xs font-bold uppercase' }, s),
+            h('p', { className: 'text-3xl font-bold' }, cnt)
+          );
+        })
+      ),
+      h('div', { className: 'bg-white rounded-lg border shadow-sm overflow-hidden' },
+        h('table', { className: 'w-full text-sm' },
+          h('thead', null, h('tr', { className: 'bg-gray-50 border-b' },
+            ['ID', 'Name', 'Phone', 'Type', 'Source', 'Status', 'Last', ''].map(function(hd) { return h('th', { key: hd, className: 'text-left py-3 px-4 font-semibold text-gray-700' }, hd); })
+          )),
+          h('tbody', null,
+            filtered.map(function(l) {
+              return h('tr', { key: l.id, className: 'border-b border-gray-100 hover:bg-blue-50 transition' },
+                h('td', { className: 'py-3 px-4 font-semibold text-blue-600' }, l.id),
+                h('td', { className: 'py-3 px-4 font-medium' }, l.name),
+                h('td', { className: 'py-3 px-4 text-gray-600' }, l.phone),
+                h('td', { className: 'py-3 px-4' }, h('span', { className: 'bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-semibold' }, l.type)),
+                h('td', { className: 'py-3 px-4' }, h('span', { className: 'bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-semibold' }, l.source)),
+                h('td', { className: 'py-3 px-4' }, h('span', { className: sc[l.status] + ' px-2 py-1 rounded text-xs font-semibold' }, l.status)),
+                h('td', { className: 'py-3 px-4 text-gray-500' }, l.last),
+                h('td', { className: 'py-3 px-4' }, h('button', { onClick: function() { setSel(l); }, className: 'text-blue-600 font-semibold' }, 'View'))
+              );
+            })
+          )
+        )
+      )
+    ),
+    sel && h('div', { className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50', onClick: function() { setSel(null); } },
+      h('div', { className: 'bg-white rounded-lg max-w-lg w-full p-6', onClick: function(e) { e.stopPropagation(); } },
+        h('div', { className: 'flex justify-between mb-4' },
+          h('div', null, h('h2', { className: 'text-2xl font-bold' }, sel.name), h('p', { className: 'text-gray-500' }, sel.id)),
+          h('button', { onClick: function() { setSel(null); }, className: 'text-2xl text-gray-400' }, '✕')
+        ),
+        h('div', { className: 'grid grid-cols-2 gap-4 mb-4' },
+          [['Phone', sel.phone], ['Type', sel.type], ['Source', sel.source], ['Status', sel.status]].map(function(item) {
+            return h('div', { key: item[0] }, h('p', { className: 'text-xs text-gray-500 uppercase font-semibold' }, item[0]), h('p', { className: 'font-semibold' }, item[1]));
+          })
+        ),
+        h('div', { className: 'flex gap-2' },
+          h('button', { className: 'flex-1 bg-blue-700 text-white py-2 rounded-lg font-bold' }, 'Convert to Policy'),
+          h('button', { className: 'flex-1 bg-gray-200 py-2 rounded-lg font-bold' }, 'Send Quote')
+        )
+      )
+    )
+  );
+};
+
+// ─── POLICY MANAGEMENT ──────────────────────────────────────────
+const PolicyMgmt = ({ onNavigate }) => {
+  var allPolicies = [
+    { id: 'TIB-2025-0001', name: 'Rajesh Kumar', insurer: 'Max Bupa', type: 'Health', si: '₹5,00,000', prem: '₹18,500', end: '2025-12-14', status: 'Active' },
+    { id: 'TIB-2025-0002', name: 'Priya Sharma', insurer: 'HDFC Life', type: 'Life', si: '₹20,00,000', prem: '₹35,000', end: '2025-06-19', status: 'Active' },
+    { id: 'TIB-2025-0003', name: 'Neha Singh', insurer: 'ICICI Lombard', type: 'Motor', si: '₹15,00,000', prem: '₹8,500', end: '2025-08-09', status: 'Active' },
+    { id: 'TIB-2025-0004', name: 'Amit Patel', insurer: 'Bajaj Allianz', type: 'Health', si: '₹7,50,000', prem: '₹22,000', end: '2025-01-31', status: 'Expiring' },
+    { id: 'TIB-2025-0005', name: 'Sanjana Roy', insurer: 'Max Bupa', type: 'Health', si: '₹5,00,000', prem: '₹16,000', end: '2024-03-14', status: 'Expired' },
+    { id: 'TIB-2025-0006', name: 'Vikram Desai', insurer: 'ICICI Pru', type: 'Life', si: '₹25,00,000', prem: '₹45,000', end: '2025-04-04', status: 'Active' },
+    { id: 'TIB-2025-0007', name: 'Aditya Verma', insurer: 'ICICI Lombard', type: 'Motor', si: '₹10,00,000', prem: '₹6,500', end: '2025-11-19', status: 'Active' },
+    { id: 'TIB-2025-0008', name: 'Pooja Menon', insurer: 'Star Health', type: 'Health', si: '₹10,00,000', prem: '₹28,000', end: '2025-05-11', status: 'Active' }
+  ];
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState('');
+  var filtered = allPolicies.filter(function(p) { return (!filter || p.status === filter) && (p.name.toLowerCase().indexOf(search.toLowerCase()) >= 0 || p.id.indexOf(search) >= 0); });
+  var sty = { Active: 'bg-green-100 text-green-800', Expiring: 'bg-yellow-100 text-yellow-800', Expired: 'bg-red-100 text-red-800' };
+  return h('div', { className: 'min-h-screen bg-gray-50' },
+    h('div', { className: 'bg-white border-b px-6 py-6' },
+      h('div', { className: 'max-w-7xl mx-auto' },
+        h('h1', { className: 'text-3xl font-bold text-gray-900 mb-4' }, '📋 Policy Management'),
+        h('div', { className: 'flex gap-4' },
+          h('div', { className: 'flex-1' }, h('input', { value: search, onChange: function(e) { setSearch(e.target.value); }, placeholder: '🔍 Search policies...', className: 'w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500' })),
+          h('select', { value: filter, onChange: function(e) { setFilter(e.target.value); }, className: 'px-4 py-2 border rounded-lg' },
+            h('option', { value: '' }, 'All Status'), h('option', null, 'Active'), h('option', null, 'Expiring'), h('option', null, 'Expired')
+          )
+        )
+      )
+    ),
+    h('div', { className: 'max-w-7xl mx-auto p-6' },
+      h('div', { className: 'grid grid-cols-4 gap-4 mb-6' },
+        [['Active', allPolicies.filter(function(p) { return p.status === 'Active'; }).length, 'bg-green-50 text-green-700'], ['Expiring', allPolicies.filter(function(p) { return p.status === 'Expiring'; }).length, 'bg-yellow-50 text-yellow-700'], ['Expired', allPolicies.filter(function(p) { return p.status === 'Expired'; }).length, 'bg-red-50 text-red-700'], ['Under Process', 0, 'bg-blue-50 text-blue-700']].map(function(item) {
+          return h('div', { key: item[0], className: item[2] + ' rounded-lg p-4 cursor-pointer hover:shadow-md', onClick: function() { setFilter(item[0] === filter ? '' : item[0]); } },
+            h('p', { className: 'text-xs font-bold uppercase' }, item[0]),
+            h('p', { className: 'text-3xl font-bold' }, item[1])
+          );
+        })
+      ),
+      h('div', { className: 'bg-white rounded-lg border shadow-sm overflow-hidden' },
+        h('table', { className: 'w-full text-sm' },
+          h('thead', null, h('tr', { className: 'bg-gray-50 border-b' },
+            ['Policy No', 'Customer', 'Insurer', 'Type', 'Sum Insured', 'Premium', 'Expires', 'Status'].map(function(hd) { return h('th', { key: hd, className: 'text-left py-3 px-4 font-semibold text-gray-700' }, hd); })
+          )),
+          h('tbody', null,
+            filtered.map(function(p) {
+              return h('tr', { key: p.id, className: 'border-b border-gray-100 hover:bg-blue-50' },
+                h('td', { className: 'py-3 px-4 font-semibold text-blue-600' }, p.id),
+                h('td', { className: 'py-3 px-4 font-medium' }, p.name),
+                h('td', { className: 'py-3 px-4 text-gray-600' }, p.insurer),
+                h('td', { className: 'py-3 px-4' }, h('span', { className: 'bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-semibold' }, p.type)),
+                h('td', { className: 'py-3 px-4' }, p.si),
+                h('td', { className: 'py-3 px-4 font-semibold' }, p.prem),
+                h('td', { className: 'py-3 px-4 text-gray-600' }, p.end),
+                h('td', { className: 'py-3 px-4' }, h('span', { className: (sty[p.status] || '') + ' px-2 py-1 rounded text-xs font-semibold' }, p.status))
+              );
+            })
+          )
+        )
+      )
+    )
+  );
+};
+
+// ─── COMMISSION TRACKER ─────────────────────────────────────────
+const CommTracker = ({ onNavigate }) => {
+  var monthlyData = [{ m: 'Sep', c: 180 }, { m: 'Oct', c: 215 }, { m: 'Nov', c: 189 }, { m: 'Dec', c: 256 }, { m: 'Jan', c: 235 }, { m: 'Feb', c: 198 }];
+  var comms = [
+    { pol: 'TIB-0001', name: 'Rajesh Kumar', ins: 'Max Bupa', prem: '₹18,500', rate: '6.5%', amt: '₹1,203', status: 'Paid', date: '2025-01-15' },
+    { pol: 'TIB-0002', name: 'Priya Sharma', ins: 'HDFC Life', prem: '₹35,000', rate: '5.2%', amt: '₹1,820', status: 'Paid', date: '2025-01-20' },
+    { pol: 'TIB-0003', name: 'Neha Singh', ins: 'ICICI Lombard', prem: '₹8,500', rate: '7.8%', amt: '₹663', status: 'Pending', date: '2025-02-01' },
+    { pol: 'TIB-0004', name: 'Amit Patel', ins: 'Bajaj Allianz', prem: '₹22,000', rate: '4.8%', amt: '₹1,056', status: 'Processing', date: '2025-02-03' },
+    { pol: 'TIB-0006', name: 'Vikram Desai', ins: 'ICICI Pru', prem: '₹45,000', rate: '5.2%', amt: '₹2,340', status: 'Paid', date: '2025-01-18' },
+    { pol: 'TIB-0009', name: 'Pooja Menon', ins: 'Star Health', prem: '₹28,000', rate: '6.5%', amt: '₹1,820', status: 'Paid', date: '2025-01-22' }
+  ];
+  var ss = { Paid: 'bg-green-100 text-green-800', Pending: 'bg-yellow-100 text-yellow-800', Processing: 'bg-blue-100 text-blue-800' };
+  return h('div', { className: 'min-h-screen bg-gray-50' },
+    h('div', { className: 'bg-white border-b px-6 py-6' }, h('div', { className: 'max-w-7xl mx-auto' }, h('h1', { className: 'text-3xl font-bold text-gray-900' }, '💰 Commission Tracker'))),
+    h('div', { className: 'max-w-7xl mx-auto p-6' },
+      h('div', { className: 'grid grid-cols-4 gap-4 mb-8' },
+        [['Total Earned', '₹18,45,600', 'bg-blue-50 text-blue-700'], ['This Month', '₹2,34,500', 'bg-green-50 text-green-700'], ['Pending', '₹56,000', 'bg-yellow-50 text-yellow-700'], ['Paid Out', '₹16,11,100', 'bg-purple-50 text-purple-700']].map(function(item) {
+          return h('div', { key: item[0], className: item[2] + ' rounded-lg p-6' }, h('p', { className: 'text-xs font-bold uppercase text-gray-700 mb-2' }, item[0]), h('p', { className: 'text-2xl font-bold' }, item[1]));
+        })
+      ),
+      h('div', { className: 'grid lg:grid-cols-3 gap-6 mb-8' },
+        h('div', { className: 'lg:col-span-2 bg-white rounded-lg border p-6' },
+          h('h2', { className: 'text-lg font-bold mb-4' }, '📊 Monthly Commission Trend'),
+          h('div', { className: 'flex items-end justify-around gap-2', style: { height: '200px' } },
+            monthlyData.map(function(d, i) {
+              return h('div', { key: i, className: 'flex-1 text-center' },
+                h('div', { className: 'bg-blue-500 rounded-t mx-auto', style: { height: Math.round(d.c / 256 * 160) + 'px', minWidth: '30px' } }),
+                h('p', { className: 'text-xs font-bold mt-2' }, d.m),
+                h('p', { className: 'text-xs text-gray-500' }, '₹' + d.c + 'K')
+              );
+            })
+          )
+        ),
+        h('div', { className: 'bg-white rounded-lg border p-6' },
+          h('h2', { className: 'text-lg font-bold mb-4' }, 'By Insurance Type'),
+          [['Health', 45, '₹8.28L'], ['Life', 35, '₹6.43L'], ['Motor', 20, '₹3.75L']].map(function(item) {
+            return h('div', { key: item[0], className: 'mb-4' },
+              h('div', { className: 'flex justify-between mb-1' }, h('span', { className: 'font-semibold text-gray-700' }, item[0]), h('span', { className: 'text-blue-600 font-bold' }, item[1] + '%')),
+              h('div', { className: 'w-full bg-gray-200 rounded-full h-2' }, h('div', { className: 'bg-blue-600 h-2 rounded-full', style: { width: item[1] + '%' } })),
+              h('p', { className: 'text-xs text-gray-500 mt-1' }, item[2])
+            );
+          })
+        )
+      ),
+      h('div', { className: 'bg-white rounded-lg border shadow-sm overflow-hidden' },
+        h('div', { className: 'p-4 border-b' }, h('h2', { className: 'text-lg font-bold' }, 'Commission Details')),
+        h('table', { className: 'w-full text-sm' },
+          h('thead', null, h('tr', { className: 'bg-gray-50 border-b' },
+            ['Policy', 'Customer', 'Insurer', 'Premium', 'Rate', 'Commission', 'Status', 'Date'].map(function(hd) { return h('th', { key: hd, className: 'text-left py-3 px-4 font-semibold text-gray-700' }, hd); })
+          )),
+          h('tbody', null,
+            comms.map(function(c, i) {
+              return h('tr', { key: i, className: 'border-b border-gray-100 hover:bg-blue-50' },
+                h('td', { className: 'py-3 px-4 font-semibold text-blue-600' }, c.pol),
+                h('td', { className: 'py-3 px-4' }, c.name),
+                h('td', { className: 'py-3 px-4 text-gray-600' }, c.ins),
+                h('td', { className: 'py-3 px-4' }, c.prem),
+                h('td', { className: 'py-3 px-4 font-semibold' }, c.rate),
+                h('td', { className: 'py-3 px-4 font-bold' }, c.amt),
+                h('td', { className: 'py-3 px-4' }, h('span', { className: (ss[c.status] || '') + ' px-2 py-1 rounded text-xs font-semibold' }, c.status)),
+                h('td', { className: 'py-3 px-4 text-gray-600' }, c.date)
+              );
+            })
+          )
+        )
+      )
+    )
+  );
+};
+
+// ─── REPORTS ────────────────────────────────────────────────────
+const Reports = ({ onNavigate }) => {
+  const [range, setRange] = useState('12m');
+  var trendData = [{ m: 'Mar', p: 180 }, { m: 'Apr', p: 210 }, { m: 'May', p: 195 }, { m: 'Jun', p: 235 }, { m: 'Jul', p: 205 }, { m: 'Aug', p: 240 }, { m: 'Sep', p: 220 }, { m: 'Oct', p: 255 }, { m: 'Nov', p: 228 }, { m: 'Dec', p: 275 }, { m: 'Jan', p: 245 }, { m: 'Feb', p: 240 }];
+  return h('div', { className: 'min-h-screen bg-gray-50' },
+    h('div', { className: 'bg-white border-b px-6 py-6' },
+      h('div', { className: 'max-w-7xl mx-auto' },
+        h('div', { className: 'flex justify-between items-center mb-4' },
+          h('h1', { className: 'text-3xl font-bold text-gray-900' }, '📊 Reports & Analytics'),
+          h('button', { className: 'bg-blue-700 text-white px-4 py-2 rounded-lg font-bold' }, '⬇️ Download')
+        ),
+        h('div', { className: 'flex gap-2' },
+          [['1m', 'Last Month'], ['3m', '3 Months'], ['6m', '6 Months'], ['12m', '12 Months']].map(function(item) {
+            return h('button', { key: item[0], onClick: function() { setRange(item[0]); }, className: 'px-4 py-2 rounded-lg font-bold transition ' + (range === item[0] ? 'bg-blue-700 text-white' : 'bg-gray-200') }, item[1]);
+          })
+        )
+      )
+    ),
+    h('div', { className: 'max-w-7xl mx-auto p-6' },
+      h('div', { className: 'grid grid-cols-4 gap-4 mb-8' },
+        [['Total Premium', '₹2.4 Cr', 'bg-blue-50 text-blue-700'], ['Policies Issued', '342', 'bg-green-50 text-green-700'], ['Claims Ratio', '4.2%', 'bg-red-50 text-red-700'], ['Avg Policy Value', '₹72,000', 'bg-purple-50 text-purple-700']].map(function(item) {
+          return h('div', { key: item[0], className: item[2] + ' rounded-lg p-6' }, h('p', { className: 'text-xs font-bold uppercase text-gray-700 mb-2' }, item[0]), h('p', { className: 'text-2xl font-bold' }, item[1]));
+        })
+      ),
+      h('div', { className: 'grid lg:grid-cols-3 gap-6 mb-8' },
+        h('div', { className: 'lg:col-span-2 bg-white rounded-lg border p-6' },
+          h('h2', { className: 'text-lg font-bold mb-4' }, '📈 Premium Trend'),
+          h('div', { className: 'flex items-end justify-around gap-1', style: { height: '200px' } },
+            trendData.map(function(d, i) {
+              return h('div', { key: i, className: 'flex-1 text-center' },
+                h('div', { className: 'bg-cyan-500 rounded-t mx-auto', style: { height: Math.round(d.p / 275 * 160) + 'px', minWidth: '20px' } }),
+                h('p', { className: 'text-xs font-bold mt-1' }, d.m)
+              );
+            })
+          )
+        ),
+        h('div', { className: 'bg-white rounded-lg border p-6' },
+          h('h2', { className: 'text-lg font-bold mb-4' }, 'By Type'),
+          [{ n: 'Health', p: 45, c: 'bg-red-500' }, { n: 'Life', p: 30, c: 'bg-blue-500' }, { n: 'Motor', p: 25, c: 'bg-yellow-500' }].map(function(d) {
+            return h('div', { key: d.n, className: 'mb-4' },
+              h('div', { className: 'flex justify-between mb-1' }, h('span', { className: 'text-sm font-semibold' }, d.n), h('span', { className: 'text-sm text-blue-600 font-bold' }, d.p + '%')),
+              h('div', { className: 'w-full bg-gray-200 rounded-full h-3' }, h('div', { className: d.c + ' h-3 rounded-full', style: { width: d.p + '%' } }))
+            );
+          })
+        )
+      ),
+      h('div', { className: 'bg-white rounded-lg border shadow-sm overflow-hidden' },
+        h('div', { className: 'p-4 border-b' }, h('h2', { className: 'text-lg font-bold' }, '⭐ Top Insurers')),
+        h('table', { className: 'w-full text-sm' },
+          h('thead', null, h('tr', { className: 'bg-gray-50 border-b' },
+            ['Insurer', 'Policies', 'Premium', '% of Total'].map(function(hd) { return h('th', { key: hd, className: 'text-left py-3 px-4 font-semibold text-gray-700' }, hd); })
+          )),
+          h('tbody', null,
+            [['Max Bupa', '48', '₹56.4L', '23.5%'], ['HDFC Life', '45', '₹54.0L', '22.5%'], ['ICICI Lombard', '52', '₹42.5L', '17.7%'], ['Bajaj Allianz', '38', '₹36.6L', '15.2%']].map(function(r, i) {
+              return h('tr', { key: i, className: 'border-b hover:bg-blue-50' },
+                h('td', { className: 'py-3 px-4 font-semibold' }, r[0]), h('td', { className: 'py-3 px-4 text-blue-600 font-bold' }, r[1]), h('td', { className: 'py-3 px-4' }, r[2]), h('td', { className: 'py-3 px-4 font-bold' }, r[3])
+              );
+            })
+          )
+        )
+      )
+    )
+  );
+};
+
+// ─── LOGIN PAGE ─────────────────────────────────────────────────
+const LoginPage = ({ onLogin }) => {
+  const [tab, setTab] = useState('customer');
+  const [phone, setPhone] = useState('');
+  const [showOtp, setShowOtp] = useState(false);
+  return h('div', { className: 'min-h-screen bg-gradient-to-br from-blue-700 to-blue-900 flex items-center justify-center px-4' },
+    h('div', { className: 'bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full' },
+      h('div', { className: 'text-center mb-8' },
+        h('div', { className: 'text-5xl mb-4' }, '🛡️'),
+        h('h1', { className: 'text-3xl font-bold text-gray-900' }, 'Trustner'),
+        h('p', { className: 'text-gray-600' }, 'Insurance Brokers')
+      ),
+      h('div', { className: 'flex mb-6 bg-gray-100 rounded-lg p-1' },
+        ['customer', 'agent'].map(function(t) {
+          return h('button', { key: t, onClick: function() { setTab(t); }, className: 'flex-1 py-2 rounded-lg font-bold transition capitalize ' + (tab === t ? 'bg-blue-600 text-white' : 'text-gray-600') }, t === 'customer' ? '👤 Customer' : '👔 Agent');
+        })
+      ),
+      !showOtp
+        ? h('div', { className: 'space-y-4' },
+            h('div', null,
+              h('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 'Mobile Number'),
+              h('input', { type: 'tel', value: phone, onChange: function(e) { setPhone(e.target.value); }, placeholder: '+91 XXXXX XXXXX', className: 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-600 focus:outline-none' })
+            ),
+            h('button', { onClick: function() { setShowOtp(true); }, className: 'w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition' }, '📨 Send OTP')
+          )
+        : h('div', { className: 'space-y-4' },
+            h('div', null,
+              h('label', { className: 'block text-sm font-semibold text-gray-700 mb-2' }, 'Enter OTP'),
+              h('input', { type: 'text', placeholder: '6-digit OTP', className: 'w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-center text-2xl tracking-widest', maxLength: 6 })
+            ),
+            h('button', { onClick: function() { onLogin(tab); }, className: 'w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition' }, '✅ Verify & Login'),
+            h('button', { onClick: function() { setShowOtp(false); }, className: 'w-full text-blue-600 font-semibold' }, '← Change Number')
+          ),
+      h('p', { className: 'text-center text-sm text-gray-500 mt-6' }, 'By continuing, you agree to our Terms & Privacy Policy')
+    )
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════
+// MAIN APP
+// ═══════════════════════════════════════════════════════════════
+const TrustnerApp = () => {
+  const [page, setPage] = useState('home');
+  const [userType, setUserType] = useState(null);
+  const [mobileMenu, setMobileMenu] = useState(false);
+  var nav = function(p) { setPage(p); setMobileMenu(false); window.scrollTo(0, 0); };
+  var login = function(type) { setUserType(type); nav(type === 'agent' ? 'agent-dashboard' : 'home'); };
+  var logout = function() { setUserType(null); nav('home'); };
+
+  var cLinks = [{ id: 'home', label: '🏠 Home' }, { id: 'health', label: '❤️ Health' }, { id: 'life', label: '🛡️ Life' }, { id: 'motor', label: '🚗 Motor' }, { id: 'my-dashboard', label: '📋 My Policies' }];
+  var aLinks = [{ id: 'agent-dashboard', label: '📊 Dashboard' }, { id: 'agent-leads', label: '👥 Leads' }, { id: 'agent-policies', label: '📋 Policies' }, { id: 'agent-commissions', label: '💰 Commissions' }, { id: 'agent-reports', label: '📈 Reports' }];
+  var links = userType === 'agent' ? aLinks : cLinks;
+
+  return h('div', { className: 'min-h-screen bg-gray-50' },
+    page !== 'login' && h('nav', { className: 'bg-white shadow-md sticky top-0 z-40' },
+      h('div', { className: 'max-w-7xl mx-auto px-4 flex items-center justify-between h-16' },
+        h('div', { className: 'flex items-center gap-3 cursor-pointer', onClick: function() { nav(userType === 'agent' ? 'agent-dashboard' : 'home'); } },
+          h('div', { className: 'text-2xl' }, '🛡️'),
+          h('div', null,
+            h('span', { className: 'text-xl font-bold text-blue-700' }, 'Trustner'),
+            h('span', { className: 'text-xs text-gray-500 block -mt-1' }, 'Insurance Brokers')
+          )
+        ),
+        h('div', { className: 'hidden md:flex items-center gap-1' },
+          links.map(function(l) {
+            return h('button', { key: l.id, onClick: function() { nav(l.id); }, className: 'px-4 py-2 rounded-lg font-semibold text-sm transition ' + (page === l.id ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100') }, l.label);
+          })
+        ),
+        h('div', { className: 'flex items-center gap-3' },
+          userType === 'agent' && h('span', { className: 'hidden md:inline bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold' }, '👔 Agent Portal'),
+          userType
+            ? h('button', { onClick: logout, className: 'text-gray-600 hover:text-red-600 font-semibold text-sm px-3 py-2 hover:bg-red-50 rounded-lg transition' }, '🚪 Logout')
+            : h('button', { onClick: function() { nav('login'); }, className: 'bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold text-sm transition' }, '🔐 Login'),
+          h('button', { onClick: function() { setMobileMenu(!mobileMenu); }, className: 'md:hidden p-2 text-xl' }, mobileMenu ? '✕' : '☰')
+        )
+      ),
+      mobileMenu && h('div', { className: 'md:hidden bg-white border-t px-4 py-4 space-y-2' },
+        links.map(function(l) {
+          return h('button', { key: l.id, onClick: function() { nav(l.id); }, className: 'flex items-center gap-3 w-full px-4 py-3 rounded-lg font-semibold ' + (page === l.id ? 'bg-blue-50 text-blue-700' : 'text-gray-600') }, l.label);
+        })
+      )
+    ),
+
+    page === 'home' && h(LandingPage, { onNavigate: nav }),
+    page === 'health' && h(HealthQuote, { onNavigate: nav }),
+    page === 'life' && h(LifeQuote, { onNavigate: nav }),
+    page === 'motor' && h(MotorQuote, { onNavigate: nav }),
+    page === 'my-dashboard' && h(CustomerDash, { onNavigate: nav }),
+    page === 'login' && h(LoginPage, { onLogin: login }),
+    page === 'agent-dashboard' && h(AgentDash, { onNavigate: nav }),
+    page === 'agent-leads' && h(LeadMgmt, { onNavigate: nav }),
+    page === 'agent-policies' && h(PolicyMgmt, { onNavigate: nav }),
+    page === 'agent-commissions' && h(CommTracker, { onNavigate: nav }),
+    page === 'agent-reports' && h(Reports, { onNavigate: nav }),
+
+    page !== 'login' && h('footer', { className: 'bg-gray-900 text-white py-12 px-4' },
+      h('div', { className: 'max-w-7xl mx-auto' },
+        h('div', { className: 'grid md:grid-cols-4 gap-8 mb-8' },
+          h('div', null,
+            h('div', { className: 'flex items-center gap-2 mb-4' }, h('span', { className: 'text-2xl' }, '🛡️'), h('span', { className: 'text-2xl font-bold' }, 'Trustner')),
+            h('p', { className: 'text-gray-400 text-sm' }, 'Your trusted insurance partner. Compare, choose, and buy insurance online.')
+          ),
+          h('div', null,
+            h('h3', { className: 'font-bold text-lg mb-4' }, 'Insurance'),
+            h('div', { className: 'space-y-2 text-sm text-gray-400' }, ['Health Insurance', 'Life Insurance', 'Motor Insurance', 'Travel Insurance'].map(function(l) { return h('p', { key: l, className: 'hover:text-white cursor-pointer transition' }, l); }))
+          ),
+          h('div', null,
+            h('h3', { className: 'font-bold text-lg mb-4' }, 'Company'),
+            h('div', { className: 'space-y-2 text-sm text-gray-400' }, ['About Us', 'Careers', 'Press', 'Contact'].map(function(l) { return h('p', { key: l, className: 'hover:text-white cursor-pointer transition' }, l); }))
+          ),
+          h('div', null,
+            h('h3', { className: 'font-bold text-lg mb-4' }, 'Support'),
+            h('div', { className: 'space-y-2 text-sm text-gray-400' },
+              h('p', null, '📞 1800-XXX-XXXX (Toll Free)'),
+              h('p', null, '📧 support@trustner.in'),
+              h('p', null, '🕐 Mon-Sat: 9AM - 7PM')
+            )
+          )
+        ),
+        h('div', { className: 'border-t border-gray-800 pt-8 flex flex-wrap justify-between text-sm text-gray-500' },
+          h('p', null, '© 2025 Trustner Insurance Brokers Pvt. Ltd. All rights reserved.'),
+          h('div', { className: 'flex gap-6' }, ['Privacy Policy', 'Terms of Service', 'Disclaimer'].map(function(l) { return h('p', { key: l, className: 'hover:text-white cursor-pointer' }, l); }))
+        )
+      )
+    )
+  );
+};
+
+ReactDOM.render(h(TrustnerApp), document.getElementById('root'));
+</script>
+</body>
+</html>

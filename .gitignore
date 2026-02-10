@@ -1,0 +1,31 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude Code
+.claude/
+
+# Temp files
+*.zip
+*.tmp
+/tmp/
+
+# Sensitive
+.env
+.env.local
+*.key
+*.pem
+
+# Node modules (if added later)
+node_modules/
+package-lock.json
+
+# Build artifacts
+dist/
+build/

@@ -1,0 +1,20 @@
+{
+  "name": "Trustner Insurance Brokers",
+  "short_name": "Trustner",
+  "description": "Compare & Buy Insurance Online - Health, Life, Motor, Travel from 30+ top insurers",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#0052CC",
+  "orientation": "portrait-primary",
+  "categories": ["finance", "insurance"],
+  "lang": "en-IN",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%230052CC'/%3E%3Cpath d='M256 80L128 140v92c0 84.5 54.7 163.5 128 190 73.3-26.5 128-105.5 128-190v-92L256 80z' fill='none' stroke='white' stroke-width='25'/%3E%3Cpath d='M205 256l40 40 82-82' fill='none' stroke='white' stroke-width='25' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
