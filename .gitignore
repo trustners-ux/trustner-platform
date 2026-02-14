@@ -24,8 +24,11 @@ Thumbs.db
 
 # Node modules (if added later)
 node_modules/
-package-lock.json
 
 # Build artifacts
 dist/
 build/
+.next/
+
+# Allow TAS Platform package-lock
+!TAS Platform/package-lock.json
