@@ -1,22 +1,32 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function MarketTicker() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Clean up any previous widget
-    containerRef.current.innerHTML = "";
+    // Clear previous content
+    const container = containerRef.current;
+    container.innerHTML = "";
 
+    // Create the widget container div
+    const widgetDiv = document.createElement("div");
+    widgetDiv.className = "tradingview-widget-container__widget";
+    container.appendChild(widgetDiv);
+
+    // Create the script element with TradingView config
     const script = document.createElement("script");
+    script.type = "text/javascript";
     script.src =
       "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
     script.async = true;
-    script.type = "text/javascript";
-    script.innerHTML = JSON.stringify({
+
+    // TradingView expects the config as text content of the script
+    script.textContent = JSON.stringify({
       symbols: [
         { proName: "BSE:SENSEX", title: "SENSEX" },
         { proName: "NSE:NIFTY", title: "NIFTY 50" },
@@ -32,10 +42,18 @@ export default function MarketTicker() {
       locale: "en",
     });
 
-    const widgetDiv = document.createElement("div");
-    widgetDiv.className = "tradingview-widget-container__widget";
-    containerRef.current.appendChild(widgetDiv);
-    containerRef.current.appendChild(script);
+    script.onload = () => {
+      setIsLoaded(true);
+    };
+
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      container.appendChild(script);
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+    };
   }, []);
 
   return (
@@ -45,10 +63,11 @@ export default function MarketTicker() {
         ref={containerRef}
         style={{ height: "46px", overflow: "hidden" }}
       >
-        {/* TradingView Widget loads here */}
-        <div className="flex h-[46px] animate-pulse items-center justify-center text-xs text-gray-400">
-          Loading market data...
-        </div>
+        {!isLoaded && (
+          <div className="flex h-[46px] animate-pulse items-center justify-center text-xs text-gray-400">
+            Loading market data...
+          </div>
+        )}
       </div>
     </div>
   );
