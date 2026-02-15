@@ -1,74 +1,26 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { memo } from "react";
 
-export default function MarketTicker() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    // Clear previous content
-    const container = containerRef.current;
-    container.innerHTML = "";
-
-    // Create the widget container div
-    const widgetDiv = document.createElement("div");
-    widgetDiv.className = "tradingview-widget-container__widget";
-    container.appendChild(widgetDiv);
-
-    // Create the script element with TradingView config
-    const script = document.createElement("script");
-    script.type = "text/javascript";
-    script.src =
-      "https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js";
-    script.async = true;
-
-    // TradingView expects the config as text content of the script
-    script.textContent = JSON.stringify({
-      symbols: [
-        { proName: "BSE:SENSEX", title: "SENSEX" },
-        { proName: "NSE:NIFTY", title: "NIFTY 50" },
-        { proName: "NSE:BANKNIFTY", title: "BANK NIFTY" },
-        { proName: "TVC:GOLD", title: "GOLD" },
-        { proName: "FX_IDC:USDINR", title: "USD/INR" },
-        { proName: "NSE:NIFTYMIDCAP100", title: "NIFTY MIDCAP" },
-      ],
-      showSymbolLogo: true,
-      isTransparent: false,
-      displayMode: "adaptive",
-      colorTheme: "light",
-      locale: "en",
-    });
-
-    script.onload = () => {
-      setIsLoaded(true);
-    };
-
-    // Small delay to ensure DOM is ready
-    const timer = setTimeout(() => {
-      container.appendChild(script);
-    }, 100);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, []);
-
+function MarketTicker() {
   return (
     <div className="border-b border-gray-100 bg-white">
-      <div
-        className="tradingview-widget-container"
-        ref={containerRef}
-        style={{ height: "46px", overflow: "hidden" }}
-      >
-        {!isLoaded && (
-          <div className="flex h-[46px] animate-pulse items-center justify-center text-xs text-gray-400">
-            Loading market data...
-          </div>
-        )}
+      <div style={{ height: "46px", overflow: "hidden" }}>
+        <iframe
+          src="https://s.tradingview.com/embed-widget/ticker-tape/?locale=en#%7B%22symbols%22%3A%5B%7B%22proName%22%3A%22BSE%3ASENSEX%22%2C%22title%22%3A%22SENSEX%22%7D%2C%7B%22proName%22%3A%22NSE%3ANIFTY%22%2C%22title%22%3A%22NIFTY%2050%22%7D%2C%7B%22proName%22%3A%22NSE%3ABANKNIFTY%22%2C%22title%22%3A%22BANK%20NIFTY%22%7D%2C%7B%22proName%22%3A%22TVC%3AGOLD%22%2C%22title%22%3A%22GOLD%22%7D%2C%7B%22proName%22%3A%22FX_IDC%3AUSDINR%22%2C%22title%22%3A%22USD%2FINR%22%7D%2C%7B%22proName%22%3A%22NSE%3ANIFTYMIDCAP100%22%2C%22title%22%3A%22NIFTY%20MIDCAP%22%7D%5D%2C%22showSymbolLogo%22%3Atrue%2C%22isTransparent%22%3Afalse%2C%22displayMode%22%3A%22adaptive%22%2C%22colorTheme%22%3A%22light%22%2C%22width%22%3A%22100%25%22%2C%22height%22%3A46%2C%22utm_source%22%3A%22trustner.in%22%2C%22utm_medium%22%3A%22widget_new%22%2C%22utm_campaign%22%3A%22ticker-tape%22%7D"
+          style={{
+            width: "100%",
+            height: "46px",
+            border: "none",
+            display: "block",
+          }}
+          title="Market Ticker"
+          loading="eager"
+          allowTransparency
+        />
       </div>
     </div>
   );
 }
+
+export default memo(MarketTicker);
