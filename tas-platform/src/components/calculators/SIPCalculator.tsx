@@ -33,7 +33,7 @@ export default function SIPCalculatorFull() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-100">
       {/* Header */}
       <div className="border-b border-gray-100 bg-white">
         <div className="container-custom py-8">

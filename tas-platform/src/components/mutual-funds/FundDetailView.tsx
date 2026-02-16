@@ -94,7 +94,7 @@ export default function FundDetailView({ schemeCode }: { schemeCode: string }) {
   const dayChange = (Math.random() - 0.4) * 2;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-100">
       {/* Breadcrumb */}
       <div className="border-b border-gray-100 bg-white">
         <div className="container-custom flex items-center gap-2 py-3 text-sm text-gray-400">

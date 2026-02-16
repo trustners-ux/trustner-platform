@@ -8,6 +8,8 @@ import {
   Plane,
   Landmark,
   Coins,
+  Globe,
+  ArrowRight,
 } from "lucide-react";
 
 const PRODUCTS = [
@@ -16,7 +18,6 @@ const PRODUCTS = [
     title: "Mutual Funds",
     description: "Explore 5000+ funds across equity, debt & hybrid categories",
     href: "/mutual-funds",
-    color: "bg-blue-50 text-blue-600 group-hover:bg-blue-100",
     iconBg: "bg-blue-600",
   },
   {
@@ -24,7 +25,6 @@ const PRODUCTS = [
     title: "SIP Investment",
     description: "Start with just ₹500/month. Build wealth systematically",
     href: "/calculators/sip",
-    color: "bg-green-50 text-green-600 group-hover:bg-green-100",
     iconBg: "bg-green-600",
   },
   {
@@ -32,7 +32,6 @@ const PRODUCTS = [
     title: "Health Insurance",
     description: "Cashless treatment at 12,000+ hospitals. Compare plans",
     href: "/insurance/health",
-    color: "bg-red-50 text-red-600 group-hover:bg-red-100",
     iconBg: "bg-red-600",
   },
   {
@@ -40,7 +39,6 @@ const PRODUCTS = [
     title: "Life Insurance",
     description: "Protect your family's future. Term plans from ₹490/month",
     href: "/insurance/life",
-    color: "bg-purple-50 text-purple-600 group-hover:bg-purple-100",
     iconBg: "bg-purple-600",
   },
   {
@@ -48,7 +46,6 @@ const PRODUCTS = [
     title: "Motor Insurance",
     description: "Car & Bike insurance with instant policy issuance",
     href: "/insurance/motor",
-    color: "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100",
     iconBg: "bg-emerald-600",
   },
   {
@@ -56,7 +53,6 @@ const PRODUCTS = [
     title: "Travel Insurance",
     description: "Domestic & international trip protection plans",
     href: "/insurance/travel",
-    color: "bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100",
     iconBg: "bg-indigo-600",
   },
   {
@@ -64,7 +60,6 @@ const PRODUCTS = [
     title: "NPS & Retirement",
     description: "National Pension System for long-term retirement planning",
     href: "/investments/nps",
-    color: "bg-amber-50 text-amber-600 group-hover:bg-amber-100",
     iconBg: "bg-amber-600",
   },
   {
@@ -72,14 +67,13 @@ const PRODUCTS = [
     title: "Gold & More",
     description: "Sovereign Gold Bonds, Digital Gold, Fixed Deposits",
     href: "/investments",
-    color: "bg-yellow-50 text-yellow-600 group-hover:bg-yellow-100",
     iconBg: "bg-yellow-600",
   },
 ];
 
 export default function ProductCategories() {
   return (
-    <section className="section-padding bg-gray-50">
+    <section className="section-padding bg-surface-100">
       <div className="container-custom">
         <div className="mb-12 text-center">
           <span className="mb-3 inline-block rounded-full bg-primary-50 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-primary-500">
@@ -101,10 +95,16 @@ export default function ProductCategories() {
               href={product.href}
               className="card-hover group rounded-2xl border border-gray-100 bg-white p-6"
             >
-              <div
-                className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl ${product.iconBg}`}
-              >
-                <product.icon size={24} className="text-white" />
+              <div className="mb-4 flex items-center justify-between">
+                <div
+                  className={`flex h-12 w-12 items-center justify-center rounded-xl ${product.iconBg}`}
+                >
+                  <product.icon size={24} className="text-white" />
+                </div>
+                <ArrowRight
+                  size={18}
+                  className="text-gray-300 opacity-0 transition-opacity group-hover:opacity-100"
+                />
               </div>
               <h3 className="mb-2 text-lg font-bold text-gray-900">
                 {product.title}
@@ -114,6 +114,29 @@ export default function ProductCategories() {
               </p>
             </Link>
           ))}
+
+          {/* GIFT City - Coming Soon */}
+          <Link
+            href="/gift-city"
+            className="card-hover group relative rounded-2xl border border-gray-100 bg-white p-6"
+          >
+            <span className="absolute right-4 top-4 rounded-full bg-amber-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700">
+              Coming Soon
+            </span>
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-teal-600">
+                <Globe size={24} className="text-white" />
+              </div>
+              <ArrowRight
+                size={18}
+                className="text-gray-300 opacity-0 transition-opacity group-hover:opacity-100"
+              />
+            </div>
+            <h3 className="mb-2 text-lg font-bold text-gray-900">GIFT City</h3>
+            <p className="text-sm leading-relaxed text-gray-500">
+              International investments through GIFT City IFSC route
+            </p>
+          </Link>
         </div>
       </div>
     </section>

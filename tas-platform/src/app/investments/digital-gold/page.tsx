@@ -5,13 +5,13 @@ import { ChevronRight, Check, ArrowRight, Phone, Shield, Gem } from 'lucide-reac
 
 export default function DigitalGoldPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <section className="bg-gradient-to-br from-amber-700 via-yellow-700 to-orange-700 text-white py-20">
+    <div className="min-h-screen bg-surface-100">
+      <section className="bg-gradient-to-br from-[#0A1628] via-[#1a2d4a] to-[#0A1628] text-white py-20">
         <div className="container-custom">
-          <div className="flex items-center gap-2 text-amber-200 mb-4">
-            <Link href="/" className="hover:text-white">Home</Link>
+          <div className="flex items-center gap-2 text-gray-400 mb-4">
+            <Link href="/" className="hover:text-white transition-colors">Home</Link>
             <ChevronRight className="w-4 h-4" />
-            <Link href="/investments" className="hover:text-white">Investments</Link>
+            <Link href="/investments" className="hover:text-white transition-colors">Investments</Link>
             <ChevronRight className="w-4 h-4" />
             <span className="text-white">Digital Gold</span>
           </div>
@@ -28,10 +28,10 @@ export default function DigitalGoldPage() {
               anytime, anywhere. Your gold is stored in secure, insured vaults.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Link href="/contact" className="bg-white text-amber-900 px-8 py-3 rounded-lg font-semibold hover:bg-amber-50 transition-colors flex items-center gap-2">
+              <Link href="/contact" className="bg-white text-amber-900 px-8 py-3 rounded-xl font-semibold hover:bg-amber-50 transition-colors flex items-center gap-2">
                 Start Buying Gold <ArrowRight className="w-4 h-4" />
               </Link>
-              <a href="tel:+919876543210" className="border border-white/30 text-white px-8 py-3 rounded-lg font-semibold hover:bg-white/10 transition-colors flex items-center gap-2">
+              <a href="tel:+919876543210" className="border border-white/30 text-white px-8 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors flex items-center gap-2">
                 <Phone className="w-4 h-4" /> Talk to Advisor
               </a>
             </div>
@@ -65,7 +65,7 @@ export default function DigitalGoldPage() {
               </div>
             </div>
             <div className="space-y-6">
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-card hover:shadow-card-hover transition-shadow">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">How It Works</h3>
                 <div className="space-y-6">
                   {[
@@ -87,7 +87,7 @@ export default function DigitalGoldPage() {
                 </div>
               </div>
 
-              <div className="bg-amber-50 rounded-xl border border-amber-200 p-6">
+              <div className="bg-amber-50 rounded-2xl border border-amber-200 p-6 shadow-card hover:shadow-card-hover transition-shadow">
                 <h3 className="font-semibold text-amber-900 mb-3">Gold SIP</h3>
                 <p className="text-sm text-amber-800 mb-3">
                   Set up a monthly Gold SIP to accumulate gold gradually. This helps you average out the purchase

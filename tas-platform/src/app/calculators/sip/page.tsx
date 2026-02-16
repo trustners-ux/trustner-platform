@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import SIPCalculatorFull from "@/components/calculators/SIPCalculator";
+import SEBIDisclaimer from "@/components/compliance/SEBIDisclaimer";
 
 export const metadata: Metadata = {
   title: "SIP Calculator - Calculate Returns on Systematic Investment",
@@ -8,5 +9,10 @@ export const metadata: Metadata = {
 };
 
 export default function SIPCalculatorPage() {
-  return <SIPCalculatorFull />;
+  return (
+    <div>
+      <SIPCalculatorFull />
+      <SEBIDisclaimer variant="banner" />
+    </div>
+  );
 }

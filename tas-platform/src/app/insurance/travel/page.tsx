@@ -85,7 +85,7 @@ const POPULAR_DESTINATIONS = [
 
 export default function TravelInsurancePage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-100">
       {/* Hero */}
       <section className="relative bg-gradient-to-br from-cyan-900 via-teal-800 to-blue-900 text-white py-20 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
@@ -131,7 +131,7 @@ export default function TravelInsurancePage() {
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Popular Destinations</h2>
           <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
             {POPULAR_DESTINATIONS.map((dest, idx) => (
-              <div key={idx} className="text-center bg-gray-50 rounded-lg p-3 hover:bg-teal-50 transition-colors cursor-pointer">
+              <div key={idx} className="text-center bg-surface-100 rounded-lg p-3 hover:bg-teal-50 transition-colors cursor-pointer">
                 <p className="font-medium text-gray-900 text-sm">{dest.name}</p>
                 <p className="text-xs text-gray-500">{dest.regions}</p>
               </div>

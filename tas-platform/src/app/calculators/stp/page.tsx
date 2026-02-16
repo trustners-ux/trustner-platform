@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ChevronRight, IndianRupee, Info, ArrowRightLeft } from 'lucide-react';
 import { formatINR } from '@/lib/utils/formatters';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import SEBIDisclaimer from "@/components/compliance/SEBIDisclaimer";
 
 export default function STPCalculatorPage() {
   const [totalAmount, setTotalAmount] = useState(1200000);
@@ -42,7 +43,7 @@ export default function STPCalculatorPage() {
   }, [totalAmount, monthlyTransfer, sourceReturn, targetReturn, months]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-100">
       <section className="bg-gradient-to-br from-violet-900 to-purple-800 text-white py-12">
         <div className="container-custom">
           <div className="flex items-center gap-2 text-violet-200 mb-4">
@@ -199,6 +200,7 @@ export default function STPCalculatorPage() {
           </div>
         </div>
       </section>
+      <SEBIDisclaimer variant="banner" />
     </div>
   );
 }

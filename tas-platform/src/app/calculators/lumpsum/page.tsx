@@ -6,6 +6,7 @@ import { ChevronRight, TrendingUp, IndianRupee, Info } from 'lucide-react';
 import { calculateLumpsum } from '@/lib/utils/calculators';
 import { formatINR } from '@/lib/utils/formatters';
 import { PieChart, Pie, Cell, ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import SEBIDisclaimer from "@/components/compliance/SEBIDisclaimer";
 
 export default function LumpsumCalculatorPage() {
   const [amount, setAmount] = useState(100000);
@@ -33,7 +34,7 @@ export default function LumpsumCalculatorPage() {
   }, [amount, returns, years]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-100">
       <section className="bg-gradient-to-br from-blue-900 to-blue-800 text-white py-12">
         <div className="container-custom">
           <div className="flex items-center gap-2 text-blue-200 mb-4">
@@ -240,6 +241,7 @@ export default function LumpsumCalculatorPage() {
           </div>
         </div>
       </section>
+      <SEBIDisclaimer variant="banner" />
     </div>
   );
 }

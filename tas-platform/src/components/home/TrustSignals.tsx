@@ -52,86 +52,94 @@ function AnimatedCounter({
   );
 }
 
-export default function TrustSignals() {
-  return (
-    <section className="section-padding bg-gray-50">
-      <div className="container-custom">
-        {/* Trust Stats */}
-        <div className="mb-16">
-          <div className="mb-10 text-center">
-            <span className="mb-3 inline-block rounded-full bg-primary-50 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-primary-500">
-              Why Trustner
-            </span>
-            <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-              Trusted by Thousands Across India
-            </h2>
-          </div>
+const STATS = [
+  {
+    icon: Users,
+    value: 10000,
+    suffix: "+",
+    prefix: "",
+    label: "Happy Clients",
+    color: "bg-blue-50 text-blue-600",
+  },
+  {
+    icon: Award,
+    value: 40,
+    suffix: "+",
+    prefix: "",
+    label: "AMC & Insurance Partners",
+    color: "bg-green-50 text-green-600",
+  },
+  {
+    icon: Shield,
+    value: 98,
+    suffix: "%",
+    prefix: "",
+    label: "Claim Settlement Rate",
+    color: "bg-purple-50 text-purple-600",
+  },
+  {
+    icon: BadgeCheck,
+    value: 100,
+    suffix: " Cr+",
+    prefix: "₹",
+    label: "Assets Under Guidance",
+    color: "bg-amber-50 text-amber-600",
+  },
+];
 
-          <div className="grid grid-cols-2 gap-6 lg:grid-cols-4">
-            {[
-              {
-                icon: Users,
-                value: 10000,
-                suffix: "+",
-                label: "Happy Clients",
-                color: "bg-blue-50 text-blue-600",
-              },
-              {
-                icon: Award,
-                value: 40,
-                suffix: "+",
-                label: "AMC & Insurance Partners",
-                color: "bg-green-50 text-green-600",
-              },
-              {
-                icon: Shield,
-                value: 98,
-                suffix: "%",
-                label: "Claim Settlement Rate",
-                color: "bg-purple-50 text-purple-600",
-              },
-              {
-                icon: BadgeCheck,
-                value: 100,
-                suffix: " Cr+",
-                prefix: "₹",
-                label: "Assets Under Guidance",
-                color: "bg-amber-50 text-amber-600",
-              },
-            ].map((stat) => (
+const BADGES = [
+  {
+    label: `AMFI Registered | ${REGULATORY.AMFI_ARN}`,
+    icon: BadgeCheck,
+  },
+  { label: "SEBI Compliant", icon: Shield },
+  { label: "IRDAI Licensed", icon: Award },
+];
+
+export default function TrustSignals() {
+  const allPartners = [...AMC_PARTNERS, ...INSURANCE_PARTNERS];
+  const duplicatedPartners = [...allPartners, ...allPartners];
+
+  return (
+    <section className="section-padding bg-surface-100">
+      <div className="container-custom">
+        {/* Header */}
+        <div className="mb-10 text-center">
+          <span className="mb-3 inline-block rounded-full bg-primary-50 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-primary-500">
+            Why Trustner
+          </span>
+          <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+            Trusted by Thousands Across India
+          </h2>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="mb-16 grid grid-cols-2 gap-6 lg:grid-cols-4">
+          {STATS.map((stat) => (
+            <div
+              key={stat.label}
+              className="rounded-2xl border border-gray-100 bg-white p-6 text-center"
+            >
               <div
-                key={stat.label}
-                className="rounded-2xl border border-gray-100 bg-white p-6 text-center"
+                className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl ${stat.color}`}
               >
-                <div
-                  className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl ${stat.color}`}
-                >
-                  <stat.icon size={28} />
-                </div>
-                <div className="mb-1 text-3xl font-extrabold text-gray-900">
-                  <AnimatedCounter
-                    target={stat.value}
-                    suffix={stat.suffix}
-                    prefix={stat.prefix}
-                  />
-                </div>
-                <p className="text-sm text-gray-500">{stat.label}</p>
+                <stat.icon size={28} />
               </div>
-            ))}
-          </div>
+              <div className="mb-1 text-3xl font-extrabold text-gray-900">
+                <AnimatedCounter
+                  target={stat.value}
+                  suffix={stat.suffix}
+                  prefix={stat.prefix}
+                />
+              </div>
+              <p className="text-sm text-gray-500">{stat.label}</p>
+            </div>
+          ))}
         </div>
 
         {/* Regulatory Badges */}
         <div className="mb-12 flex flex-wrap items-center justify-center gap-4">
-          {[
-            {
-              label: `AMFI Registered | ${REGULATORY.AMFI_ARN}`,
-              icon: BadgeCheck,
-            },
-            { label: "SEBI Compliant", icon: Shield },
-            { label: "IRDAI Licensed", icon: Award },
-            { label: "ISO 27001 Certified", icon: Shield },
-          ].map((badge) => (
+          {BADGES.map((badge) => (
             <div
               key={badge.label}
               className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-600"
@@ -142,7 +150,7 @@ export default function TrustSignals() {
           ))}
         </div>
 
-        {/* Partner Logos Marquee */}
+        {/* Partner Marquee */}
         <div className="mb-4 text-center">
           <p className="text-xs font-bold uppercase tracking-wider text-gray-400">
             Our AMC & Insurance Partners
@@ -150,16 +158,14 @@ export default function TrustSignals() {
         </div>
         <div className="relative overflow-hidden rounded-2xl border border-gray-100 bg-white py-6">
           <div className="flex animate-ticker">
-            {[...AMC_PARTNERS, ...INSURANCE_PARTNERS, ...AMC_PARTNERS].map(
-              (partner, i) => (
-                <div
-                  key={`${partner}-${i}`}
-                  className="flex-shrink-0 px-6 text-sm font-semibold text-gray-400"
-                >
-                  {partner}
-                </div>
-              )
-            )}
+            {duplicatedPartners.map((partner, i) => (
+              <div
+                key={`${partner}-${i}`}
+                className="flex-shrink-0 px-6 text-sm font-semibold text-gray-400"
+              >
+                {partner}
+              </div>
+            ))}
           </div>
         </div>
       </div>

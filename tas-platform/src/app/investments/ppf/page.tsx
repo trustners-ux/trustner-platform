@@ -5,10 +5,10 @@ import { ChevronRight, Check, ArrowRight, Phone, Shield, Landmark } from 'lucide
 
 export default function PPFPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-100">
       <section className="bg-gradient-to-br from-green-900 via-emerald-800 to-green-800 text-white py-20">
         <div className="container-custom">
-          <div className="flex items-center gap-2 text-green-200 mb-4">
+          <div className="flex items-center gap-2 text-gray-400 mb-4">
             <Link href="/" className="hover:text-white">Home</Link>
             <ChevronRight className="w-4 h-4" />
             <Link href="/investments" className="hover:text-white">Investments</Link>
@@ -28,10 +28,10 @@ export default function PPFPage() {
               and complete tax exemption under EEE (Exempt-Exempt-Exempt) category.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Link href="/contact" className="bg-white text-green-900 px-8 py-3 rounded-lg font-semibold hover:bg-green-50 transition-colors flex items-center gap-2">
+              <Link href="/contact" className="bg-white text-green-900 px-8 py-3 rounded-xl font-semibold hover:bg-green-50 transition-colors flex items-center gap-2">
                 Open PPF Account <ArrowRight className="w-4 h-4" />
               </Link>
-              <a href="tel:+919876543210" className="border border-white/30 text-white px-8 py-3 rounded-lg font-semibold hover:bg-white/10 transition-colors flex items-center gap-2">
+              <a href="tel:+919876543210" className="border border-white/30 text-white px-8 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors flex items-center gap-2">
                 <Phone className="w-4 h-4" /> Speak to Advisor
               </a>
             </div>
@@ -44,7 +44,7 @@ export default function PPFPage() {
           <div className="grid md:grid-cols-2 gap-12">
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-6">PPF Key Features</h2>
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-card hover:shadow-card-hover transition-shadow">
                 <div className="space-y-3">
                   {[
                     { label: 'Current Interest Rate', value: '7.1% p.a. (Q1 FY25)', highlight: true },
@@ -69,7 +69,7 @@ export default function PPFPage() {
               </div>
             </div>
             <div className="space-y-6">
-              <div className="bg-green-50 rounded-xl border border-green-200 p-6">
+              <div className="bg-green-50 rounded-2xl border border-green-200 p-6 shadow-card hover:shadow-card-hover transition-shadow">
                 <h3 className="font-semibold text-green-900 mb-3">EEE Tax Benefit (Triple Exempt)</h3>
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
@@ -96,7 +96,7 @@ export default function PPFPage() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-card hover:shadow-card-hover transition-shadow">
                 <h3 className="font-semibold text-gray-900 mb-4">₹1.5 Lakh/year for 15 years at 7.1%</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between py-2">
@@ -117,7 +117,7 @@ export default function PPFPage() {
                 </div>
               </div>
 
-              <div className="bg-blue-50 rounded-xl border border-blue-200 p-4">
+              <div className="bg-blue-50 rounded-2xl border border-blue-200 p-4 shadow-card hover:shadow-card-hover transition-shadow">
                 <p className="text-sm text-blue-800">
                   <strong>Pro Tip:</strong> Invest your PPF amount before the 5th of every month to earn interest
                   for that entire month. PPF interest is calculated on the minimum balance between the 5th and

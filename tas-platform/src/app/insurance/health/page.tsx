@@ -81,15 +81,15 @@ export default function HealthInsurancePage() {
   const [selectedPlan, setSelectedPlan] = useState<number | null>(null);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-100">
       {/* Hero */}
-      <section className="relative bg-gradient-to-br from-blue-900 via-blue-800 to-teal-700 text-white py-20 overflow-hidden">
+      <section className="relative bg-gradient-to-br from-[#0A1628] via-[#1a2d4a] to-[#0A1628] text-white py-20 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-10 right-10 w-72 h-72 bg-white rounded-full blur-3xl" />
           <div className="absolute bottom-10 left-10 w-96 h-96 bg-teal-300 rounded-full blur-3xl" />
         </div>
         <div className="container-custom relative z-10">
-          <div className="flex items-center gap-2 text-blue-200 mb-4">
+          <div className="flex items-center gap-2 text-gray-400 mb-4">
             <Link href="/" className="hover:text-white">Home</Link>
             <ChevronRight className="w-4 h-4" />
             <Link href="/insurance" className="hover:text-white">Insurance</Link>
@@ -111,10 +111,10 @@ export default function HealthInsurancePage() {
                 Get cashless treatment at 10,000+ network hospitals across India.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Link href="/contact" className="bg-white text-blue-900 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors flex items-center gap-2">
+                <Link href="/contact" className="bg-white text-blue-900 px-8 py-3 rounded-xl font-semibold hover:bg-blue-50 transition-colors flex items-center gap-2">
                   Get Free Quote <ArrowRight className="w-4 h-4" />
                 </Link>
-                <a href="tel:+919876543210" className="border border-white/30 text-white px-8 py-3 rounded-lg font-semibold hover:bg-white/10 transition-colors flex items-center gap-2">
+                <a href="tel:+919876543210" className="border border-white/30 text-white px-8 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors flex items-center gap-2">
                   <Phone className="w-4 h-4" /> Talk to Expert
                 </a>
               </div>
@@ -155,16 +155,16 @@ export default function HealthInsurancePage() {
             {HEALTH_PLANS.map((plan, idx) => (
               <div
                 key={idx}
-                className={`bg-white rounded-xl border-2 transition-all duration-300 cursor-pointer ${
+                className={`bg-white rounded-2xl border-2 shadow-card hover:shadow-card-hover transition-shadow duration-300 cursor-pointer ${
                   selectedPlan === idx
                     ? 'border-blue-500 shadow-lg shadow-blue-500/10'
-                    : 'border-gray-200 hover:border-blue-300 hover:shadow-md'
+                    : 'border-gray-200 hover:border-blue-300'
                 }`}
                 onClick={() => setSelectedPlan(selectedPlan === idx ? null : idx)}
               >
                 <div className="p-6">
                   <div className="flex items-start gap-4 mb-4">
-                    <div className={`p-3 rounded-lg ${selectedPlan === idx ? 'bg-blue-100' : 'bg-gray-100'}`}>
+                    <div className={`p-3 rounded-2xl ${selectedPlan === idx ? 'bg-blue-100' : 'bg-gray-100'}`}>
                       <plan.icon className={`w-6 h-6 ${selectedPlan === idx ? 'text-blue-600' : 'text-gray-600'}`} />
                     </div>
                     <div className="flex-1">
@@ -191,7 +191,7 @@ export default function HealthInsurancePage() {
                     ))}
                     <Link
                       href="/contact"
-                      className="mt-4 bg-blue-600 text-white text-center py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                      className="mt-4 bg-blue-600 text-white text-center py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors"
                     >
                       Get Quote for {plan.name}
                     </Link>
@@ -209,7 +209,7 @@ export default function HealthInsurancePage() {
           <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">Our Insurance Partners</h2>
           <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {PARTNER_INSURERS.map((insurer, idx) => (
-              <div key={idx} className="bg-gray-50 rounded-lg p-4 text-center text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+              <div key={idx} className="bg-surface-100 rounded-2xl p-4 text-center text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
                 {insurer}
               </div>
             ))}
@@ -218,7 +218,7 @@ export default function HealthInsurancePage() {
       </section>
 
       {/* How It Works */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-surface-100">
         <div className="container-custom">
           <h2 className="text-2xl font-bold text-gray-900 text-center mb-12">How to Buy Health Insurance</h2>
           <div className="grid md:grid-cols-4 gap-8">
@@ -252,7 +252,7 @@ export default function HealthInsurancePage() {
               { q: 'What is cashless hospitalization?', a: 'Cashless hospitalization means you don\'t pay the hospital directly. The insurer settles the bill directly with the network hospital. We have 10,000+ cashless hospitals in our network.' },
               { q: 'Can I claim tax benefits on health insurance?', a: 'Yes, premiums paid for health insurance are eligible for tax deduction under Section 80D of the Income Tax Act — up to ₹25,000 for self/family and additional ₹50,000 for senior citizen parents.' },
             ].map((faq, idx) => (
-              <details key={idx} className="group bg-gray-50 rounded-lg">
+              <details key={idx} className="group bg-surface-100 rounded-2xl">
                 <summary className="p-4 cursor-pointer font-semibold text-gray-900 flex items-center justify-between">
                   {faq.q}
                   <ChevronRight className="w-4 h-4 text-gray-400 group-open:rotate-90 transition-transform" />

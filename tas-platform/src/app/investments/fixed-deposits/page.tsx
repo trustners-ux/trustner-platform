@@ -16,10 +16,10 @@ const FD_RATES = [
 
 export default function FixedDepositsPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-100">
       <section className="bg-gradient-to-br from-slate-800 via-gray-800 to-slate-900 text-white py-20">
         <div className="container-custom">
-          <div className="flex items-center gap-2 text-gray-300 mb-4">
+          <div className="flex items-center gap-2 text-gray-400 mb-4">
             <Link href="/" className="hover:text-white">Home</Link>
             <ChevronRight className="w-4 h-4" />
             <Link href="/investments" className="hover:text-white">Investments</Link>
@@ -35,10 +35,10 @@ export default function FixedDepositsPage() {
               corporate FDs from AAA-rated companies. Senior citizens get additional 0.25-0.50% premium.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Link href="/contact" className="bg-white text-gray-900 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center gap-2">
+              <Link href="/contact" className="bg-white text-gray-900 px-8 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-colors flex items-center gap-2">
                 Compare FD Rates <ArrowRight className="w-4 h-4" />
               </Link>
-              <a href="tel:+919876543210" className="border border-white/30 text-white px-8 py-3 rounded-lg font-semibold hover:bg-white/10 transition-colors flex items-center gap-2">
+              <a href="tel:+919876543210" className="border border-white/30 text-white px-8 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors flex items-center gap-2">
                 <Phone className="w-4 h-4" /> Speak to Advisor
               </a>
             </div>
@@ -49,7 +49,7 @@ export default function FixedDepositsPage() {
       <section className="py-16">
         <div className="container-custom">
           <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">Current FD Interest Rates</h2>
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-card hover:shadow-card-hover transition-shadow">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -87,7 +87,7 @@ export default function FixedDepositsPage() {
                   { name: 'Tax-Saver FD', desc: '5-year lock-in FD with tax benefit under Section 80C. Available at all banks.', color: 'purple' },
                   { name: 'Flexi FD', desc: 'FD linked to savings account. Auto-sweep excess balance for higher returns.', color: 'orange' },
                 ].map((item, idx) => (
-                  <div key={idx} className="bg-white rounded-lg border border-gray-200 p-4">
+                  <div key={idx} className="bg-white rounded-2xl border border-gray-200 p-4 shadow-card hover:shadow-card-hover transition-shadow">
                     <h4 className="font-semibold text-gray-900">{item.name}</h4>
                     <p className="text-sm text-gray-600 mt-1">{item.desc}</p>
                   </div>
@@ -96,7 +96,7 @@ export default function FixedDepositsPage() {
             </div>
             <div>
               <h3 className="text-xl font-bold text-gray-900 mb-4">FD vs Debt Mutual Funds</h3>
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-card hover:shadow-card-hover transition-shadow">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
@@ -125,7 +125,7 @@ export default function FixedDepositsPage() {
                 </div>
               </div>
 
-              <div className="mt-4 bg-amber-50 rounded-lg border border-amber-200 p-4">
+              <div className="mt-4 bg-amber-50 rounded-2xl border border-amber-200 p-4 shadow-card hover:shadow-card-hover transition-shadow">
                 <div className="flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
                   <div>

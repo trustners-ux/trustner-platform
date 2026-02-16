@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function GIFTCityPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-100">
       {/* Hero */}
       <div className="relative overflow-hidden bg-gradient-to-br from-[#0F172A] via-[#1a2744] to-[#0F172A] py-20 text-white">
         <div className="absolute inset-0 opacity-10">

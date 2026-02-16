@@ -85,7 +85,7 @@ export default function LifeInsurancePage() {
   const [selectedPlan, setSelectedPlan] = useState<number | null>(null);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-100">
       {/* Hero */}
       <section className="relative bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800 text-white py-20 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
@@ -115,10 +115,10 @@ export default function LifeInsurancePage() {
                 Get the right coverage at the best price.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Link href="/contact" className="bg-white text-indigo-900 px-8 py-3 rounded-lg font-semibold hover:bg-purple-50 transition-colors flex items-center gap-2">
+                <Link href="/contact" className="bg-white text-indigo-900 px-8 py-3 rounded-xl font-semibold hover:bg-purple-50 transition-colors flex items-center gap-2">
                   Get Free Quote <ArrowRight className="w-4 h-4" />
                 </Link>
-                <a href="tel:+919876543210" className="border border-white/30 text-white px-8 py-3 rounded-lg font-semibold hover:bg-white/10 transition-colors flex items-center gap-2">
+                <a href="tel:+919876543210" className="border border-white/30 text-white px-8 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors flex items-center gap-2">
                   <Phone className="w-4 h-4" /> Talk to Advisor
                 </a>
               </div>
@@ -154,7 +154,7 @@ export default function LifeInsurancePage() {
             {LIFE_PLANS.map((plan, idx) => (
               <div
                 key={idx}
-                className={`bg-white rounded-xl border-2 transition-all duration-300 cursor-pointer ${
+                className={`bg-white rounded-2xl border-2 transition-all duration-300 cursor-pointer ${
                   selectedPlan === idx
                     ? 'border-indigo-500 shadow-lg shadow-indigo-500/10'
                     : 'border-gray-200 hover:border-indigo-300 hover:shadow-md'
@@ -193,7 +193,7 @@ export default function LifeInsurancePage() {
                     ))}
                     <Link
                       href="/contact"
-                      className="mt-4 bg-indigo-600 text-white text-center py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors"
+                      className="mt-4 bg-indigo-600 text-white text-center py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-colors"
                     >
                       Get Quote for {plan.name}
                     </Link>
@@ -211,7 +211,7 @@ export default function LifeInsurancePage() {
           <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">Life Insurance Partners</h2>
           <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {PARTNER_INSURERS.map((insurer, idx) => (
-              <div key={idx} className="bg-gray-50 rounded-lg p-4 text-center text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors">
+              <div key={idx} className="bg-surface-100 rounded-lg p-4 text-center text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors">
                 {insurer}
               </div>
             ))}
@@ -220,7 +220,7 @@ export default function LifeInsurancePage() {
       </section>
 
       {/* Why Life Insurance */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-surface-100">
         <div className="container-custom max-w-4xl">
           <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">Why You Need Life Insurance</h2>
           <div className="grid md:grid-cols-3 gap-6">
@@ -232,7 +232,7 @@ export default function LifeInsurancePage() {
               { title: 'Tax Benefits', desc: 'Premiums qualify for deduction under Section 80C (up to ₹1.5 Lakh). Maturity proceeds tax-free under 10(10D).' },
               { title: 'Peace of Mind', desc: 'Knowing your loved ones are financially secure lets you focus on living and achieving your goals.' },
             ].map((item, idx) => (
-              <div key={idx} className="bg-white rounded-lg p-5 border border-gray-200">
+              <div key={idx} className="bg-white rounded-2xl p-5 border border-gray-200">
                 <h3 className="font-semibold text-gray-900 mb-2">{item.title}</h3>
                 <p className="text-sm text-gray-600">{item.desc}</p>
               </div>

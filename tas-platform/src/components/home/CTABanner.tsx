@@ -5,7 +5,7 @@ import { COMPANY } from "@/lib/constants/company";
 export default function CTABanner() {
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-primary to-primary-700 py-20">
-      {/* Background Pattern */}
+      {/* Dot Pattern Background */}
       <div className="absolute inset-0 opacity-5">
         <div
           className="absolute inset-0"
@@ -49,7 +49,8 @@ export default function CTABanner() {
         </div>
 
         <p className="mt-8 text-sm text-primary-300">
-          Free consultation • No hidden charges • AMFI Registered Distributor
+          Free consultation &bull; No hidden charges &bull; AMFI Registered
+          Distributor
         </p>
       </div>
     </section>

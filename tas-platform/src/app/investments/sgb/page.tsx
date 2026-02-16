@@ -5,13 +5,13 @@ import { ChevronRight, Check, ArrowRight, Phone, Shield, TrendingUp } from 'luci
 
 export default function SGBPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <section className="bg-gradient-to-br from-yellow-800 via-amber-800 to-yellow-900 text-white py-20">
+    <div className="min-h-screen bg-surface-100">
+      <section className="bg-gradient-to-br from-[#0A1628] via-[#1a2d4a] to-[#0A1628] text-white py-20">
         <div className="container-custom">
-          <div className="flex items-center gap-2 text-yellow-200 mb-4">
-            <Link href="/" className="hover:text-white">Home</Link>
+          <div className="flex items-center gap-2 text-gray-400 mb-4">
+            <Link href="/" className="hover:text-white transition-colors">Home</Link>
             <ChevronRight className="w-4 h-4" />
-            <Link href="/investments" className="hover:text-white">Investments</Link>
+            <Link href="/investments" className="hover:text-white transition-colors">Investments</Link>
             <ChevronRight className="w-4 h-4" />
             <span className="text-white">Sovereign Gold Bonds</span>
           </div>
@@ -24,10 +24,10 @@ export default function SGBPage() {
               plus 2.5% annual interest — and zero capital gains tax if held till maturity.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Link href="/contact" className="bg-white text-yellow-900 px-8 py-3 rounded-lg font-semibold hover:bg-yellow-50 transition-colors flex items-center gap-2">
+              <Link href="/contact" className="bg-white text-yellow-900 px-8 py-3 rounded-xl font-semibold hover:bg-yellow-50 transition-colors flex items-center gap-2">
                 Invest in SGB <ArrowRight className="w-4 h-4" />
               </Link>
-              <a href="tel:+919876543210" className="border border-white/30 text-white px-8 py-3 rounded-lg font-semibold hover:bg-white/10 transition-colors flex items-center gap-2">
+              <a href="tel:+919876543210" className="border border-white/30 text-white px-8 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors flex items-center gap-2">
                 <Phone className="w-4 h-4" /> Talk to Advisor
               </a>
             </div>
@@ -61,7 +61,7 @@ export default function SGBPage() {
               </div>
             </div>
             <div className="space-y-6">
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-card hover:shadow-card-hover transition-shadow">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">SGB Key Details</h3>
                 <div className="space-y-3">
                   {[
@@ -83,7 +83,7 @@ export default function SGBPage() {
                 </div>
               </div>
 
-              <div className="bg-yellow-50 rounded-xl border border-yellow-200 p-6">
+              <div className="bg-yellow-50 rounded-2xl border border-yellow-200 p-6 shadow-card hover:shadow-card-hover transition-shadow">
                 <h3 className="font-semibold text-yellow-900 mb-3">SGB vs Physical Gold vs Gold ETF</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -128,13 +128,13 @@ export default function SGBPage() {
             </div>
           </div>
 
-          <div className="mt-16 bg-gradient-to-br from-yellow-800 to-amber-900 rounded-2xl p-8 text-center text-white">
+          <div className="mt-16 bg-gradient-to-br from-[#0A1628] via-[#1a2d4a] to-[#0A1628] rounded-2xl p-8 text-center text-white">
             <h2 className="text-2xl font-bold mb-4">Interested in Sovereign Gold Bonds?</h2>
             <p className="text-yellow-200 mb-6 max-w-2xl mx-auto">
               SGBs are issued in tranches by RBI. We&apos;ll notify you when the next tranche opens and help you
               invest seamlessly. You can also buy existing SGBs on the stock exchange.
             </p>
-            <Link href="/contact" className="inline-flex items-center gap-2 bg-white text-yellow-900 px-8 py-3 rounded-lg font-semibold hover:bg-yellow-50 transition-colors">
+            <Link href="/contact" className="inline-flex items-center gap-2 bg-white text-yellow-900 px-8 py-3 rounded-xl font-semibold hover:bg-yellow-50 transition-colors">
               Register Interest <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

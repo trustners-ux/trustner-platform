@@ -5,6 +5,7 @@ import TopBar from "@/components/layout/TopBar";
 import Header from "@/components/layout/Header";
 import MarketTicker from "@/components/layout/MarketTicker";
 import Footer from "@/components/layout/Footer";
+import FloatingCTA from "@/components/ui/FloatingCTA";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -14,11 +15,11 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "Trustner - Your Trusted Investment & Insurance Partner",
+    default: "Trustner - AMFI Registered Mutual Fund Distributor | Invest in Mutual Funds, Insurance & More",
     template: "%s | Trustner",
   },
   description:
-    "India's trusted platform for mutual fund investments and insurance. Compare funds, start SIP, get insurance quotes. AMFI ARN-286886.",
+    "India's trusted AMFI registered mutual fund distributor and IRDAI licensed insurance broker. Compare 5000+ mutual funds, start SIP, get insurance quotes, plan your financial future. ARN-286886.",
   keywords: [
     "mutual fund distributor India",
     "SIP investment",
@@ -30,6 +31,11 @@ export const metadata: Metadata = {
     "Trustner",
     "AMFI registered",
     "insurance broker",
+    "mutual fund SIP",
+    "best mutual funds India",
+    "NPS investment",
+    "tax saving investment",
+    "wealth management India",
   ],
   authors: [{ name: "Trustner Asset Services Pvt. Ltd." }],
   creator: "Trustner",
@@ -42,7 +48,7 @@ export const metadata: Metadata = {
     siteName: "Trustner",
     title: "Trustner - Your Trusted Investment & Insurance Partner",
     description:
-      "Compare mutual funds, start SIP, get insurance quotes. One platform for all your financial needs.",
+      "Compare mutual funds, start SIP, get insurance quotes. One platform for all your financial needs. AMFI ARN-286886.",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
   },
   twitter: {
@@ -63,7 +69,7 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <head>
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <meta name="theme-color" content="#0F172A" />
+        <meta name="theme-color" content="#0A1628" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -92,10 +98,11 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased">
         <TopBar />
-        <MarketTicker />
         <Header />
+        <MarketTicker />
         <main className="min-h-screen">{children}</main>
         <Footer />
+        <FloatingCTA />
       </body>
     </html>
   );

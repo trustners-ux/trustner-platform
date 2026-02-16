@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Clock, Newspaper } from "lucide-react";
+import { ArrowRight, Newspaper } from "lucide-react";
 import { MOCK_NEWS } from "@/data/mock-funds";
 
 export default function NewsHighlights() {
@@ -46,8 +46,7 @@ export default function NewsHighlights() {
                   <Newspaper size={12} />
                   {news.source}
                 </span>
-                <span className="flex items-center gap-1">
-                  <Clock size={12} />
+                <span>
                   {new Date(news.date).toLocaleDateString("en-IN", {
                     day: "numeric",
                     month: "short",

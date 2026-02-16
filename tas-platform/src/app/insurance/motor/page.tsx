@@ -75,7 +75,7 @@ export default function MotorInsurancePage() {
   const [activeVehicle, setActiveVehicle] = useState(0);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-100">
       {/* Hero */}
       <section className="relative bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 text-white py-20 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
@@ -103,10 +103,10 @@ export default function MotorInsurancePage() {
               and hassle-free claim settlement.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Link href="/contact" className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2">
+              <Link href="/contact" className="bg-blue-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2">
                 Get Instant Quote <ArrowRight className="w-4 h-4" />
               </Link>
-              <a href="tel:+919876543210" className="border border-white/30 text-white px-8 py-3 rounded-lg font-semibold hover:bg-white/10 transition-colors flex items-center gap-2">
+              <a href="tel:+919876543210" className="border border-white/30 text-white px-8 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors flex items-center gap-2">
                 <Phone className="w-4 h-4" /> Claims Helpline
               </a>
             </div>
@@ -138,7 +138,7 @@ export default function MotorInsurancePage() {
             <p className="text-gray-600 mb-8">{VEHICLE_TYPES[activeVehicle].description}</p>
             <div className="grid md:grid-cols-2 gap-6">
               {VEHICLE_TYPES[activeVehicle].plans.map((plan, idx) => (
-                <div key={idx} className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div key={idx} className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-md transition-shadow">
                   <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.type}</h3>
                   <p className="text-gray-600 text-sm mb-4">{plan.desc}</p>
                   <p className="text-2xl font-bold text-blue-600 mb-4">{plan.premium}</p>
@@ -150,7 +150,7 @@ export default function MotorInsurancePage() {
                       </div>
                     ))}
                   </div>
-                  <Link href="/contact" className="block bg-blue-600 text-white text-center py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                  <Link href="/contact" className="block bg-blue-600 text-white text-center py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors">
                     Get Quote
                   </Link>
                 </div>
@@ -169,7 +169,7 @@ export default function MotorInsurancePage() {
           </p>
           <div className="grid md:grid-cols-3 gap-4">
             {ADD_ONS.map((addon, idx) => (
-              <div key={idx} className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-blue-300 transition-colors">
+              <div key={idx} className="bg-surface-100 rounded-lg p-4 border border-gray-200 hover:border-blue-300 transition-colors">
                 <div className="flex items-start gap-3">
                   <Wrench className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
                   <div>

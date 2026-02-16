@@ -108,6 +108,10 @@ export default function MarketOverview() {
             View All Funds <ArrowRight size={16} />
           </Link>
         </div>
+
+        <p className="mt-6 text-center text-xs italic text-gray-400">
+          Past performance is not indicative of future results.
+        </p>
       </div>
     </section>
   );

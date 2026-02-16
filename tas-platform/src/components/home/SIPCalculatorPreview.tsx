@@ -13,8 +13,13 @@ export default function SIPCalculatorPreview() {
 
   const result = calculateSIP(monthlyAmount, returnRate, years);
 
+  const wealthGainPercent =
+    result.totalInvested > 0
+      ? ((result.estimatedReturns / result.totalInvested) * 100).toFixed(0)
+      : "0";
+
   return (
-    <section className="section-padding bg-gray-50">
+    <section className="section-padding bg-surface-100">
       <div className="container-custom">
         <div className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xl">
           <div className="grid lg:grid-cols-2">
@@ -31,7 +36,7 @@ export default function SIPCalculatorPreview() {
               </h2>
               <p className="mb-8 text-sm text-gray-500">
                 See how small, regular investments can grow into a large corpus
-                over time.
+                over time through the power of compounding.
               </p>
 
               {/* Monthly Investment Slider */}
@@ -91,7 +96,7 @@ export default function SIPCalculatorPreview() {
                     Time Period
                   </label>
                   <span className="rounded-lg bg-accent-light px-3 py-1 text-sm font-bold text-accent">
-                    {years} Years
+                    {years} {years === 1 ? "Year" : "Years"}
                   </span>
                 </div>
                 <input
@@ -133,7 +138,7 @@ export default function SIPCalculatorPreview() {
                   <p className="mb-1 text-sm text-primary-300">
                     Total Invested
                   </p>
-                  <p className="text-xl font-bold">
+                  <p className="text-xl font-bold text-white">
                     {formatINR(result.totalInvested)}
                   </p>
                 </div>
@@ -147,7 +152,7 @@ export default function SIPCalculatorPreview() {
                 </div>
               </div>
 
-              {/* Visual Bar */}
+              {/* Visual Progress Bar */}
               <div className="mb-4">
                 <div className="h-4 w-full overflow-hidden rounded-full bg-white/20">
                   <div
@@ -162,26 +167,24 @@ export default function SIPCalculatorPreview() {
                 </div>
                 <div className="mt-2 flex justify-between text-xs text-primary-300">
                   <span>Invested</span>
-                  <span>
-                    Wealth Gain:{" "}
-                    {(
-                      (result.estimatedReturns / result.totalInvested) *
-                      100
-                    ).toFixed(0)}
-                    %
-                  </span>
+                  <span>Wealth Gain: {wealthGainPercent}%</span>
                 </div>
               </div>
 
               <Link
                 href="/mutual-funds"
-                className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-primary transition hover:bg-gray-100"
+                className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-primary shadow-lg transition hover:bg-gray-100"
               >
                 Start SIP Now <ArrowRight size={16} />
               </Link>
             </div>
           </div>
         </div>
+
+        <p className="mt-6 text-center text-xs italic text-gray-400">
+          Calculator results are for illustration purposes only. Actual returns
+          may vary based on market conditions.
+        </p>
       </div>
     </section>
   );

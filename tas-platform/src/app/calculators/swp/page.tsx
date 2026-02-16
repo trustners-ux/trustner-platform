@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ChevronRight, IndianRupee, Info, TrendingDown } from 'lucide-react';
 import { formatINR } from '@/lib/utils/formatters';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import SEBIDisclaimer from "@/components/compliance/SEBIDisclaimer";
 
 export default function SWPCalculatorPage() {
   const [totalInvestment, setTotalInvestment] = useState(5000000);
@@ -35,7 +36,7 @@ export default function SWPCalculatorPage() {
   }, [totalInvestment, monthlyWithdrawal, expectedReturn, years]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface-100">
       <section className="bg-gradient-to-br from-orange-900 to-amber-800 text-white py-12">
         <div className="container-custom">
           <div className="flex items-center gap-2 text-orange-200 mb-4">
@@ -224,6 +225,7 @@ export default function SWPCalculatorPage() {
           </div>
         </div>
       </section>
+      <SEBIDisclaimer variant="banner" />
     </div>
   );
 }

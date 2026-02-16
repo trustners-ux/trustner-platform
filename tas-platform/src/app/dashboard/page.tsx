@@ -49,9 +49,9 @@ export default function DashboardPage() {
   const returnsPercent = ((MOCK_PORTFOLIO.returns / MOCK_PORTFOLIO.invested) * 100).toFixed(1);
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-surface-100">
       {/* Dashboard Header */}
-      <div className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white">
+      <div className="bg-gradient-to-br from-[#0A1628] via-[#1a2d4a] to-[#0A1628] text-white">
         <div className="container-custom py-6">
           <div className="flex items-center justify-between">
             <div>
