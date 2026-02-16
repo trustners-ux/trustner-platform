@@ -7,6 +7,7 @@ import {
   Phone,
   Mail,
   Clock,
+  MapPin,
   ExternalLink,
   Send,
   Linkedin,
@@ -113,6 +114,10 @@ export default function Footer() {
                 <p className="flex items-center gap-2.5 text-gray-400">
                   <Clock size={15} className="text-primary-400" />
                   {COMPANY.contact.workingHours}
+                </p>
+                <p className="flex items-start gap-2.5 text-gray-400">
+                  <MapPin size={15} className="mt-0.5 flex-shrink-0 text-primary-400" />
+                  {COMPANY.address.full}
                 </p>
               </div>
 
@@ -256,6 +261,14 @@ export default function Footer() {
                 </span>
                 <span className="text-gray-400">
                   {COMPANY.insuranceEntity.name} | {REGULATORY.IRDAI_LICENSE}
+                </span>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="font-semibold text-gray-300">
+                  CIN:
+                </span>
+                <span className="text-gray-400">
+                  {REGULATORY.CIN_MF} (MF) | {REGULATORY.CIN_INSURANCE} (Insurance)
                 </span>
               </div>
             </div>

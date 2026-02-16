@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://trustner.in';
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://wealthyhub.in';
 const SITE_NAME = 'Trustner';
 const DEFAULT_OG_IMAGE = '/og-image.png';
 
@@ -81,8 +81,8 @@ export function generateFinancialServiceSchema() {
     url: BASE_URL,
     description:
       'AMFI registered mutual fund distributor and IRDAI licensed insurance broker. One platform for investments and insurance.',
-    telephone: '+91-1800-XXX-XXXX',
-    email: 'hello@trustner.in',
+    telephone: '+91-6003903737',
+    email: 'wecare@wealthyhub.in',
     address: {
       '@type': 'PostalAddress',
       addressCountry: 'IN',

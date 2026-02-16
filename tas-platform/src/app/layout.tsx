@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "https://trustner.in",
+    url: "https://wealthyhub.in",
     siteName: "Trustner",
     title: "Trustner - Your Trusted Investment & Insurance Partner",
     description:
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
     description:
       "Compare mutual funds, start SIP, get insurance quotes. AMFI ARN-286886.",
   },
-  metadataBase: new URL("https://trustner.in"),
+  metadataBase: new URL("https://wealthyhub.in"),
 };
 
 export default function RootLayout({
@@ -78,11 +78,11 @@ export default function RootLayout({
               "@type": "FinancialService",
               name: "Trustner Asset Services Pvt. Ltd.",
               alternateName: "Trustner",
-              url: "https://trustner.in",
+              url: "https://wealthyhub.in",
               description:
                 "AMFI registered mutual fund distributor and IRDAI licensed insurance broker. One platform for investments and insurance.",
-              telephone: "+91-1800-XXX-XXXX",
-              email: "hello@trustner.in",
+              telephone: "+91-6003903737",
+              email: "wecare@wealthyhub.in",
               address: {
                 "@type": "PostalAddress",
                 addressCountry: "IN",

@@ -20,7 +20,7 @@ export default function PrivacyPolicyPage() {
         <div className="mx-auto max-w-4xl rounded-2xl border border-gray-100 bg-white p-8 lg:p-12">
           <div className="prose prose-sm max-w-none text-gray-600">
             <h2 className="text-xl font-bold text-gray-900">1. Introduction</h2>
-            <p>{COMPANY.brand} (&quot;we&quot;, &quot;our&quot;, &quot;us&quot;) is committed to protecting your personal data. This Privacy Policy explains how we collect, use, store, and share your information when you use our website (trustner.in) and services.</p>
+            <p>{COMPANY.brand} (&quot;we&quot;, &quot;our&quot;, &quot;us&quot;) is committed to protecting your personal data. This Privacy Policy explains how we collect, use, store, and share your information when you use our website (wealthyhub.in) and services.</p>
             <p>This policy is compliant with the Digital Personal Data Protection Act, 2023 (DPDPA) and applicable SEBI, AMFI, and IRDAI regulations regarding data protection.</p>
 
             <h2 className="mt-8 text-xl font-bold text-gray-900">2. Information We Collect</h2>

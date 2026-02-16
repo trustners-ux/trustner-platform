@@ -7,6 +7,10 @@ export const REGULATORY = {
   MF_ENTITY: "Trustner Asset Services Pvt. Ltd.",
   INSURANCE_ENTITY: "Trustner Insurance Brokers Private Limited",
 
+  // CIN Numbers
+  CIN_MF: "CIN: U66301AS2023PTC025505",
+  CIN_INSURANCE: "CIN: U66220AS2024PTC025948",
+
   // Core SEBI Disclaimers
   SEBI_MUTUAL_FUND_DISCLAIMER:
     "Mutual fund investments are subject to market risks. Read all scheme related documents carefully before investing.",
@@ -56,18 +60,14 @@ export const REGULATORY = {
   INSURANCE_DISCLAIMER:
     "Insurance is the subject matter of solicitation. For more details on risk factors, terms & conditions, please read the sales brochure carefully before concluding a sale.",
 
-  IRDAI_LICENSE: "IRDAI License No. [To be updated]",
+  IRDAI_LICENSE: "IRDAI License No. 1067",
 
   // Compliance Officer
   COMPLIANCE_OFFICER: {
-    name: "[Compliance Officer Name]",
-    email: "compliance@trustner.in",
-    phone: "[Phone Number]",
+    name: "Vinita Kabra",
+    email: "wecare@wealthyhub.in",
+    phone: "+91-6003903737",
   },
-
-  // Company Registration
-  CIN_MF: "CIN: [To be updated]",
-  CIN_INSURANCE: "CIN: [To be updated]",
 
   // Privacy
   DPDPA_NOTICE:

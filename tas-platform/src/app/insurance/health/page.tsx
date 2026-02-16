@@ -114,7 +114,7 @@ export default function HealthInsurancePage() {
                 <Link href="/contact" className="bg-white text-blue-900 px-8 py-3 rounded-xl font-semibold hover:bg-blue-50 transition-colors flex items-center gap-2">
                   Get Free Quote <ArrowRight className="w-4 h-4" />
                 </Link>
-                <a href="tel:+919876543210" className="border border-white/30 text-white px-8 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors flex items-center gap-2">
+                <a href="tel:+916003903737" className="border border-white/30 text-white px-8 py-3 rounded-xl font-semibold hover:bg-white/10 transition-colors flex items-center gap-2">
                   <Phone className="w-4 h-4" /> Talk to Expert
                 </a>
               </div>

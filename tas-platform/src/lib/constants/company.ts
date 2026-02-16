@@ -9,31 +9,46 @@ export const COMPANY = {
     shortName: "Trustner Asset Services",
     amfiArn: "ARN-286886",
     type: "AMFI Registered Mutual Fund Distributor",
+    cin: "U66301AS2023PTC025505",
   },
 
   insuranceEntity: {
     name: "Trustner Insurance Brokers Private Limited",
     shortName: "Trustner Insurance Brokers",
     type: "IRDAI Licensed Insurance Broker",
-    irdaiLicense: "[To be updated]",
+    irdaiLicense: "1067",
+    cin: "U66220AS2024PTC025948",
   },
 
   contact: {
-    phone: "1800-XXX-XXXX",
-    email: "hello@trustner.in",
-    supportEmail: "support@trustner.in",
-    whatsapp: "+91-XXXXXXXXXX",
+    phone: "+91-6003903737",
+    phoneDisplay: "6003903737",
+    email: "wecare@wealthyhub.in",
+    supportEmail: "wecare@wealthyhub.in",
+    whatsapp: "+916003903737",
+    whatsappDisplay: "6003903737",
     workingHours: "Mon - Sat: 9:00 AM - 7:00 PM IST",
   },
 
   address: {
-    line1: "[Office Address Line 1]",
-    line2: "[Office Address Line 2]",
-    city: "[City]",
-    state: "[State]",
-    pincode: "[Pincode]",
+    line1: "Sethi Trust Building, Unit 2, 4th Floor",
+    line2: "G S Road, Bhangagarh",
+    city: "Guwahati",
+    state: "Assam",
+    pincode: "781005",
     country: "India",
+    full: "Sethi Trust Building, Unit 2, 4th Floor, G S Road, Bhangagarh, Guwahati - 781005, Assam",
   },
+
+  branches: [
+    { city: "Guwahati", state: "Assam", type: "head-office" as const },
+    { city: "Tezpur", state: "Assam", type: "branch" as const },
+    { city: "Kolkata", state: "West Bengal", type: "branch" as const },
+    { city: "Bangalore", state: "Karnataka", type: "branch" as const },
+    { city: "Hyderabad", state: "Telangana", type: "branch" as const },
+    { city: "Ranchi", state: "Jharkhand", type: "coming-soon" as const },
+    { city: "Mumbai", state: "Maharashtra", type: "coming-soon" as const },
+  ],
 
   social: {
     linkedin: "https://www.linkedin.com/company/trustner",

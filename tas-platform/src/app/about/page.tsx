@@ -19,6 +19,7 @@ import {
   MessageCircle,
   Phone,
   AlertTriangle,
+  MapPin,
 } from "lucide-react";
 import { COMPANY } from "@/lib/constants/company";
 import { REGULATORY } from "@/lib/constants/regulatory";
@@ -306,6 +307,9 @@ export default function AboutPage() {
                   <p className="text-xs text-gray-500">
                     AMFI Registered Mutual Fund Distributor
                   </p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    {REGULATORY.CIN_MF}
+                  </p>
                 </div>
               </div>
             </div>
@@ -359,9 +363,68 @@ export default function AboutPage() {
                   <p className="text-xs text-gray-500">
                     IRDAI Licensed Insurance Broker
                   </p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    {REGULATORY.CIN_INSURANCE}
+                  </p>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Branch Locations */}
+        <div className="mb-16">
+          <div className="mb-8 text-center">
+            <span className="mb-2 inline-block rounded-full bg-primary-50 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-primary-500">
+              Our Presence
+            </span>
+            <h2 className="text-3xl font-extrabold text-gray-900">
+              Branch Locations
+            </h2>
+            <p className="mx-auto mt-2 max-w-xl text-sm text-gray-500">
+              Serving clients across India with a growing network of offices.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {COMPANY.branches.map((branch) => (
+              <div
+                key={branch.city}
+                className={`rounded-2xl border bg-white p-5 shadow-card transition-all hover:shadow-card-hover ${
+                  branch.type === "head-office"
+                    ? "border-primary-200 ring-1 ring-primary-100"
+                    : branch.type === "coming-soon"
+                    ? "border-dashed border-gray-200"
+                    : "border-gray-100"
+                }`}
+              >
+                <div className="mb-3 flex items-center gap-2">
+                  <MapPin
+                    size={16}
+                    className={
+                      branch.type === "head-office"
+                        ? "text-primary-500"
+                        : branch.type === "coming-soon"
+                        ? "text-gray-400"
+                        : "text-gray-500"
+                    }
+                  />
+                  <h3 className="text-sm font-bold text-gray-900">
+                    {branch.city}
+                  </h3>
+                  {branch.type === "head-office" && (
+                    <span className="rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-bold text-primary-600">
+                      Head Office
+                    </span>
+                  )}
+                  {branch.type === "coming-soon" && (
+                    <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-600">
+                      Coming Soon
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500">{branch.state}</p>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -480,6 +543,9 @@ export default function AboutPage() {
                   <p className="text-sm text-gray-600">
                     {REGULATORY.AMFI_ARN}
                   </p>
+                  <p className="text-xs text-gray-500">
+                    {REGULATORY.CIN_MF}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-amber-100 bg-white p-4">
                   <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-amber-600">
@@ -490,6 +556,30 @@ export default function AboutPage() {
                   </p>
                   <p className="text-sm text-gray-600">
                     {REGULATORY.IRDAI_LICENSE}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {REGULATORY.CIN_INSURANCE}
+                  </p>
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-xl border border-amber-100 bg-white p-4">
+                  <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-amber-600">
+                    Registered Address
+                  </p>
+                  <p className="text-sm text-gray-700">
+                    {COMPANY.address.full}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-amber-100 bg-white p-4">
+                  <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-amber-600">
+                    CIN Numbers
+                  </p>
+                  <p className="text-sm text-gray-700">
+                    {REGULATORY.CIN_MF}
+                  </p>
+                  <p className="text-sm text-gray-700">
+                    {REGULATORY.CIN_INSURANCE}
                   </p>
                 </div>
               </div>

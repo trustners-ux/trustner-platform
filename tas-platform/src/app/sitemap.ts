@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://trustner.in';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://wealthyhub.in';
   const now = new Date();
 
   // Blog post slugs for dynamic sitemap entries

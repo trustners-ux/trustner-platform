@@ -21,7 +21,7 @@ export default function TermsPage() {
         <div className="mx-auto max-w-4xl rounded-2xl border border-gray-100 bg-white p-8 lg:p-12">
           <div className="prose prose-sm max-w-none text-gray-600">
             <h2 className="text-xl font-bold text-gray-900">1. Acceptance of Terms</h2>
-            <p>By accessing and using the Trustner platform (trustner.in), you agree to be bound by these Terms of Service. If you do not agree, please do not use our services.</p>
+            <p>By accessing and using the Trustner platform (wealthyhub.in), you agree to be bound by these Terms of Service. If you do not agree, please do not use our services.</p>
 
             <h2 className="mt-8 text-xl font-bold text-gray-900">2. Services</h2>
             <p>Trustner provides mutual fund distribution services through {COMPANY.mfEntity.name} ({REGULATORY.AMFI_ARN}) and insurance broking services through {COMPANY.insuranceEntity.name} ({REGULATORY.IRDAI_LICENSE}).</p>
