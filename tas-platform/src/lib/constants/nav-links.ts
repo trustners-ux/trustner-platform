@@ -7,6 +7,16 @@ export interface NavItem {
 
 export const NAV_LINKS: NavItem[] = [
   {
+    label: "Financial Planning",
+    href: "/ai-planner",
+    children: [
+      { label: "AI Financial Planner", href: "/ai-planner", badge: "AI-Powered" },
+      { label: "Financial Health Check", href: "/financial-health-check" },
+      { label: "Risk Profile Assessment", href: "/risk-profile" },
+      { label: "Dashboard", href: "/dashboard" },
+    ],
+  },
+  {
     label: "Mutual Funds",
     href: "/mutual-funds",
     children: [
@@ -46,10 +56,14 @@ export const NAV_LINKS: NavItem[] = [
     href: "/calculators",
     children: [
       { label: "SIP Calculator", href: "/calculators/sip" },
+      { label: "Retirement Calculator", href: "/calculators/retirement" },
+      { label: "EMI Calculator", href: "/calculators/emi" },
       { label: "Lumpsum Calculator", href: "/calculators/lumpsum" },
-      { label: "SWP Calculator", href: "/calculators/swp" },
-      { label: "STP Calculator", href: "/calculators/stp" },
+      { label: "Term Insurance Calculator", href: "/calculators/term-insurance" },
+      { label: "Health Insurance Calculator", href: "/calculators/health-insurance" },
+      { label: "Education Planner", href: "/calculators/education" },
       { label: "Tax Calculator", href: "/calculators/tax" },
+      { label: "HUF Tax Planner", href: "/calculators/huf" },
     ],
   },
   {

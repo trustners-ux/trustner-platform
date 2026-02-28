@@ -1,20 +1,26 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { Calculator, TrendingUp, TrendingDown, Repeat, ArrowRight, Receipt, Target, Sparkles, ChevronRight } from "lucide-react";
+import { Calculator, TrendingUp, TrendingDown, Repeat, ArrowRight, Receipt, Target, Sparkles, ChevronRight, Landmark, CreditCard, Shield, HeartPulse, GraduationCap, Users } from "lucide-react";
 import SEBIDisclaimer from "@/components/compliance/SEBIDisclaimer";
 
 export const metadata: Metadata = {
-  title: "Financial Calculators - SIP, Lumpsum, SWP, Goal Planning, Tax",
-  description: "Free financial calculators. SIP calculator, lumpsum calculator, SWP calculator, STP calculator, goal planning calculator, mutual fund tax calculator. Plan your investments.",
+  title: "Financial Calculators - SIP, Retirement, EMI, Insurance, Tax & More",
+  description: "12 free financial calculators. SIP, lumpsum, retirement, EMI, term insurance, health insurance, child education, HUF tax planner, goal planning, SWP, STP and tax calculator.",
 };
 
 const CALCULATORS = [
-  { title: "SIP Calculator", description: "Calculate returns on your monthly SIP investments. See how compounding grows your wealth over time.", href: "/calculators/sip", icon: TrendingUp, color: "from-blue-600 to-blue-700", popular: true },
-  { title: "Lumpsum Calculator", description: "Calculate future value of one-time investments. Compare returns across different tenures and rates.", href: "/calculators/lumpsum", icon: Calculator, color: "from-emerald-600 to-emerald-700", popular: false },
-  { title: "Goal Planning", description: "Plan for child education, retirement, house purchase, or any financial goal. Get recommended monthly SIP.", href: "/calculators/goal", icon: Target, color: "from-amber-500 to-amber-600", popular: false },
-  { title: "SWP Calculator", description: "Plan regular withdrawals from your mutual fund investments. See how long your corpus will last.", href: "/calculators/swp", icon: TrendingDown, color: "from-purple-600 to-purple-700", popular: false },
-  { title: "STP Calculator", description: "Calculate returns when transferring money systematically between two mutual fund schemes.", href: "/calculators/stp", icon: Repeat, color: "from-violet-600 to-violet-700", popular: false },
-  { title: "Tax Calculator", description: "Compare Old vs New tax regime. Calculate LTCG/STCG on mutual fund redemptions. Plan tax-efficient exits.", href: "/calculators/tax", icon: Receipt, color: "from-rose-600 to-rose-700", popular: false },
+  { title: "SIP Calculator", description: "Calculate returns on your monthly SIP investments. See how compounding grows your wealth over time.", href: "/calculators/sip", icon: TrendingUp, color: "from-blue-600 to-blue-700", popular: true, category: "investment" },
+  { title: "Retirement Calculator", description: "Plan your FIRE journey. Calculate corpus needed, required SIP, and year-by-year growth projections.", href: "/calculators/retirement", icon: Landmark, color: "from-indigo-600 to-indigo-700", popular: true, category: "planning" },
+  { title: "EMI Calculator", description: "Calculate EMI for home, car, personal or education loans. Full amortization schedule with prepayment analysis.", href: "/calculators/emi", icon: CreditCard, color: "from-cyan-600 to-cyan-700", popular: true, category: "planning" },
+  { title: "Lumpsum Calculator", description: "Calculate future value of one-time investments. Compare returns across different tenures and rates.", href: "/calculators/lumpsum", icon: Calculator, color: "from-emerald-600 to-emerald-700", popular: false, category: "investment" },
+  { title: "Goal Planning", description: "Plan for child education, retirement, house purchase, or any financial goal. Get recommended monthly SIP.", href: "/calculators/goal", icon: Target, color: "from-amber-500 to-amber-600", popular: false, category: "planning" },
+  { title: "Term Insurance Calculator", description: "Find your ideal life cover using HLV, income replacement or expense methods. Identify your insurance gap.", href: "/calculators/term-insurance", icon: Shield, color: "from-teal-600 to-teal-700", popular: false, category: "insurance" },
+  { title: "Health Insurance Calculator", description: "Check if your health cover is adequate. City-wise medical cost analysis with family-adjusted recommendations.", href: "/calculators/health-insurance", icon: HeartPulse, color: "from-pink-600 to-pink-700", popular: false, category: "insurance" },
+  { title: "Education Planner", description: "Plan for IIT, IIM, MBBS or study abroad. Calculate future costs and required monthly SIP investments.", href: "/calculators/education", icon: GraduationCap, color: "from-orange-500 to-orange-600", popular: false, category: "planning" },
+  { title: "SWP Calculator", description: "Plan regular withdrawals from your mutual fund investments. See how long your corpus will last.", href: "/calculators/swp", icon: TrendingDown, color: "from-purple-600 to-purple-700", popular: false, category: "investment" },
+  { title: "STP Calculator", description: "Calculate returns when transferring money systematically between two mutual fund schemes.", href: "/calculators/stp", icon: Repeat, color: "from-violet-600 to-violet-700", popular: false, category: "investment" },
+  { title: "Tax Calculator", description: "Compare Old vs New tax regime. Calculate LTCG/STCG on mutual fund redemptions. Plan tax-efficient exits.", href: "/calculators/tax", icon: Receipt, color: "from-rose-600 to-rose-700", popular: false, category: "tax" },
+  { title: "HUF Tax Planner", description: "Save taxes as a Hindu Undivided Family. Compare HUF vs individual filing and maximise family tax savings.", href: "/calculators/huf", icon: Users, color: "from-slate-600 to-slate-700", popular: false, category: "tax" },
 ];
 
 export default function CalculatorsPage() {

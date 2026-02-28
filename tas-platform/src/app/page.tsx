@@ -10,9 +10,9 @@ import CTABanner from "@/components/home/CTABanner";
 import SEBIDisclaimer from "@/components/compliance/SEBIDisclaimer";
 
 export const metadata: Metadata = {
-  title: "Trustner - AMFI Registered Mutual Fund Distributor & Insurance Broker",
+  title: "Trustner - India's First AI-Powered Financial Planner | Free Financial Plan",
   description:
-    "Compare 5000+ mutual funds, start SIP with ₹500/month, get health & life insurance quotes. AMFI ARN-286886. SEBI compliant. Trusted by 10,000+ investors across India.",
+    "Create a comprehensive financial plan in 15 minutes — free. AI-powered retirement planning, insurance gap analysis, tax optimization, goal-based investing. 12 free calculators. AMFI ARN-286886. IRDAI License 1067.",
 };
 
 export default function HomePage() {
