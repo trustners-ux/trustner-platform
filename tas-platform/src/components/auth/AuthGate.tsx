@@ -237,14 +237,19 @@ export default function AuthGate({ onSuccess, onClose, prefillName, prefillCity 
   // Step 2 - Verify OTP
   const handleVerifyOtp = useCallback(
     async (code: string) => {
+      console.log('[AuthGate] handleVerifyOtp called with code length:', code.length, 'method:', method)
       setError('')
       setLoading(true)
+      const t0 = Date.now()
       try {
         if (method === 'phone') {
+          console.log('[AuthGate] Calling verifyPhoneOtp...')
           await auth.verifyPhoneOtp(phone, code)
         } else {
+          console.log('[AuthGate] Calling verifyEmailOtp...')
           await auth.verifyEmailOtp(email, code)
         }
+        console.log('[AuthGate] Verify succeeded in', Date.now() - t0, 'ms, advancing step')
         // If email method, skip step 3 (already have email). Go to step 4.
         if (method === 'email') {
           setStep(4)
@@ -252,10 +257,12 @@ export default function AuthGate({ onSuccess, onClose, prefillName, prefillCity 
           setStep(3)
         }
       } catch (err: unknown) {
+        console.error('[AuthGate] Verify failed in', Date.now() - t0, 'ms:', err)
         const message = err instanceof Error ? err.message : 'Wrong OTP? Try again.'
         triggerError(message)
         setOtp(Array(6).fill(''))
       } finally {
+        console.log('[AuthGate] Verify finally block, total:', Date.now() - t0, 'ms')
         setLoading(false)
       }
     },

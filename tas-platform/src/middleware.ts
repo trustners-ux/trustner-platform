@@ -39,7 +39,9 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico, icon.svg (browser icons)
      * - Static assets (svg, png, jpg, jpeg, gif, webp)
+     * - /api/auth/* (auth API routes handle their own auth server-side)
+     * - /api/debug-otp (debug endpoint)
      */
-    '/((?!_next/static|_next/image|favicon.ico|icon.svg|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|icon.svg|api/auth/|api/debug-otp|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
