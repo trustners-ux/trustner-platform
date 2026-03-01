@@ -174,7 +174,7 @@ function LoginPageContent() {
 
   // ---- State ----
   const [step, setStep] = useState<Step>(1)
-  const [method, setMethod] = useState<AuthMethod>('email')
+  const [method, setMethod] = useState<AuthMethod>('phone')
 
   // Step 1
   const [phone, setPhone] = useState('')
@@ -470,7 +470,7 @@ function LoginPageContent() {
           onClick={switchToEmail}
           className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
         >
-          <Mail size={16} /> Login with Email (Recommended)
+          <Mail size={16} /> Login with Email
         </button>
       ) : (
         <button

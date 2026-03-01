@@ -157,7 +157,7 @@ export default function AuthGate({ onSuccess, onClose, prefillName, prefillCity 
 
   // ---- State ----
   const [step, setStep] = useState<Step>(1)
-  const [method, setMethod] = useState<AuthMethod>('email')
+  const [method, setMethod] = useState<AuthMethod>('phone')
 
   // Step 1
   const [phone, setPhone] = useState('')
@@ -434,7 +434,7 @@ export default function AuthGate({ onSuccess, onClose, prefillName, prefillCity 
       <div className="text-center">
         {method === 'phone' ? (
           <button onClick={switchToEmail} className="text-sm font-medium text-violet-600 hover:underline">
-            Use Email Instead (Recommended)
+            Use Email Instead
           </button>
         ) : (
           <button onClick={switchToPhone} className="text-sm font-medium text-violet-600 hover:underline">
