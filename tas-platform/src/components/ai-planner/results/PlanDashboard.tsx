@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -38,9 +38,14 @@ import {
   FileText,
   MessageCircle,
   BarChart3,
+  Mail,
+  Loader2,
+  Check,
 } from "lucide-react";
 import { useFinancialPlanStore } from "@/store/financial-plan-store";
+import { useAuth } from "@/hooks/useAuth";
 import { formatINR, formatLakhsCrores } from "@/lib/utils/formatters";
+import { downloadReport, generateReport, emailReport } from "@/lib/api/plans";
 import type { GoalType, ActionItem } from "@/types/financial-plan";
 
 // ─── Props ───────────────────────────────────────────────────────────────────
@@ -345,8 +350,62 @@ function PieTooltip({
 
 // ─── Main Component ──────────────────────────────────────────────────────────
 export default function PlanDashboard({ onEdit }: Props) {
-  const { plan } = useFinancialPlanStore();
+  const { plan, planDbId } = useFinancialPlanStore();
+  const { isAuthenticated } = useAuth();
   const analysis = plan.analysis;
+
+  // Download/Email states
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [isEmailing, setIsEmailing] = useState(false);
+  const [emailSuccess, setEmailSuccess] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [emailAddress, setEmailAddress] = useState("");
+
+  const handleDownloadPDF = useCallback(async () => {
+    if (!planDbId || !isAuthenticated) return;
+    setIsDownloading(true);
+    setDownloadSuccess(false);
+    try {
+      // First ensure report is generated
+      await generateReport(planDbId);
+      // Then download
+      const blob = await downloadReport(planDbId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Trustner-Financial-Plan.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      setDownloadSuccess(true);
+      setTimeout(() => setDownloadSuccess(false), 3000);
+    } catch (err) {
+      console.error("Download failed:", err);
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [planDbId, isAuthenticated]);
+
+  const handleEmailReport = useCallback(async () => {
+    if (!planDbId || !isAuthenticated || !emailAddress) return;
+    setIsEmailing(true);
+    setEmailError(null);
+    setEmailSuccess(false);
+    try {
+      await emailReport(planDbId, emailAddress);
+      setEmailSuccess(true);
+      setShowEmailDialog(false);
+      setTimeout(() => setEmailSuccess(false), 5000);
+    } catch (err) {
+      setEmailError("Failed to send email. Please try again.");
+      console.error("Email failed:", err);
+    } finally {
+      setIsEmailing(false);
+    }
+  }, [planDbId, isAuthenticated, emailAddress]);
 
   // Prepare chart data
   const currentAllocationData = useMemo(() => {
@@ -456,13 +515,86 @@ export default function PlanDashboard({ onEdit }: Props) {
                 >
                   <Pencil size={14} /> Edit Plan
                 </button>
-                <Link
-                  href="/report"
-                  className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-primary-700 transition hover:bg-gray-50"
-                >
-                  <Download size={14} /> Download Report
-                </Link>
+                {isAuthenticated && planDbId ? (
+                  <>
+                    <button
+                      onClick={handleDownloadPDF}
+                      disabled={isDownloading}
+                      className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-primary-700 transition hover:bg-gray-50 disabled:opacity-60"
+                    >
+                      {isDownloading ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : downloadSuccess ? (
+                        <Check size={14} className="text-emerald-600" />
+                      ) : (
+                        <Download size={14} />
+                      )}
+                      {isDownloading ? "Generating..." : downloadSuccess ? "Downloaded!" : "Download PDF"}
+                    </button>
+                    <button
+                      onClick={() => setShowEmailDialog(true)}
+                      className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/20"
+                    >
+                      {emailSuccess ? (
+                        <Check size={14} className="text-emerald-400" />
+                      ) : (
+                        <Mail size={14} />
+                      )}
+                      {emailSuccess ? "Email Sent!" : "Email Report"}
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    href="/report"
+                    className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-primary-700 transition hover:bg-gray-50"
+                  >
+                    <FileText size={14} /> View Report
+                  </Link>
+                )}
               </div>
+
+              {/* Email Dialog */}
+              {showEmailDialog && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-3 rounded-xl bg-white/10 p-4 backdrop-blur-sm"
+                >
+                  <p className="mb-2 text-xs font-semibold text-white/80">
+                    Send your PDF report to:
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      value={emailAddress}
+                      onChange={(e) => setEmailAddress(e.target.value)}
+                      placeholder="your@email.com"
+                      className="flex-1 rounded-lg bg-white/20 px-3 py-2 text-sm text-white placeholder-white/50 outline-none focus:bg-white/30"
+                    />
+                    <button
+                      onClick={handleEmailReport}
+                      disabled={isEmailing || !emailAddress}
+                      className="flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-xs font-bold text-primary-700 transition hover:bg-gray-100 disabled:opacity-60"
+                    >
+                      {isEmailing ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        <Mail size={12} />
+                      )}
+                      {isEmailing ? "Sending..." : "Send"}
+                    </button>
+                    <button
+                      onClick={() => setShowEmailDialog(false)}
+                      className="rounded-lg px-3 py-2 text-xs font-bold text-white/60 hover:text-white"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  {emailError && (
+                    <p className="mt-2 text-xs text-red-300">{emailError}</p>
+                  )}
+                </motion.div>
+              )}
             </div>
 
             {/* Right: Score Circle */}
@@ -1195,12 +1327,27 @@ export default function PlanDashboard({ onEdit }: Props) {
             </p>
 
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link
-                href="/report"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-bold text-primary-700 transition hover:bg-gray-50 sm:w-auto"
-              >
-                <FileText size={16} /> Download Detailed Report
-              </Link>
+              {isAuthenticated && planDbId ? (
+                <button
+                  onClick={handleDownloadPDF}
+                  disabled={isDownloading}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-bold text-primary-700 transition hover:bg-gray-50 sm:w-auto disabled:opacity-60"
+                >
+                  {isDownloading ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <FileText size={16} />
+                  )}
+                  {isDownloading ? "Generating PDF..." : "Download Detailed Report"}
+                </button>
+              ) : (
+                <Link
+                  href="/report"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-bold text-primary-700 transition hover:bg-gray-50 sm:w-auto"
+                >
+                  <FileText size={16} /> View Detailed Report
+                </Link>
+              )}
               <Link
                 href="/contact"
                 className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/10 px-6 py-3 text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/20 sm:w-auto"

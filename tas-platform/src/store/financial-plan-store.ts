@@ -20,6 +20,11 @@ interface FinancialPlanState {
   isComplete: boolean;
   hasStarted: boolean;
 
+  // Backend sync state
+  planDbId: string | null;
+  isSaving: boolean;
+  lastSavedAt: string | null;
+
   // Step setters
   setPersonal: (data: PersonalProfile) => void;
   setIncome: (data: IncomeDetails) => void;
@@ -39,6 +44,10 @@ interface FinancialPlanState {
   generateAnalysis: () => FinancialAnalysis | null;
   markComplete: () => void;
 
+  // Backend sync
+  savePlanToBackend: () => Promise<void>;
+  loadPlanFromBackend: () => Promise<boolean>;
+
   // Reset
   resetPlan: () => void;
 }
@@ -48,6 +57,9 @@ const INITIAL_STATE = {
   currentStep: 0,
   isComplete: false,
   hasStarted: false,
+  planDbId: null as string | null,
+  isSaving: false,
+  lastSavedAt: null as string | null,
 };
 
 export const useFinancialPlanStore = create<FinancialPlanState>()(
@@ -148,6 +160,58 @@ export const useFinancialPlanStore = create<FinancialPlanState>()(
 
       markComplete: () => set({ isComplete: true }),
 
+      savePlanToBackend: async () => {
+        const { plan, isComplete } = get();
+        if (!plan.analysis || !isComplete) return;
+
+        set({ isSaving: true });
+
+        try {
+          const res = await fetch("/api/plans", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ plan }),
+          });
+
+          const data = await res.json();
+
+          if (data.success && data.data?.planId) {
+            set({
+              planDbId: data.data.planId,
+              lastSavedAt: new Date().toISOString(),
+            });
+          }
+        } catch (err) {
+          console.error("Failed to save plan to backend:", err);
+        } finally {
+          set({ isSaving: false });
+        }
+      },
+
+      loadPlanFromBackend: async () => {
+        try {
+          const res = await fetch("/api/plans");
+          const data = await res.json();
+
+          if (data.success && data.data?.plan) {
+            const backendPlan = data.data.plan as FinancialPlan;
+            set({
+              plan: backendPlan,
+              planDbId: data.data.planId,
+              isComplete: true,
+              hasStarted: true,
+              currentStep: 10, // Review step (completed)
+              lastSavedAt: backendPlan.updatedAt,
+            });
+            return true;
+          }
+          return false;
+        } catch (err) {
+          console.error("Failed to load plan from backend:", err);
+          return false;
+        }
+      },
+
       resetPlan: () => set(INITIAL_STATE),
     }),
     {
@@ -158,6 +222,8 @@ export const useFinancialPlanStore = create<FinancialPlanState>()(
         currentStep: state.currentStep,
         isComplete: state.isComplete,
         hasStarted: state.hasStarted,
+        planDbId: state.planDbId,
+        lastSavedAt: state.lastSavedAt,
       }),
     }
   )

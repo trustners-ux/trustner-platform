@@ -1,31 +1,39 @@
 'use client'
 
-import { Suspense, useState, useRef, useEffect, useCallback, type KeyboardEvent, type ChangeEvent } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
+import { useState, useRef, useEffect, useCallback, type KeyboardEvent, type ChangeEvent } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { motion, AnimatePresence } from 'framer-motion'
-import {
-  TrendingUp,
-  Phone,
-  Mail,
-  ArrowRight,
-  Shield,
-  CheckCircle,
-  Loader2,
-} from 'lucide-react'
-import { REGULATORY } from '@/lib/constants/regulatory'
+import { Phone, Mail, Shield, ArrowRight, X, CheckCircle, Loader2 } from 'lucide-react'
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
+interface AuthGateProps {
+  onSuccess: () => void
+  onClose: () => void
+  prefillName?: string
+  prefillCity?: string
+}
+
 type AuthMethod = 'phone' | 'email'
 type Step = 1 | 2 | 3 | 4
 
 // ---------------------------------------------------------------------------
-// Animation
+// Animation variants
 // ---------------------------------------------------------------------------
+
+const overlayVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1 },
+  exit: { opacity: 0 },
+}
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 40, scale: 0.97 },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', damping: 25, stiffness: 300 } },
+  exit: { opacity: 0, y: 40, scale: 0.97, transition: { duration: 0.2 } },
+}
 
 const shakeVariants = {
   shake: { x: [0, -8, 8, -6, 6, -3, 3, 0], transition: { duration: 0.5 } },
@@ -41,9 +49,9 @@ function maskPhone(phone: string): string {
   return phone.slice(0, 2) + 'XXXXXX' + phone.slice(-2)
 }
 
-function maskEmail(emailAddr: string): string {
-  const [local, domain] = emailAddr.split('@')
-  if (!domain) return emailAddr
+function maskEmail(email: string): string {
+  const [local, domain] = email.split('@')
+  if (!domain) return email
   const masked = local.length > 2 ? local.slice(0, 2) + '***' : local + '***'
   return `${masked}@${domain}`
 }
@@ -141,36 +149,11 @@ function OtpInput({ value, onChange, onComplete, disabled }: OtpInputProps) {
 }
 
 // ---------------------------------------------------------------------------
-// Login Page
+// Main AuthGate component
 // ---------------------------------------------------------------------------
 
-export default function LoginPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0A1628] via-[#1a2d4a] to-[#0A1628]">
-        <div className="animate-pulse text-white/60 text-sm">Loading...</div>
-      </div>
-    }>
-      <LoginPageContent />
-    </Suspense>
-  )
-}
-
-function LoginPageContent() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+export default function AuthGate({ onSuccess, onClose, prefillName, prefillCity }: AuthGateProps) {
   const auth = useAuth()
-
-  // Redirect destination after login
-  const redirectTo = searchParams.get('redirect') || '/dashboard'
-  const fromPlanner = redirectTo.includes('ai-planner')
-
-  // ---- Redirect if already authenticated ----
-  useEffect(() => {
-    if (!auth.isLoading && auth.isAuthenticated) {
-      router.replace(redirectTo)
-    }
-  }, [auth.isLoading, auth.isAuthenticated, router, redirectTo])
 
   // ---- State ----
   const [step, setStep] = useState<Step>(1)
@@ -187,12 +170,12 @@ function LoginPageContent() {
   const [reportEmail, setReportEmail] = useState('')
 
   // Step 4
-  const [name, setName] = useState('')
+  const [name, setName] = useState(prefillName ?? '')
 
   // UI state
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [hasError, setHasError] = useState(false)
+  const [hasError, setHasError] = useState(false) // triggers shake
   const [resendCountdown, setResendCountdown] = useState(0)
 
   // ---- Resend countdown ----
@@ -202,14 +185,15 @@ function LoginPageContent() {
     return () => clearTimeout(timer)
   }, [resendCountdown])
 
-  // ---- Helpers ----
+  // ---- Handlers ----
+
   const triggerError = useCallback((msg: string) => {
     setError(msg)
     setHasError(true)
     setTimeout(() => setHasError(false), 600)
   }, [])
 
-  // ---- Step 1: Send OTP ----
+  // Step 1 - Send OTP
   const handleSendOtp = useCallback(async () => {
     setError('')
     setLoading(true)
@@ -239,7 +223,7 @@ function LoginPageContent() {
     }
   }, [method, phone, email, auth, triggerError])
 
-  // ---- Step 2: Verify OTP ----
+  // Step 2 - Verify OTP
   const handleVerifyOtp = useCallback(
     async (code: string) => {
       setError('')
@@ -250,7 +234,7 @@ function LoginPageContent() {
         } else {
           await auth.verifyEmailOtp(email, code)
         }
-        // Email flow skips step 3 (already have email)
+        // If email method, skip step 3 (already have email). Go to step 4.
         if (method === 'email') {
           setStep(4)
         } else {
@@ -267,7 +251,7 @@ function LoginPageContent() {
     [method, phone, email, auth, triggerError],
   )
 
-  // ---- Step 2: Resend OTP ----
+  // Step 2 - Resend OTP
   const handleResendOtp = useCallback(async () => {
     if (resendCountdown > 0) return
     setError('')
@@ -288,7 +272,7 @@ function LoginPageContent() {
     }
   }, [resendCountdown, method, phone, email, auth, triggerError])
 
-  // ---- Step 3: Save email ----
+  // Step 3 - Save email
   const handleSaveEmail = useCallback(async () => {
     setError('')
     if (!isValidEmail(reportEmail)) {
@@ -307,7 +291,7 @@ function LoginPageContent() {
     }
   }, [reportEmail, auth, triggerError])
 
-  // ---- Step 4: Confirm name & redirect ----
+  // Step 4 - Confirm name & finish
   const handleFinish = useCallback(async () => {
     setError('')
     if (!name.trim()) {
@@ -316,17 +300,17 @@ function LoginPageContent() {
     }
     setLoading(true)
     try {
-      await auth.updateProfile({ name: name.trim() })
-      router.replace(redirectTo)
+      await auth.updateProfile({ name: name.trim(), city: prefillCity })
+      onSuccess()
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Something went wrong.'
       triggerError(message)
     } finally {
       setLoading(false)
     }
-  }, [name, auth, router, redirectTo, triggerError])
+  }, [name, prefillCity, auth, onSuccess, triggerError])
 
-  // ---- Switch methods ----
+  // ---- Switch auth method ----
   const switchToEmail = useCallback(() => {
     setMethod('email')
     setError('')
@@ -339,6 +323,7 @@ function LoginPageContent() {
     setEmail('')
   }, [])
 
+  // ---- Go back from OTP ----
   const goBackToStep1 = useCallback(() => {
     setStep(1)
     setOtp(Array(6).fill(''))
@@ -349,35 +334,26 @@ function LoginPageContent() {
   // ---- Computed ----
   const canSendOtp = method === 'phone' ? isValidPhone(phone) : isValidEmail(email)
 
-  // ---- If loading auth state, show spinner ----
-  if (auth.isLoading) {
-    return (
-      <div className="flex min-h-[80vh] items-center justify-center">
-        <Loader2 size={32} className="animate-spin text-violet-600" />
-      </div>
-    )
-  }
-
-  // If already authenticated the useEffect above handles redirect;
-  // show nothing while redirecting
-  if (auth.isAuthenticated) {
-    return (
-      <div className="flex min-h-[80vh] items-center justify-center">
-        <Loader2 size={32} className="animate-spin text-violet-600" />
-      </div>
-    )
-  }
-
-  // ---- Step progress ----
-  const totalSteps = method === 'email' ? 3 : 4
-  const mappedStep = method === 'email' && step === 4 ? 3 : step
-
-  // ---------------------------------------------------------------------------
-  // Step renderers
-  // ---------------------------------------------------------------------------
+  // ---- Render steps ----
 
   const renderStep1 = () => (
     <div className="space-y-5">
+      {/* Heading */}
+      <div className="text-center">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-blue-600">
+          {method === 'phone' ? (
+            <Phone size={22} className="text-white" />
+          ) : (
+            <Mail size={22} className="text-white" />
+          )}
+        </div>
+        <h2 className="text-xl font-extrabold text-gray-900">Verify Your Identity</h2>
+        <p className="mt-1 text-sm text-gray-500">
+          We need to verify your {method === 'phone' ? 'phone number' : 'email'} to generate your personalized
+          financial plan.
+        </p>
+      </div>
+
       {/* Input */}
       {method === 'phone' ? (
         <div>
@@ -443,7 +419,7 @@ function LoginPageContent() {
         )}
       </AnimatePresence>
 
-      {/* Send OTP */}
+      {/* Send OTP Button */}
       <button
         onClick={handleSendOtp}
         disabled={!canSendOtp || loading}
@@ -453,39 +429,34 @@ function LoginPageContent() {
         {loading ? 'Sending...' : 'Send OTP'}
       </button>
 
-      {/* Divider */}
-      <div className="relative my-2">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-200" />
-        </div>
-        <div className="relative flex justify-center text-xs">
-          <span className="bg-white px-3 text-gray-400">Or continue with</span>
-        </div>
+      {/* Switch method */}
+      <div className="text-center">
+        {method === 'phone' ? (
+          <button onClick={switchToEmail} className="text-sm font-medium text-violet-600 hover:underline">
+            Use Email Instead
+          </button>
+        ) : (
+          <button onClick={switchToPhone} className="text-sm font-medium text-violet-600 hover:underline">
+            Use Phone Instead
+          </button>
+        )}
       </div>
 
-      {/* Switch method */}
-      {method === 'phone' ? (
-        <button
-          onClick={switchToEmail}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
-        >
-          <Mail size={16} /> Login with Email
-        </button>
-      ) : (
-        <button
-          onClick={switchToPhone}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
-        >
-          <Phone size={16} /> Login with Phone
-        </button>
-      )}
+      {/* Trust badge */}
+      <div className="flex items-center justify-center gap-1.5 text-xs text-gray-400">
+        <Shield size={12} />
+        <span>Your data is encrypted &amp; stored securely</span>
+      </div>
     </div>
   )
 
   const renderStep2 = () => (
     <div className="space-y-5">
       <div className="text-center">
-        <h2 className="text-lg font-bold text-gray-900">Enter OTP</h2>
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-blue-600">
+          <Shield size={22} className="text-white" />
+        </div>
+        <h2 className="text-xl font-extrabold text-gray-900">Enter OTP</h2>
         <p className="mt-1 text-sm text-gray-500">
           We sent a 6-digit code to{' '}
           <span className="font-semibold text-gray-700">
@@ -511,7 +482,7 @@ function LoginPageContent() {
         )}
       </AnimatePresence>
 
-      {/* Loading */}
+      {/* Loading indicator */}
       {loading && (
         <div className="flex items-center justify-center gap-2 text-sm text-violet-600">
           <Loader2 size={16} className="animate-spin" />
@@ -538,7 +509,10 @@ function LoginPageContent() {
   const renderStep3 = () => (
     <div className="space-y-5">
       <div className="text-center">
-        <h2 className="text-lg font-bold text-gray-900">Where should we send your report?</h2>
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-blue-600">
+          <Mail size={22} className="text-white" />
+        </div>
+        <h2 className="text-xl font-extrabold text-gray-900">Where should we send your report?</h2>
         <p className="mt-1 text-sm text-gray-500">
           We&apos;ll email your complete financial plan as a PDF
         </p>
@@ -591,7 +565,10 @@ function LoginPageContent() {
       </button>
 
       <div className="text-center">
-        <button onClick={() => setStep(4)} className="text-sm font-medium text-gray-400 hover:text-gray-600">
+        <button
+          onClick={() => setStep(4)}
+          className="text-sm font-medium text-gray-400 hover:text-gray-600"
+        >
           Skip for Now
         </button>
       </div>
@@ -601,10 +578,10 @@ function LoginPageContent() {
   const renderStep4 = () => (
     <div className="space-y-5">
       <div className="text-center">
-        <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100">
-          <CheckCircle size={20} className="text-emerald-600" />
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500">
+          <CheckCircle size={22} className="text-white" />
         </div>
-        <h2 className="text-lg font-bold text-gray-900">Almost Done!</h2>
+        <h2 className="text-xl font-extrabold text-gray-900">Almost Done!</h2>
         <p className="mt-1 text-sm text-gray-500">Confirm your name for the report</p>
       </div>
 
@@ -646,104 +623,96 @@ function LoginPageContent() {
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 py-3.5 text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle size={18} />}
-        {loading ? 'Setting up...' : fromPlanner ? 'Generate My Plan' : 'Go to Dashboard'}
+        {loading ? 'Setting up...' : 'Generate My Plan'}
       </button>
     </div>
   )
 
-  // ---------------------------------------------------------------------------
-  // Page render
-  // ---------------------------------------------------------------------------
+  // ---- Step progress dots ----
+  const renderStepIndicator = () => {
+    const totalSteps = method === 'email' ? 3 : 4
+    const mappedStep = method === 'email' && step === 4 ? 3 : step
 
+    return (
+      <div className="mb-6 flex items-center justify-center gap-2">
+        {Array.from({ length: totalSteps }).map((_, i) => {
+          const stepNum = i + 1
+          const isActive = stepNum === mappedStep
+          const isCompleted = stepNum < mappedStep
+          return (
+            <div
+              key={i}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                isActive
+                  ? 'w-8 bg-gradient-to-r from-violet-600 to-blue-600'
+                  : isCompleted
+                    ? 'w-2 bg-violet-400'
+                    : 'w-2 bg-gray-200'
+              }`}
+            />
+          )
+        })}
+      </div>
+    )
+  }
+
+  // ---- Main render ----
   return (
-    <div className="flex min-h-[80vh] items-center justify-center bg-gradient-to-br from-gray-50 via-violet-50/30 to-blue-50/30 px-4 py-12">
+    <AnimatePresence>
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="w-full max-w-md"
+        key="auth-gate-overlay"
+        variants={overlayVariants}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose()
+        }}
       >
         <motion.div
-          variants={shakeVariants}
-          animate={hasError ? 'shake' : 'idle'}
-          className="rounded-2xl border border-gray-100 bg-white p-8 shadow-xl"
+          key="auth-gate-card"
+          variants={cardVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          className="relative w-full max-w-md"
         >
-          {/* Logo & branding */}
-          <div className="mb-6 text-center">
-            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-blue-600">
-              <TrendingUp size={28} className="text-white" />
-            </div>
-            <h1 className="text-2xl font-extrabold text-gray-900">Welcome to Trustner</h1>
-            <p className="text-sm text-gray-500">
-              {fromPlanner
-                ? 'Verify your identity to generate your financial plan'
-                : 'Login to manage your investments & insurance'}
-            </p>
-          </div>
-
-          {/* Step indicator */}
-          <div className="mb-6 flex items-center justify-center gap-2">
-            {Array.from({ length: totalSteps }).map((_, i) => {
-              const stepNum = i + 1
-              const isActive = stepNum === mappedStep
-              const isCompleted = stepNum < mappedStep
-              return (
-                <div
-                  key={i}
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    isActive
-                      ? 'w-8 bg-gradient-to-r from-violet-600 to-blue-600'
-                      : isCompleted
-                        ? 'w-2 bg-violet-400'
-                        : 'w-2 bg-gray-200'
-                  }`}
-                />
-              )
-            })}
-          </div>
-
-          {/* Step content */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`step-${step}`}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
+          <motion.div
+            variants={shakeVariants}
+            animate={hasError ? 'shake' : 'idle'}
+            className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xl sm:p-8"
+          >
+            {/* Close button */}
+            <button
+              onClick={onClose}
+              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+              aria-label="Close"
             >
-              {step === 1 && renderStep1()}
-              {step === 2 && renderStep2()}
-              {step === 3 && renderStep3()}
-              {step === 4 && renderStep4()}
-            </motion.div>
-          </AnimatePresence>
+              <X size={18} />
+            </button>
 
-          {/* KYC Notice */}
-          <div className="mt-6 rounded-lg bg-blue-50 p-3 text-xs text-blue-700">
-            <div className="flex items-start gap-2">
-              <Shield size={14} className="mt-0.5 flex-shrink-0" />
-              <p>{REGULATORY.KYC_NOTICE}</p>
-            </div>
-          </div>
+            {/* Step indicator */}
+            {renderStepIndicator()}
 
-          {/* Terms */}
-          <p className="mt-6 text-center text-xs text-gray-400">
-            By continuing, you agree to our{' '}
-            <Link href="/terms" className="text-violet-600 hover:underline">
-              Terms
-            </Link>{' '}
-            &amp;{' '}
-            <Link href="/privacy-policy" className="text-violet-600 hover:underline">
-              Privacy Policy
-            </Link>
-          </p>
+            {/* Step content */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`step-${step}`}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                {step === 1 && renderStep1()}
+                {step === 2 && renderStep2()}
+                {step === 3 && renderStep3()}
+                {step === 4 && renderStep4()}
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
         </motion.div>
-
-        {/* Regulatory footer */}
-        <p className="mt-4 text-center text-[11px] text-gray-400">
-          {REGULATORY.AMFI_ARN} | {REGULATORY.MF_ENTITY}
-        </p>
       </motion.div>
-    </div>
+    </AnimatePresence>
   )
 }

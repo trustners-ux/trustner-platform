@@ -32,3 +32,4 @@ build/
 
 # Allow TAS Platform package-lock
 !TAS Platform/package-lock.json
+.vercel

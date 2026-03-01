@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
   },
+  serverExternalPackages: ["@react-pdf/renderer"],
 };
 
 export default nextConfig;

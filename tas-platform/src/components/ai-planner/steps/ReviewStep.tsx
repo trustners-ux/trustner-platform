@@ -17,6 +17,12 @@ import {
 } from "lucide-react";
 import { useFinancialPlanStore } from "@/store/financial-plan-store";
 import { formatINR, formatLakhsCrores } from "@/lib/utils/formatters";
+import { useAuth } from "@/hooks/useAuth";
+import dynamic from "next/dynamic";
+
+const AuthGate = dynamic(() => import("@/components/auth/AuthGate"), {
+  ssr: false,
+});
 
 interface Props {
   onPrev: () => void;
@@ -27,14 +33,17 @@ const LOADING_MESSAGES = [
   "Calculating insurance gaps...",
   "Optimizing asset allocation...",
   "Generating action plan...",
+  "Saving your plan securely...",
 ];
 
 export default function ReviewStep({ onPrev }: Props) {
-  const { plan, setStep, generateAnalysis, markComplete } =
+  const { plan, setStep, generateAnalysis, markComplete, savePlanToBackend } =
     useFinancialPlanStore();
+  const { isAuthenticated } = useAuth();
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingMsgIdx, setLoadingMsgIdx] = useState(0);
+  const [showAuthGate, setShowAuthGate] = useState(false);
 
   useEffect(() => {
     if (!isGenerating) return;
@@ -48,6 +57,12 @@ export default function ReviewStep({ onPrev }: Props) {
   }, [isGenerating]);
 
   const handleGenerate = useCallback(async () => {
+    // If not authenticated, show AuthGate first
+    if (!isAuthenticated) {
+      setShowAuthGate(true);
+      return;
+    }
+
     setIsGenerating(true);
     setLoadingMsgIdx(0);
 
@@ -56,7 +71,16 @@ export default function ReviewStep({ onPrev }: Props) {
 
     generateAnalysis();
     markComplete();
-  }, [generateAnalysis, markComplete]);
+
+    // Save to backend (non-blocking)
+    savePlanToBackend().catch(console.error);
+  }, [isAuthenticated, generateAnalysis, markComplete, savePlanToBackend]);
+
+  const handleAuthSuccess = useCallback(() => {
+    setShowAuthGate(false);
+    // After successful auth, proceed with plan generation
+    handleGenerate();
+  }, [handleGenerate]);
 
   const goToStep = (step: number) => {
     setStep(step);
@@ -232,7 +256,7 @@ export default function ReviewStep({ onPrev }: Props) {
               className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500"
               initial={{ width: "0%" }}
               animate={{ width: "100%" }}
-              transition={{ duration: 3, ease: "easeInOut" }}
+              transition={{ duration: 3.5, ease: "easeInOut" }}
             />
           </div>
         </div>
@@ -303,6 +327,16 @@ export default function ReviewStep({ onPrev }: Props) {
         )}
       </div>
 
+      {/* Auth status indicator */}
+      {isAuthenticated && (
+        <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-2.5">
+          <CheckCircle size={14} className="text-emerald-600" />
+          <span className="text-xs font-medium text-emerald-700">
+            Verified — Your plan will be saved securely to your account
+          </span>
+        </div>
+      )}
+
       {/* Navigation */}
       <div className="mt-6 flex items-center justify-between">
         <button
@@ -320,6 +354,16 @@ export default function ReviewStep({ onPrev }: Props) {
           Generate My Financial Plan
         </button>
       </div>
+
+      {/* AuthGate Modal */}
+      {showAuthGate && (
+        <AuthGate
+          onSuccess={handleAuthSuccess}
+          onClose={() => setShowAuthGate(false)}
+          prefillName={plan.personal?.name}
+          prefillCity={plan.personal?.city}
+        />
+      )}
     </div>
   );
 }

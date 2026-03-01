@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Metadata } from "next";
+import AuthStatusBadge from "./AuthStatusBadge";
 
 export const metadata: Metadata = {
   title: "AI Financial Planner - Free Comprehensive Financial Plan | Trustner",
@@ -30,9 +31,7 @@ export default function AIPlannerLayout({
             </span>
           </Link>
           <div className="flex items-center gap-3">
-            <span className="hidden text-xs text-gray-400 sm:block">
-              Your data stays on your device
-            </span>
+            <AuthStatusBadge />
             <Link
               href="/calculators"
               className="text-xs font-medium text-gray-500 transition hover:text-gray-900"

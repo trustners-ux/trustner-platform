@@ -15,6 +15,8 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { NAV_LINKS, type NavItem } from "@/lib/constants/nav-links";
 import { cn } from "@/lib/utils/cn";
+import { useAuthStore } from "@/store/auth-store";
+import { createClient } from "@/lib/supabase/client";
 
 // ---------------------------------------------------------------------------
 // Animation variants
@@ -340,6 +342,51 @@ function MobileAccordionItem({
 }
 
 // ---------------------------------------------------------------------------
+// Header auth button — shows Login or user phone + Sign Out
+// ---------------------------------------------------------------------------
+
+function HeaderAuthButton() {
+  const { user } = useAuthStore();
+
+  if (user) {
+    const phone = user.phone;
+    const display = phone ? `+91 ****${phone.slice(-4)}` : (user.email || "Account");
+
+    return (
+      <div className="hidden items-center gap-2 sm:flex">
+        <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+          {display}
+        </span>
+        <button
+          onClick={async () => {
+            const supabase = createClient();
+            await supabase.auth.signOut();
+          }}
+          className="rounded-lg px-3 py-1.5 text-xs font-medium text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
+        >
+          Sign Out
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      href="/login"
+      className={cn(
+        "hidden items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 sm:flex",
+        "bg-gradient-to-r from-primary-500 to-primary-600",
+        "shadow-sm hover:shadow-glow-blue hover:brightness-110",
+        "active:scale-[0.98]"
+      )}
+    >
+      Start Investing
+      <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+    </Link>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main Header component
 // ---------------------------------------------------------------------------
 
@@ -443,19 +490,8 @@ export default function Header() {
               <Search size={20} />
             </button>
 
-            {/* Start Investing CTA */}
-            <Link
-              href="/contact"
-              className={cn(
-                "hidden items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 sm:flex",
-                "bg-gradient-to-r from-primary-500 to-primary-600",
-                "shadow-sm hover:shadow-glow-blue hover:brightness-110",
-                "active:scale-[0.98]"
-              )}
-            >
-              Start Investing
-              <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
-            </Link>
+            {/* Auth indicator / CTA */}
+            <HeaderAuthButton />
 
             {/* Mobile hamburger */}
             <button

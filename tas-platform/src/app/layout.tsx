@@ -6,6 +6,7 @@ import Header from "@/components/layout/Header";
 import MarketTicker from "@/components/layout/MarketTicker";
 import Footer from "@/components/layout/Footer";
 import FloatingCTA from "@/components/ui/FloatingCTA";
+import AuthProvider from "@/components/auth/AuthProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -97,12 +98,14 @@ export default function RootLayout({
         />
       </head>
       <body className="font-sans antialiased">
-        <TopBar />
-        <Header />
-        <MarketTicker />
-        <main className="min-h-screen">{children}</main>
-        <Footer />
-        <FloatingCTA />
+        <AuthProvider>
+          <TopBar />
+          <Header />
+          <MarketTicker />
+          <main className="min-h-screen">{children}</main>
+          <Footer />
+          <FloatingCTA />
+        </AuthProvider>
       </body>
     </html>
   );

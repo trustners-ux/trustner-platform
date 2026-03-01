@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Printer,
@@ -20,8 +21,14 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
+  Download,
+  Mail,
+  Loader2,
+  Check,
 } from 'lucide-react';
 import { useFinancialPlanStore } from '@/store/financial-plan-store';
+import { useAuth } from '@/hooks/useAuth';
+import { downloadReport, generateReport, emailReport } from '@/lib/api/plans';
 import {
   formatINR,
   formatLakhsCrores,
@@ -172,7 +179,53 @@ function ProgressBar({ value, max = 100, color }: { value: number; max?: number;
 // ─── Main Report ────────────────────────────────────────────────────────────
 
 export default function ReportContent() {
-  const { plan, isComplete } = useFinancialPlanStore();
+  const { plan, isComplete, planDbId } = useFinancialPlanStore();
+  const { isAuthenticated } = useAuth();
+
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadDone, setDownloadDone] = useState(false);
+  const [isEmailing, setIsEmailing] = useState(false);
+  const [emailDone, setEmailDone] = useState(false);
+  const [showEmailInput, setShowEmailInput] = useState(false);
+  const [emailAddr, setEmailAddr] = useState('');
+
+  const handleDownload = useCallback(async () => {
+    if (!planDbId || !isAuthenticated) return;
+    setIsDownloading(true);
+    try {
+      await generateReport(planDbId);
+      const blob = await downloadReport(planDbId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Trustner-Financial-Plan.pdf';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      setDownloadDone(true);
+      setTimeout(() => setDownloadDone(false), 3000);
+    } catch (err) {
+      console.error('Download error:', err);
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [planDbId, isAuthenticated]);
+
+  const handleEmail = useCallback(async () => {
+    if (!planDbId || !isAuthenticated || !emailAddr) return;
+    setIsEmailing(true);
+    try {
+      await emailReport(planDbId, emailAddr);
+      setEmailDone(true);
+      setShowEmailInput(false);
+      setTimeout(() => setEmailDone(false), 5000);
+    } catch (err) {
+      console.error('Email error:', err);
+    } finally {
+      setIsEmailing(false);
+    }
+  }, [planDbId, isAuthenticated, emailAddr]);
 
   // Guard: no plan
   if (
@@ -215,7 +268,7 @@ export default function ReportContent() {
     <div className="min-h-screen bg-slate-50 print:bg-white">
       {/* ── Print Controls ───────────────────────────────────────────── */}
       <div className="print:hidden sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-[900px] mx-auto px-6 py-3 flex items-center justify-between">
+        <div className="relative max-w-[900px] mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link
               href="/dashboard"
@@ -225,7 +278,7 @@ export default function ReportContent() {
               Back to Dashboard
             </Link>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <Link
               href="/ai-planner"
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
@@ -233,14 +286,63 @@ export default function ReportContent() {
               <RefreshCw className="w-4 h-4" />
               Update Plan
             </Link>
+            {isAuthenticated && planDbId && (
+              <>
+                <button
+                  onClick={handleDownload}
+                  disabled={isDownloading}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-60"
+                >
+                  {isDownloading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : downloadDone ? (
+                    <Check className="w-4 h-4 text-emerald-600" />
+                  ) : (
+                    <Download className="w-4 h-4" />
+                  )}
+                  {isDownloading ? 'Generating...' : downloadDone ? 'Done!' : 'Download PDF'}
+                </button>
+                <button
+                  onClick={() => setShowEmailInput(!showEmailInput)}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  {emailDone ? (
+                    <Check className="w-4 h-4 text-emerald-600" />
+                  ) : (
+                    <Mail className="w-4 h-4" />
+                  )}
+                  {emailDone ? 'Sent!' : 'Email'}
+                </button>
+              </>
+            )}
             <button
               onClick={() => window.print()}
               className="flex items-center gap-2 px-5 py-2 text-sm font-semibold bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
             >
               <Printer className="w-4 h-4" />
-              Print Report
+              Print
             </button>
           </div>
+          {/* Email Input Dropdown */}
+          {showEmailInput && (
+            <div className="absolute right-6 top-full mt-1 z-50 flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-3 shadow-lg">
+              <input
+                type="email"
+                value={emailAddr}
+                onChange={(e) => setEmailAddr(e.target.value)}
+                placeholder="your@email.com"
+                className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-blue-400"
+              />
+              <button
+                onClick={handleEmail}
+                disabled={isEmailing || !emailAddr}
+                className="flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+              >
+                {isEmailing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Mail className="w-3 h-3" />}
+                Send
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1125,11 +1227,12 @@ export default function ReportContent() {
               </p>
 
               <p>
-                <strong className="text-slate-700">Privacy</strong>
+                <strong className="text-slate-700">Privacy &amp; Data Protection</strong>
                 <br />
-                Your data is processed locally on your device. No personal financial data is
-                transmitted to or stored on our servers. You retain full control of your
-                information at all times.
+                Your data is encrypted and stored securely. When authenticated, your plan is
+                saved to enable PDF generation, email delivery, and multi-device access.
+                We adhere to the Digital Personal Data Protection Act, 2023 (DPDPA) principles.
+                You may request deletion of your data at any time by contacting us.
               </p>
 
               <p>

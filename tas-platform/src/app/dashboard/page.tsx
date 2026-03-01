@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import {
@@ -13,6 +13,7 @@ import {
 import SEBIDisclaimer from '@/components/compliance/SEBIDisclaimer';
 import { formatINR, formatLakhsCrores } from '@/lib/utils/formatters';
 import { useFinancialPlanStore } from '@/store/financial-plan-store';
+import { useAuth } from '@/hooks/useAuth';
 import type { GoalType, ActionItem } from '@/types/financial-plan';
 
 // ─── Dynamic import to avoid localStorage SSR issues ─────────────────────────
@@ -158,12 +159,20 @@ function PieTooltip({ active, payload }: { active?: boolean; payload?: Array<{ n
 
 function DashboardInner() {
   // Zustand store -- safe to access localStorage here because ssr: false via dynamic()
-  const { plan, isComplete } = useFinancialPlanStore();
+  const { plan, isComplete, loadPlanFromBackend } = useFinancialPlanStore();
+  const { isAuthenticated } = useAuth();
 
   const analysis = plan?.analysis;
   const hasPlan = isComplete && analysis;
 
   const [demoOpen, setDemoOpen] = useState(false);
+
+  // Backend sync: recover plan from Supabase if authenticated but no local plan
+  useEffect(() => {
+    if (isAuthenticated && !hasPlan) {
+      loadPlanFromBackend().catch(console.error);
+    }
+  }, [isAuthenticated, hasPlan, loadPlanFromBackend]);
 
   // Derived data
   const netWorthValue = (plan?.netWorth?.totalAssets ?? 0) - (plan?.netWorth?.totalLiabilities ?? 0);
