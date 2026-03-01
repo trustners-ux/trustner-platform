@@ -27,13 +27,24 @@ export function useAuth() {
     const supabase = createClient()
     const formattedPhone = phone.startsWith('+91') ? phone : `+91${phone}`
 
-    const result = await Promise.race([
-      supabase.auth.signInWithOtp({ phone: formattedPhone }),
-      timeoutPromise(OTP_SEND_TIMEOUT, 'Sending OTP'),
-    ])
+    console.log('[useAuth] signInWithPhone called with:', formattedPhone)
+    console.log('[useAuth] Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+
+    let result
+    try {
+      result = await Promise.race([
+        supabase.auth.signInWithOtp({ phone: formattedPhone }),
+        timeoutPromise(OTP_SEND_TIMEOUT, 'Sending OTP'),
+      ])
+      console.log('[useAuth] signInWithOtp result:', JSON.stringify(result, null, 2))
+    } catch (raceError) {
+      console.error('[useAuth] Promise.race threw:', raceError)
+      throw raceError
+    }
 
     if (result.error) {
       const msg = result.error.message || ''
+      console.error('[useAuth] Supabase OTP error:', msg, 'Status:', result.error.status)
       if (msg.includes('rate limit') || msg.includes('too many')) {
         throw new Error('Too many attempts. Please wait a minute before trying again.')
       }
@@ -43,6 +54,7 @@ export function useAuth() {
       throw result.error
     }
 
+    console.log('[useAuth] signInWithPhone SUCCESS')
     return { success: true }
   }, [])
 

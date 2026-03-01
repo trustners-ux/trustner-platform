@@ -195,6 +195,7 @@ export default function AuthGate({ onSuccess, onClose, prefillName, prefillCity 
 
   // Step 1 - Send OTP
   const handleSendOtp = useCallback(async () => {
+    console.log('[AuthGate] handleSendOtp called, method:', method, 'phone:', phone, 'email:', email)
     setError('')
 
     // Validate before setting loading state
@@ -207,19 +208,28 @@ export default function AuthGate({ onSuccess, onClose, prefillName, prefillCity 
       return
     }
 
+    console.log('[AuthGate] Validation passed, setting loading=true')
     setLoading(true)
     try {
       if (method === 'phone') {
+        console.log('[AuthGate] Calling auth.signInWithPhone...')
         await auth.signInWithPhone(phone)
+        console.log('[AuthGate] signInWithPhone returned successfully')
       } else {
+        console.log('[AuthGate] Calling auth.signInWithEmail...')
         await auth.signInWithEmail(email)
+        console.log('[AuthGate] signInWithEmail returned successfully')
       }
+      console.log('[AuthGate] Setting step=2 and resendCountdown=30')
       setResendCountdown(30)
       setStep(2)
     } catch (err: unknown) {
+      console.error('[AuthGate] handleSendOtp catch block:', err)
       const message = err instanceof Error ? err.message : 'Failed to send OTP. Please try again.'
+      console.error('[AuthGate] Error message to display:', message)
       triggerError(message)
     } finally {
+      console.log('[AuthGate] handleSendOtp finally block, setting loading=false')
       setLoading(false)
     }
   }, [method, phone, email, auth, triggerError])
