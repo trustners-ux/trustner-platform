@@ -157,7 +157,7 @@ export default function AuthGate({ onSuccess, onClose, prefillName, prefillCity 
 
   // ---- State ----
   const [step, setStep] = useState<Step>(1)
-  const [method, setMethod] = useState<AuthMethod>('phone')
+  const [method, setMethod] = useState<AuthMethod>('email')
 
   // Step 1
   const [phone, setPhone] = useState('')
@@ -196,21 +196,22 @@ export default function AuthGate({ onSuccess, onClose, prefillName, prefillCity 
   // Step 1 - Send OTP
   const handleSendOtp = useCallback(async () => {
     setError('')
+
+    // Validate before setting loading state
+    if (method === 'phone' && !isValidPhone(phone)) {
+      triggerError('Please enter a valid 10-digit phone number.')
+      return
+    }
+    if (method === 'email' && !isValidEmail(email)) {
+      triggerError('Please enter a valid email address.')
+      return
+    }
+
     setLoading(true)
     try {
       if (method === 'phone') {
-        if (!isValidPhone(phone)) {
-          triggerError('Please enter a valid 10-digit phone number.')
-          setLoading(false)
-          return
-        }
         await auth.signInWithPhone(phone)
       } else {
-        if (!isValidEmail(email)) {
-          triggerError('Please enter a valid email address.')
-          setLoading(false)
-          return
-        }
         await auth.signInWithEmail(email)
       }
       setResendCountdown(30)
@@ -433,7 +434,7 @@ export default function AuthGate({ onSuccess, onClose, prefillName, prefillCity 
       <div className="text-center">
         {method === 'phone' ? (
           <button onClick={switchToEmail} className="text-sm font-medium text-violet-600 hover:underline">
-            Use Email Instead
+            Use Email Instead (Recommended)
           </button>
         ) : (
           <button onClick={switchToPhone} className="text-sm font-medium text-violet-600 hover:underline">

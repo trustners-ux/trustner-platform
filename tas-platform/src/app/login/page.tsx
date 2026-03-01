@@ -174,7 +174,7 @@ function LoginPageContent() {
 
   // ---- State ----
   const [step, setStep] = useState<Step>(1)
-  const [method, setMethod] = useState<AuthMethod>('phone')
+  const [method, setMethod] = useState<AuthMethod>('email')
 
   // Step 1
   const [phone, setPhone] = useState('')
@@ -212,21 +212,22 @@ function LoginPageContent() {
   // ---- Step 1: Send OTP ----
   const handleSendOtp = useCallback(async () => {
     setError('')
+
+    // Validate before setting loading state
+    if (method === 'phone' && !isValidPhone(phone)) {
+      triggerError('Please enter a valid 10-digit phone number.')
+      return
+    }
+    if (method === 'email' && !isValidEmail(email)) {
+      triggerError('Please enter a valid email address.')
+      return
+    }
+
     setLoading(true)
     try {
       if (method === 'phone') {
-        if (!isValidPhone(phone)) {
-          triggerError('Please enter a valid 10-digit phone number.')
-          setLoading(false)
-          return
-        }
         await auth.signInWithPhone(phone)
       } else {
-        if (!isValidEmail(email)) {
-          triggerError('Please enter a valid email address.')
-          setLoading(false)
-          return
-        }
         await auth.signInWithEmail(email)
       }
       setResendCountdown(30)
@@ -469,7 +470,7 @@ function LoginPageContent() {
           onClick={switchToEmail}
           className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
         >
-          <Mail size={16} /> Login with Email
+          <Mail size={16} /> Login with Email (Recommended)
         </button>
       ) : (
         <button
