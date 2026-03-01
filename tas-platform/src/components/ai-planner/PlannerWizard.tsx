@@ -16,6 +16,7 @@ import RiskStep from "./steps/RiskStep";
 import TaxStep from "./steps/TaxStep";
 import ReviewStep from "./steps/ReviewStep";
 import PlanDashboard from "./results/PlanDashboard";
+import ConsentBanner from "@/components/ui/ConsentBanner";
 
 const TOTAL_STEPS = 11;
 
@@ -79,6 +80,9 @@ export default function PlannerWizard() {
 
   return (
     <div className="container-custom py-6 lg:py-10">
+      {/* Privacy consent banner (shows once on first visit) */}
+      <ConsentBanner />
+
       {/* Progress bar (hidden on welcome step) */}
       {currentStep > 0 && (
         <div className="mb-8">

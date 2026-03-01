@@ -226,6 +226,12 @@ export interface ActionItem {
   description: string;
   impact: string;
   cta: { label: string; href: string };
+  executionFlow?: {
+    gapType: "insurance" | "investment" | "tax" | "emergency";
+    gapAmount: number;
+    recommendedCategory: string;
+    recommendedProducts: { name: string; href: string; reason: string }[];
+  };
 }
 
 export interface FinancialAnalysis {

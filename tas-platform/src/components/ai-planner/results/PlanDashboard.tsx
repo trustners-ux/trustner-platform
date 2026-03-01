@@ -41,11 +41,18 @@ import {
   Mail,
   Loader2,
   Check,
+  Users,
 } from "lucide-react";
 import { useFinancialPlanStore } from "@/store/financial-plan-store";
 import { useAuth } from "@/hooks/useAuth";
 import { formatINR, formatLakhsCrores } from "@/lib/utils/formatters";
 import { downloadReport, generateReport, emailReport } from "@/lib/api/plans";
+import { generatePlanInsights } from "@/lib/utils/plan-insights";
+import { generateBehavioralNudges } from "@/lib/utils/behavioral-nudges";
+import InsightEngine from "@/components/insights/InsightEngine";
+import NudgeCard from "@/components/dashboard/NudgeCard";
+import ScenarioModeler from "@/components/dashboard/ScenarioModeler";
+import ExecutionCard from "@/components/dashboard/ExecutionCard";
 import type { GoalType, ActionItem } from "@/types/financial-plan";
 
 // ─── Props ───────────────────────────────────────────────────────────────────
@@ -221,10 +228,12 @@ function MiniScore({
   score,
   label,
   icon: Icon,
+  description,
 }: {
   score: number;
   label: string;
   icon: React.ElementType;
+  description?: string;
 }) {
   const size = 64;
   const strokeWidth = 5;
@@ -276,6 +285,11 @@ function MiniScore({
         <Icon size={14} className="text-gray-400" />
         <span className="text-xs font-semibold text-gray-600">{label}</span>
       </div>
+      {description && (
+        <p className="mt-0.5 text-center text-[10px] leading-tight text-gray-400">
+          {description}
+        </p>
+      )}
     </motion.div>
   );
 }
@@ -353,6 +367,40 @@ export default function PlanDashboard({ onEdit }: Props) {
   const { plan, planDbId } = useFinancialPlanStore();
   const { isAuthenticated } = useAuth();
   const analysis = plan.analysis;
+
+  // AI Insights
+  const planInsights = useMemo(
+    () =>
+      analysis
+        ? generatePlanInsights(plan as Parameters<typeof generatePlanInsights>[0], analysis)
+        : [],
+    [plan, analysis]
+  );
+
+  // Behavioral nudges
+  const behavioralNudges = useMemo(
+    () =>
+      analysis
+        ? generateBehavioralNudges(plan as Parameters<typeof generateBehavioralNudges>[0], analysis)
+        : [],
+    [plan, analysis]
+  );
+
+  // Sub-score descriptions for enhanced MiniScore cards
+  const scoreDescriptions = useMemo(() => {
+    if (!analysis) return {} as Record<string, string>;
+    const occupation = plan?.personal?.occupation || "salaried";
+    const reqMonths =
+      occupation === "self-employed" ? 9 : occupation === "business" ? 12 : 6;
+    return {
+      emergency: `${analysis.emergencyFundMonths.toFixed(1)} months saved. Need ${reqMonths}.`,
+      insurance: `Term gap: ${formatLakhsCrores(analysis.termInsuranceGap)}. Health gap: ${formatLakhsCrores(analysis.healthInsuranceGap)}.`,
+      investment: `Savings rate: ${analysis.savingsRate.toFixed(0)}%. Target: 20%+.`,
+      debt: `EMI-to-income: ${analysis.debtToIncomeRatio.toFixed(0)}%. ${analysis.debtToIncomeRatio <= 10 ? "Healthy" : analysis.debtToIncomeRatio <= 30 ? "Manageable" : "High"}.`,
+      retirement: `Score ${analysis.retirementScore}/100. ${analysis.retirementScore >= 70 ? "On track" : "Needs focus"}.`,
+      tax: `Unused deductions: ${formatLakhsCrores(analysis.potentialTaxSavings)}. Efficiency: ${analysis.taxEfficiencyScore}/100.`,
+    };
+  }, [analysis, plan?.personal?.occupation]);
 
   // Download/Email states
   const [isDownloading, setIsDownloading] = useState(false);
@@ -498,9 +546,17 @@ export default function PlanDashboard({ onEdit }: Props) {
           >
             {/* Left: Heading */}
             <div className="text-center lg:text-left">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/80 backdrop-blur-sm">
-                <Sparkles size={12} />
-                Prepared by Trustner AI
+              <div className="mb-2 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
+                <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/80 backdrop-blur-sm">
+                  <Sparkles size={12} />
+                  Prepared by Trustner AI
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/20 px-2.5 py-1 text-[10px] font-bold text-blue-300">
+                  AMFI ARN-286886
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-2.5 py-1 text-[10px] font-bold text-emerald-300">
+                  IRDAI License 1067
+                </span>
               </div>
               <h1 className="text-3xl font-extrabold text-white lg:text-4xl">
                 Your Financial Plan
@@ -672,6 +728,21 @@ export default function PlanDashboard({ onEdit }: Props) {
         </motion.div>
 
         {/* ================================================================ */}
+        {/* Section 2.5 : AI Analysis — Key Findings                        */}
+        {/* ================================================================ */}
+        {planInsights.length > 0 && (
+          <motion.section variants={cardVariants}>
+            <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50/60 to-white p-5 shadow-sm">
+              <h2 className="mb-4 flex items-center gap-2 text-lg font-extrabold text-gray-900">
+                <Sparkles size={20} className="text-blue-600" />
+                AI Analysis — Key Findings
+              </h2>
+              <InsightEngine insights={planInsights} />
+            </div>
+          </motion.section>
+        )}
+
+        {/* ================================================================ */}
         {/* Section 3 : Score Breakdown                                      */}
         {/* ================================================================ */}
         <motion.section variants={cardVariants}>
@@ -686,34 +757,57 @@ export default function PlanDashboard({ onEdit }: Props) {
               score={analysis.emergencyFundScore}
               label="Emergency"
               icon={Shield}
+              description={scoreDescriptions.emergency}
             />
             <MiniScore
               score={analysis.insuranceScore}
               label="Insurance"
               icon={Heart}
+              description={scoreDescriptions.insurance}
             />
             <MiniScore
               score={analysis.investmentScore}
               label="Investment"
               icon={TrendingUp}
+              description={scoreDescriptions.investment}
             />
             <MiniScore
               score={analysis.debtScore}
               label="Debt"
               icon={Receipt}
+              description={scoreDescriptions.debt}
             />
             <MiniScore
               score={analysis.retirementScore}
               label="Retirement"
               icon={Landmark}
+              description={scoreDescriptions.retirement}
             />
             <MiniScore
               score={analysis.taxEfficiencyScore}
               label="Tax"
               icon={BadgeIndianRupee}
+              description={scoreDescriptions.tax}
             />
           </motion.div>
         </motion.section>
+
+        {/* ================================================================ */}
+        {/* Section 3b : How You Compare — Behavioral Nudges                 */}
+        {/* ================================================================ */}
+        {behavioralNudges.length > 0 && (
+          <motion.section variants={cardVariants}>
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-extrabold text-gray-900">
+              <Users size={20} className="text-violet-600" />
+              How You Compare
+            </h2>
+            <div className="grid gap-4 lg:grid-cols-2">
+              {behavioralNudges.slice(0, 4).map((nudge) => (
+                <NudgeCard key={nudge.id} nudge={nudge} />
+              ))}
+            </div>
+          </motion.section>
+        )}
 
         {/* ================================================================ */}
         {/* Section 4 : Insurance Gap Analysis                               */}
@@ -1264,51 +1358,21 @@ export default function PlanDashboard({ onEdit }: Props) {
               Action Plan
             </h2>
             <motion.div variants={containerVariants} className="space-y-3">
-              {sortedActions.map((action) => {
-                const style = PRIORITY_STYLES[action.priority];
-                return (
-                  <motion.div
-                    key={action.id}
-                    variants={cardVariants}
-                    className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm"
-                  >
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="flex-1">
-                        <div className="mb-2 flex flex-wrap items-center gap-2">
-                          <span
-                            className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${style.bg} ${style.text} ${style.border}`}
-                          >
-                            {style.label}
-                          </span>
-                          <h4 className="text-sm font-extrabold text-gray-900">
-                            {action.title}
-                          </h4>
-                        </div>
-                        <p className="text-xs leading-relaxed text-gray-500">
-                          {action.description}
-                        </p>
-                        {action.impact && (
-                          <p className="mt-1.5 flex items-center gap-1 text-xs font-semibold text-blue-600">
-                            <TrendingUp size={12} /> {action.impact}
-                          </p>
-                        )}
-                      </div>
-
-                      {action.cta && (
-                        <Link
-                          href={action.cta.href}
-                          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-blue-700"
-                        >
-                          {action.cta.label} <ArrowRight size={14} />
-                        </Link>
-                      )}
-                    </div>
-                  </motion.div>
-                );
-              })}
+              {sortedActions.map((action) => (
+                <motion.div key={action.id} variants={cardVariants}>
+                  <ExecutionCard action={action} />
+                </motion.div>
+              ))}
             </motion.div>
           </motion.section>
         )}
+
+        {/* ================================================================ */}
+        {/* Section 8b : What-If Scenario Modeler                            */}
+        {/* ================================================================ */}
+        <motion.section variants={cardVariants}>
+          <ScenarioModeler />
+        </motion.section>
 
         {/* ================================================================ */}
         {/* Section 9 : Bottom CTAs                                          */}

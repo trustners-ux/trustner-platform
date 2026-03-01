@@ -11,6 +11,8 @@ import type {
   FinancialGoal,
   ActionItem,
 } from '@/types/financial-plan'
+import { generatePlanInsights } from '@/lib/utils/plan-insights'
+import { generateBehavioralNudges } from '@/lib/utils/behavioral-nudges'
 
 // ─── Helpers ────────────────────────────────────────────────
 
@@ -657,6 +659,74 @@ function ExecutiveSummaryPage({ plan }: { plan: FinancialPlan }) {
       </Text>
 
       <PageFooter pageNumber={2} />
+    </Page>
+  )
+}
+
+// ─── Key Findings (AI Insights) ─────────────────────────────
+
+const insightTypeStyles: Record<string, { label: string; color: string }> = {
+  warning: { label: 'ACTION NEEDED', color: '#DC2626' },
+  opportunity: { label: 'OPPORTUNITY', color: '#2563EB' },
+  tip: { label: 'INSIGHT', color: '#D97706' },
+  achievement: { label: 'STRENGTH', color: '#059669' },
+}
+
+function KeyFindingsPage({ plan }: { plan: FinancialPlan }) {
+  const insights = generatePlanInsights(plan, plan.analysis)
+  const nudges = generateBehavioralNudges(plan, plan.analysis)
+
+  return (
+    <Page size="A4" style={styles.page}>
+      <Text style={styles.sectionTitle}>Key Findings</Text>
+      <Text style={[styles.bodyText, { marginBottom: 12 }]}>
+        Based on our analysis of your financial data, here are the most important findings and recommendations:
+      </Text>
+
+      {insights.slice(0, 8).map((insight, idx) => {
+        const typeStyle = insightTypeStyles[insight.type] || insightTypeStyles.tip
+        return (
+          <View key={insight.id} style={{ marginBottom: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+              <View style={{
+                backgroundColor: typeStyle.color,
+                borderRadius: 3,
+                paddingHorizontal: 6,
+                paddingVertical: 2,
+              }}>
+                <Text style={{ fontSize: 7, fontWeight: 700, color: '#FFFFFF', letterSpacing: 0.5 }}>
+                  {typeStyle.label}
+                </Text>
+              </View>
+              <Text style={{ fontSize: 9, fontWeight: 700, color: '#111827' }}>
+                {insight.title}
+              </Text>
+            </View>
+            <Text style={{ fontSize: 8, color: '#6B7280', lineHeight: 1.5, paddingLeft: 4 }}>
+              {insight.description}
+            </Text>
+          </View>
+        )
+      })}
+
+      {/* Peer Comparisons */}
+      {nudges.length > 0 && (
+        <>
+          <Text style={[styles.sectionSubtitle, { marginTop: 16 }]}>How You Compare</Text>
+          {nudges.slice(0, 3).map((nudge) => (
+            <View key={nudge.id} style={{ marginBottom: 8, paddingLeft: 4 }}>
+              <Text style={{ fontSize: 9, fontWeight: 700, color: '#111827', marginBottom: 2 }}>
+                {nudge.title}
+              </Text>
+              <Text style={{ fontSize: 8, color: '#6B7280', lineHeight: 1.5 }}>
+                {nudge.description}
+              </Text>
+            </View>
+          ))}
+        </>
+      )}
+
+      <PageFooter pageNumber={3} />
     </Page>
   )
 }
@@ -1789,6 +1859,7 @@ export default function PlanReportPDF({ plan }: PlanReportPDFProps) {
     >
       <CoverPage plan={plan} />
       <ExecutiveSummaryPage plan={plan} />
+      <KeyFindingsPage plan={plan} />
       <NetWorthPage plan={plan} />
       <CashFlowPage plan={plan} />
       <InsuranceGapPage plan={plan} />

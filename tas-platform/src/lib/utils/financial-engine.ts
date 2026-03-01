@@ -850,6 +850,7 @@ export function calculateFinancialHealthScore(
   const actionItems: ActionItem[] = [];
 
   if (emergencyFundAdequacy === "critical" || emergencyFundAdequacy === "insufficient") {
+    const efGap = (monthlyExpenses * requiredMonths) - netWorth.liquidAssets;
     actionItems.push({
       id: "ef-1",
       priority: emergencyFundAdequacy === "critical" ? "urgent" : "high",
@@ -858,6 +859,15 @@ export function calculateFinancialHealthScore(
       description: `You need ${requiredMonths} months of expenses (${formatAmount(monthlyExpenses * requiredMonths)}) as emergency fund. Currently at ${emergencyFundMonths.toFixed(1)} months.`,
       impact: "Protects against job loss, medical emergencies, and unexpected expenses",
       cta: { label: "Explore Liquid Funds", href: "/mutual-funds?category=Debt" },
+      executionFlow: {
+        gapType: "emergency",
+        gapAmount: Math.max(0, efGap),
+        recommendedCategory: "Liquid Funds",
+        recommendedProducts: [
+          { name: "Liquid Funds", href: "/mutual-funds?category=Debt", reason: "Instant liquidity with better returns than savings account" },
+          { name: "Ultra Short Duration Funds", href: "/mutual-funds?category=Debt", reason: "Slightly higher returns for 3-6 month horizon" },
+        ],
+      },
     });
   }
 
@@ -870,6 +880,14 @@ export function calculateFinancialHealthScore(
       description: `Recommended: ${formatAmount(recommendedTermCover)}. Current: ${formatAmount(insurance.totalLifeCover)}. Gap: ${formatAmount(recommendedTermCover - insurance.totalLifeCover)}.`,
       impact: "Protects family's financial future in case of untimely demise",
       cta: { label: "Calculate Term Need", href: "/calculators/term-insurance" },
+      executionFlow: {
+        gapType: "insurance",
+        gapAmount: recommendedTermCover - insurance.totalLifeCover,
+        recommendedCategory: "Term Insurance",
+        recommendedProducts: [
+          { name: "Term Life Insurance", href: "/insurance/life", reason: `Close ${formatAmount(recommendedTermCover - insurance.totalLifeCover)} coverage gap` },
+        ],
+      },
     });
   }
 
@@ -882,6 +900,14 @@ export function calculateFinancialHealthScore(
       description: `Recommended: ${formatAmount(recommendedHealthCover)}. Current: ${formatAmount(insurance.totalHealthCover)}. Gap: ${formatAmount(recommendedHealthCover - insurance.totalHealthCover)}.`,
       impact: "Medical costs inflate at 12% p.a. Adequate cover prevents financial stress",
       cta: { label: "Check Health Cover", href: "/calculators/health-insurance" },
+      executionFlow: {
+        gapType: "insurance",
+        gapAmount: recommendedHealthCover - insurance.totalHealthCover,
+        recommendedCategory: "Health Insurance",
+        recommendedProducts: [
+          { name: "Health Insurance Plans", href: "/insurance/health", reason: `Close ${formatAmount(recommendedHealthCover - insurance.totalHealthCover)} health cover gap` },
+        ],
+      },
     });
   }
 
@@ -910,12 +936,27 @@ export function calculateFinancialHealthScore(
       description: `You can save up to ${formatAmount(totalPotentialSaving)} in taxes by utilizing unused deductions.`,
       impact: "Tax savings can be redirected to wealth-building investments",
       cta: { label: "Tax Calculator", href: "/calculators/tax" },
+      executionFlow: {
+        gapType: "tax",
+        gapAmount: totalPotentialSaving,
+        recommendedCategory: "ELSS Funds",
+        recommendedProducts: [
+          { name: "ELSS Funds", href: "/mutual-funds?category=ELSS", reason: "Save tax under 80C with potential for high returns" },
+          { name: "NPS", href: "/calculators/retirement", reason: "Additional ₹50,000 deduction under 80CCD(1B)" },
+        ],
+      },
     });
   }
 
   goalFeasibility
     .filter((g) => !g.isOnTrack)
     .forEach((g) => {
+      const fundCategory = g.suggestedFundCategory || "Flexi Cap Funds";
+      const fundHref = g.goalType === "retirement"
+        ? "/mutual-funds?category=Equity"
+        : g.yearsRemaining <= 3
+          ? "/mutual-funds?category=Debt"
+          : "/mutual-funds?category=Equity";
       actionItems.push({
         id: `goal-${g.goalId}`,
         priority: g.goalType === "retirement" ? "high" : "medium",
@@ -924,6 +965,14 @@ export function calculateFinancialHealthScore(
         description: `Need ${formatAmount(g.requiredMonthlySIP)}/month in ${g.suggestedFundCategory} to reach ${formatAmount(g.inflatedTarget)} in ${g.yearsRemaining} years.`,
         impact: `Bridge the gap of ${formatAmount(g.gap)}`,
         cta: { label: "Start SIP", href: "/mutual-funds" },
+        executionFlow: {
+          gapType: "investment",
+          gapAmount: g.gap,
+          recommendedCategory: fundCategory,
+          recommendedProducts: [
+            { name: fundCategory, href: fundHref, reason: `Best for ${g.yearsRemaining}+ year goals` },
+          ],
+        },
       });
     });
 

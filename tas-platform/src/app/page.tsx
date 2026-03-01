@@ -1,10 +1,12 @@
 import { Metadata } from "next";
 import HeroSection from "@/components/home/Hero";
+import PlanningJourney from "@/components/home/PlanningJourney";
 import ProductCategories from "@/components/home/ProductCategories";
 import MarketOverview from "@/components/home/MarketOverview";
 import SIPCalculatorPreview from "@/components/home/SIPCalculatorPreview";
 import NewsHighlights from "@/components/home/NewsHighlights";
 import TrustSignals from "@/components/home/TrustSignals";
+import AuthoritySection from "@/components/home/AuthoritySection";
 import Testimonials from "@/components/home/Testimonials";
 import CTABanner from "@/components/home/CTABanner";
 import SEBIDisclaimer from "@/components/compliance/SEBIDisclaimer";
@@ -19,12 +21,14 @@ export default function HomePage() {
   return (
     <>
       <HeroSection />
-      <ProductCategories />
-      <MarketOverview />
+      <PlanningJourney />
       <SIPCalculatorPreview />
       <TrustSignals />
-      <NewsHighlights />
+      <AuthoritySection />
       <Testimonials />
+      <ProductCategories />
+      <MarketOverview />
+      <NewsHighlights />
       <CTABanner />
       <SEBIDisclaimer variant="banner" />
     </>

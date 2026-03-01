@@ -8,12 +8,18 @@ import {
   Landmark, GraduationCap, Home, Car, Gem, Plane,
   AlertTriangle, CheckCircle2, XCircle, ArrowRight,
   ChevronDown, Sparkles, BadgeIndianRupee, MessageCircle,
-  Activity, Zap,
+  Activity, Zap, Users,
 } from 'lucide-react';
 import SEBIDisclaimer from '@/components/compliance/SEBIDisclaimer';
 import { formatINR, formatLakhsCrores } from '@/lib/utils/formatters';
 import { useFinancialPlanStore } from '@/store/financial-plan-store';
 import { useAuth } from '@/hooks/useAuth';
+import { generatePlanInsights } from '@/lib/utils/plan-insights';
+import { generateBehavioralNudges } from '@/lib/utils/behavioral-nudges';
+import InsightEngine from '@/components/insights/InsightEngine';
+import NudgeCard from '@/components/dashboard/NudgeCard';
+import ScenarioModeler from '@/components/dashboard/ScenarioModeler';
+import ExecutionCard from '@/components/dashboard/ExecutionCard';
 import type { GoalType, ActionItem } from '@/types/financial-plan';
 
 // ─── Dynamic import to avoid localStorage SSR issues ─────────────────────────
@@ -165,6 +171,15 @@ function DashboardInner() {
   const analysis = plan?.analysis;
   const hasPlan = isComplete && analysis;
 
+  // AI Insights
+  const planInsights = useMemo(
+    () =>
+      analysis
+        ? generatePlanInsights(plan as Parameters<typeof generatePlanInsights>[0], analysis)
+        : [],
+    [plan, analysis]
+  );
+
   const [demoOpen, setDemoOpen] = useState(false);
 
   // Backend sync: recover plan from Supabase if authenticated but no local plan
@@ -173,6 +188,35 @@ function DashboardInner() {
       loadPlanFromBackend().catch(console.error);
     }
   }, [isAuthenticated, hasPlan, loadPlanFromBackend]);
+
+  // Behavioral nudges
+  const behavioralNudges = useMemo(
+    () =>
+      analysis
+        ? generateBehavioralNudges(plan as Parameters<typeof generateBehavioralNudges>[0], analysis)
+        : [],
+    [plan, analysis]
+  );
+
+  // Sub-score descriptions for enhanced cards
+  const scoreDescriptions = useMemo(() => {
+    if (!analysis) return {} as Record<string, string>;
+    const occupation = plan?.personal?.occupation || 'salaried';
+    const reqMonths = occupation === 'self-employed' ? 9 : occupation === 'business' ? 12 : 6;
+    return {
+      emergency: `${analysis.emergencyFundMonths.toFixed(1)} months saved. Need ${reqMonths}.`,
+      insurance: `Term gap: ${formatLakhsCrores(analysis.termInsuranceGap)}. Health gap: ${formatLakhsCrores(analysis.healthInsuranceGap)}.`,
+      investment: `Savings rate: ${analysis.savingsRate.toFixed(0)}%. Target: 20%+.`,
+      debt: `EMI-to-income: ${analysis.debtToIncomeRatio.toFixed(0)}%. ${analysis.debtToIncomeRatio <= 10 ? 'Healthy' : analysis.debtToIncomeRatio <= 30 ? 'Manageable' : 'High'}.`,
+      retirement: `Score ${analysis.retirementScore}/100. ${analysis.retirementScore >= 70 ? 'On track' : 'Needs focus'}.`,
+      tax: `Unused deductions: ${formatLakhsCrores(analysis.potentialTaxSavings)}. Efficiency: ${analysis.taxEfficiencyScore}/100.`,
+    };
+  }, [analysis, plan?.personal?.occupation]);
+
+  // Retirement readiness data
+  const retirementGoal = useMemo(() => {
+    return analysis?.goalFeasibility?.find((g) => g.goalType === 'retirement') || null;
+  }, [analysis?.goalFeasibility]);
 
   // Derived data
   const netWorthValue = (plan?.netWorth?.totalAssets ?? 0) - (plan?.netWorth?.totalLiabilities ?? 0);
@@ -423,6 +467,185 @@ function DashboardInner() {
       {/* Dashboard Body                                                     */}
       {/* ================================================================== */}
       <div className="mx-auto max-w-6xl space-y-8 px-4 pt-8 sm:px-6 lg:px-8">
+
+        {/* ================================================================ */}
+        {/* AI Analysis — Key Findings                                      */}
+        {/* ================================================================ */}
+        {planInsights.length > 0 && (
+          <section className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50/60 to-white p-6 shadow-sm">
+            <h2 className="mb-4 flex items-center gap-2 text-base font-extrabold text-gray-900">
+              <Sparkles size={18} className="text-blue-600" />
+              AI Analysis — Key Findings
+            </h2>
+            <InsightEngine insights={planInsights} />
+          </section>
+        )}
+
+        {/* ================================================================ */}
+        {/* Retirement Readiness Meter                                      */}
+        {/* ================================================================ */}
+        {analysis.retirementScore !== undefined && (
+          <section className="rounded-2xl border border-gray-100 bg-white p-6">
+            <h2 className="mb-4 flex items-center gap-2 text-base font-extrabold text-gray-900">
+              <Landmark size={18} className="text-blue-600" />
+              Retirement Readiness
+            </h2>
+            <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
+              {/* Large gauge */}
+              <div className="flex flex-col items-center">
+                <CircularScore score={analysis.retirementScore} size={140} strokeWidth={10} />
+                <span className={`mt-2 rounded-full px-3 py-1 text-xs font-bold ${getScoreBgClass(analysis.retirementScore)}`}>
+                  {analysis.retirementScore >= 70 ? 'On Track' : analysis.retirementScore >= 40 ? 'Needs Improvement' : 'Critical'}
+                </span>
+              </div>
+              {/* Details */}
+              <div className="flex-1 space-y-3">
+                {retirementGoal ? (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-xl bg-gray-50 p-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Years to Retirement</p>
+                        <p className="mt-0.5 text-lg font-extrabold text-gray-900">{retirementGoal.yearsRemaining}</p>
+                      </div>
+                      <div className="rounded-xl bg-gray-50 p-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Corpus Needed</p>
+                        <p className="mt-0.5 text-lg font-extrabold text-gray-900">{formatLakhsCrores(retirementGoal.inflatedTarget)}</p>
+                      </div>
+                      <div className="rounded-xl bg-gray-50 p-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Current Projection</p>
+                        <p className={`mt-0.5 text-lg font-extrabold ${retirementGoal.isOnTrack ? 'text-emerald-600' : 'text-red-600'}`}>
+                          {formatLakhsCrores(retirementGoal.currentProjection)}
+                        </p>
+                      </div>
+                      <div className="rounded-xl bg-gray-50 p-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Required SIP</p>
+                        <p className="mt-0.5 text-lg font-extrabold text-blue-600">{formatINR(retirementGoal.requiredMonthlySIP)}/mo</p>
+                      </div>
+                    </div>
+                    <p className="text-xs leading-relaxed text-gray-500">
+                      {retirementGoal.isOnTrack
+                        ? `At your current savings trajectory, you're projected to accumulate ${formatLakhsCrores(retirementGoal.currentProjection)} against a target of ${formatLakhsCrores(retirementGoal.inflatedTarget)}. Keep it up!`
+                        : `You're projected to have ${formatLakhsCrores(retirementGoal.currentProjection)}, but need ${formatLakhsCrores(retirementGoal.inflatedTarget)} for retirement. A SIP of ${formatINR(retirementGoal.requiredMonthlySIP)}/month in ${retirementGoal.suggestedFundCategory} can help close this gap.`}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-gray-500">
+                    Your retirement readiness score is <strong>{analysis.retirementScore}/100</strong>.{' '}
+                    {analysis.retirementScore < 50
+                      ? 'Consider setting a dedicated retirement goal to improve your preparedness.'
+                      : 'Good foundation — keep monitoring and adjusting as life changes.'}
+                  </p>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ================================================================ */}
+        {/* Financial Health Scores with Descriptions                        */}
+        {/* ================================================================ */}
+        <section>
+          <h2 className="mb-4 text-base font-extrabold text-gray-900">Financial Health Scores</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            {[
+              { score: analysis.emergencyFundScore, label: 'Emergency', icon: Shield, desc: scoreDescriptions.emergency },
+              { score: analysis.insuranceScore, label: 'Insurance', icon: Heart, desc: scoreDescriptions.insurance },
+              { score: analysis.investmentScore, label: 'Investment', icon: TrendingUp, desc: scoreDescriptions.investment },
+              { score: analysis.debtScore, label: 'Debt', icon: Wallet, desc: scoreDescriptions.debt },
+              { score: analysis.retirementScore, label: 'Retirement', icon: Landmark, desc: scoreDescriptions.retirement },
+              { score: analysis.taxEfficiencyScore, label: 'Tax', icon: BadgeIndianRupee, desc: scoreDescriptions.tax },
+            ].map((item) => {
+              const scoreColor = getScoreColor(item.score);
+              const sz = 56;
+              const sw = 4;
+              const r = (sz - sw) / 2;
+              const c = 2 * Math.PI * r;
+              const o = c - (item.score / 100) * c;
+              return (
+                <div key={item.label} className="flex flex-col items-center gap-2 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                  <div className="relative inline-flex items-center justify-center">
+                    <svg width={sz} height={sz} className="-rotate-90">
+                      <circle cx={sz / 2} cy={sz / 2} r={r} fill="none" stroke="#F3F4F6" strokeWidth={sw} />
+                      <circle
+                        cx={sz / 2} cy={sz / 2} r={r} fill="none"
+                        stroke={scoreColor} strokeWidth={sw} strokeLinecap="round"
+                        strokeDasharray={c} strokeDashoffset={o}
+                        style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(0.22, 1, 0.36, 1)' }}
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-sm font-extrabold" style={{ color: scoreColor }}>{item.score}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <item.icon className="w-3.5 h-3.5 text-gray-400" />
+                    <span className="text-xs font-semibold text-gray-600">{item.label}</span>
+                  </div>
+                  {item.desc && (
+                    <p className="mt-0.5 text-center text-[10px] leading-tight text-gray-400">{item.desc}</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* ================================================================ */}
+        {/* Plan Review Timeline                                             */}
+        {/* ================================================================ */}
+        <section className="rounded-2xl border border-gray-100 bg-white px-6 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            {[
+              {
+                label: 'Plan Created',
+                date: plan?.createdAt
+                  ? new Date(plan.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                  : 'Today',
+                color: 'bg-emerald-500',
+              },
+              {
+                label: 'Last Updated',
+                date: plan?.updatedAt
+                  ? new Date(plan.updatedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                  : 'Today',
+                color: 'bg-blue-500',
+              },
+              {
+                label: 'Next Review',
+                date: plan?.updatedAt
+                  ? new Date(new Date(plan.updatedAt).setMonth(new Date(plan.updatedAt).getMonth() + 6)).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                  : 'In 6 months',
+                color: 'bg-amber-500',
+              },
+            ].map((item, idx) => (
+              <div key={item.label} className="flex items-center gap-3">
+                {idx > 0 && <div className="hidden h-px w-8 bg-gray-200 sm:block" />}
+                <div className={`h-2.5 w-2.5 rounded-full ${item.color}`} />
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">{item.label}</p>
+                  <p className="text-sm font-bold text-gray-900">{item.date}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ================================================================ */}
+        {/* How You Compare — Behavioral Nudges                              */}
+        {/* ================================================================ */}
+        {behavioralNudges.length > 0 && (
+          <section>
+            <h2 className="mb-4 flex items-center gap-2 text-base font-extrabold text-gray-900">
+              <Users className="w-[18px] h-[18px] text-violet-600" />
+              How You Compare
+            </h2>
+            <div className="grid gap-4 lg:grid-cols-2">
+              {behavioralNudges.slice(0, 4).map((nudge) => (
+                <NudgeCard key={nudge.id} nudge={nudge} />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* ================================================================ */}
         {/* Net Worth Breakdown - Stacked Horizontal Bar                     */}
@@ -749,41 +972,17 @@ function DashboardInner() {
           <section>
             <h2 className="mb-4 text-base font-extrabold text-gray-900">Action Items</h2>
             <div className="space-y-3">
-              {sortedActions.map((action) => {
-                const style = PRIORITY_STYLES[action.priority];
-                return (
-                  <div key={action.id} className="rounded-2xl border border-gray-100 bg-white p-5">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="flex-1">
-                        <div className="mb-1.5 flex flex-wrap items-center gap-2">
-                          <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${style.bg} ${style.text} ${style.border}`}>
-                            <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
-                            {style.label}
-                          </span>
-                          <h4 className="text-sm font-extrabold text-gray-900">{action.title}</h4>
-                        </div>
-                        <p className="text-xs leading-relaxed text-gray-500">{action.description}</p>
-                        {action.impact && (
-                          <p className="mt-1 flex items-center gap-1 text-xs font-semibold text-blue-600">
-                            <TrendingUp className="w-3 h-3" /> {action.impact}
-                          </p>
-                        )}
-                      </div>
-                      {action.cta && (
-                        <Link
-                          href={action.cta.href}
-                          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-blue-700"
-                        >
-                          {action.cta.label} <ArrowRight className="w-3.5 h-3.5" />
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+              {sortedActions.map((action) => (
+                <ExecutionCard key={action.id} action={action} />
+              ))}
             </div>
           </section>
         )}
+
+        {/* ================================================================ */}
+        {/* What-If Scenario Modeler                                         */}
+        {/* ================================================================ */}
+        <ScenarioModeler />
 
         {/* ================================================================ */}
         {/* Quick Actions                                                    */}

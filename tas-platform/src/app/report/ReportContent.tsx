@@ -35,6 +35,9 @@ import {
   formatTenure,
 } from '@/lib/utils/formatters';
 import type { FinancialPlan, ActionItem } from '@/types/financial-plan';
+import { generatePlanInsights } from '@/lib/utils/plan-insights';
+import { generateBehavioralNudges } from '@/lib/utils/behavioral-nudges';
+import { Sparkles, Users } from 'lucide-react';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -463,6 +466,77 @@ export default function ReportContent() {
               </div>
             ))}
           </div>
+        </section>
+
+        {/* ════════════════ KEY FINDINGS (AI INSIGHTS) ════════════════ */}
+        <section className="print:break-before-page print:pt-10 py-10">
+          <SectionHeader
+            icon={Sparkles}
+            title="Key Findings"
+            subtitle="AI-generated insights based on your financial data"
+          />
+
+          {(() => {
+            const insights = generatePlanInsights(p, p.analysis);
+            const nudges = generateBehavioralNudges(p, p.analysis);
+            const insightStyles: Record<string, { bg: string; text: string; label: string }> = {
+              warning: { bg: 'bg-red-50 border-red-200', text: 'text-red-700', label: 'Action Needed' },
+              opportunity: { bg: 'bg-blue-50 border-blue-200', text: 'text-blue-700', label: 'Opportunity' },
+              tip: { bg: 'bg-amber-50 border-amber-200', text: 'text-amber-700', label: 'Insight' },
+              achievement: { bg: 'bg-emerald-50 border-emerald-200', text: 'text-emerald-700', label: 'Strength' },
+            };
+
+            return (
+              <>
+                <div className="space-y-3 mb-8">
+                  {insights.slice(0, 8).map((insight) => {
+                    const style = insightStyles[insight.type] || insightStyles.tip;
+                    return (
+                      <div key={insight.id} className={`rounded-xl border p-4 ${style.bg}`}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`text-[10px] font-bold uppercase tracking-wider ${style.text}`}>
+                            {style.label}
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-bold text-slate-900 mb-1">{insight.title}</h4>
+                        <p className="text-xs text-slate-600 leading-relaxed">{insight.description}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {nudges.length > 0 && (
+                  <div>
+                    <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700 uppercase tracking-wider mb-3">
+                      <Users className="w-4 h-4" /> How You Compare
+                    </h3>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {nudges.slice(0, 4).map((nudge) => (
+                        <div key={nudge.id} className="rounded-xl border border-slate-200 bg-white p-4">
+                          <h4 className="text-xs font-bold text-slate-900 mb-1">{nudge.title}</h4>
+                          <div className="mb-2">
+                            <div className="h-2 w-full rounded-full bg-slate-100">
+                              <div
+                                className={`h-full rounded-full ${nudge.isAbove ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                                style={{ width: `${Math.max(2, nudge.userValue)}%` }}
+                              />
+                            </div>
+                            <div className="mt-1 flex justify-between text-[10px]">
+                              <span className="font-semibold text-slate-600">You: {nudge.userLabel}</span>
+                              <span className={`font-semibold ${nudge.isAbove ? 'text-emerald-600' : 'text-amber-600'}`}>
+                                Benchmark: {nudge.benchmarkLabel}
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-[11px] text-slate-500 leading-relaxed">{nudge.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </section>
 
         {/* ════════════════ NET WORTH STATEMENT ════════════════ */}

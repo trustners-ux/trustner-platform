@@ -16,12 +16,12 @@ import {
 } from "lucide-react";
 
 const ROTATING_WORDS = [
-  "Retirement Planning",
-  "Goal-Based Investing",
-  "Insurance Gap Analysis",
-  "Tax Optimization",
-  "Wealth Building",
-  "Debt Management",
+  "Retirement Readiness",
+  "Insurance Gaps",
+  "Tax Savings",
+  "Goal Planning",
+  "Debt Analysis",
+  "Wealth Score",
 ];
 
 const FEATURE_CARDS = [
@@ -178,11 +178,13 @@ export default function HeroSection() {
                 variants={fadeUpVariants}
                 className="mb-4 text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl"
               >
-                India&apos;s First
+                Understand Your
                 <br />
                 <span className="bg-gradient-to-r from-violet-400 to-emerald-400 bg-clip-text text-transparent">
-                  AI Financial Planner
+                  Complete Financial Life
                 </span>
+                <br />
+                <span className="text-3xl sm:text-4xl lg:text-5xl">in 15 Minutes</span>
               </motion.h1>
 
               {/* Rotating Words */}
@@ -212,9 +214,9 @@ export default function HeroSection() {
                 variants={fadeUpVariants}
                 className="mb-8 max-w-lg text-lg leading-relaxed text-gray-300"
               >
-                Create a comprehensive financial plan worth ₹15,000 — absolutely
-                free. No registration. Your data stays on your device. Plan in 15
-                minutes, then execute through our platform.
+                Get a CFP-quality financial plan worth ₹15,000 — absolutely free.
+                AI analyzes your income, expenses, goals, insurance, and tax to
+                give you a personalized action plan. No registration required.
               </motion.p>
 
               {/* CTA Buttons */}
