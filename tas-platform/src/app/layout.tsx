@@ -1,11 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import TopBar from "@/components/layout/TopBar";
-import Header from "@/components/layout/Header";
-import MarketTicker from "@/components/layout/MarketTicker";
-import Footer from "@/components/layout/Footer";
-import FloatingCTA from "@/components/ui/FloatingCTA";
+import PublicShell from "@/components/layout/PublicShell";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -97,12 +93,9 @@ export default function RootLayout({
         />
       </head>
       <body className="font-sans antialiased">
-        <TopBar />
-        <Header />
-        <MarketTicker />
-        <main className="min-h-screen">{children}</main>
-        <Footer />
-        <FloatingCTA />
+        <PublicShell>
+          <main className="min-h-screen">{children}</main>
+        </PublicShell>
       </body>
     </html>
   );
