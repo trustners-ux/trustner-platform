@@ -15,6 +15,7 @@ const CATEGORIES: { value: DocumentCategory; label: string }[] = [
   { value: "appointment_letter", label: "Appointment Letter" },
   { value: "increment_letter", label: "Increment Letter" },
   { value: "fnf_settlement", label: "F&F Settlement" },
+  { value: "handbook", label: "Employee Handbook" },
   { value: "other", label: "Other" },
 ];
 

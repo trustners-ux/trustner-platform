@@ -44,6 +44,15 @@ const PERMISSIONS = {
   "fnf:manage": ["admin", "hr_head"],
   "fnf:read_own": ["admin", "hr_head", "management", "employee"],
 
+  "attendance:upload": ["admin", "hr_head"],
+  "attendance:read_all": ["admin", "hr_head", "management"],
+  "attendance:read_own": ["admin", "hr_head", "management", "employee"],
+
+  "salary:manage_structure": ["admin", "hr_head"],
+  "salary:generate_payroll": ["admin", "hr_head"],
+  "salary:read_all": ["admin", "hr_head", "management"],
+  "salary:read_own": ["admin", "hr_head", "management", "employee"],
+
   "admin:access": ["admin", "hr_head"],
 } as const;
 

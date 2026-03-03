@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getEmployee } from "@/lib/auth/actions";
 import { formatDate } from "@/lib/utils/formatters";
 import type { Document, DocumentCategory } from "@/types/employee";
-import { FileText, Download, FolderOpen, Shield, Receipt, Gift, File } from "lucide-react";
+import { FileText, Download, FolderOpen, Shield, Receipt, Gift, File, BookOpen } from "lucide-react";
 import DocumentDownloadButton from "./download-button";
 
 const CATEGORY_CONFIG: Record<
@@ -39,6 +39,11 @@ const CATEGORY_CONFIG: Record<
     label: "F&F Settlement",
     color: "bg-red-100 text-red-700",
     icon: FileText,
+  },
+  handbook: {
+    label: "Employee Handbook",
+    color: "bg-indigo-100 text-indigo-700",
+    icon: BookOpen,
   },
   other: {
     label: "Other",

@@ -62,6 +62,7 @@ export default async function DocumentsListPage() {
     appointment_letter: "Appointment Letter",
     increment_letter: "Increment Letter",
     fnf_settlement: "F&F Settlement",
+    handbook: "Employee Handbook",
     other: "Other",
   };
 
@@ -72,6 +73,7 @@ export default async function DocumentsListPage() {
     appointment_letter: "bg-green-100 text-green-700",
     increment_letter: "bg-cyan-100 text-cyan-700",
     fnf_settlement: "bg-red-100 text-red-700",
+    handbook: "bg-indigo-100 text-indigo-700",
     other: "bg-gray-100 text-gray-700",
   };
 

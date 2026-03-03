@@ -7,7 +7,22 @@ export type DocumentCategory =
   | "appointment_letter"
   | "increment_letter"
   | "fnf_settlement"
+  | "handbook"
   | "other";
+
+export type AttendanceStatus =
+  | "present"
+  | "absent"
+  | "half_day"
+  | "weekend"
+  | "holiday"
+  | "leave";
+
+export type PayrollRunStatus =
+  | "draft"
+  | "processing"
+  | "completed"
+  | "finalized";
 
 export type AnnouncementCategory =
   | "general"
@@ -128,4 +143,120 @@ export interface FnFSettlement {
   employee?: Employee;
   processor?: Employee;
   approver?: Employee;
+}
+
+// ─── Attendance ────────────────────────────────────────
+
+export interface AttendanceUpload {
+  id: string;
+  month_year: string;
+  file_name: string;
+  records_count: number;
+  uploaded_by: string;
+  created_at: string;
+  uploader?: Employee;
+}
+
+export interface AttendanceRecord {
+  id: string;
+  employee_id: string;
+  upload_id: string | null;
+  date: string;
+  in_time: string | null;
+  out_time: string | null;
+  status: AttendanceStatus;
+  hours_worked: number | null;
+  is_late: boolean;
+  overtime_hours: number;
+  remarks: string | null;
+  created_at: string;
+  employee?: Employee;
+}
+
+export interface AttendanceMonthlySummary {
+  employee_id: string;
+  month_year: string;
+  total_working_days: number;
+  days_present: number;
+  days_absent: number;
+  days_half_day: number;
+  days_late: number;
+  total_overtime_hours: number;
+  lop_days: number;
+}
+
+// ─── Salary & Payroll ──────────────────────────────────
+
+export interface SalaryStructure {
+  id: string;
+  employee_id: string;
+  effective_from: string;
+  ctc_annual: number;
+  basic: number;
+  hra: number;
+  dearness_allowance: number;
+  conveyance: number;
+  medical_allowance: number;
+  special_allowance: number;
+  pf_employee: number;
+  pf_employer: number;
+  esi_employee: number;
+  esi_employer: number;
+  professional_tax: number;
+  tds_monthly: number;
+  lwf_employee: number;
+  lwf_employer: number;
+  is_active: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  employee?: Employee;
+}
+
+export interface PayrollRun {
+  id: string;
+  month_year: string;
+  status: PayrollRunStatus;
+  total_employees: number;
+  total_gross: number;
+  total_deductions: number;
+  total_net: number;
+  generated_by: string;
+  finalized_by: string | null;
+  created_at: string;
+  updated_at: string;
+  generator?: Employee;
+}
+
+export interface SalarySlip {
+  id: string;
+  payroll_run_id: string;
+  employee_id: string;
+  month_year: string;
+  total_working_days: number;
+  days_present: number;
+  days_absent: number;
+  days_half_day: number;
+  lop_days: number;
+  basic: number;
+  hra: number;
+  dearness_allowance: number;
+  conveyance: number;
+  medical_allowance: number;
+  special_allowance: number;
+  gross_earnings: number;
+  pf_employee: number;
+  pf_employer: number;
+  esi_employee: number;
+  esi_employer: number;
+  professional_tax: number;
+  tds: number;
+  lwf_employee: number;
+  other_deductions: number;
+  other_deduction_notes: string | null;
+  total_deductions: number;
+  net_pay: number;
+  document_id: string | null;
+  created_at: string;
+  employee?: Employee;
 }

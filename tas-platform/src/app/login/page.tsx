@@ -80,7 +80,7 @@ export default function LoginPage() {
               </h2>
               <p className="mb-6 text-sm leading-relaxed text-gray-500">
                 Access your investment portfolio, track mutual fund performance,
-                and manage your financial goals through InvestWell.
+                and manage your financial goals.
               </p>
               <ul className="mb-8 space-y-2.5 text-sm text-gray-600">
                 <li className="flex items-center gap-2">
@@ -105,7 +105,7 @@ export default function LoginPage() {
                 rel="noopener noreferrer"
                 className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-trustBlue py-3.5 text-sm font-bold text-white transition hover:bg-trustBlue/90"
               >
-                Go to InvestWell Portal
+                Sign In
                 <ArrowRight size={16} />
               </a>
             </div>
