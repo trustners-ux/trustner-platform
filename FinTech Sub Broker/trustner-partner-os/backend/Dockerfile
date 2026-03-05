@@ -36,8 +36,8 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
+# Install dumb-init for proper signal handling and openssl for Prisma
+RUN apk add --no-cache dumb-init openssl
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
@@ -46,13 +46,16 @@ RUN addgroup -g 1001 -S nodejs && \
 # Copy package files
 COPY package*.json ./
 
+# Copy Prisma schema for client generation
+COPY --from=builder /build/prisma ./prisma
+
 # Install production dependencies only
 RUN npm install --only=production && \
+    npx prisma generate && \
     npm cache clean --force
 
 # Copy built application from builder
 COPY --from=builder /build/dist ./dist
-COPY --from=builder /build/node_modules/.prisma ./node_modules/.prisma
 
 # Set environment to production
 ENV NODE_ENV=production
