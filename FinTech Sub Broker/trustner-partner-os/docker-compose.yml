@@ -69,6 +69,8 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD:-TrustnerRedis@2026}@redis:6379
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost,http://localhost:3000,https://app.trustner.in}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:-TrustnerEncrypt_AES256_Key_2026}
+      ENABLE_SWAGGER_DOCS: 'false'
+      ENABLE_HELMET_SECURITY: 'false'
     ports:
       - "${API_PORT:-5000}:5000"
     depends_on:
