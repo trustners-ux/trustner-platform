@@ -37,6 +37,13 @@ enum SubBrokerStatus {
   TERMINATED
 }
 
+enum CommissionTier {
+  STARTER
+  GROWTH
+  SENIOR
+  ELITE
+}
+
 enum ClientStatus {
   PROSPECT
   KYC_PENDING
@@ -495,7 +502,7 @@ model SubBroker {
   status            SubBrokerStatus @default(PENDING_APPROVAL)
   approvedAt        DateTime?
   approvedBy        String?
-  commissionTier    String          @default("STARTER")
+  commissionTier    CommissionTier  @default(STARTER)
   revenueSharePct   Decimal         @default(50.00) @db.Decimal(5, 2)
   agreementSignedAt DateTime?
   remarks           String?
