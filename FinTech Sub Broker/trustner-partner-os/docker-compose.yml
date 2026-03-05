@@ -1,0 +1,131 @@
+# ============================================================================
+# TRUSTNER PARTNER OS - Docker Compose Production Configuration
+# B2B2C Fintech Distribution Platform
+# ============================================================================
+
+version: '3.8'
+
+services:
+  # --------------------------------------------------------------------------
+  # PostgreSQL 15 - Primary Database
+  # --------------------------------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: trustner-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-trustner_partner_os}
+      POSTGRES_USER: ${DB_USER:-trustner_admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-TrustnerSecure@2026}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backups:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-trustner_admin} -d ${DB_NAME:-trustner_partner_os}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - trustner-network
+
+  # --------------------------------------------------------------------------
+  # Redis 7 - Caching & Session Store
+  # --------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: trustner-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-TrustnerRedis@2026}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-TrustnerRedis@2026}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - trustner-network
+
+  # --------------------------------------------------------------------------
+  # NestJS Backend API
+  # --------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: trustner-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 5000
+      DATABASE_URL: postgresql://${DB_USER:-trustner_admin}:${DB_PASSWORD:-TrustnerSecure@2026}@postgres:5432/${DB_NAME:-trustner_partner_os}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-TrustnerJWT_SuperSecret_2026_ChangeMe}
+      JWT_EXPIRY: ${JWT_EXPIRY:-1h}
+      JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY:-7d}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-TrustnerRedis@2026}@redis:6379
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost,http://localhost:3000,https://app.trustner.in}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-TrustnerEncrypt_AES256_Key_2026}
+    ports:
+      - "${API_PORT:-5000}:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - trustner-network
+
+  # --------------------------------------------------------------------------
+  # React Frontend (Nginx)
+  # --------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: trustner-web
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-80}:80"
+      - "${WEB_SSL_PORT:-443}:443"
+    depends_on:
+      - backend
+    networks:
+      - trustner-network
+
+  # --------------------------------------------------------------------------
+  # Adminer - Database Management UI (Development Only)
+  # --------------------------------------------------------------------------
+  adminer:
+    image: adminer:latest
+    container_name: trustner-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    profiles:
+      - dev
+    networks:
+      - trustner-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  trustner-network:
+    driver: bridge

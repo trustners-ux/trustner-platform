@@ -1,0 +1,206 @@
+---
+title: Trustner Partner OS - Entity Relationship Diagram
+---
+erDiagram
+    User ||--o| UserProfile : has
+    User ||--o| SubBroker : "is (if role=SUB_BROKER)"
+    User ||--o| Client : "is (if role=CLIENT)"
+    User ||--o{ UserSession : has
+    User ||--o{ AuditLog : creates
+    User ||--o{ Notification : receives
+
+    SubBroker ||--o{ Client : manages
+    SubBroker ||--o{ Commission : earns
+    SubBroker ||--o{ Payout : receives
+    SubBroker ||--o{ AumRecord : tracked
+    SubBroker ||--o{ Document : uploads
+    SubBroker ||--o{ SIPRegistration : manages
+    SubBroker ||--o{ ComplianceAlert : has
+    SubBroker ||--o{ MarketingAsset : uses
+    SubBroker ||--o{ PartnerTarget : assigned
+    SubBroker }o--o| Branch : "belongs to"
+
+    Client ||--o{ ClientBankAccount : has
+    Client ||--o{ Document : uploads
+    Client ||--o{ Transaction : makes
+    Client ||--o{ SIPRegistration : registers
+    Client ||--o{ Holding : owns
+    Client ||--o{ InvestmentGoal : sets
+    Client ||--o{ RiskAssessment : takes
+
+    MutualFundScheme ||--o{ NavHistory : has
+    MutualFundScheme ||--o{ Holding : "held in"
+    MutualFundScheme ||--o{ Transaction : "transacted in"
+    MutualFundScheme ||--o{ SIPRegistration : "SIP in"
+    MutualFundScheme ||--o{ SchemeCommissionRate : has
+
+    SIPRegistration ||--o{ SIPInstallment : has
+    SIPRegistration }o--o| Mandate : "uses"
+
+    Commission ||--o{ PayoutItem : "included in"
+    Payout ||--o{ PayoutItem : contains
+
+    SubBroker ||--o{ Referral : "refers others"
+
+    User {
+        string id PK
+        string email UK
+        string phone UK
+        enum role "SUPER_ADMIN|COMPLIANCE_ADMIN|FINANCE_ADMIN|REGIONAL_HEAD|SUB_BROKER|CLIENT"
+        boolean isActive
+        boolean twoFactorEnabled
+        datetime lastLoginAt
+    }
+
+    SubBroker {
+        string id PK
+        string userId FK
+        string code UK "TRUSTNER-SB-XXX"
+        string arnNumber
+        string euinNumber
+        string nismCertNumber
+        string pospLicenseNumber
+        string panNumber "Encrypted"
+        enum status "PENDING|APPROVED|ACTIVE|SUSPENDED"
+        string commissionTier "STARTER|GROWTH|SENIOR|ELITE"
+        decimal revenueSharePct
+        decimal totalAum
+    }
+
+    Client {
+        string id PK
+        string userId FK
+        string subBrokerId FK
+        string clientCode UK "TRUSTNER-C-XXXXX"
+        string panNumber "Encrypted"
+        string aadhaarNumber "Encrypted"
+        enum kycStatus "NOT_STARTED to COMPLETE"
+        enum riskProfile "CONSERVATIVE to AGGRESSIVE"
+        string bseClientCode
+        decimal totalInvested
+        decimal currentValue
+    }
+
+    MutualFundScheme {
+        string id PK
+        string schemeCode UK
+        string schemeName
+        string amcName
+        string category
+        string planType "DIRECT|REGULAR"
+        decimal latestNav
+        decimal minLumpsum
+        decimal minSip
+        boolean sipAllowed
+    }
+
+    Transaction {
+        string id PK
+        string transactionCode UK
+        string clientId FK
+        string schemeId FK
+        enum type "LUMPSUM|SIP|STP|SWP|REDEMPTION|SWITCH"
+        decimal amount
+        decimal units
+        decimal nav
+        string bseOrderId
+        enum status "INITIATED to ALLOTMENT_DONE"
+    }
+
+    SIPRegistration {
+        string id PK
+        string sipCode UK
+        string clientId FK
+        string schemeId FK
+        decimal amount
+        enum frequency "MONTHLY|QUARTERLY|WEEKLY|YEARLY"
+        int sipDate "Day 1-28"
+        string bseSipRegId
+        enum status "ACTIVE|PAUSED|COMPLETED|CANCELLED"
+    }
+
+    Commission {
+        string id PK
+        string subBrokerId FK
+        decimal grossAmount
+        decimal tdsAmount
+        decimal gstAmount
+        decimal netAmount
+        decimal subBrokerShare
+        decimal trustnerShare
+        enum commissionType "TRAIL|UPFRONT|CLAWBACK"
+        enum status "PENDING|CALCULATED|APPROVED|PAID"
+        int periodMonth
+        int periodYear
+        string rtaSource "CAMS|KFintech"
+    }
+
+    Payout {
+        string id PK
+        string subBrokerId FK
+        string payoutCode UK
+        decimal grossAmount
+        decimal tdsAmount
+        decimal netPayable
+        decimal clawbackAmount
+        decimal finalAmount
+        enum status "PENDING|PROCESSING|PAID"
+    }
+
+    Holding {
+        string id PK
+        string clientId FK
+        string schemeId FK
+        string folioNumber
+        decimal units
+        decimal investedAmount
+        decimal currentValue
+        decimal xirr
+    }
+
+    Mandate {
+        string id PK
+        string clientId
+        enum mandateType "NACH|E_MANDATE|UPI_AUTOPAY"
+        decimal amount
+        enum status "PENDING|ACTIVE|CANCELLED"
+    }
+
+    AumRecord {
+        string id PK
+        string subBrokerId FK
+        decimal totalAum
+        decimal equityAum
+        decimal debtAum
+        decimal totalSipBook
+        int totalClients
+        datetime recordDate
+    }
+
+    ComplianceAlert {
+        string id PK
+        string subBrokerId FK
+        enum type "ARN_EXPIRY|NISM_EXPIRY|KYC_INCOMPLETE..."
+        enum severity "LOW|MEDIUM|HIGH|CRITICAL"
+        boolean isResolved
+    }
+
+    Branch {
+        string id PK
+        string code UK
+        string name
+        enum type "HEAD_OFFICE|REGIONAL|BRANCH|FRANCHISE"
+        string city
+        string state
+    }
+
+    RTAImport {
+        string id PK
+        string fileName
+        string rtaSource
+        int periodMonth
+        int periodYear
+        int totalRecords
+        int processedRecords
+        enum status "UPLOADED|PROCESSING|COMPLETED|FAILED"
+    }

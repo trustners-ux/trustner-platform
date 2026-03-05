@@ -1,0 +1,1161 @@
+// ============================================================================
+// TRUSTNER INSURANCE BROKING MODULE - Database Schema Extension
+// Replaces Heph Scope | IRDAI Compliant | Integrated with Partner OS
+// ============================================================================
+// NOTE: This schema extends the main schema.prisma. In production,
+// these models will be merged into the single schema.prisma file.
+// Kept separate here for clarity during development.
+// ============================================================================
+
+// ============================================================================
+// INSURANCE-SPECIFIC ENUMS
+// ============================================================================
+
+enum POSPStatus {
+  APPLICATION_RECEIVED
+  TRAINING_IN_PROGRESS
+  TRAINING_COMPLETED
+  EXAM_SCHEDULED
+  EXAM_PASSED
+  EXAM_FAILED
+  CERTIFICATE_ISSUED
+  ACTIVE
+  SUSPENDED
+  TERMINATED
+  RENEWAL_PENDING
+}
+
+enum POSPCategory {
+  LIFE
+  GENERAL
+  HEALTH
+  LIFE_AND_GENERAL
+  LIFE_AND_HEALTH
+  GENERAL_AND_HEALTH
+  ALL
+}
+
+enum InsuranceLOB {
+  MOTOR_TWO_WHEELER
+  MOTOR_FOUR_WHEELER
+  MOTOR_COMMERCIAL
+  HEALTH_INDIVIDUAL
+  HEALTH_FAMILY_FLOATER
+  HEALTH_GROUP
+  HEALTH_CRITICAL_ILLNESS
+  HEALTH_TOP_UP
+  LIFE_TERM
+  LIFE_ENDOWMENT
+  LIFE_ULIP
+  LIFE_WHOLE_LIFE
+  TRAVEL
+  HOME
+  FIRE
+  MARINE
+  LIABILITY
+  PA_PERSONAL_ACCIDENT
+  CYBER
+  OTHER
+}
+
+enum PolicyStatus {
+  QUOTE_GENERATED
+  PROPOSAL_SUBMITTED
+  PROPOSAL_UNDER_REVIEW
+  PAYMENT_PENDING
+  PAYMENT_RECEIVED
+  POLICY_ISSUED
+  POLICY_ACTIVE
+  POLICY_EXPIRED
+  POLICY_CANCELLED
+  POLICY_LAPSED
+  CLAIM_IN_PROGRESS
+  ENDORSEMENT_IN_PROGRESS
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUOTE_SHARED
+  FOLLOW_UP
+  PROPOSAL_STAGE
+  PAYMENT_PENDING
+  CONVERTED
+  LOST
+  JUNK
+}
+
+enum LeadSource {
+  WEBSITE
+  REFERRAL
+  POSP_GENERATED
+  WALK_IN
+  PHONE_CALL
+  WHATSAPP
+  SOCIAL_MEDIA
+  RENEWAL
+  CAMPAIGN
+  OTHER
+}
+
+enum ClaimStatus {
+  INTIMATED
+  DOCUMENTS_PENDING
+  DOCUMENTS_SUBMITTED
+  UNDER_INVESTIGATION
+  SURVEYOR_APPOINTED
+  SURVEY_COMPLETED
+  APPROVED
+  PARTIALLY_APPROVED
+  REJECTED
+  SETTLED
+  CLOSED
+  REOPENED
+}
+
+enum EndorsementStatus {
+  REQUESTED
+  DOCUMENTS_PENDING
+  DOCUMENTS_SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  PROCESSED
+  COMPLETED
+}
+
+enum EndorsementType {
+  NAME_CHANGE
+  ADDRESS_CHANGE
+  NOMINEE_CHANGE
+  SUM_INSURED_CHANGE
+  ADD_MEMBER
+  REMOVE_MEMBER
+  VEHICLE_TRANSFER
+  HYPOTHECATION_CHANGE
+  NCB_CORRECTION
+  COVERAGE_CHANGE
+  PREMIUM_ADJUSTMENT
+  OTHER
+}
+
+enum InspectionStatus {
+  SCHEDULED
+  IN_PROGRESS
+  PHOTOS_UPLOADED
+  VIDEO_UPLOADED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum InsuranceCommissionType {
+  FIRST_YEAR
+  RENEWAL
+  OVERRIDE
+  BONUS
+  CLAWBACK
+}
+
+enum RenewalStatus {
+  UPCOMING_90_DAYS
+  UPCOMING_60_DAYS
+  UPCOMING_30_DAYS
+  UPCOMING_15_DAYS
+  DUE
+  OVERDUE
+  RENEWED
+  LAPSED
+  LOST_TO_COMPETITOR
+}
+
+enum TicketStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  AWAITING_CUSTOMER
+  AWAITING_INSURER
+  RESOLVED
+  CLOSED
+  REOPENED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TicketCategory {
+  POLICY_QUERY
+  CLAIM_SUPPORT
+  ENDORSEMENT
+  PAYMENT_ISSUE
+  RENEWAL
+  TECHNICAL
+  COMPLAINT
+  OTHER
+}
+
+// ============================================================================
+// MODULE 1: POSP / SP / BQP MANAGEMENT
+// ============================================================================
+
+model POSPAgent {
+  id                  String        @id @default(cuid())
+  subBrokerId         String?       // Linked to MF sub-broker if dual role
+  userId              String        @unique
+  agentCode           String        @unique // TIBPL-POSP-00001
+  category            POSPCategory
+  status              POSPStatus    @default(APPLICATION_RECEIVED)
+
+  // Personal Details
+  firstName           String
+  lastName            String
+  dateOfBirth         DateTime
+  gender              String
+  email               String
+  phone               String
+  panNumber           String?       // Encrypted
+  aadhaarNumber       String?       // Encrypted (last 4)
+  addressLine1        String?
+  addressLine2        String?
+  city                String?
+  state               String?
+  pincode             String?
+
+  // IRDAI Registration
+  irdaiLicenseNumber  String?
+  irdaiLicenseDate    DateTime?
+  irdaiExpiryDate     DateTime?
+  spCode              String?       // SP Registration (if applicable)
+  bqpCode             String?       // BQP Registration (if applicable)
+
+  // Training & Certification
+  trainingStartDate   DateTime?
+  trainingEndDate     DateTime?
+  trainingHoursCompleted Decimal   @default(0) @db.Decimal(5, 1) // Out of 15 hours
+  examDate            DateTime?
+  examScore           Int?
+  examAttempts        Int           @default(0)
+  certificateNumber   String?
+  certificateIssuedAt DateTime?
+  certificateExpiryAt DateTime?
+
+  // Bank Details (for commission payout)
+  bankAccountName     String?
+  bankAccountNumber   String?       // Encrypted
+  bankIfscCode        String?
+  bankName            String?
+
+  // Hierarchy
+  branchId            String?
+  reportingManagerId  String?
+  regionId            String?
+
+  // Performance
+  totalPoliciesSold   Int           @default(0)
+  totalPremiumGenerated Decimal     @default(0) @db.Decimal(18, 2)
+  totalCommissionEarned Decimal     @default(0) @db.Decimal(18, 2)
+  activePolicies      Int           @default(0)
+  renewalRate         Decimal       @default(0) @db.Decimal(5, 2) // percentage
+
+  // Metadata
+  approvedAt          DateTime?
+  approvedBy          String?
+  terminatedAt        DateTime?
+  terminationReason   String?
+  remarks             String?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  // Relations
+  leads               InsuranceLead[]
+  policies            InsurancePolicy[]
+  commissions         InsuranceCommission[]
+  payouts             InsurancePayout[]
+  trainingRecords     POSPTrainingRecord[]
+  documents           POSPDocument[]
+  targets             POSPTarget[]
+  tickets             SupportTicket[]  @relation("TicketAgent")
+
+  @@index([status])
+  @@index([category])
+  @@index([irdaiLicenseNumber])
+  @@index([branchId])
+  @@index([subBrokerId])
+}
+
+model POSPTrainingRecord {
+  id              String    @id @default(cuid())
+  pospId          String
+  moduleTitle     String
+  moduleDuration  Decimal   @db.Decimal(5, 1) // hours
+  completedAt     DateTime?
+  score           Int?      // quiz score if applicable
+  videoUrl        String?
+  materialUrl     String?
+  isCompleted     Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+
+  posp            POSPAgent @relation(fields: [pospId], references: [id], onDelete: Cascade)
+
+  @@index([pospId])
+}
+
+model POSPDocument {
+  id              String    @id @default(cuid())
+  pospId          String
+  documentType    String    // PAN, AADHAAR, PHOTO, QUALIFICATION, IRDAI_CERT, BANK_PROOF
+  fileName        String
+  filePath        String
+  fileSize        Int?
+  mimeType        String?
+  isVerified      Boolean   @default(false)
+  verifiedAt      DateTime?
+  verifiedBy      String?
+  remarks         String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  posp            POSPAgent @relation(fields: [pospId], references: [id], onDelete: Cascade)
+
+  @@index([pospId])
+}
+
+model POSPTarget {
+  id                  String    @id @default(cuid())
+  pospId              String
+  month               Int
+  year                Int
+  premiumTarget       Decimal   @db.Decimal(18, 2)
+  policyCountTarget   Int
+  premiumAchieved     Decimal   @default(0) @db.Decimal(18, 2)
+  policyCountAchieved Int       @default(0)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  posp                POSPAgent @relation(fields: [pospId], references: [id])
+
+  @@unique([pospId, month, year])
+}
+
+// ============================================================================
+// MODULE 2: INSURANCE COMPANIES & PRODUCTS
+// ============================================================================
+
+model InsuranceCompany {
+  id              String    @id @default(cuid())
+  companyCode     String    @unique
+  companyName     String
+  shortName       String?
+  irdaiRegNumber  String?
+  companyType     String    // LIFE, GENERAL, HEALTH, STANDALONE_HEALTH
+  logoUrl         String?
+  apiIntegrated   Boolean   @default(false)
+  apiProvider     String?   // VJ_INFOSOFT, DIRECT, HEPH, etc.
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  products        InsuranceProduct[]
+  policies        InsurancePolicy[]
+  commissionSlabs InsuranceCommissionSlab[]
+
+  @@index([companyType])
+}
+
+model InsuranceProduct {
+  id              String        @id @default(cuid())
+  companyId       String
+  productCode     String        @unique
+  productName     String
+  lob             InsuranceLOB
+  planType        String?       // BASE, TOP_UP, SUPER_TOP_UP, ADD_ON
+  description     String?
+  minAge          Int?
+  maxAge          Int?
+  minSumInsured   Decimal?      @db.Decimal(18, 2)
+  maxSumInsured   Decimal?      @db.Decimal(18, 2)
+  minPremium      Decimal?      @db.Decimal(12, 2)
+  maxPremium      Decimal?      @db.Decimal(12, 2)
+  policyTerm      Int?          // in years
+  waitingPeriod   Int?          // in days
+  claimSettlement Decimal?      @db.Decimal(5, 2) // CSR percentage
+  brochureUrl     String?
+  featureMatrix   Json?         // Key features as structured data
+  isActive        Boolean       @default(true)
+  pospCanSell     Boolean       @default(true)
+  apiEnabled      Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  company         InsuranceCompany @relation(fields: [companyId], references: [id])
+  policies        InsurancePolicy[]
+  leads           InsuranceLead[]
+  commissionSlabs InsuranceCommissionSlab[]
+
+  @@index([companyId])
+  @@index([lob])
+  @@index([isActive])
+}
+
+// ============================================================================
+// MODULE 3: LEAD MANAGEMENT (INSURANCE SALES FUNNEL)
+// ============================================================================
+
+model InsuranceLead {
+  id                  String      @id @default(cuid())
+  leadCode            String      @unique // LEAD-INS-20260225-00001
+  pospId              String?
+  assignedToUserId    String?
+
+  // Customer Info
+  customerName        String
+  customerPhone       String
+  customerEmail       String?
+  customerCity        String?
+  customerState       String?
+  customerPincode     String?
+  dateOfBirth         DateTime?
+
+  // Lead Details
+  lob                 InsuranceLOB
+  productId           String?
+  source              LeadSource   @default(OTHER)
+  status              LeadStatus   @default(NEW)
+  isRenewal           Boolean      @default(false)
+  existingPolicyNumber String?
+
+  // Motor Specific
+  vehicleRegNumber    String?
+  vehicleMake         String?
+  vehicleModel        String?
+  vehicleVariant      String?
+  vehicleYear         Int?
+  vehicleFuelType     String?
+  previousInsurer     String?
+  previousPolicyExpiry DateTime?
+  ncbPercentage       Decimal?    @db.Decimal(5, 2)
+  idv                 Decimal?    @db.Decimal(12, 2) // Insured Declared Value
+
+  // Health Specific
+  membersCount        Int?
+  membersDetails      Json?       // Array of {name, age, relation, preExisting}
+  sumInsuredRequired  Decimal?    @db.Decimal(18, 2)
+
+  // Life Specific
+  annualIncome        Decimal?    @db.Decimal(18, 2)
+  smokingStatus       String?     // SMOKER, NON_SMOKER
+  coverRequired       Decimal?    @db.Decimal(18, 2)
+
+  // Quote & Proposal
+  quotedPremium       Decimal?    @db.Decimal(12, 2)
+  quoteReferenceId    String?
+  proposalId          String?
+  lastDropOffStage    String?     // Where user left the journey
+
+  // Tracking
+  followUpDate        DateTime?
+  followUpNotes       String?
+  lostReason          String?
+  convertedPolicyId   String?
+  priorityScore       Int         @default(50) // 1-100 lead scoring
+
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  // Relations
+  posp                POSPAgent?  @relation(fields: [pospId], references: [id])
+  product             InsuranceProduct? @relation(fields: [productId], references: [id])
+  activities          LeadActivity[]
+  quotes              InsuranceQuote[]
+
+  @@index([pospId])
+  @@index([status])
+  @@index([lob])
+  @@index([source])
+  @@index([followUpDate])
+  @@index([customerPhone])
+}
+
+model LeadActivity {
+  id          String    @id @default(cuid())
+  leadId      String
+  action      String    // CALLED, EMAILED, WHATSAPP_SENT, QUOTE_SHARED, FOLLOW_UP_SET, STATUS_CHANGED, NOTE_ADDED
+  description String?
+  performedBy String
+  createdAt   DateTime  @default(now())
+
+  lead        InsuranceLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+}
+
+model InsuranceQuote {
+  id              String    @id @default(cuid())
+  leadId          String
+  insurerName     String
+  productName     String
+  sumInsured      Decimal   @db.Decimal(18, 2)
+  premium         Decimal   @db.Decimal(12, 2)
+  gst             Decimal   @db.Decimal(12, 2)
+  totalPremium    Decimal   @db.Decimal(12, 2)
+  coverageDetails Json?     // Structured coverage breakdown
+  addOns          Json?     // Selected add-ons
+  quoteRefId      String?
+  validTill       DateTime?
+  isSelected      Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+
+  lead            InsuranceLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+}
+
+// ============================================================================
+// MODULE 4: POLICY MANAGEMENT (STATE MACHINE)
+// ============================================================================
+
+model InsurancePolicy {
+  id                  String        @id @default(cuid())
+  policyNumber        String        @unique
+  internalRefCode     String        @unique // TIBPL-POL-20260225-00001
+  pospId              String
+  customerId          String?       // Link to Client model if exists
+  companyId           String
+  productId           String
+
+  // Customer Details (denormalized for quick access)
+  customerName        String
+  customerPhone       String
+  customerEmail       String?
+  customerPan         String?       // Encrypted
+  customerAadhaar     String?       // Encrypted
+
+  // Policy Details
+  lob                 InsuranceLOB
+  status              PolicyStatus  @default(QUOTE_GENERATED)
+  sumInsured          Decimal       @db.Decimal(18, 2)
+  basePremium         Decimal       @db.Decimal(12, 2)
+  addOnPremium        Decimal       @default(0) @db.Decimal(12, 2)
+  gstAmount           Decimal       @db.Decimal(12, 2)
+  totalPremium        Decimal       @db.Decimal(12, 2)
+  stampDuty           Decimal       @default(0) @db.Decimal(12, 2)
+  netPremium          Decimal       @db.Decimal(12, 2) // Premium for commission calc
+
+  // Dates
+  proposalDate        DateTime?
+  issuanceDate        DateTime?
+  startDate           DateTime?
+  endDate             DateTime?
+  cancellationDate    DateTime?
+
+  // Motor Specific
+  vehicleRegNumber    String?
+  vehicleMake         String?
+  vehicleModel        String?
+  vehicleChassisNo    String?       // Encrypted
+  vehicleEngineNo     String?       // Encrypted
+  idv                 Decimal?      @db.Decimal(12, 2)
+  ncbPercentage       Decimal?      @db.Decimal(5, 2)
+  policyType          String?       // TP, OD, COMPREHENSIVE, BREAKIN, ROLLOVER
+
+  // Health Specific
+  membersDetails      Json?
+  waitingPeriod       Int?
+  preExistingConditions Json?
+
+  // Life Specific
+  nomineeName         String?
+  nomineeRelation     String?
+  riderDetails        Json?
+
+  // Payment
+  paymentMode         String?       // ONLINE, CHEQUE, NACH
+  paymentRefId        String?
+  paymentDate         DateTime?
+
+  // Insurer Reference
+  insurerProposalNo   String?
+  insurerPolicyUrl    String?
+  policyDocumentUrl   String?
+
+  // BQP/SP Tagging (IRDAI compliance)
+  bqpTagged           Boolean       @default(false)
+  bqpCode             String?
+  spTagged            Boolean       @default(false)
+  spCode              String?
+
+  // Renewal
+  renewalStatus       RenewalStatus?
+  previousPolicyId    String?
+  renewedPolicyId     String?
+  renewalReminderSent Boolean       @default(false)
+
+  // Metadata
+  remarks             String?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  // Relations
+  posp                POSPAgent     @relation(fields: [pospId], references: [id])
+  company             InsuranceCompany @relation(fields: [companyId], references: [id])
+  product             InsuranceProduct @relation(fields: [productId], references: [id])
+  endorsements        Endorsement[]
+  claims              InsuranceClaim[]
+  commissions         InsuranceCommission[]
+  statusHistory       PolicyStatusHistory[]
+  documents           PolicyDocument[]
+  inspections         VehicleInspection[]
+
+  @@index([pospId])
+  @@index([companyId])
+  @@index([lob])
+  @@index([status])
+  @@index([endDate])
+  @@index([renewalStatus])
+  @@index([customerPhone])
+  @@index([vehicleRegNumber])
+  @@index([policyNumber])
+}
+
+model PolicyStatusHistory {
+  id          String   @id @default(cuid())
+  policyId    String
+  fromStatus  String
+  toStatus    String
+  changedBy   String
+  reason      String?
+  createdAt   DateTime @default(now())
+
+  policy      InsurancePolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+
+  @@index([policyId])
+}
+
+model PolicyDocument {
+  id            String    @id @default(cuid())
+  policyId      String
+  documentType  String    // PROPOSAL_FORM, POLICY_COPY, ID_PROOF, ADDRESS_PROOF, VEHICLE_RC, MEDICAL_REPORT, PAYMENT_RECEIPT, etc.
+  fileName      String
+  filePath      String
+  fileSize      Int?
+  isVerified    Boolean   @default(false)
+  verifiedBy    String?
+  verifiedAt    DateTime?
+  createdAt     DateTime  @default(now())
+
+  policy        InsurancePolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+
+  @@index([policyId])
+}
+
+// ============================================================================
+// MODULE 5: VEHICLE INSPECTION (Self-Inspection for Break-In)
+// ============================================================================
+
+model VehicleInspection {
+  id                String           @id @default(cuid())
+  policyId          String?
+  leadId            String?
+  vehicleRegNumber  String
+  inspectionType    String           // SELF, PHYSICAL, VIDEO
+  status            InspectionStatus @default(SCHEDULED)
+  scheduledAt       DateTime?
+  completedAt       DateTime?
+  inspectorName     String?
+  inspectorPhone    String?
+
+  // Photos (structured storage)
+  frontPhoto        String?
+  rearPhoto         String?
+  leftSidePhoto     String?
+  rightSidePhoto    String?
+  dashboardPhoto    String?
+  odometerPhoto     String?
+  chassisNumberPhoto String?
+  engineNumberPhoto String?
+  additionalPhotos  Json?           // Array of URLs
+  videoUrl          String?
+
+  // Vaahan Data
+  vaahanData        Json?           // Full Vaahan API response
+  vaahanFetched     Boolean         @default(false)
+
+  // Review
+  reviewedBy        String?
+  reviewedAt        DateTime?
+  reviewRemarks     String?
+  isApproved        Boolean?
+
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  policy            InsurancePolicy? @relation(fields: [policyId], references: [id])
+
+  @@index([vehicleRegNumber])
+  @@index([status])
+}
+
+// ============================================================================
+// MODULE 6: CLAIMS MANAGEMENT
+// ============================================================================
+
+model InsuranceClaim {
+  id                  String      @id @default(cuid())
+  claimCode           String      @unique // CLM-20260225-00001
+  policyId            String
+  pospId              String?
+
+  // Claim Details
+  claimType           String      // CASHLESS, REIMBURSEMENT, OWN_DAMAGE, THIRD_PARTY, DEATH, MATURITY
+  status              ClaimStatus @default(INTIMATED)
+  incidentDate        DateTime
+  intimationDate      DateTime    @default(now())
+  description         String
+  estimatedAmount     Decimal?    @db.Decimal(18, 2)
+  claimedAmount       Decimal?    @db.Decimal(18, 2)
+  approvedAmount      Decimal?    @db.Decimal(18, 2)
+  settledAmount       Decimal?    @db.Decimal(18, 2)
+  deductionAmount     Decimal?    @db.Decimal(18, 2)
+  deductionReason     String?
+
+  // Hospital/Garage Details (Health/Motor)
+  providerName        String?     // Hospital or Garage name
+  providerCity        String?
+  providerState       String?
+  admissionDate       DateTime?
+  dischargeDate       DateTime?
+
+  // Surveyor Details (Motor)
+  surveyorName        String?
+  surveyorPhone       String?
+  surveyorReportUrl   String?
+  surveyDate          DateTime?
+
+  // Insurer Reference
+  insurerClaimNumber  String?
+  insurerRemarks      String?
+
+  // Resolution
+  rejectionReason     String?
+  settledAt           DateTime?
+  closedAt            DateTime?
+  closedBy            String?
+
+  // Allocated to
+  assignedToUserId    String?
+
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  // Relations
+  policy              InsurancePolicy @relation(fields: [policyId], references: [id])
+  documents           ClaimDocument[]
+  statusHistory       ClaimStatusHistory[]
+
+  @@index([policyId])
+  @@index([status])
+  @@index([claimType])
+  @@index([assignedToUserId])
+}
+
+model ClaimDocument {
+  id            String    @id @default(cuid())
+  claimId       String
+  documentType  String    // CLAIM_FORM, HOSPITAL_BILL, DISCHARGE_SUMMARY, FIR, SURVEY_REPORT, REPAIR_ESTIMATE, etc.
+  fileName      String
+  filePath      String
+  fileSize      Int?
+  isVerified    Boolean   @default(false)
+  verifiedBy    String?
+  remarks       String?
+  createdAt     DateTime  @default(now())
+
+  claim         InsuranceClaim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  @@index([claimId])
+}
+
+model ClaimStatusHistory {
+  id          String   @id @default(cuid())
+  claimId     String
+  fromStatus  String
+  toStatus    String
+  changedBy   String
+  reason      String?
+  createdAt   DateTime @default(now())
+
+  claim       InsuranceClaim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  @@index([claimId])
+}
+
+// ============================================================================
+// MODULE 7: ENDORSEMENTS
+// ============================================================================
+
+model Endorsement {
+  id                  String            @id @default(cuid())
+  endorsementCode     String            @unique // END-20260225-00001
+  policyId            String
+  type                EndorsementType
+  status              EndorsementStatus @default(REQUESTED)
+  description         String
+  requestedChanges    Json              // {field: oldValue, newValue}
+  oldValues           Json?
+  newValues           Json?
+  premiumDifference   Decimal?          @db.Decimal(12, 2)
+  additionalPremium   Decimal?          @db.Decimal(12, 2)
+  refundAmount        Decimal?          @db.Decimal(12, 2)
+  endorsementDate     DateTime?
+  insurerEndorsementNo String?
+  requestedBy         String
+  processedBy         String?
+  processedAt         DateTime?
+  rejectionReason     String?
+  assignedToUserId    String?
+  remarks             String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  // Relations
+  policy              InsurancePolicy   @relation(fields: [policyId], references: [id])
+  documents           EndorsementDocument[]
+  statusHistory       EndorsementStatusHistory[]
+
+  @@index([policyId])
+  @@index([status])
+  @@index([type])
+  @@index([assignedToUserId])
+}
+
+model EndorsementDocument {
+  id            String    @id @default(cuid())
+  endorsementId String
+  documentType  String
+  fileName      String
+  filePath      String
+  fileSize      Int?
+  isVerified    Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+
+  endorsement   Endorsement @relation(fields: [endorsementId], references: [id], onDelete: Cascade)
+
+  @@index([endorsementId])
+}
+
+model EndorsementStatusHistory {
+  id              String   @id @default(cuid())
+  endorsementId   String
+  fromStatus      String
+  toStatus        String
+  changedBy       String
+  reason          String?
+  createdAt       DateTime @default(now())
+
+  endorsement     Endorsement @relation(fields: [endorsementId], references: [id], onDelete: Cascade)
+
+  @@index([endorsementId])
+}
+
+// ============================================================================
+// MODULE 8: INSURANCE COMMISSION ENGINE (SLAB-BASED)
+// ============================================================================
+
+model InsuranceCommissionSlab {
+  id              String    @id @default(cuid())
+  companyId       String
+  productId       String?   // null = applies to all products of company
+  lob             InsuranceLOB
+  commissionType  InsuranceCommissionType
+  slabName        String    // e.g., "0-25L", "25L-50L", "50L-1Cr"
+  minPremium      Decimal   @db.Decimal(18, 2) // Slab start (cumulative premium)
+  maxPremium      Decimal   @db.Decimal(18, 2) // Slab end
+  brokerRate      Decimal   @db.Decimal(8, 4)  // % commission for Trustner from insurer
+  pospShareRate   Decimal   @db.Decimal(8, 4)  // % of broker commission shared with POSP
+  effectiveFrom   DateTime
+  effectiveTo     DateTime?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  company         InsuranceCompany  @relation(fields: [companyId], references: [id])
+  product         InsuranceProduct? @relation(fields: [productId], references: [id])
+
+  @@index([companyId, lob, isActive])
+  @@index([productId])
+}
+
+model InsuranceCommission {
+  id                  String                  @id @default(cuid())
+  policyId            String
+  pospId              String
+  companyId           String?
+  commissionType      InsuranceCommissionType
+  netPremium          Decimal                 @db.Decimal(18, 2)
+  brokerCommissionPct Decimal                 @db.Decimal(8, 4) // % from insurer
+  brokerCommissionAmt Decimal                 @db.Decimal(18, 4) // Total broker commission
+  pospSharePct        Decimal                 @db.Decimal(8, 4) // POSP's share %
+  pospCommissionAmt   Decimal                 @db.Decimal(18, 4) // POSP's commission
+  trustnerRetention   Decimal                 @db.Decimal(18, 4) // Trustner's retention
+  tdsAmount           Decimal                 @default(0) @db.Decimal(18, 4)
+  gstAmount           Decimal                 @default(0) @db.Decimal(18, 4)
+  netPayable          Decimal                 @db.Decimal(18, 4) // Final POSP payout
+  slabApplied         String?                 // Which slab was used
+  status              CommissionStatus        @default(PENDING)
+  periodMonth         Int
+  periodYear          Int
+  receivedFromInsurer Boolean                 @default(false)
+  receivedDate        DateTime?
+  receivedAmount      Decimal?                @db.Decimal(18, 4)
+  reconciled          Boolean                 @default(false)
+  isClawback          Boolean                 @default(false)
+  clawbackRefId       String?
+  remarks             String?
+  calculatedAt        DateTime?
+  approvedAt          DateTime?
+  approvedBy          String?
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+
+  // Relations
+  policy              InsurancePolicy         @relation(fields: [policyId], references: [id])
+  posp                POSPAgent               @relation(fields: [pospId], references: [id])
+  payoutItems         InsurancePayoutItem[]
+
+  @@index([pospId])
+  @@index([policyId])
+  @@index([status])
+  @@index([periodMonth, periodYear])
+  @@index([commissionType])
+}
+
+model InsurancePayout {
+  id              String       @id @default(cuid())
+  pospId          String
+  payoutCode      String       @unique // IPAY-202602-001
+  periodMonth     Int
+  periodYear      Int
+  grossAmount     Decimal      @db.Decimal(18, 4)
+  tdsAmount       Decimal      @db.Decimal(18, 4)
+  gstAmount       Decimal      @db.Decimal(18, 4)
+  clawbackAmount  Decimal      @default(0) @db.Decimal(18, 4)
+  netPayable      Decimal      @db.Decimal(18, 4)
+  bankRefNumber   String?
+  paidAt          DateTime?
+  status          PayoutStatus @default(PENDING)
+  approvedBy      String?
+  approvedAt      DateTime?
+  statementUrl    String?
+  excelUrl        String?
+  remarks         String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  posp            POSPAgent    @relation(fields: [pospId], references: [id])
+  items           InsurancePayoutItem[]
+
+  @@unique([pospId, periodMonth, periodYear])
+  @@index([pospId])
+  @@index([status])
+}
+
+model InsurancePayoutItem {
+  id              String    @id @default(cuid())
+  payoutId        String
+  commissionId    String
+
+  payout          InsurancePayout     @relation(fields: [payoutId], references: [id], onDelete: Cascade)
+  commission      InsuranceCommission @relation(fields: [commissionId], references: [id])
+
+  @@unique([payoutId, commissionId])
+}
+
+// ============================================================================
+// MODULE 9: SUPPORT TICKETS
+// ============================================================================
+
+model SupportTicket {
+  id              String         @id @default(cuid())
+  ticketCode      String         @unique // TKT-20260225-00001
+  pospId          String?
+  customerId      String?
+  policyNumber    String?
+  category        TicketCategory
+  priority        TicketPriority @default(MEDIUM)
+  status          TicketStatus   @default(OPEN)
+  subject         String
+  description     String
+  assignedToUserId String?
+  resolvedAt      DateTime?
+  resolvedBy      String?
+  resolution      String?
+  slaDeadline     DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  posp            POSPAgent?     @relation("TicketAgent", fields: [pospId], references: [id])
+  comments        TicketComment[]
+
+  @@index([pospId])
+  @@index([status])
+  @@index([priority])
+  @@index([category])
+  @@index([assignedToUserId])
+}
+
+model TicketComment {
+  id          String   @id @default(cuid())
+  ticketId    String
+  authorId    String
+  authorName  String
+  content     String
+  isInternal  Boolean  @default(false) // Internal note vs customer-visible
+  attachments Json?    // Array of file URLs
+  createdAt   DateTime @default(now())
+
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+}
+
+// ============================================================================
+// MODULE 10: RENEWALS ENGINE
+// ============================================================================
+
+model RenewalTracker {
+  id                  String        @id @default(cuid())
+  policyId            String        @unique
+  pospId              String
+  customerName        String
+  customerPhone       String
+  lob                 InsuranceLOB
+  companyName         String
+  policyNumber        String
+  expiryDate          DateTime
+  premiumAmount       Decimal       @db.Decimal(12, 2)
+  status              RenewalStatus @default(UPCOMING_90_DAYS)
+  reminder90DaySent   Boolean       @default(false)
+  reminder60DaySent   Boolean       @default(false)
+  reminder30DaySent   Boolean       @default(false)
+  reminder15DaySent   Boolean       @default(false)
+  reminder7DaySent    Boolean       @default(false)
+  reminderDueDaySent  Boolean       @default(false)
+  lastContactedAt     DateTime?
+  lastContactedBy     String?
+  contactNotes        String?
+  renewedPolicyId     String?
+  lostReason          String?
+  competitorName      String?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@index([pospId])
+  @@index([expiryDate])
+  @@index([status])
+  @@index([lob])
+}
+
+// ============================================================================
+// MODULE 11: VAAHAN INTEGRATION CACHE
+// ============================================================================
+
+model VaahanLookup {
+  id                  String    @id @default(cuid())
+  registrationNumber  String    @unique
+  ownerName           String?
+  fatherName          String?
+  vehicleClass        String?
+  maker               String?
+  model               String?
+  fuelType            String?
+  color               String?
+  manufacturingDate   DateTime?
+  registrationDate    DateTime?
+  fitnessUpto         DateTime?
+  insuranceUpto       DateTime?
+  insuranceCompany    String?
+  policyNumber        String?
+  chassisNumber       String?   // Masked
+  engineNumber        String?   // Masked
+  rtoCode             String?
+  rtoName             String?
+  vehicleAge          Int?
+  seatingCapacity     Int?
+  grossWeight         Int?
+  bodyType            String?
+  rawResponse         Json?
+  fetchedAt           DateTime  @default(now())
+  expiresAt           DateTime  // Cache expiry (24 hours typically)
+
+  @@index([registrationNumber])
+  @@index([expiresAt])
+}
+
+// ============================================================================
+// MODULE 12: IRDAI REGULATORY REPORTS
+// ============================================================================
+
+model IRDAIReport {
+  id              String    @id @default(cuid())
+  reportType      String    // MONTHLY_BUSINESS, QUARTERLY_AUDIT, ANNUAL_RETURN, SP_BQP_LIST, COMPLAINT_REGISTER, CLAIMS_REGISTER
+  periodMonth     Int?
+  periodYear      Int
+  periodQuarter   Int?      // 1-4
+  generatedAt     DateTime  @default(now())
+  generatedBy     String
+  fileUrl         String?
+  status          String    @default("GENERATED") // GENERATED, REVIEWED, SUBMITTED
+  submittedAt     DateTime?
+  submittedBy     String?
+  remarks         String?
+
+  @@index([reportType, periodYear])
+}
+
+// ============================================================================
+// MODULE 13: BULK OFFLINE BOOKING
+// ============================================================================
+
+model BulkBooking {
+  id              String    @id @default(cuid())
+  batchCode       String    @unique // BULK-20260225-001
+  uploadedBy      String
+  fileName        String
+  filePath        String
+  totalRecords    Int       @default(0)
+  processedRecords Int      @default(0)
+  successRecords  Int       @default(0)
+  failedRecords   Int       @default(0)
+  status          String    @default("UPLOADED") // UPLOADED, VALIDATING, PROCESSING, COMPLETED, FAILED
+  errorLog        Json?
+  lob             InsuranceLOB
+  processedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([status])
+  @@index([uploadedBy])
+}
+
+// ============================================================================
+// MODULE 14: INSURANCE SYSTEM CONFIGURATION
+// ============================================================================
+
+model InsuranceConfig {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  category    String   // COMMISSION, RENEWAL, COMPLIANCE, INTEGRATION, GENERAL
+  description String?
+  isEditable  Boolean  @default(true)
+  updatedBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+}

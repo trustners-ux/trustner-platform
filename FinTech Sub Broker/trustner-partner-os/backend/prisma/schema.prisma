@@ -1,0 +1,2196 @@
+// ============================================================================
+// TRUSTNER PARTNER OS - Complete Unified Database Schema
+// B2B2C Fintech Distribution Platform + Insurance Broking Module
+// Scalable to 100,000+ users | IPO-Ready Architecture
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// SECTION 1: ENUMS - MF MODULE
+// ============================================================================
+
+enum UserRole {
+  SUPER_ADMIN
+  COMPLIANCE_ADMIN
+  FINANCE_ADMIN
+  REGIONAL_HEAD
+  SUB_BROKER
+  CLIENT
+  POSP
+}
+
+enum SubBrokerStatus {
+  PENDING_APPROVAL
+  DOCUMENTS_SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  ACTIVE
+  SUSPENDED
+  TERMINATED
+}
+
+enum ClientStatus {
+  PROSPECT
+  KYC_PENDING
+  KYC_SUBMITTED
+  KYC_VERIFIED
+  ACTIVE
+  DORMANT
+  BLOCKED
+}
+
+enum KYCStatus {
+  NOT_STARTED
+  PAN_VERIFIED
+  AADHAAR_VERIFIED
+  CKYC_FETCHED
+  BANK_VERIFIED
+  FATCA_DONE
+  COMPLETE
+  REJECTED
+}
+
+enum RiskProfile {
+  CONSERVATIVE
+  MODERATELY_CONSERVATIVE
+  MODERATE
+  MODERATELY_AGGRESSIVE
+  AGGRESSIVE
+}
+
+enum TransactionType {
+  LUMPSUM
+  SIP
+  STP
+  SWP
+  REDEMPTION
+  SWITCH
+}
+
+enum TransactionStatus {
+  INITIATED
+  PAYMENT_PENDING
+  PAYMENT_RECEIVED
+  SUBMITTED_TO_BSE
+  BSE_ACCEPTED
+  BSE_REJECTED
+  ALLOTMENT_DONE
+  FAILED
+  CANCELLED
+}
+
+enum SIPStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+  FAILED
+}
+
+enum SIPFrequency {
+  MONTHLY
+  QUARTERLY
+  WEEKLY
+  YEARLY
+}
+
+enum CommissionType {
+  TRAIL
+  UPFRONT
+  ADDITIONAL
+  CLAWBACK
+}
+
+enum CommissionStatus {
+  PENDING
+  CALCULATED
+  APPROVED
+  PAID
+  DISPUTED
+  CLAWBACK_APPLIED
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+  ON_HOLD
+}
+
+enum MandateStatus {
+  PENDING
+  APPROVED
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  FAILED
+}
+
+enum MandateType {
+  NACH
+  E_MANDATE
+  UPI_AUTOPAY
+}
+
+enum DocumentType {
+  PAN_CARD
+  AADHAAR_FRONT
+  AADHAAR_BACK
+  CANCELLED_CHEQUE
+  PASSPORT_PHOTO
+  ARN_CERTIFICATE
+  NISM_CERTIFICATE
+  POSP_CERTIFICATE
+  ADDRESS_PROOF
+  BANK_STATEMENT
+  GST_CERTIFICATE
+  BUSINESS_PROOF
+  AGREEMENT_SIGNED
+  FATCA_DECLARATION
+  NOMINATION_FORM
+}
+
+enum AlertSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AlertType {
+  ARN_EXPIRY
+  NISM_EXPIRY
+  POSP_EXPIRY
+  KYC_INCOMPLETE
+  COMPLIANCE_BREACH
+  COMMISSION_ANOMALY
+  TRANSACTION_FAILURE
+  SIP_BOUNCE
+  MANDATE_EXPIRY
+  SECURITY_ALERT
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  APPROVE
+  REJECT
+  SUSPEND
+  TRANSACTION
+  PAYOUT
+  EXPORT
+  CONFIG_CHANGE
+}
+
+enum BranchType {
+  HEAD_OFFICE
+  REGIONAL_OFFICE
+  BRANCH
+  FRANCHISE
+}
+
+// ============================================================================
+// SECTION 2: ENUMS - INSURANCE MODULE
+// ============================================================================
+
+enum POSPStatus {
+  APPLICATION_RECEIVED
+  TRAINING_IN_PROGRESS
+  TRAINING_COMPLETED
+  EXAM_SCHEDULED
+  EXAM_PASSED
+  EXAM_FAILED
+  CERTIFICATE_ISSUED
+  ACTIVE
+  SUSPENDED
+  TERMINATED
+  RENEWAL_PENDING
+}
+
+enum POSPCategory {
+  LIFE
+  GENERAL
+  HEALTH
+  LIFE_AND_GENERAL
+  LIFE_AND_HEALTH
+  GENERAL_AND_HEALTH
+  ALL
+}
+
+enum InsuranceLOB {
+  MOTOR_TWO_WHEELER
+  MOTOR_FOUR_WHEELER
+  MOTOR_COMMERCIAL
+  HEALTH_INDIVIDUAL
+  HEALTH_FAMILY_FLOATER
+  HEALTH_GROUP
+  HEALTH_CRITICAL_ILLNESS
+  HEALTH_TOP_UP
+  LIFE_TERM
+  LIFE_ENDOWMENT
+  LIFE_ULIP
+  LIFE_WHOLE_LIFE
+  TRAVEL
+  HOME
+  FIRE
+  MARINE
+  LIABILITY
+  PA_PERSONAL_ACCIDENT
+  CYBER
+  OTHER
+}
+
+enum PolicyStatus {
+  QUOTE_GENERATED
+  PROPOSAL_SUBMITTED
+  PROPOSAL_UNDER_REVIEW
+  PAYMENT_PENDING
+  PAYMENT_RECEIVED
+  POLICY_ISSUED
+  POLICY_ACTIVE
+  POLICY_EXPIRED
+  POLICY_CANCELLED
+  POLICY_LAPSED
+  CLAIM_IN_PROGRESS
+  ENDORSEMENT_IN_PROGRESS
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUOTE_SHARED
+  FOLLOW_UP
+  PROPOSAL_STAGE
+  PAYMENT_PENDING
+  CONVERTED
+  LOST
+  JUNK
+}
+
+enum LeadSource {
+  WEBSITE
+  REFERRAL
+  POSP_GENERATED
+  WALK_IN
+  PHONE_CALL
+  WHATSAPP
+  SOCIAL_MEDIA
+  RENEWAL
+  CAMPAIGN
+  OTHER
+}
+
+enum ClaimStatus {
+  INTIMATED
+  DOCUMENTS_PENDING
+  DOCUMENTS_SUBMITTED
+  UNDER_INVESTIGATION
+  SURVEYOR_APPOINTED
+  SURVEY_COMPLETED
+  APPROVED
+  PARTIALLY_APPROVED
+  REJECTED
+  SETTLED
+  CLOSED
+  REOPENED
+}
+
+enum EndorsementStatus {
+  REQUESTED
+  DOCUMENTS_PENDING
+  DOCUMENTS_SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  PROCESSED
+  COMPLETED
+}
+
+enum EndorsementType {
+  NAME_CHANGE
+  ADDRESS_CHANGE
+  NOMINEE_CHANGE
+  SUM_INSURED_CHANGE
+  ADD_MEMBER
+  REMOVE_MEMBER
+  VEHICLE_TRANSFER
+  HYPOTHECATION_CHANGE
+  NCB_CORRECTION
+  COVERAGE_CHANGE
+  PREMIUM_ADJUSTMENT
+  OTHER
+}
+
+enum InspectionStatus {
+  SCHEDULED
+  IN_PROGRESS
+  PHOTOS_UPLOADED
+  VIDEO_UPLOADED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum InsuranceCommissionType {
+  FIRST_YEAR
+  RENEWAL
+  OVERRIDE
+  BONUS
+  CLAWBACK
+}
+
+enum RenewalStatus {
+  UPCOMING_90_DAYS
+  UPCOMING_60_DAYS
+  UPCOMING_30_DAYS
+  UPCOMING_15_DAYS
+  DUE
+  OVERDUE
+  RENEWED
+  LAPSED
+  LOST_TO_COMPETITOR
+}
+
+enum TicketStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  AWAITING_CUSTOMER
+  AWAITING_INSURER
+  RESOLVED
+  CLOSED
+  REOPENED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TicketCategory {
+  POLICY_QUERY
+  CLAIM_SUPPORT
+  ENDORSEMENT
+  PAYMENT_ISSUE
+  RENEWAL
+  TECHNICAL
+  COMPLAINT
+  OTHER
+}
+
+// ============================================================================
+// MODULE 1: USER & AUTHENTICATION
+// ============================================================================
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  phone           String    @unique
+  passwordHash    String
+  role            UserRole
+  isActive        Boolean   @default(true)
+  isEmailVerified Boolean   @default(false)
+  isPhoneVerified Boolean   @default(false)
+  twoFactorEnabled Boolean  @default(false)
+  twoFactorSecret String?
+  lastLoginAt     DateTime?
+  lastLoginIp     String?
+  failedAttempts  Int       @default(0)
+  lockedUntil     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  profile         UserProfile?
+  subBroker       SubBroker?
+  client          Client?
+  pospAgent       POSPAgent?
+  sessions        UserSession[]
+  auditLogs       AuditLog[]
+  notifications   Notification[]
+
+  @@index([email])
+  @@index([phone])
+  @@index([role, isActive])
+}
+
+model UserProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  firstName     String
+  lastName      String
+  displayName   String?
+  dateOfBirth   DateTime?
+  gender        String?
+  avatarUrl     String?
+  addressLine1  String?
+  addressLine2  String?
+  city          String?
+  state         String?
+  pincode       String?
+  country       String   @default("IN")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserSession {
+  id           String   @id @default(cuid())
+  userId       String
+  token        String   @unique
+  refreshToken String   @unique
+  deviceInfo   String?
+  ipAddress    String?
+  userAgent    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+}
+
+// ============================================================================
+// MODULE 2: SUB-BROKER / PARTNER MANAGEMENT (MF)
+// ============================================================================
+
+model SubBroker {
+  id                String          @id @default(cuid())
+  userId            String          @unique
+  code              String          @unique  // TRUSTNER-SB-001
+  arnNumber         String?
+  arnValidTill      DateTime?
+  euinNumber        String?
+  euinValidTill     DateTime?
+  nismCertNumber    String?
+  nismValidTill     DateTime?
+  pospLicenseNumber String?
+  pospValidTill     DateTime?
+  panNumber         String?         // Encrypted
+  gstNumber         String?
+  bankAccountName   String?
+  bankAccountNumber String?         // Encrypted
+  bankIfscCode      String?
+  bankName          String?
+  branchId          String?
+  regionalHeadId    String?
+  status            SubBrokerStatus @default(PENDING_APPROVAL)
+  approvedAt        DateTime?
+  approvedBy        String?
+  commissionTier    String          @default("STARTER")
+  revenueSharePct   Decimal         @default(50.00) @db.Decimal(5, 2)
+  agreementSignedAt DateTime?
+  remarks           String?
+  totalAum          Decimal         @default(0) @db.Decimal(18, 2)
+  totalClients      Int             @default(0)
+  totalSipBook      Decimal         @default(0) @db.Decimal(18, 2)
+  joiningDate       DateTime        @default(now())
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // Relations
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branch            Branch?         @relation(fields: [branchId], references: [id])
+  clients           Client[]
+  documents         Document[]
+  commissions       Commission[]
+  payouts           Payout[]
+  aumRecords        AumRecord[]
+  sipRegistrations  SIPRegistration[]
+  complianceAlerts  ComplianceAlert[]
+  marketingAssets   MarketingAsset[]
+  targets           PartnerTarget[]
+  referrals         Referral[]      @relation("ReferredBy")
+  referredBy        Referral?       @relation("ReferredTo")
+  // Cross-reference to POSP: A SubBroker can also be a POSP Agent
+  pospAgent         POSPAgent?
+
+  @@index([status])
+  @@index([arnNumber])
+  @@index([branchId])
+  @@index([regionalHeadId])
+  @@index([commissionTier])
+}
+
+model Branch {
+  id          String     @id @default(cuid())
+  code        String     @unique
+  name        String
+  type        BranchType
+  address     String?
+  city        String
+  state       String
+  pincode     String?
+  headId      String?    // Regional Head userId
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  subBrokers  SubBroker[]
+
+  @@index([city, state])
+}
+
+// ============================================================================
+// MODULE 3: CLIENT MANAGEMENT & KYC (MF)
+// ============================================================================
+
+model Client {
+  id                String       @id @default(cuid())
+  userId            String       @unique
+  subBrokerId       String
+  clientCode        String       @unique  // TRUSTNER-C-00001
+  panNumber         String?      // Encrypted
+  aadhaarNumber     String?      // Encrypted (last 4 stored)
+  aadhaarRefId      String?
+  taxStatus         String       @default("INDIVIDUAL")
+  occupation        String?
+  annualIncome      String?
+  kycStatus         KYCStatus    @default(NOT_STARTED)
+  ckycNumber        String?
+  riskProfile       RiskProfile?
+  riskScore         Int?
+  riskAssessedAt    DateTime?
+  bseClientCode     String?      // BSE Star MF client code
+  nseClientCode     String?
+  nomineeDetails    Json?
+  fatcaCompliant    Boolean      @default(false)
+  status            ClientStatus @default(PROSPECT)
+  totalInvested     Decimal      @default(0) @db.Decimal(18, 2)
+  currentValue      Decimal      @default(0) @db.Decimal(18, 2)
+  totalSipAmount    Decimal      @default(0) @db.Decimal(18, 2)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  // Relations
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subBroker         SubBroker    @relation(fields: [subBrokerId], references: [id])
+  bankAccounts      ClientBankAccount[]
+  documents         Document[]
+  transactions      Transaction[]
+  sipRegistrations  SIPRegistration[]
+  holdings          Holding[]
+  goals             InvestmentGoal[]
+  riskAssessments   RiskAssessment[]
+
+  @@index([subBrokerId])
+  @@index([panNumber])
+  @@index([kycStatus])
+  @@index([status])
+  @@index([bseClientCode])
+}
+
+model ClientBankAccount {
+  id              String   @id @default(cuid())
+  clientId        String
+  accountNumber   String   // Encrypted
+  ifscCode        String
+  bankName        String
+  branchName      String?
+  accountType     String   @default("SAVINGS")
+  isVerified      Boolean  @default(false)
+  isPrimary       Boolean  @default(false)
+  verifiedAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  client          Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+}
+
+model RiskAssessment {
+  id            String      @id @default(cuid())
+  clientId      String
+  responses     Json        // Array of {questionId, answer, score}
+  totalScore    Int
+  riskProfile   RiskProfile
+  suggestedAllocation Json  // {equity: 60, debt: 30, gold: 10}
+  assessedAt    DateTime    @default(now())
+
+  client        Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+}
+
+// ============================================================================
+// MODULE 4: MUTUAL FUND SCHEMES & NAV
+// ============================================================================
+
+model MutualFundScheme {
+  id              String    @id @default(cuid())
+  schemeCode      String    @unique  // BSE/AMFI scheme code
+  amfiCode        String?
+  schemeName      String
+  amcName         String
+  amcCode         String?
+  category        String    // Equity, Debt, Hybrid, etc.
+  subCategory     String?   // Large Cap, Mid Cap, etc.
+  schemeType      String    // Open-ended, Close-ended
+  planType        String    // DIRECT, REGULAR
+  optionType      String    // GROWTH, IDCW
+  riskCategory    String?   // Low, Moderate, High, Very High
+  latestNav       Decimal?  @db.Decimal(12, 4)
+  navDate         DateTime?
+  aum             Decimal?  @db.Decimal(18, 2)
+  expenseRatio    Decimal?  @db.Decimal(5, 4)
+  minLumpsum      Decimal?  @db.Decimal(12, 2)
+  minSip          Decimal?  @db.Decimal(12, 2)
+  minSipFrequency String?
+  exitLoad        String?
+  lockInPeriod    Int?      // in days
+  benchmarkIndex  String?
+  fundManagerName String?
+  launchDate      DateTime?
+  isActive        Boolean   @default(true)
+  sipAllowed      Boolean   @default(true)
+  stpAllowed      Boolean   @default(true)
+  swpAllowed      Boolean   @default(true)
+  switchAllowed   Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  navHistory      NavHistory[]
+  holdings        Holding[]
+  transactions    Transaction[]
+  sipRegistrations SIPRegistration[]
+  commissionRates  SchemeCommissionRate[]
+
+  @@index([schemeCode])
+  @@index([amcCode])
+  @@index([category, subCategory])
+  @@index([planType])
+  @@index([isActive])
+}
+
+model NavHistory {
+  id          String   @id @default(cuid())
+  schemeId    String
+  nav         Decimal  @db.Decimal(12, 4)
+  navDate     DateTime
+  createdAt   DateTime @default(now())
+
+  scheme      MutualFundScheme @relation(fields: [schemeId], references: [id])
+
+  @@unique([schemeId, navDate])
+  @@index([schemeId, navDate])
+}
+
+// ============================================================================
+// MODULE 5: TRANSACTIONS (MF)
+// ============================================================================
+
+model Transaction {
+  id                  String            @id @default(cuid())
+  transactionCode     String            @unique // TXN-20260225-00001
+  clientId            String
+  subBrokerId         String?
+  schemeId            String
+  type                TransactionType
+  amount              Decimal           @db.Decimal(18, 2)
+  units               Decimal?          @db.Decimal(18, 4)
+  nav                 Decimal?          @db.Decimal(12, 4)
+  folioNumber         String?
+  bseOrderId          String?
+  bseOrderStatus      String?
+  paymentMode         String?           // NETBANKING, UPI, NACH
+  paymentRefId        String?
+  stampDuty           Decimal?          @db.Decimal(12, 2)
+  stt                 Decimal?          @db.Decimal(12, 2)
+  exitLoadAmount      Decimal?          @db.Decimal(12, 2)
+  status              TransactionStatus @default(INITIATED)
+  remarks             String?
+  switchToSchemeId    String?
+  stpToSchemeId       String?
+  allotmentDate       DateTime?
+  allotmentNav        Decimal?          @db.Decimal(12, 4)
+  allotmentUnits      Decimal?          @db.Decimal(18, 4)
+  failureReason       String?
+  submittedAt         DateTime?
+  completedAt         DateTime?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  // Relations
+  client              Client            @relation(fields: [clientId], references: [id])
+  scheme              MutualFundScheme  @relation(fields: [schemeId], references: [id])
+
+  @@index([clientId])
+  @@index([subBrokerId])
+  @@index([type])
+  @@index([status])
+  @@index([bseOrderId])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// MODULE 6: SIP MANAGEMENT (MF)
+// ============================================================================
+
+model SIPRegistration {
+  id                String       @id @default(cuid())
+  sipCode           String       @unique // SIP-20260225-00001
+  clientId          String
+  subBrokerId       String
+  schemeId          String
+  amount            Decimal      @db.Decimal(18, 2)
+  frequency         SIPFrequency @default(MONTHLY)
+  sipDate           Int          // Day of month (1-28)
+  startDate         DateTime
+  endDate           DateTime?
+  totalInstallments Int?
+  completedInstallments Int      @default(0)
+  missedInstallments    Int      @default(0)
+  mandateId         String?
+  bseSipRegId       String?      // BSE SIP Registration ID
+  folioNumber       String?
+  status            SIPStatus    @default(ACTIVE)
+  nextDueDate       DateTime?
+  lastProcessedDate DateTime?
+  totalInvested     Decimal      @default(0) @db.Decimal(18, 2)
+  pausedAt          DateTime?
+  cancelledAt       DateTime?
+  remarks           String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  // Relations
+  client            Client       @relation(fields: [clientId], references: [id])
+  subBroker         SubBroker    @relation(fields: [subBrokerId], references: [id])
+  scheme            MutualFundScheme @relation(fields: [schemeId], references: [id])
+  mandate           Mandate?     @relation(fields: [mandateId], references: [id])
+  installments      SIPInstallment[]
+
+  @@index([clientId])
+  @@index([subBrokerId])
+  @@index([status])
+  @@index([nextDueDate])
+}
+
+model SIPInstallment {
+  id              String   @id @default(cuid())
+  sipId           String
+  installmentNo   Int
+  dueDate         DateTime
+  amount          Decimal  @db.Decimal(18, 2)
+  status          String   @default("PENDING") // PENDING, SUCCESS, FAILED, BOUNCED
+  transactionId   String?
+  nav             Decimal? @db.Decimal(12, 4)
+  units           Decimal? @db.Decimal(18, 4)
+  failureReason   String?
+  processedAt     DateTime?
+  createdAt       DateTime @default(now())
+
+  sip             SIPRegistration @relation(fields: [sipId], references: [id], onDelete: Cascade)
+
+  @@unique([sipId, installmentNo])
+  @@index([sipId])
+  @@index([dueDate, status])
+}
+
+// ============================================================================
+// MODULE 7: MANDATE / NACH / eMANDATE (MF)
+// ============================================================================
+
+model Mandate {
+  id              String        @id @default(cuid())
+  clientId        String
+  mandateType     MandateType
+  mandateRefId    String?       @unique  // BSE/Bank mandate reference
+  bankAccountId   String?
+  amount          Decimal       @db.Decimal(18, 2) // Max mandate amount
+  startDate       DateTime
+  endDate         DateTime
+  status          MandateStatus @default(PENDING)
+  approvedAt      DateTime?
+  cancelledAt     DateTime?
+  remarks         String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  sipRegistrations SIPRegistration[]
+
+  @@index([clientId])
+  @@index([status])
+}
+
+// ============================================================================
+// MODULE 8: PORTFOLIO HOLDINGS (MF)
+// ============================================================================
+
+model Holding {
+  id              String   @id @default(cuid())
+  clientId        String
+  schemeId        String
+  folioNumber     String
+  units           Decimal  @db.Decimal(18, 4)
+  investedAmount  Decimal  @db.Decimal(18, 2)
+  currentValue    Decimal  @db.Decimal(18, 2)
+  currentNav      Decimal  @db.Decimal(12, 4)
+  avgNav          Decimal  @db.Decimal(12, 4)
+  absoluteReturn  Decimal? @db.Decimal(10, 4) // percentage
+  xirr            Decimal? @db.Decimal(10, 4) // percentage
+  lastUpdatedAt   DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  client          Client   @relation(fields: [clientId], references: [id])
+  scheme          MutualFundScheme @relation(fields: [schemeId], references: [id])
+
+  @@unique([clientId, schemeId, folioNumber])
+  @@index([clientId])
+}
+
+// ============================================================================
+// MODULE 9: INVESTMENT GOALS (MF)
+// ============================================================================
+
+model InvestmentGoal {
+  id              String    @id @default(cuid())
+  clientId        String
+  goalName        String    // Retirement, Child Education, etc.
+  targetAmount    Decimal   @db.Decimal(18, 2)
+  targetDate      DateTime
+  currentValue    Decimal   @default(0) @db.Decimal(18, 2)
+  monthlySip      Decimal?  @db.Decimal(18, 2)
+  riskProfile     RiskProfile?
+  allocation      Json?     // {equity: %, debt: %, gold: %}
+  linkedSchemes   Json?     // Array of schemeIds
+  progressPct     Decimal   @default(0) @db.Decimal(5, 2)
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  client          Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+}
+
+// ============================================================================
+// MODULE 10: COMMISSION ENGINE (MF)
+// ============================================================================
+
+model SchemeCommissionRate {
+  id              String   @id @default(cuid())
+  schemeId        String
+  commissionType  CommissionType
+  ratePct         Decimal  @db.Decimal(8, 4) // Commission rate %
+  effectiveFrom   DateTime
+  effectiveTo     DateTime?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  scheme          MutualFundScheme @relation(fields: [schemeId], references: [id])
+
+  @@index([schemeId, commissionType, isActive])
+}
+
+model Commission {
+  id                String           @id @default(cuid())
+  subBrokerId       String
+  clientId          String?
+  schemeCode        String?
+  schemeName        String?
+  folioNumber       String?
+  transactionType   String?
+  grossAmount       Decimal          @db.Decimal(18, 4)  // From AMC/RTA
+  tdsAmount         Decimal          @default(0) @db.Decimal(18, 4)
+  gstAmount         Decimal          @default(0) @db.Decimal(18, 4)
+  netAmount         Decimal          @db.Decimal(18, 4)  // After TDS
+  subBrokerShare    Decimal          @db.Decimal(18, 4)  // Sub-broker's portion
+  trustnerShare     Decimal          @db.Decimal(18, 4)  // Trustner's retention
+  revenueSharePct   Decimal          @db.Decimal(5, 2)   // Applied %
+  commissionType    CommissionType
+  status            CommissionStatus @default(PENDING)
+  periodMonth       Int              // 1-12
+  periodYear        Int
+  rtaSource         String?          // CAMS, Karvy/KFintech
+  rtaFileRef        String?
+  clawbackRefId     String?          // Original commission ID if clawback
+  isClawback        Boolean          @default(false)
+  arnSplitApplied   Boolean          @default(false)
+  calculatedAt      DateTime?
+  approvedAt        DateTime?
+  approvedBy        String?
+  remarks           String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  // Relations
+  subBroker         SubBroker        @relation(fields: [subBrokerId], references: [id])
+  payoutItems       PayoutItem[]
+
+  @@index([subBrokerId])
+  @@index([commissionType])
+  @@index([status])
+  @@index([periodMonth, periodYear])
+  @@index([rtaSource])
+}
+
+model Payout {
+  id              String       @id @default(cuid())
+  subBrokerId     String
+  payoutCode      String       @unique // PAY-202602-001
+  periodMonth     Int
+  periodYear      Int
+  grossAmount     Decimal      @db.Decimal(18, 4)
+  tdsAmount       Decimal      @db.Decimal(18, 4)
+  gstAmount       Decimal      @db.Decimal(18, 4)
+  netPayable      Decimal      @db.Decimal(18, 4)
+  clawbackAmount  Decimal      @default(0) @db.Decimal(18, 4)
+  finalAmount     Decimal      @db.Decimal(18, 4)
+  bankRefNumber   String?
+  paidAt          DateTime?
+  status          PayoutStatus @default(PENDING)
+  approvedBy      String?
+  approvedAt      DateTime?
+  statementUrl    String?      // PDF statement path
+  excelUrl        String?      // Excel export path
+  remarks         String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // Relations
+  subBroker       SubBroker    @relation(fields: [subBrokerId], references: [id])
+  items           PayoutItem[]
+
+  @@unique([subBrokerId, periodMonth, periodYear])
+  @@index([subBrokerId])
+  @@index([status])
+  @@index([periodMonth, periodYear])
+}
+
+model PayoutItem {
+  id            String     @id @default(cuid())
+  payoutId      String
+  commissionId  String
+
+  payout        Payout     @relation(fields: [payoutId], references: [id], onDelete: Cascade)
+  commission    Commission @relation(fields: [commissionId], references: [id])
+
+  @@unique([payoutId, commissionId])
+}
+
+// ============================================================================
+// MODULE 11: AUM TRACKING (MF)
+// ============================================================================
+
+model AumRecord {
+  id            String    @id @default(cuid())
+  subBrokerId   String
+  totalAum      Decimal   @db.Decimal(18, 2)
+  equityAum     Decimal   @default(0) @db.Decimal(18, 2)
+  debtAum       Decimal   @default(0) @db.Decimal(18, 2)
+  hybridAum     Decimal   @default(0) @db.Decimal(18, 2)
+  otherAum      Decimal   @default(0) @db.Decimal(18, 2)
+  totalSipBook  Decimal   @default(0) @db.Decimal(18, 2)
+  activeSips    Int       @default(0)
+  totalClients  Int       @default(0)
+  activeClients Int       @default(0)
+  netInflows    Decimal   @default(0) @db.Decimal(18, 2)
+  recordDate    DateTime
+  createdAt     DateTime  @default(now())
+
+  subBroker     SubBroker @relation(fields: [subBrokerId], references: [id])
+
+  @@unique([subBrokerId, recordDate])
+  @@index([subBrokerId, recordDate])
+}
+
+// ============================================================================
+// MODULE 12: COMPLIANCE & ALERTS (MF)
+// ============================================================================
+
+model ComplianceAlert {
+  id            String        @id @default(cuid())
+  subBrokerId   String?
+  clientId      String?
+  type          AlertType
+  severity      AlertSeverity
+  title         String
+  description   String
+  dueDate       DateTime?
+  isResolved    Boolean       @default(false)
+  resolvedAt    DateTime?
+  resolvedBy    String?
+  resolution    String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  subBroker     SubBroker?    @relation(fields: [subBrokerId], references: [id])
+
+  @@index([subBrokerId])
+  @@index([type])
+  @@index([severity])
+  @@index([isResolved])
+}
+
+// ============================================================================
+// MODULE 13: DOCUMENTS (SHARED)
+// ============================================================================
+
+model Document {
+  id            String       @id @default(cuid())
+  subBrokerId   String?
+  clientId      String?
+  type          DocumentType
+  fileName      String
+  filePath      String
+  fileSize      Int?
+  mimeType      String?
+  isVerified    Boolean      @default(false)
+  verifiedAt    DateTime?
+  verifiedBy    String?
+  expiryDate    DateTime?
+  remarks       String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  subBroker     SubBroker?   @relation(fields: [subBrokerId], references: [id])
+  client        Client?      @relation(fields: [clientId], references: [id])
+
+  @@index([subBrokerId])
+  @@index([clientId])
+  @@index([type])
+}
+
+// ============================================================================
+// MODULE 14: NOTIFICATIONS (SHARED)
+// ============================================================================
+
+model Notification {
+  id          String    @id @default(cuid())
+  userId      String
+  title       String
+  body        String
+  channel     String    @default("IN_APP") // IN_APP, SMS, EMAIL, WHATSAPP, PUSH
+  isRead      Boolean   @default(false)
+  actionUrl   String?
+  metadata    Json?
+  sentAt      DateTime  @default(now())
+  readAt      DateTime?
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([sentAt])
+}
+
+// ============================================================================
+// MODULE 15: AUDIT LOG (SHARED)
+// ============================================================================
+
+model AuditLog {
+  id          String      @id @default(cuid())
+  userId      String?
+  action      AuditAction
+  entity      String      // Table name
+  entityId    String?
+  oldValue    Json?
+  newValue    Json?
+  ipAddress   String?
+  userAgent   String?
+  description String?
+  createdAt   DateTime    @default(now())
+
+  user        User?       @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// ============================================================================
+// MODULE 16: MARKETING & REFERRALS (MF)
+// ============================================================================
+
+model MarketingAsset {
+  id            String    @id @default(cuid())
+  subBrokerId   String?
+  title         String
+  description   String?
+  assetType     String    // CALCULATOR, SOCIAL_POST, REPORT_TEMPLATE, VIDEO
+  fileUrl       String?
+  thumbnailUrl  String?
+  isGlobal      Boolean   @default(true)  // Available to all partners
+  downloads     Int       @default(0)
+  shares        Int       @default(0)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  subBroker     SubBroker? @relation(fields: [subBrokerId], references: [id])
+
+  @@index([assetType])
+  @@index([isGlobal, isActive])
+}
+
+model Referral {
+  id              String    @id @default(cuid())
+  referredById    String    // SubBroker who referred
+  referredToId    String    @unique // New SubBroker who was referred
+  referralCode    String    @unique
+  status          String    @default("PENDING") // PENDING, CONVERTED, EXPIRED
+  rewardAmount    Decimal?  @db.Decimal(12, 2)
+  rewardPaidAt    DateTime?
+  convertedAt     DateTime?
+  createdAt       DateTime  @default(now())
+
+  referredBy      SubBroker @relation("ReferredBy", fields: [referredById], references: [id])
+  referredTo      SubBroker @relation("ReferredTo", fields: [referredToId], references: [id])
+
+  @@index([referredById])
+  @@index([referralCode])
+}
+
+// ============================================================================
+// MODULE 17: SYSTEM CONFIGURATION (MF)
+// ============================================================================
+
+model SystemConfig {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  category    String   @default("GENERAL")
+  description String?
+  isEditable  Boolean  @default(true)
+  updatedBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+}
+
+model PartnerTarget {
+  id            String    @id @default(cuid())
+  subBrokerId   String
+  month         Int
+  year          Int
+  aumTarget     Decimal   @db.Decimal(18, 2)
+  sipTarget     Decimal   @db.Decimal(18, 2)
+  clientTarget  Int
+  aumAchieved   Decimal   @default(0) @db.Decimal(18, 2)
+  sipAchieved   Decimal   @default(0) @db.Decimal(18, 2)
+  clientAchieved Int      @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  subBroker     SubBroker @relation(fields: [subBrokerId], references: [id])
+
+  @@unique([subBrokerId, month, year])
+  @@index([subBrokerId])
+}
+
+// ============================================================================
+// MODULE 18: RTA COMMISSION FILE IMPORT TRACKING (MF)
+// ============================================================================
+
+model RTAImport {
+  id              String   @id @default(cuid())
+  fileName        String
+  rtaSource       String   // CAMS, KFintech
+  fileType        String   // TRAIL, UPFRONT, CLAWBACK
+  periodMonth     Int
+  periodYear      Int
+  totalRecords    Int      @default(0)
+  processedRecords Int     @default(0)
+  failedRecords   Int      @default(0)
+  totalAmount     Decimal  @default(0) @db.Decimal(18, 4)
+  status          String   @default("UPLOADED") // UPLOADED, PROCESSING, COMPLETED, FAILED
+  errorLog        Json?
+  importedBy      String
+  processedAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([rtaSource, periodMonth, periodYear])
+  @@index([status])
+}
+
+// ============================================================================
+// SECTION 3: INSURANCE MODULE MODELS
+// ============================================================================
+
+// ============================================================================
+// MODULE 19: POSP / SP / BQP MANAGEMENT
+// ============================================================================
+
+model POSPAgent {
+  id                  String        @id @default(cuid())
+  subBrokerId         String?       @unique // Linked to MF sub-broker if dual role
+  userId              String        @unique
+  agentCode           String        @unique // TIBPL-POSP-00001
+  category            POSPCategory
+  status              POSPStatus    @default(APPLICATION_RECEIVED)
+
+  // Personal Details
+  firstName           String
+  lastName            String
+  dateOfBirth         DateTime
+  gender              String
+  email               String
+  phone               String
+  panNumber           String?       // Encrypted
+  aadhaarNumber       String?       // Encrypted (last 4)
+  addressLine1        String?
+  addressLine2        String?
+  city                String?
+  state               String?
+  pincode             String?
+
+  // IRDAI Registration
+  irdaiLicenseNumber  String?
+  irdaiLicenseDate    DateTime?
+  irdaiExpiryDate     DateTime?
+  spCode              String?       // SP Registration (if applicable)
+  bqpCode             String?       // BQP Registration (if applicable)
+
+  // Training & Certification
+  trainingStartDate   DateTime?
+  trainingEndDate     DateTime?
+  trainingHoursCompleted Decimal   @default(0) @db.Decimal(5, 1) // Out of 15 hours
+  examDate            DateTime?
+  examScore           Int?
+  examAttempts        Int           @default(0)
+  certificateNumber   String?
+  certificateIssuedAt DateTime?
+  certificateExpiryAt DateTime?
+
+  // Bank Details (for commission payout)
+  bankAccountName     String?
+  bankAccountNumber   String?       // Encrypted
+  bankIfscCode        String?
+  bankName            String?
+
+  // Hierarchy
+  branchId            String?
+  reportingManagerId  String?
+  regionId            String?
+
+  // Performance
+  totalPoliciesSold   Int           @default(0)
+  totalPremiumGenerated Decimal     @default(0) @db.Decimal(18, 2)
+  totalCommissionEarned Decimal     @default(0) @db.Decimal(18, 2)
+  activePolicies      Int           @default(0)
+  renewalRate         Decimal       @default(0) @db.Decimal(5, 2) // percentage
+
+  // Metadata
+  approvedAt          DateTime?
+  approvedBy          String?
+  terminatedAt        DateTime?
+  terminationReason   String?
+  remarks             String?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  // Relations
+  user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subBroker           SubBroker?    @relation(fields: [subBrokerId], references: [id])
+  leads               InsuranceLead[]
+  policies            InsurancePolicy[]
+  commissions         InsuranceCommission[]
+  payouts             InsurancePayout[]
+  trainingRecords     POSPTrainingRecord[]
+  documents           POSPDocument[]
+  targets             POSPTarget[]
+  tickets             SupportTicket[]  @relation("TicketAgent")
+
+  @@index([status])
+  @@index([category])
+  @@index([irdaiLicenseNumber])
+  @@index([branchId])
+  @@index([subBrokerId])
+}
+
+model POSPTrainingRecord {
+  id              String    @id @default(cuid())
+  pospId          String
+  moduleTitle     String
+  moduleDuration  Decimal   @db.Decimal(5, 1) // hours
+  completedAt     DateTime?
+  score           Int?      // quiz score if applicable
+  videoUrl        String?
+  materialUrl     String?
+  isCompleted     Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+
+  posp            POSPAgent @relation(fields: [pospId], references: [id], onDelete: Cascade)
+
+  @@index([pospId])
+}
+
+model POSPDocument {
+  id              String    @id @default(cuid())
+  pospId          String
+  documentType    String    // PAN, AADHAAR, PHOTO, QUALIFICATION, IRDAI_CERT, BANK_PROOF
+  fileName        String
+  filePath        String
+  fileSize        Int?
+  mimeType        String?
+  isVerified      Boolean   @default(false)
+  verifiedAt      DateTime?
+  verifiedBy      String?
+  remarks         String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  posp            POSPAgent @relation(fields: [pospId], references: [id], onDelete: Cascade)
+
+  @@index([pospId])
+}
+
+model POSPTarget {
+  id                  String    @id @default(cuid())
+  pospId              String
+  month               Int
+  year                Int
+  premiumTarget       Decimal   @db.Decimal(18, 2)
+  policyCountTarget   Int
+  premiumAchieved     Decimal   @default(0) @db.Decimal(18, 2)
+  policyCountAchieved Int       @default(0)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  posp                POSPAgent @relation(fields: [pospId], references: [id])
+
+  @@unique([pospId, month, year])
+}
+
+// ============================================================================
+// MODULE 20: INSURANCE COMPANIES & PRODUCTS
+// ============================================================================
+
+model InsuranceCompany {
+  id              String    @id @default(cuid())
+  companyCode     String    @unique
+  companyName     String
+  shortName       String?
+  irdaiRegNumber  String?
+  companyType     String    // LIFE, GENERAL, HEALTH, STANDALONE_HEALTH
+  logoUrl         String?
+  apiIntegrated   Boolean   @default(false)
+  apiProvider     String?   // VJ_INFOSOFT, DIRECT, HEPH, etc.
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  products        InsuranceProduct[]
+  policies        InsurancePolicy[]
+  commissionSlabs InsuranceCommissionSlab[]
+
+  @@index([companyType])
+}
+
+model InsuranceProduct {
+  id              String        @id @default(cuid())
+  companyId       String
+  productCode     String        @unique
+  productName     String
+  lob             InsuranceLOB
+  planType        String?       // BASE, TOP_UP, SUPER_TOP_UP, ADD_ON
+  description     String?
+  minAge          Int?
+  maxAge          Int?
+  minSumInsured   Decimal?      @db.Decimal(18, 2)
+  maxSumInsured   Decimal?      @db.Decimal(18, 2)
+  minPremium      Decimal?      @db.Decimal(12, 2)
+  maxPremium      Decimal?      @db.Decimal(12, 2)
+  policyTerm      Int?          // in years
+  waitingPeriod   Int?          // in days
+  claimSettlement Decimal?      @db.Decimal(5, 2) // CSR percentage
+  brochureUrl     String?
+  featureMatrix   Json?         // Key features as structured data
+  isActive        Boolean       @default(true)
+  pospCanSell     Boolean       @default(true)
+  apiEnabled      Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  company         InsuranceCompany @relation(fields: [companyId], references: [id])
+  policies        InsurancePolicy[]
+  leads           InsuranceLead[]
+  commissionSlabs InsuranceCommissionSlab[]
+
+  @@index([companyId])
+  @@index([lob])
+  @@index([isActive])
+}
+
+// ============================================================================
+// MODULE 21: LEAD MANAGEMENT (INSURANCE SALES FUNNEL)
+// ============================================================================
+
+model InsuranceLead {
+  id                  String      @id @default(cuid())
+  leadCode            String      @unique // LEAD-INS-20260225-00001
+  pospId              String?
+  assignedToUserId    String?
+
+  // Customer Info
+  customerName        String
+  customerPhone       String
+  customerEmail       String?
+  customerCity        String?
+  customerState       String?
+  customerPincode     String?
+  dateOfBirth         DateTime?
+
+  // Lead Details
+  lob                 InsuranceLOB
+  productId           String?
+  source              LeadSource   @default(OTHER)
+  status              LeadStatus   @default(NEW)
+  isRenewal           Boolean      @default(false)
+  existingPolicyNumber String?
+
+  // Motor Specific
+  vehicleRegNumber    String?
+  vehicleMake         String?
+  vehicleModel        String?
+  vehicleVariant      String?
+  vehicleYear         Int?
+  vehicleFuelType     String?
+  previousInsurer     String?
+  previousPolicyExpiry DateTime?
+  ncbPercentage       Decimal?    @db.Decimal(5, 2)
+  idv                 Decimal?    @db.Decimal(12, 2) // Insured Declared Value
+
+  // Health Specific
+  membersCount        Int?
+  membersDetails      Json?       // Array of {name, age, relation, preExisting}
+  sumInsuredRequired  Decimal?    @db.Decimal(18, 2)
+
+  // Life Specific
+  annualIncome        Decimal?    @db.Decimal(18, 2)
+  smokingStatus       String?     // SMOKER, NON_SMOKER
+  coverRequired       Decimal?    @db.Decimal(18, 2)
+
+  // Quote & Proposal
+  quotedPremium       Decimal?    @db.Decimal(12, 2)
+  quoteReferenceId    String?
+  proposalId          String?
+  lastDropOffStage    String?     // Where user left the journey
+
+  // Tracking
+  followUpDate        DateTime?
+  followUpNotes       String?
+  lostReason          String?
+  convertedPolicyId   String?
+  priorityScore       Int         @default(50) // 1-100 lead scoring
+
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  // Relations
+  posp                POSPAgent?  @relation(fields: [pospId], references: [id])
+  product             InsuranceProduct? @relation(fields: [productId], references: [id])
+  activities          LeadActivity[]
+  quotes              InsuranceQuote[]
+
+  @@index([pospId])
+  @@index([status])
+  @@index([lob])
+  @@index([source])
+  @@index([followUpDate])
+  @@index([customerPhone])
+}
+
+model LeadActivity {
+  id          String    @id @default(cuid())
+  leadId      String
+  action      String    // CALLED, EMAILED, WHATSAPP_SENT, QUOTE_SHARED, FOLLOW_UP_SET, STATUS_CHANGED, NOTE_ADDED
+  description String?
+  performedBy String
+  createdAt   DateTime  @default(now())
+
+  lead        InsuranceLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+}
+
+model InsuranceQuote {
+  id              String    @id @default(cuid())
+  leadId          String
+  insurerName     String
+  productName     String
+  sumInsured      Decimal   @db.Decimal(18, 2)
+  premium         Decimal   @db.Decimal(12, 2)
+  gst             Decimal   @db.Decimal(12, 2)
+  totalPremium    Decimal   @db.Decimal(12, 2)
+  coverageDetails Json?     // Structured coverage breakdown
+  addOns          Json?     // Selected add-ons
+  quoteRefId      String?
+  validTill       DateTime?
+  isSelected      Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+
+  lead            InsuranceLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+}
+
+// ============================================================================
+// MODULE 22: POLICY MANAGEMENT (STATE MACHINE)
+// ============================================================================
+
+model InsurancePolicy {
+  id                  String        @id @default(cuid())
+  policyNumber        String        @unique
+  internalRefCode     String        @unique // TIBPL-POL-20260225-00001
+  pospId              String
+  customerId          String?       // Link to Client model if exists
+  companyId           String
+  productId           String
+
+  // Customer Details (denormalized for quick access)
+  customerName        String
+  customerPhone       String
+  customerEmail       String?
+  customerPan         String?       // Encrypted
+  customerAadhaar     String?       // Encrypted
+
+  // Policy Details
+  lob                 InsuranceLOB
+  status              PolicyStatus  @default(QUOTE_GENERATED)
+  sumInsured          Decimal       @db.Decimal(18, 2)
+  basePremium         Decimal       @db.Decimal(12, 2)
+  addOnPremium        Decimal       @default(0) @db.Decimal(12, 2)
+  gstAmount           Decimal       @db.Decimal(12, 2)
+  totalPremium        Decimal       @db.Decimal(12, 2)
+  stampDuty           Decimal       @default(0) @db.Decimal(12, 2)
+  netPremium          Decimal       @db.Decimal(12, 2) // Premium for commission calc
+
+  // Dates
+  proposalDate        DateTime?
+  issuanceDate        DateTime?
+  startDate           DateTime?
+  endDate             DateTime?
+  cancellationDate    DateTime?
+
+  // Motor Specific
+  vehicleRegNumber    String?
+  vehicleMake         String?
+  vehicleModel        String?
+  vehicleChassisNo    String?       // Encrypted
+  vehicleEngineNo     String?       // Encrypted
+  idv                 Decimal?      @db.Decimal(12, 2)
+  ncbPercentage       Decimal?      @db.Decimal(5, 2)
+  policyType          String?       // TP, OD, COMPREHENSIVE, BREAKIN, ROLLOVER
+
+  // Health Specific
+  membersDetails      Json?
+  waitingPeriod       Int?
+  preExistingConditions Json?
+
+  // Life Specific
+  nomineeName         String?
+  nomineeRelation     String?
+  riderDetails        Json?
+
+  // Payment
+  paymentMode         String?       // ONLINE, CHEQUE, NACH
+  paymentRefId        String?
+  paymentDate         DateTime?
+
+  // Insurer Reference
+  insurerProposalNo   String?
+  insurerPolicyUrl    String?
+  policyDocumentUrl   String?
+
+  // BQP/SP Tagging (IRDAI compliance)
+  bqpTagged           Boolean       @default(false)
+  bqpCode             String?
+  spTagged            Boolean       @default(false)
+  spCode              String?
+
+  // Renewal
+  renewalStatus       RenewalStatus?
+  previousPolicyId    String?
+  renewedPolicyId     String?
+  renewalReminderSent Boolean       @default(false)
+
+  // Metadata
+  remarks             String?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  // Relations
+  posp                POSPAgent     @relation(fields: [pospId], references: [id])
+  company             InsuranceCompany @relation(fields: [companyId], references: [id])
+  product             InsuranceProduct @relation(fields: [productId], references: [id])
+  endorsements        Endorsement[]
+  claims              InsuranceClaim[]
+  commissions         InsuranceCommission[]
+  statusHistory       PolicyStatusHistory[]
+  documents           PolicyDocument[]
+  inspections         VehicleInspection[]
+
+  @@index([pospId])
+  @@index([companyId])
+  @@index([lob])
+  @@index([status])
+  @@index([endDate])
+  @@index([renewalStatus])
+  @@index([customerPhone])
+  @@index([vehicleRegNumber])
+  @@index([policyNumber])
+}
+
+model PolicyStatusHistory {
+  id          String   @id @default(cuid())
+  policyId    String
+  fromStatus  String
+  toStatus    String
+  changedBy   String
+  reason      String?
+  createdAt   DateTime @default(now())
+
+  policy      InsurancePolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+
+  @@index([policyId])
+}
+
+model PolicyDocument {
+  id            String    @id @default(cuid())
+  policyId      String
+  documentType  String    // PROPOSAL_FORM, POLICY_COPY, ID_PROOF, ADDRESS_PROOF, VEHICLE_RC, MEDICAL_REPORT, PAYMENT_RECEIPT, etc.
+  fileName      String
+  filePath      String
+  fileSize      Int?
+  isVerified    Boolean   @default(false)
+  verifiedBy    String?
+  verifiedAt    DateTime?
+  createdAt     DateTime  @default(now())
+
+  policy        InsurancePolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+
+  @@index([policyId])
+}
+
+// ============================================================================
+// MODULE 23: VEHICLE INSPECTION (Self-Inspection for Break-In)
+// ============================================================================
+
+model VehicleInspection {
+  id                String           @id @default(cuid())
+  policyId          String?
+  leadId            String?
+  vehicleRegNumber  String
+  inspectionType    String           // SELF, PHYSICAL, VIDEO
+  status            InspectionStatus @default(SCHEDULED)
+  scheduledAt       DateTime?
+  completedAt       DateTime?
+  inspectorName     String?
+  inspectorPhone    String?
+
+  // Photos (structured storage)
+  frontPhoto        String?
+  rearPhoto         String?
+  leftSidePhoto     String?
+  rightSidePhoto    String?
+  dashboardPhoto    String?
+  odometerPhoto     String?
+  chassisNumberPhoto String?
+  engineNumberPhoto String?
+  additionalPhotos  Json?           // Array of URLs
+  videoUrl          String?
+
+  // Vaahan Data
+  vaahanData        Json?           // Full Vaahan API response
+  vaahanFetched     Boolean         @default(false)
+
+  // Review
+  reviewedBy        String?
+  reviewedAt        DateTime?
+  reviewRemarks     String?
+  isApproved        Boolean?
+
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  policy            InsurancePolicy? @relation(fields: [policyId], references: [id])
+
+  @@index([vehicleRegNumber])
+  @@index([status])
+}
+
+// ============================================================================
+// MODULE 24: CLAIMS MANAGEMENT
+// ============================================================================
+
+model InsuranceClaim {
+  id                  String      @id @default(cuid())
+  claimCode           String      @unique // CLM-20260225-00001
+  policyId            String
+  pospId              String?
+
+  // Claim Details
+  claimType           String      // CASHLESS, REIMBURSEMENT, OWN_DAMAGE, THIRD_PARTY, DEATH, MATURITY
+  status              ClaimStatus @default(INTIMATED)
+  incidentDate        DateTime
+  intimationDate      DateTime    @default(now())
+  description         String
+  estimatedAmount     Decimal?    @db.Decimal(18, 2)
+  claimedAmount       Decimal?    @db.Decimal(18, 2)
+  approvedAmount      Decimal?    @db.Decimal(18, 2)
+  settledAmount       Decimal?    @db.Decimal(18, 2)
+  deductionAmount     Decimal?    @db.Decimal(18, 2)
+  deductionReason     String?
+
+  // Hospital/Garage Details (Health/Motor)
+  providerName        String?     // Hospital or Garage name
+  providerCity        String?
+  providerState       String?
+  admissionDate       DateTime?
+  dischargeDate       DateTime?
+
+  // Surveyor Details (Motor)
+  surveyorName        String?
+  surveyorPhone       String?
+  surveyorReportUrl   String?
+  surveyDate          DateTime?
+
+  // Insurer Reference
+  insurerClaimNumber  String?
+  insurerRemarks      String?
+
+  // Resolution
+  rejectionReason     String?
+  settledAt           DateTime?
+  closedAt            DateTime?
+  closedBy            String?
+
+  // Allocated to
+  assignedToUserId    String?
+
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  // Relations
+  policy              InsurancePolicy @relation(fields: [policyId], references: [id])
+  documents           ClaimDocument[]
+  statusHistory       ClaimStatusHistory[]
+
+  @@index([policyId])
+  @@index([status])
+  @@index([claimType])
+  @@index([assignedToUserId])
+}
+
+model ClaimDocument {
+  id            String    @id @default(cuid())
+  claimId       String
+  documentType  String    // CLAIM_FORM, HOSPITAL_BILL, DISCHARGE_SUMMARY, FIR, SURVEY_REPORT, REPAIR_ESTIMATE, etc.
+  fileName      String
+  filePath      String
+  fileSize      Int?
+  isVerified    Boolean   @default(false)
+  verifiedBy    String?
+  remarks       String?
+  createdAt     DateTime  @default(now())
+
+  claim         InsuranceClaim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  @@index([claimId])
+}
+
+model ClaimStatusHistory {
+  id          String   @id @default(cuid())
+  claimId     String
+  fromStatus  String
+  toStatus    String
+  changedBy   String
+  reason      String?
+  createdAt   DateTime @default(now())
+
+  claim       InsuranceClaim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  @@index([claimId])
+}
+
+// ============================================================================
+// MODULE 25: ENDORSEMENTS
+// ============================================================================
+
+model Endorsement {
+  id                  String            @id @default(cuid())
+  endorsementCode     String            @unique // END-20260225-00001
+  policyId            String
+  type                EndorsementType
+  status              EndorsementStatus @default(REQUESTED)
+  description         String
+  requestedChanges    Json              // {field: oldValue, newValue}
+  oldValues           Json?
+  newValues           Json?
+  premiumDifference   Decimal?          @db.Decimal(12, 2)
+  additionalPremium   Decimal?          @db.Decimal(12, 2)
+  refundAmount        Decimal?          @db.Decimal(12, 2)
+  endorsementDate     DateTime?
+  insurerEndorsementNo String?
+  requestedBy         String
+  processedBy         String?
+  processedAt         DateTime?
+  rejectionReason     String?
+  assignedToUserId    String?
+  remarks             String?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  // Relations
+  policy              InsurancePolicy   @relation(fields: [policyId], references: [id])
+  documents           EndorsementDocument[]
+  statusHistory       EndorsementStatusHistory[]
+
+  @@index([policyId])
+  @@index([status])
+  @@index([type])
+  @@index([assignedToUserId])
+}
+
+model EndorsementDocument {
+  id            String    @id @default(cuid())
+  endorsementId String
+  documentType  String
+  fileName      String
+  filePath      String
+  fileSize      Int?
+  isVerified    Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+
+  endorsement   Endorsement @relation(fields: [endorsementId], references: [id], onDelete: Cascade)
+
+  @@index([endorsementId])
+}
+
+model EndorsementStatusHistory {
+  id              String   @id @default(cuid())
+  endorsementId   String
+  fromStatus      String
+  toStatus        String
+  changedBy       String
+  reason          String?
+  createdAt       DateTime @default(now())
+
+  endorsement     Endorsement @relation(fields: [endorsementId], references: [id], onDelete: Cascade)
+
+  @@index([endorsementId])
+}
+
+// ============================================================================
+// MODULE 26: INSURANCE COMMISSION ENGINE (SLAB-BASED)
+// ============================================================================
+
+model InsuranceCommissionSlab {
+  id              String    @id @default(cuid())
+  companyId       String
+  productId       String?   // null = applies to all products of company
+  lob             InsuranceLOB
+  commissionType  InsuranceCommissionType
+  slabName        String    // e.g., "0-25L", "25L-50L", "50L-1Cr"
+  minPremium      Decimal   @db.Decimal(18, 2) // Slab start (cumulative premium)
+  maxPremium      Decimal   @db.Decimal(18, 2) // Slab end
+  brokerRate      Decimal   @db.Decimal(8, 4)  // % commission for Trustner from insurer
+  pospShareRate   Decimal   @db.Decimal(8, 4)  // % of broker commission shared with POSP
+  effectiveFrom   DateTime
+  effectiveTo     DateTime?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  company         InsuranceCompany  @relation(fields: [companyId], references: [id])
+  product         InsuranceProduct? @relation(fields: [productId], references: [id])
+
+  @@index([companyId, lob, isActive])
+  @@index([productId])
+}
+
+model InsuranceCommission {
+  id                  String                  @id @default(cuid())
+  policyId            String
+  pospId              String
+  companyId           String?
+  commissionType      InsuranceCommissionType
+  netPremium          Decimal                 @db.Decimal(18, 2)
+  brokerCommissionPct Decimal                 @db.Decimal(8, 4) // % from insurer
+  brokerCommissionAmt Decimal                 @db.Decimal(18, 4) // Total broker commission
+  pospSharePct        Decimal                 @db.Decimal(8, 4) // POSP's share %
+  pospCommissionAmt   Decimal                 @db.Decimal(18, 4) // POSP's commission
+  trustnerRetention   Decimal                 @db.Decimal(18, 4) // Trustner's retention
+  tdsAmount           Decimal                 @default(0) @db.Decimal(18, 4)
+  gstAmount           Decimal                 @default(0) @db.Decimal(18, 4)
+  netPayable          Decimal                 @db.Decimal(18, 4) // Final POSP payout
+  slabApplied         String?                 // Which slab was used
+  status              CommissionStatus        @default(PENDING)
+  periodMonth         Int
+  periodYear          Int
+  receivedFromInsurer Boolean                 @default(false)
+  receivedDate        DateTime?
+  receivedAmount      Decimal?                @db.Decimal(18, 4)
+  reconciled          Boolean                 @default(false)
+  isClawback          Boolean                 @default(false)
+  clawbackRefId       String?
+  remarks             String?
+  calculatedAt        DateTime?
+  approvedAt          DateTime?
+  approvedBy          String?
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+
+  // Relations
+  policy              InsurancePolicy         @relation(fields: [policyId], references: [id])
+  posp                POSPAgent               @relation(fields: [pospId], references: [id])
+  payoutItems         InsurancePayoutItem[]
+
+  @@index([pospId])
+  @@index([policyId])
+  @@index([status])
+  @@index([periodMonth, periodYear])
+  @@index([commissionType])
+}
+
+model InsurancePayout {
+  id              String       @id @default(cuid())
+  pospId          String
+  payoutCode      String       @unique // IPAY-202602-001
+  periodMonth     Int
+  periodYear      Int
+  grossAmount     Decimal      @db.Decimal(18, 4)
+  tdsAmount       Decimal      @db.Decimal(18, 4)
+  gstAmount       Decimal      @db.Decimal(18, 4)
+  clawbackAmount  Decimal      @default(0) @db.Decimal(18, 4)
+  netPayable      Decimal      @db.Decimal(18, 4)
+  bankRefNumber   String?
+  paidAt          DateTime?
+  status          PayoutStatus @default(PENDING)
+  approvedBy      String?
+  approvedAt      DateTime?
+  statementUrl    String?
+  excelUrl        String?
+  remarks         String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  posp            POSPAgent    @relation(fields: [pospId], references: [id])
+  items           InsurancePayoutItem[]
+
+  @@unique([pospId, periodMonth, periodYear])
+  @@index([pospId])
+  @@index([status])
+}
+
+model InsurancePayoutItem {
+  id              String    @id @default(cuid())
+  payoutId        String
+  commissionId    String
+
+  payout          InsurancePayout     @relation(fields: [payoutId], references: [id], onDelete: Cascade)
+  commission      InsuranceCommission @relation(fields: [commissionId], references: [id])
+
+  @@unique([payoutId, commissionId])
+}
+
+// ============================================================================
+// MODULE 27: SUPPORT TICKETS
+// ============================================================================
+
+model SupportTicket {
+  id              String         @id @default(cuid())
+  ticketCode      String         @unique // TKT-20260225-00001
+  pospId          String?
+  customerId      String?
+  policyNumber    String?
+  category        TicketCategory
+  priority        TicketPriority @default(MEDIUM)
+  status          TicketStatus   @default(OPEN)
+  subject         String
+  description     String
+  assignedToUserId String?
+  resolvedAt      DateTime?
+  resolvedBy      String?
+  resolution      String?
+  slaDeadline     DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  posp            POSPAgent?     @relation("TicketAgent", fields: [pospId], references: [id])
+  comments        TicketComment[]
+
+  @@index([pospId])
+  @@index([status])
+  @@index([priority])
+  @@index([category])
+  @@index([assignedToUserId])
+}
+
+model TicketComment {
+  id          String   @id @default(cuid())
+  ticketId    String
+  authorId    String
+  authorName  String
+  content     String
+  isInternal  Boolean  @default(false) // Internal note vs customer-visible
+  attachments Json?    // Array of file URLs
+  createdAt   DateTime @default(now())
+
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+}
+
+// ============================================================================
+// MODULE 28: RENEWALS ENGINE
+// ============================================================================
+
+model RenewalTracker {
+  id                  String        @id @default(cuid())
+  policyId            String        @unique
+  pospId              String
+  customerName        String
+  customerPhone       String
+  lob                 InsuranceLOB
+  companyName         String
+  policyNumber        String
+  expiryDate          DateTime
+  premiumAmount       Decimal       @db.Decimal(12, 2)
+  status              RenewalStatus @default(UPCOMING_90_DAYS)
+  reminder90DaySent   Boolean       @default(false)
+  reminder60DaySent   Boolean       @default(false)
+  reminder30DaySent   Boolean       @default(false)
+  reminder15DaySent   Boolean       @default(false)
+  reminder7DaySent    Boolean       @default(false)
+  reminderDueDaySent  Boolean       @default(false)
+  lastContactedAt     DateTime?
+  lastContactedBy     String?
+  contactNotes        String?
+  renewedPolicyId     String?
+  lostReason          String?
+  competitorName      String?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@index([pospId])
+  @@index([expiryDate])
+  @@index([status])
+  @@index([lob])
+}
+
+// ============================================================================
+// MODULE 29: VAAHAN INTEGRATION CACHE
+// ============================================================================
+
+model VaahanLookup {
+  id                  String    @id @default(cuid())
+  registrationNumber  String    @unique
+  ownerName           String?
+  fatherName          String?
+  vehicleClass        String?
+  maker               String?
+  model               String?
+  fuelType            String?
+  color               String?
+  manufacturingDate   DateTime?
+  registrationDate    DateTime?
+  fitnessUpto         DateTime?
+  insuranceUpto       DateTime?
+  insuranceCompany    String?
+  policyNumber        String?
+  chassisNumber       String?   // Masked
+  engineNumber        String?   // Masked
+  rtoCode             String?
+  rtoName             String?
+  vehicleAge          Int?
+  seatingCapacity     Int?
+  grossWeight         Int?
+  bodyType            String?
+  rawResponse         Json?
+  fetchedAt           DateTime  @default(now())
+  expiresAt           DateTime  // Cache expiry (24 hours typically)
+
+  @@index([registrationNumber])
+  @@index([expiresAt])
+}
+
+// ============================================================================
+// MODULE 30: IRDAI REGULATORY REPORTS
+// ============================================================================
+
+model IRDAIReport {
+  id              String    @id @default(cuid())
+  reportType      String    // MONTHLY_BUSINESS, QUARTERLY_AUDIT, ANNUAL_RETURN, SP_BQP_LIST, COMPLAINT_REGISTER, CLAIMS_REGISTER
+  periodMonth     Int?
+  periodYear      Int
+  periodQuarter   Int?      // 1-4
+  generatedAt     DateTime  @default(now())
+  generatedBy     String
+  fileUrl         String?
+  status          String    @default("GENERATED") // GENERATED, REVIEWED, SUBMITTED
+  submittedAt     DateTime?
+  submittedBy     String?
+  remarks         String?
+
+  @@index([reportType, periodYear])
+}
+
+// ============================================================================
+// MODULE 31: BULK OFFLINE BOOKING
+// ============================================================================
+
+model BulkBooking {
+  id              String    @id @default(cuid())
+  batchCode       String    @unique // BULK-20260225-001
+  uploadedBy      String
+  fileName        String
+  filePath        String
+  totalRecords    Int       @default(0)
+  processedRecords Int      @default(0)
+  successRecords  Int       @default(0)
+  failedRecords   Int       @default(0)
+  status          String    @default("UPLOADED") // UPLOADED, VALIDATING, PROCESSING, COMPLETED, FAILED
+  errorLog        Json?
+  lob             InsuranceLOB
+  processedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([status])
+  @@index([uploadedBy])
+}
+
+// ============================================================================
+// MODULE 32: INSURANCE SYSTEM CONFIGURATION
+// ============================================================================
+
+model InsuranceConfig {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  category    String   // COMMISSION, RENEWAL, COMPLIANCE, INTEGRATION, GENERAL
+  description String?
+  isEditable  Boolean  @default(true)
+  updatedBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+}

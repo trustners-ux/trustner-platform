@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trustner Partner OS - Architecture Diagram</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0a0f1e; color: #e0e6f0; padding: 40px 20px; }
+  h1 { text-align: center; font-size: 28px; color: #fff; margin-bottom: 8px; }
+  .subtitle { text-align: center; font-size: 14px; color: #7b8ab8; margin-bottom: 40px; }
+  .diagram { max-width: 1200px; margin: 0 auto; }
+
+  /* Layer Sections */
+  .layer { margin-bottom: 24px; border-radius: 16px; padding: 24px; position: relative; }
+  .layer-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .layer-title .badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+
+  /* User Layer */
+  .layer-users { background: linear-gradient(135deg, #1a1f3a 0%, #141829 100%); border: 1px solid #2a3055; }
+  .layer-users .layer-title { color: #a0b4ff; }
+  .layer-users .badge { background: #1a237e; color: #a0b4ff; }
+
+  /* Frontend Layer */
+  .layer-frontend { background: linear-gradient(135deg, #1a2a1f 0%, #141f18 100%); border: 1px solid #2a4535; }
+  .layer-frontend .layer-title { color: #81c995; }
+  .layer-frontend .badge { background: #1b5e20; color: #81c995; }
+
+  /* API Layer */
+  .layer-api { background: linear-gradient(135deg, #2a1a1f 0%, #1f1418 100%); border: 1px solid #452a35; }
+  .layer-api .layer-title { color: #ef9a9a; }
+  .layer-api .badge { background: #b71c1c; color: #ef9a9a; }
+
+  /* Services Layer */
+  .layer-services { background: linear-gradient(135deg, #1a2a2a 0%, #141f1f 100%); border: 1px solid #2a4545; }
+  .layer-services .layer-title { color: #80cbc4; }
+  .layer-services .badge { background: #004d40; color: #80cbc4; }
+
+  /* Data Layer */
+  .layer-data { background: linear-gradient(135deg, #2a2a1a 0%, #1f1f14 100%); border: 1px solid #45452a; }
+  .layer-data .layer-title { color: #fff59d; }
+  .layer-data .badge { background: #f57f17; color: #fff; }
+
+  /* External Layer */
+  .layer-external { background: linear-gradient(135deg, #2a1a2a 0%, #1f141f 100%); border: 1px solid #452a45; }
+  .layer-external .layer-title { color: #ce93d8; }
+  .layer-external .badge { background: #6a1b9a; color: #ce93d8; }
+
+  /* Cards Grid */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; transition: all 0.2s; }
+  .card:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); transform: translateY(-2px); }
+  .card-icon { font-size: 24px; margin-bottom: 8px; }
+  .card-title { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+  .card-desc { font-size: 11px; color: #7b8ab8; line-height: 1.5; }
+  .card-tech { font-size: 10px; color: #5a6a9a; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.06); }
+
+  /* Connection arrows */
+  .connections { display: flex; justify-content: center; padding: 8px 0; }
+  .arrow { color: #3a4a7a; font-size: 20px; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+  /* Stats bar */
+  .stats { display: flex; justify-content: center; gap: 40px; margin-top: 40px; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 12px; }
+  .stat { text-align: center; }
+  .stat-value { font-size: 28px; font-weight: 700; color: #fff; }
+  .stat-label { font-size: 11px; color: #7b8ab8; margin-top: 4px; }
+
+  .cards-wide { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+</style>
+</head>
+<body>
+
+<h1>Trustner Partner OS</h1>
+<p class="subtitle">B2B2C Fintech Distribution Platform Architecture | Scalable to 100K+ Users</p>
+
+<div class="diagram">
+
+  <!-- LAYER 1: Users -->
+  <div class="layer layer-users">
+    <div class="layer-title"><span class="badge">LAYER 1</span> User Interfaces (3 Portals)</div>
+    <div class="cards">
+      <div class="card">
+        <div class="card-icon">&#128119;</div>
+        <div class="card-title">Super Admin Panel</div>
+        <div class="card-desc">Management, Finance & Compliance teams. Partner approvals, commission config, MIS reports, audit logs.</div>
+        <div class="card-tech">React + Next.js | 8 Pages</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#129309;</div>
+        <div class="card-title">Partner Dashboard</div>
+        <div class="card-desc">Sub-Brokers & Regional Heads. Client onboarding, transactions, SIP management, commission tracking.</div>
+        <div class="card-tech">React + Next.js | 7 Pages</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128100;</div>
+        <div class="card-title">Client Portal</div>
+        <div class="card-desc">Investors. Portfolio view, goal tracking, SIP tracker, transaction history, statements.</div>
+        <div class="card-tech">React + Next.js | 5 Pages</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128241;</div>
+        <div class="card-title">Mobile App (Phase 2)</div>
+        <div class="card-desc">React Native for Android. Partner and client access on mobile.</div>
+        <div class="card-tech">React Native | Android First</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="connections"><span class="arrow">&#9660; &#9660; &#9660; HTTPS/JWT &#9660; &#9660; &#9660;</span></div>
+
+  <!-- LAYER 2: API Gateway -->
+  <div class="layer layer-api">
+    <div class="layer-title"><span class="badge">LAYER 2</span> API Gateway & Security</div>
+    <div class="cards cards-wide">
+      <div class="card">
+        <div class="card-icon">&#128274;</div>
+        <div class="card-title">JWT Auth</div>
+        <div class="card-desc">Access + Refresh tokens. 1hr/7d expiry. Account lockout after 5 failures.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128101;</div>
+        <div class="card-title">6-Role RBAC</div>
+        <div class="card-desc">Super Admin, Compliance, Finance, Regional Head, Sub-Broker, Client</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128737;</div>
+        <div class="card-title">Rate Limiter</div>
+        <div class="card-desc">100 req/min per IP. DDoS protection. Helmet security headers.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128209;</div>
+        <div class="card-title">Audit Logger</div>
+        <div class="card-desc">Every state change logged. IP tracking. User agent capture.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128196;</div>
+        <div class="card-title">Swagger Docs</div>
+        <div class="card-desc">Auto-generated API docs at /api/docs. 60+ endpoints.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128272;</div>
+        <div class="card-title">Encryption</div>
+        <div class="card-desc">AES-256 for PAN, Aadhaar, bank details. SSL/TLS in transit.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="connections"><span class="arrow">&#9660; &#9660; &#9660; NestJS Modules &#9660; &#9660; &#9660;</span></div>
+
+  <!-- LAYER 3: Business Services -->
+  <div class="layer layer-services">
+    <div class="layer-title"><span class="badge">LAYER 3</span> Business Logic Services (18 Modules)</div>
+    <div class="cards cards-wide">
+      <div class="card">
+        <div class="card-icon">&#128176;</div>
+        <div class="card-title">Commission Engine</div>
+        <div class="card-desc">RTA import, tier calculation, TDS/GST, clawback, ARN split, revenue share. THE HEART.</div>
+        <div class="card-tech">4 Tiers: 50-70% Share</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128179;</div>
+        <div class="card-title">Transaction Engine</div>
+        <div class="card-desc">Lumpsum, SIP, STP, SWP, Redemption, Switch. BSE order management.</div>
+        <div class="card-tech">BSE Star MF API</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128197;</div>
+        <div class="card-title">SIP Manager</div>
+        <div class="card-desc">Registration, mandate, installment tracking, bounce handling.</div>
+        <div class="card-tech">NACH/eMandate</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128200;</div>
+        <div class="card-title">Portfolio Tracker</div>
+        <div class="card-desc">Holdings, NAV updates, XIRR calculation, goal-wise tracking.</div>
+        <div class="card-tech">Real-time NAV</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128178;</div>
+        <div class="card-title">Payout System</div>
+        <div class="card-desc">Generate, approve, process payouts. PDF statements. Excel exports.</div>
+        <div class="card-tech">PDFKit + XLSX</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#9989;</div>
+        <div class="card-title">KYC Engine</div>
+        <div class="card-desc">Aadhaar eKYC, CKYC fetch, PAN verify, bank verify, FATCA.</div>
+        <div class="card-tech">DigiLocker / KRA</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128202;</div>
+        <div class="card-title">Analytics & Reports</div>
+        <div class="card-desc">AUM growth, SIP inflows, partner leaderboard, MIS, capital gains.</div>
+        <div class="card-tech">Charts + Excel</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128737;</div>
+        <div class="card-title">Compliance</div>
+        <div class="card-desc">ARN/NISM/POSP expiry alerts. KYC monitoring. Regulatory checks.</div>
+        <div class="card-tech">Scheduled Scans</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#9878;</div>
+        <div class="card-title">Risk Profiling</div>
+        <div class="card-desc">SEBI-compliant questionnaire. Auto risk scoring. Asset allocation.</div>
+        <div class="card-tech">5 Risk Categories</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="connections"><span class="arrow">&#9660; &#9660; &#9660; Prisma ORM &#9660; &#9660; &#9660;</span></div>
+
+  <!-- LAYER 4: Data -->
+  <div class="layer layer-data">
+    <div class="layer-title"><span class="badge">LAYER 4</span> Data Layer (30+ Models)</div>
+    <div class="cards">
+      <div class="card">
+        <div class="card-icon">&#128451;</div>
+        <div class="card-title">PostgreSQL 15</div>
+        <div class="card-desc">Primary database. 30+ tables. Users, SubBrokers, Clients, Transactions, Commissions, Holdings, SIPs, Mandates, NAV History, Audit Logs.</div>
+        <div class="card-tech">Prisma ORM | 100K+ Users Scale</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#9889;</div>
+        <div class="card-title">Redis 7</div>
+        <div class="card-desc">Session cache, NAV cache, rate limiting, real-time data. Append-only persistence.</div>
+        <div class="card-tech">Cache + Sessions</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128193;</div>
+        <div class="card-title">File Storage</div>
+        <div class="card-desc">Documents, KYC proofs, payout PDFs, RTA files. S3/DigitalOcean Spaces.</div>
+        <div class="card-tech">S3 Compatible</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="connections"><span class="arrow">&#9660; &#9660; &#9660; Secure APIs &#9660; &#9660; &#9660;</span></div>
+
+  <!-- LAYER 5: External -->
+  <div class="layer layer-external">
+    <div class="layer-title"><span class="badge">LAYER 5</span> External Integrations</div>
+    <div class="cards cards-wide">
+      <div class="card">
+        <div class="card-icon">&#127970;</div>
+        <div class="card-title">BSE Star MF</div>
+        <div class="card-desc">Order placement, SIP registration, mandate, NAV, scheme master.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128196;</div>
+        <div class="card-title">CKYC / DigiLocker</div>
+        <div class="card-desc">Aadhaar eKYC, CKYC fetch, PAN verification.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128179;</div>
+        <div class="card-title">Razorpay</div>
+        <div class="card-desc">Payment gateway for lumpsum. UPI, netbanking, NACH.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128172;</div>
+        <div class="card-title">WhatsApp API</div>
+        <div class="card-desc">Wati/AiSensy integration for partner & client communication.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128231;</div>
+        <div class="card-title">SMS + Email</div>
+        <div class="card-desc">MSG91 for SMS. SMTP for transactional emails.</div>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#128200;</div>
+        <div class="card-title">RTA (CAMS/KFin)</div>
+        <div class="card-desc">Commission data files. Trail, upfront, clawback imports.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat"><div class="stat-value">110+</div><div class="stat-label">Total Files</div></div>
+    <div class="stat"><div class="stat-value">9,500+</div><div class="stat-label">Lines of Code</div></div>
+    <div class="stat"><div class="stat-value">30+</div><div class="stat-label">Database Models</div></div>
+    <div class="stat"><div class="stat-value">60+</div><div class="stat-label">API Endpoints</div></div>
+    <div class="stat"><div class="stat-value">20</div><div class="stat-label">UI Pages</div></div>
+    <div class="stat"><div class="stat-value">6</div><div class="stat-label">User Roles</div></div>
+  </div>
+</div>
+
+</body>
+</html>
