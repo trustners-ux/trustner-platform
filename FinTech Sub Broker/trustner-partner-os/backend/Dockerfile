@@ -17,9 +17,8 @@ RUN apk add --no-cache python3 make g++
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production && \
-    npm ci --only=development
+# Install all dependencies (dev + prod needed for build)
+RUN npm install
 
 # Copy source code
 COPY . .
@@ -48,7 +47,7 @@ RUN addgroup -g 1001 -S nodejs && \
 COPY package*.json ./
 
 # Install production dependencies only
-RUN npm ci --only=production && \
+RUN npm install --only=production && \
     npm cache clean --force
 
 # Copy built application from builder
