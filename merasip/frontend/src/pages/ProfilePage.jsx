@@ -224,7 +224,7 @@ export default function ProfilePage() {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
               <span style={{ color: C.muted, fontWeight: 500 }}>Last login</span>
-              <span style={{ color: C.ink, fontWeight: 600 }}>{formatDateTime(user?.last_login_at)}</span>
+              <span style={{ color: C.ink, fontWeight: 600 }}>{formatDateTime(user?.last_login)}</span>
             </div>
           </div>
         </div>

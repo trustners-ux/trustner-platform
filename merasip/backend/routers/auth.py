@@ -202,7 +202,15 @@ async def password_login(req: PasswordLoginRequest):
         # (sign_in_with_password changes the client's auth session)
         db = get_supabase()
 
-        # Fetch employee profile from employees table
+        # Update last_login timestamp first (non-critical)
+        try:
+            db.table("employees").update({
+                "last_login": datetime.now(timezone.utc).isoformat(),
+            }).eq("auth_id", str(user.id)).execute()
+        except Exception:
+            pass  # Non-critical
+
+        # Fetch employee profile from employees table (after last_login update)
         employee = None
         try:
             emp_result = (
@@ -216,15 +224,8 @@ async def password_login(req: PasswordLoginRequest):
         except Exception:
             pass  # Non-critical — login still works without profile
 
-        # Update last_login timestamp and log activity (non-critical)
+        # Log activity (non-critical)
         if employee:
-            try:
-                db.table("employees").update({
-                    "last_login": datetime.now(timezone.utc).isoformat(),
-                }).eq("auth_id", str(user.id)).execute()
-            except Exception:
-                pass  # Non-critical
-
             try:
                 db.table("activity_log").insert({
                     "employee_id": employee["id"],
