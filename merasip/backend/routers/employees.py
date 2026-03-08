@@ -149,7 +149,7 @@ async def create_employee(req: EmployeeCreate, admin: dict = Depends(require_adm
                 sb.table("activity_log").insert({
                     "employee_id": admin_emp.data["id"],
                     "action": "create_employee",
-                    "details": f"{admin_emp.data['name']} created employee {req.name}",
+                    "details": {"message": f"{admin_emp.data['name']} created employee {req.name}"},
                 }).execute()
         except Exception:
             pass  # Non-critical
@@ -239,7 +239,7 @@ async def update_employee(
                 sb.table("activity_log").insert({
                     "employee_id": admin_emp.data["id"],
                     "action": "update_employee",
-                    "details": f"{admin_emp.data['name']} updated employee {existing.data.get('name', employee_id)}",
+                    "details": {"message": f"{admin_emp.data['name']} updated employee {existing.data.get('name', employee_id)}"},
                 }).execute()
         except Exception:
             pass  # Non-critical
@@ -303,7 +303,7 @@ async def reset_employee_password(
                 sb.table("activity_log").insert({
                     "employee_id": admin_emp.data["id"],
                     "action": "reset_password",
-                    "details": f"{admin_emp.data['name']} reset password for {emp_result.data.get('name', employee_id)}",
+                    "details": {"message": f"{admin_emp.data['name']} reset password for {emp_result.data.get('name', employee_id)}"},
                 }).execute()
         except Exception:
             pass  # Non-critical

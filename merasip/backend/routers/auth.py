@@ -143,18 +143,20 @@ async def password_login(req: PasswordLoginRequest):
         )
         employee = emp_result.data
 
-        # Update last_login timestamp
+        # Update last_login timestamp and log activity (non-critical)
         if employee:
-            sb.table("employees").update({
-                "last_login": datetime.now(timezone.utc).isoformat(),
-            }).eq("auth_id", user.id).execute()
+            try:
+                sb.table("employees").update({
+                    "last_login": datetime.now(timezone.utc).isoformat(),
+                }).eq("auth_id", str(user.id)).execute()
+            except Exception:
+                pass  # Non-critical
 
-            # Log the activity
             try:
                 sb.table("activity_log").insert({
                     "employee_id": employee["id"],
                     "action": "login",
-                    "details": f"{employee['name']} logged in",
+                    "details": {"message": f"{employee['name']} logged in"},
                 }).execute()
             except Exception:
                 pass  # Non-critical — don't fail login over logging
@@ -217,8 +219,8 @@ async def change_password(
             if emp_result.data:
                 sb.table("activity_log").insert({
                     "employee_id": emp_result.data["id"],
-                    "action": "password_change",
-                    "details": f"{emp_result.data['name']} changed their password",
+                    "action": "password_changed",
+                    "details": {"message": f"{emp_result.data['name']} changed their password"},
                 }).execute()
         except Exception:
             pass  # Non-critical

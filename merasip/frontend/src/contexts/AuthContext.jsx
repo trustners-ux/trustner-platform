@@ -33,9 +33,14 @@ export function AuthProvider({ children }) {
   const loginWithPassword = async (email, password) => {
     const result = await api.loginWithPassword(email, password)
     if (result.access_token) {
+      // Merge user basic info with employee profile data
+      const merged = {
+        ...result.user,
+        ...(result.employee || {}),
+      }
       localStorage.setItem('advisor_token', result.access_token)
-      localStorage.setItem('advisor_user', JSON.stringify(result.user))
-      setUser(result.user)
+      localStorage.setItem('advisor_user', JSON.stringify(merged))
+      setUser(merged)
     }
     return result
   }
