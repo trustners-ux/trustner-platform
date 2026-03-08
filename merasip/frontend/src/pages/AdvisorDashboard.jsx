@@ -296,6 +296,7 @@ export default function AdvisorDashboard() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>ARN-286886</span>
           {/* Nav links */}
+          <button onClick={() => navigate('/advisor/analyse')} style={{ ...navBtn, background: 'rgba(255,255,255,0.2)' }}>Analyse</button>
           <button onClick={() => navigate('/advisor/rebalance')} style={navBtn}>Rebalance</button>
           <button onClick={() => navigate('/advisor/nav')} style={navBtn}>NAV</button>
           {isManager && <button onClick={() => navigate('/advisor/review-queue')} style={{ ...navBtn, background: 'rgba(255,255,255,0.2)' }}>Review Queue</button>}
@@ -372,7 +373,7 @@ export default function AdvisorDashboard() {
               <div style={{ fontSize: 48, marginBottom: 16 }}>📊</div>
               <div style={{ fontSize: 16, fontWeight: 700, color: C.navy }}>Select a client to view details</div>
               <div style={{ fontSize: 12, marginTop: 8 }}>
-                Choose from the sidebar or <a href="/review" style={{ color: C.navy }}>upload a new CAS</a>
+                Choose from the sidebar or <a href="/advisor/analyse" style={{ color: C.navy }}>upload a new CAS</a>
               </div>
             </div>
           ) : (

@@ -243,6 +243,7 @@ export default function AdminPanel() {
             {[
               { label: 'Dashboard', href: '/advisor' },
               { label: 'Rebalance', href: '/advisor/rebalance' },
+              { label: 'Analyse', href: '/advisor/analyse' },
               { label: 'NAV Engine', href: '/advisor/nav' },
               ...(isManager ? [{ label: 'Review Queue', href: '/advisor/review-queue' }] : []),
               { label: 'Team', href: '/advisor/team' },

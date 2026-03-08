@@ -13,6 +13,7 @@ const LoginPage = lazy(() => import('./pages/LoginPage'))
 const TeamPage = lazy(() => import('./pages/TeamPage'))
 const AdminPanel = lazy(() => import('./pages/AdminPanel'))
 const ProfilePage = lazy(() => import('./pages/ProfilePage'))
+const PortfolioAnalyser = lazy(() => import('./pages/PortfolioAnalyser'))
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'))
 const TermsPage = lazy(() => import('./pages/TermsPage'))
 
@@ -48,6 +49,7 @@ export default function App() {
             <Route path="/advisor/review-queue" element={<PrivateRoute requireManager><ReviewManagerPage /></PrivateRoute>} />
             <Route path="/advisor/team" element={<PrivateRoute><TeamPage /></PrivateRoute>} />
             <Route path="/advisor/admin" element={<PrivateRoute requireAdmin><AdminPanel /></PrivateRoute>} />
+            <Route path="/advisor/analyse" element={<PrivateRoute><PortfolioAnalyser /></PrivateRoute>} />
             <Route path="/advisor/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
 
             {/* Default redirect */}
