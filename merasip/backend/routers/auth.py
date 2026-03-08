@@ -134,14 +134,18 @@ async def password_login(req: PasswordLoginRequest):
             raise HTTPException(status_code=401, detail="Invalid credentials")
 
         # Fetch employee profile from employees table
-        emp_result = (
-            sb.table("employees")
-            .select("id, name, email, designation, department, role, status")
-            .eq("auth_id", user.id)
-            .maybe_single()
-            .execute()
-        )
-        employee = emp_result.data
+        employee = None
+        try:
+            emp_result = (
+                sb.table("employees")
+                .select("id, name, email, designation, department, role, status, created_at, last_login")
+                .eq("auth_id", str(user.id))
+                .execute()
+            )
+            if emp_result.data and len(emp_result.data) > 0:
+                employee = emp_result.data[0]
+        except Exception:
+            pass  # Non-critical — login still works without profile
 
         # Update last_login timestamp and log activity (non-critical)
         if employee:
@@ -212,15 +216,14 @@ async def change_password(
             emp_result = (
                 sb.table("employees")
                 .select("id, name")
-                .eq("auth_id", user_id)
-                .maybe_single()
+                .eq("auth_id", str(user_id))
                 .execute()
             )
-            if emp_result.data:
+            if emp_result.data and len(emp_result.data) > 0:
                 sb.table("activity_log").insert({
-                    "employee_id": emp_result.data["id"],
+                    "employee_id": emp_result.data[0]["id"],
                     "action": "password_changed",
-                    "details": {"message": f"{emp_result.data['name']} changed their password"},
+                    "details": {"message": f"{emp_result.data[0]['name']} changed their password"},
                 }).execute()
         except Exception:
             pass  # Non-critical
@@ -249,12 +252,12 @@ async def get_me(user: dict = Depends(verify_token)):
         sb = get_supabase()
         emp_result = (
             sb.table("employees")
-            .select("id, name, email, designation, department, role, status")
-            .eq("auth_id", user_id)
-            .maybe_single()
+            .select("id, name, email, designation, department, role, status, created_at, last_login")
+            .eq("auth_id", str(user_id))
             .execute()
         )
-        employee = emp_result.data
+        if emp_result.data and len(emp_result.data) > 0:
+            employee = emp_result.data[0]
     except Exception:
         pass  # Fall back to JWT-only data
 

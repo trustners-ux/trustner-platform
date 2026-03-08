@@ -86,12 +86,11 @@ async def get_employee(employee_id: str, user: dict = Depends(verify_token)):
             sb.table("employees")
             .select("id, name, email, designation, department, role, status, last_login, created_at")
             .eq("id", employee_id)
-            .maybe_single()
             .execute()
         )
-        if not result.data:
+        if not result.data or len(result.data) == 0:
             raise HTTPException(status_code=404, detail="Employee not found")
-        return result.data
+        return result.data[0]
     except HTTPException:
         raise
     except Exception as e:
@@ -141,13 +140,12 @@ async def create_employee(req: EmployeeCreate, admin: dict = Depends(require_adm
             admin_emp = (
                 sb.table("employees")
                 .select("id, name")
-                .eq("auth_id", admin_id)
-                .maybe_single()
+                .eq("auth_id", str(admin_id))
                 .execute()
             )
-            if admin_emp.data and employee:
+            if admin_emp.data and len(admin_emp.data) > 0 and employee:
                 sb.table("activity_log").insert({
-                    "employee_id": admin_emp.data["id"],
+                    "employee_id": admin_emp.data[0]["id"],
                     "action": "create_employee",
                     "details": {"message": f"{admin_emp.data['name']} created employee {req.name}"},
                 }).execute()
@@ -182,15 +180,15 @@ async def update_employee(
         sb = get_supabase()
 
         # Fetch existing employee to get auth_id
-        existing = (
+        existing_q = (
             sb.table("employees")
             .select("id, auth_id, name, role")
             .eq("id", employee_id)
-            .maybe_single()
             .execute()
         )
-        if not existing.data:
+        if not existing_q.data or len(existing_q.data) == 0:
             raise HTTPException(status_code=404, detail="Employee not found")
+        existing_emp = existing_q.data[0]
 
         # Build update payload (only non-None fields)
         update_data = {}
@@ -217,8 +215,8 @@ async def update_employee(
         )
 
         # If role changed, update Supabase Auth app_metadata
-        if req.role is not None and req.role != existing.data.get("role"):
-            auth_id = existing.data.get("auth_id")
+        if req.role is not None and req.role != existing_emp.get("role"):
+            auth_id = existing_emp.get("auth_id")
             if auth_id:
                 sb.auth.admin.update_user_by_id(
                     auth_id,
@@ -228,18 +226,17 @@ async def update_employee(
         # Log the activity
         admin_id = admin.get("sub", "")
         try:
-            admin_emp = (
+            admin_emp_q = (
                 sb.table("employees")
                 .select("id, name")
-                .eq("auth_id", admin_id)
-                .maybe_single()
+                .eq("auth_id", str(admin_id))
                 .execute()
             )
-            if admin_emp.data:
+            if admin_emp_q.data and len(admin_emp_q.data) > 0:
                 sb.table("activity_log").insert({
-                    "employee_id": admin_emp.data["id"],
+                    "employee_id": admin_emp_q.data[0]["id"],
                     "action": "update_employee",
-                    "details": {"message": f"{admin_emp.data['name']} updated employee {existing.data.get('name', employee_id)}"},
+                    "details": {"message": f"{admin_emp_q.data[0]['name']} updated employee {existing_emp.get('name', employee_id)}"},
                 }).execute()
         except Exception:
             pass  # Non-critical
@@ -266,17 +263,17 @@ async def reset_employee_password(
         sb = get_supabase()
 
         # Fetch employee to get auth_id
-        emp_result = (
+        emp_q = (
             sb.table("employees")
             .select("id, auth_id, name")
             .eq("id", employee_id)
-            .maybe_single()
             .execute()
         )
-        if not emp_result.data:
+        if not emp_q.data or len(emp_q.data) == 0:
             raise HTTPException(status_code=404, detail="Employee not found")
+        target_emp = emp_q.data[0]
 
-        auth_id = emp_result.data.get("auth_id")
+        auth_id = target_emp.get("auth_id")
         if not auth_id:
             raise HTTPException(status_code=400, detail="Employee has no linked auth account")
 
@@ -292,18 +289,17 @@ async def reset_employee_password(
         # Log the activity
         admin_id = admin.get("sub", "")
         try:
-            admin_emp = (
+            admin_emp_q = (
                 sb.table("employees")
                 .select("id, name")
-                .eq("auth_id", admin_id)
-                .maybe_single()
+                .eq("auth_id", str(admin_id))
                 .execute()
             )
-            if admin_emp.data:
+            if admin_emp_q.data and len(admin_emp_q.data) > 0:
                 sb.table("activity_log").insert({
-                    "employee_id": admin_emp.data["id"],
+                    "employee_id": admin_emp_q.data[0]["id"],
                     "action": "reset_password",
-                    "details": {"message": f"{admin_emp.data['name']} reset password for {emp_result.data.get('name', employee_id)}"},
+                    "details": {"message": f"{admin_emp_q.data[0]['name']} reset password for {target_emp.get('name', employee_id)}"},
                 }).execute()
         except Exception:
             pass  # Non-critical
