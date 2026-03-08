@@ -198,11 +198,15 @@ async def password_login(req: PasswordLoginRequest):
         if not session:
             raise HTTPException(status_code=401, detail="Invalid credentials")
 
+        # Use a fresh service-role client for DB queries
+        # (sign_in_with_password changes the client's auth session)
+        db = get_supabase()
+
         # Fetch employee profile from employees table
         employee = None
         try:
             emp_result = (
-                sb.table("employees")
+                db.table("employees")
                 .select("id, name, email, designation, department, role, status, created_at, last_login")
                 .eq("auth_id", str(user.id))
                 .execute()
@@ -215,14 +219,14 @@ async def password_login(req: PasswordLoginRequest):
         # Update last_login timestamp and log activity (non-critical)
         if employee:
             try:
-                sb.table("employees").update({
+                db.table("employees").update({
                     "last_login": datetime.now(timezone.utc).isoformat(),
                 }).eq("auth_id", str(user.id)).execute()
             except Exception:
                 pass  # Non-critical
 
             try:
-                sb.table("activity_log").insert({
+                db.table("activity_log").insert({
                     "employee_id": employee["id"],
                     "action": "login",
                     "details": {"message": f"{employee['name']} logged in"},
