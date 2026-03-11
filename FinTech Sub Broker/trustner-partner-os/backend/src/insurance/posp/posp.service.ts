@@ -902,4 +902,96 @@ export class POSPService {
     const result = await this.getMyTeamPOSPs(userId, userRole, { skip: 0, take: 10000 }, filters);
     return result.data;
   }
+
+  /**
+   * Search POSPs for dropdown selector — matches by name or agent code
+   */
+  async searchForDropdown(query: string, limit = 20): Promise<any[]> {
+    if (!query || query.trim().length < 1) {
+      return this.prisma.pOSPAgent.findMany({
+        select: { id: true, agentCode: true, firstName: true, lastName: true, city: true, status: true },
+        take: limit,
+        orderBy: { firstName: 'asc' },
+      });
+    }
+
+    return this.prisma.pOSPAgent.findMany({
+      where: {
+        OR: [
+          { firstName: { contains: query, mode: 'insensitive' } },
+          { lastName: { contains: query, mode: 'insensitive' } },
+          { agentCode: { contains: query, mode: 'insensitive' } },
+        ],
+      },
+      select: { id: true, agentCode: true, firstName: true, lastName: true, city: true, status: true },
+      take: limit,
+      orderBy: { firstName: 'asc' },
+    });
+  }
+
+  /**
+   * Get POSP self-service dashboard data for POSP login
+   * Shows own business summary, expected earnings, and recent policies
+   */
+  async getPOSPSelfDashboard(userId: string): Promise<any> {
+    const agent = await this.prisma.pOSPAgent.findUnique({ where: { userId } });
+    if (!agent) throw new NotFoundException('POSP agent not found for this user');
+
+    const [
+      totalPolicies,
+      premiumAgg,
+      expectedEarnings,
+      recentEntries,
+    ] = await Promise.all([
+      // Total verified MIS entries for this POSP
+      this.prisma.mISEntry.count({
+        where: { pospId: agent.id, status: 'VERIFIED' },
+      }),
+      // Total premium and commission from verified entries
+      this.prisma.mISEntry.aggregate({
+        where: { pospId: agent.id, status: 'VERIFIED' },
+        _sum: { grossPremium: true, netPremium: true, commissionAmount: true },
+      }),
+      // Expected earnings from pending/approved payouts
+      this.prisma.insurancePayout.aggregate({
+        where: { pospId: agent.id, status: { in: ['PENDING', 'APPROVED'] } },
+        _sum: { netPayable: true, grossAmount: true },
+      }),
+      // Recent 10 verified entries
+      this.prisma.mISEntry.findMany({
+        where: { pospId: agent.id, status: 'VERIFIED' },
+        select: {
+          id: true, misCode: true, customerName: true, insurerName: true,
+          lob: true, grossPremium: true, netPremium: true, commissionAmount: true,
+          policyNumber: true, policyCategory: true, createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      }),
+    ]);
+
+    return {
+      agent: {
+        id: agent.id,
+        agentCode: agent.agentCode,
+        firstName: agent.firstName,
+        lastName: agent.lastName,
+        category: agent.category,
+        status: agent.status,
+        city: agent.city,
+        state: agent.state,
+      },
+      summary: {
+        totalPolicies,
+        totalPremium: premiumAgg._sum.grossPremium || 0,
+        totalNetPremium: premiumAgg._sum.netPremium || 0,
+        totalCommission: premiumAgg._sum.commissionAmount || 0,
+      },
+      expectedEarnings: {
+        pendingPayouts: expectedEarnings._sum.netPayable || 0,
+        grossAmount: expectedEarnings._sum.grossAmount || 0,
+      },
+      recentPolicies: recentEntries,
+    };
+  }
 }

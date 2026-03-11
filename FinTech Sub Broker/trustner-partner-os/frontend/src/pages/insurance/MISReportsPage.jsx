@@ -21,6 +21,7 @@ const REPORT_TYPES = [
   { value: 'QUARTERLY', label: 'Quarterly' },
   { value: 'HALF_YEARLY', label: 'Half-Yearly' },
   { value: 'YEARLY', label: 'Yearly' },
+  { value: 'CUSTOM_DATE_RANGE', label: 'Custom Date Range' },
 ];
 
 const DEPARTMENTS = ['All', 'Health', 'Life', 'General', 'Motor', 'Travel'];
@@ -54,6 +55,11 @@ const MISReportsPage = () => {
   const [year, setYear] = useState(new Date().getFullYear().toString());
   const [period, setPeriod] = useState('');
   const [department, setDepartment] = useState('All');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+  // Summary date range
+  const [summaryStartDate, setSummaryStartDate] = useState('');
+  const [summaryEndDate, setSummaryEndDate] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -91,6 +97,12 @@ const MISReportsPage = () => {
         period: period || undefined,
         department: department === 'All' ? undefined : department,
       };
+      // Custom date range
+      if (reportType === 'CUSTOM_DATE_RANGE') {
+        payload.startDate = customStartDate;
+        payload.endDate = customEndDate;
+        delete payload.period;
+      }
       await misAPI.generateReport(payload);
       setSuccess('Report generation started. It will appear in the list once completed.');
       fetchData();
@@ -99,6 +111,20 @@ const MISReportsPage = () => {
       console.error(err);
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleRefreshSummary = async () => {
+    try {
+      const params = {};
+      if (summaryStartDate && summaryEndDate) {
+        params.startDate = summaryStartDate;
+        params.endDate = summaryEndDate;
+      }
+      const summaryRes = await misAPI.getSummary(params);
+      setSummary(summaryRes.data || null);
+    } catch (err) {
+      console.error('Failed to refresh summary:', err);
     }
   };
 
@@ -129,9 +155,12 @@ const MISReportsPage = () => {
       case 'QUARTERLY': return QUARTERS.map((q, i) => ({ value: `Q${i + 1}`, label: q }));
       case 'HALF_YEARLY': return HALF_YEARS.map((h, i) => ({ value: `H${i + 1}`, label: h }));
       case 'YEARLY': return [];
+      case 'CUSTOM_DATE_RANGE': return [];
       default: return [];
     }
   };
+
+  const isCustomRange = reportType === 'CUSTOM_DATE_RANGE';
 
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear - i);
@@ -255,6 +284,29 @@ const MISReportsPage = () => {
               </div>
             )}
 
+            {isCustomRange && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Start Date *</label>
+                  <input
+                    type="date"
+                    value={customStartDate}
+                    onChange={(e) => setCustomStartDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">End Date *</label>
+                  <input
+                    type="date"
+                    value={customEndDate}
+                    onChange={(e) => setCustomEndDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              </>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
               <select
@@ -272,7 +324,7 @@ const MISReportsPage = () => {
           <div className="mt-6 flex justify-end">
             <button
               onClick={handleGenerate}
-              disabled={generating || (getPeriodOptions().length > 0 && !period)}
+              disabled={generating || (getPeriodOptions().length > 0 && !period) || (isCustomRange && (!customStartDate || !customEndDate))}
               className="flex items-center gap-2 px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
             >
               {generating ? (
@@ -371,6 +423,44 @@ const MISReportsPage = () => {
       {/* Real-time Summary Tab */}
       {activeTab === 'summary' && (
         <div className="space-y-6">
+          {/* Date Range Filter for Summary */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-end">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">From Date</label>
+                <input
+                  type="date"
+                  value={summaryStartDate}
+                  onChange={(e) => setSummaryStartDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">To Date</label>
+                <input
+                  type="date"
+                  value={summaryEndDate}
+                  onChange={(e) => setSummaryEndDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
+                />
+              </div>
+              <button
+                onClick={handleRefreshSummary}
+                className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium text-sm transition-colors"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Refresh
+              </button>
+              {(summaryStartDate || summaryEndDate) && (
+                <button
+                  onClick={() => { setSummaryStartDate(''); setSummaryEndDate(''); handleRefreshSummary(); }}
+                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium text-sm transition-colors hover:bg-gray-50"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
           {/* Summary Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">

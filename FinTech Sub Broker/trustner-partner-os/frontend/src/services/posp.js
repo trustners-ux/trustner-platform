@@ -23,6 +23,12 @@ export const pospAPI = {
   getPerformance: (id) => api.get(`/insurance/posp/${id}/performance`),
   getDashboard: (id) => api.get(`/insurance/posp/${id}/dashboard`),
 
+  // Search for dropdown selector
+  search: (q, limit = 20) => api.get('/insurance/posp/search', { params: { q, limit } }),
+
+  // POSP self-service dashboard
+  getMyDashboard: () => api.get('/insurance/posp/my-dashboard'),
+
   // Hierarchy-scoped endpoints
   getMyPOSPs: (params) => api.get('/insurance/posp/my-posps', { params }),
   getMyTeam: () => api.get('/insurance/posp/my-team'),

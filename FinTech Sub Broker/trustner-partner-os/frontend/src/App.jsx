@@ -39,6 +39,8 @@ const HierarchyManagement = lazy(() => import('./pages/insurance/HierarchyManage
 const ProductGradingPage = lazy(() => import('./pages/insurance/ProductGradingPage'));
 const ContestManagement = lazy(() => import('./pages/insurance/ContestManagement'));
 const ContestDetail = lazy(() => import('./pages/insurance/ContestDetail'));
+const PayoutConfigPage = lazy(() => import('./pages/insurance/PayoutConfigPage'));
+const POSPDashboardPage = lazy(() => import('./pages/insurance/POSPDashboardPage'));
 
 // Pages - Auth & Admin
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -141,6 +143,8 @@ function App() {
             <Route path="/insurance/product-grades" element={<ProductGradingPage />} />
             <Route path="/insurance/contests" element={<ContestManagement />} />
             <Route path="/insurance/contests/:id" element={<ContestDetail />} />
+            <Route path="/insurance/payout-config" element={<PayoutConfigPage />} />
+            <Route path="/insurance/posp-dashboard" element={<POSPDashboardPage />} />
 
             {/* Admin Routes - restricted to SUPER_ADMIN & PRINCIPAL_OFFICER */}
             <Route path="/admin/users" element={<UserManagementPage />} />

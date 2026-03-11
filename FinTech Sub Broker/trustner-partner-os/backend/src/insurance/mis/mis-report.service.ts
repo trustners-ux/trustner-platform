@@ -13,14 +13,19 @@ export class MISReportService {
   }
 
   async generateReport(
-    dto: { reportType: string; periodMonth?: number; periodYear: number; periodQuarter?: number; department?: string; filters?: any },
+    dto: { reportType: string; periodMonth?: number; periodYear: number; periodQuarter?: number; department?: string; filters?: any; startDate?: string; endDate?: string },
     userId: string,
   ) {
-    // Build date range from period
+    // Build date range from period or custom date range
     let startDate: Date;
     let endDate: Date;
 
-    if (dto.periodMonth) {
+    if (dto.startDate && dto.endDate) {
+      // Custom date range
+      startDate = new Date(dto.startDate);
+      endDate = new Date(dto.endDate);
+      endDate.setHours(23, 59, 59, 999);
+    } else if (dto.periodMonth) {
       startDate = new Date(dto.periodYear, dto.periodMonth - 1, 1);
       endDate = new Date(dto.periodYear, dto.periodMonth, 0, 23, 59, 59);
     } else if (dto.periodQuarter) {
@@ -126,11 +131,16 @@ export class MISReportService {
     return report;
   }
 
-  async getSummaryData(period: { month?: number; year: number; quarter?: number }, department?: string) {
+  async getSummaryData(period: { month?: number; year: number; quarter?: number; startDate?: string; endDate?: string }, department?: string) {
     let startDate: Date;
     let endDate: Date;
 
-    if (period.month) {
+    if (period.startDate && period.endDate) {
+      // Custom date range
+      startDate = new Date(period.startDate);
+      endDate = new Date(period.endDate);
+      endDate.setHours(23, 59, 59, 999);
+    } else if (period.month) {
       startDate = new Date(period.year, period.month - 1, 1);
       endDate = new Date(period.year, period.month, 0, 23, 59, 59);
     } else if (period.quarter) {

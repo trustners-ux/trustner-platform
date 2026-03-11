@@ -66,6 +66,10 @@ export class CreateMISEntryDto {
   @IsString() @IsOptional() paymentMode?: string;
   @IsString() @IsOptional() paymentReference?: string;
 
+  // Premium Auto-Calculation
+  @IsNumber() @IsOptional() policyTermYears?: number;
+  @IsBoolean() @IsOptional() isDST?: boolean;
+
   // Reference
   @IsString() @IsOptional() policyId?: string;
   @IsString() @IsOptional() makerRemarks?: string;

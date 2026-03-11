@@ -14,9 +14,22 @@ export class MISReportController {
   }
 
   @Get('summary')
-  getSummary(@Query('month') month?: string, @Query('year') year?: string, @Query('quarter') quarter?: string, @Query('department') department?: string) {
+  getSummary(
+    @Query('month') month?: string,
+    @Query('year') year?: string,
+    @Query('quarter') quarter?: string,
+    @Query('department') department?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
     return this.reportService.getSummaryData(
-      { month: month ? Number(month) : undefined, year: Number(year) || new Date().getFullYear(), quarter: quarter ? Number(quarter) : undefined },
+      {
+        month: month ? Number(month) : undefined,
+        year: Number(year) || new Date().getFullYear(),
+        quarter: quarter ? Number(quarter) : undefined,
+        startDate,
+        endDate,
+      },
       department,
     );
   }

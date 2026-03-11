@@ -66,6 +66,10 @@ export class UpdateMISEntryDto {
   @IsString() @IsOptional() paymentMode?: string;
   @IsString() @IsOptional() paymentReference?: string;
 
+  // Premium Auto-Calculation
+  @IsNumber() @IsOptional() policyTermYears?: number;
+  @IsBoolean() @IsOptional() isDST?: boolean;
+
   // Remarks
   @IsString() @IsOptional() makerRemarks?: string;
 }

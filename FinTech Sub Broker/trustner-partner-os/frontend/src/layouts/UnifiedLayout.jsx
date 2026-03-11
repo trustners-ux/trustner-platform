@@ -108,9 +108,11 @@ const UnifiedLayout = () => {
         { label: 'MIS Entry', icon: FileText, path: '/insurance/mis/entry' },
         { label: 'Verification', icon: CheckSquare, path: '/insurance/mis/verification' },
         { label: 'MIS Reports', icon: ClipboardList, path: '/insurance/mis/reports' },
+        { label: 'Payout Config', icon: DollarSign, path: '/insurance/payout-config', adminOnly: true },
         { label: 'Hierarchy', icon: GitBranch, path: '/insurance/hierarchy', adminOnly: true },
         { label: 'Product Grades', icon: Star, path: '/insurance/product-grades', adminOnly: true },
         { label: 'Contests', icon: Trophy, path: '/insurance/contests' },
+        { label: 'My Dashboard', icon: Home, path: '/insurance/posp-dashboard', roles: ['POSP'] },
       ],
     },
     {

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   FileText,
@@ -11,8 +11,10 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronUp,
+  Calculator,
 } from 'lucide-react';
 import misAPI from '../../services/mis';
+import POSPSelector from '../../components/common/POSPSelector';
 
 const LOB_OPTIONS = [
   { value: 'MOTOR_TWO_WHEELER', label: 'Motor - Two Wheeler' },
@@ -125,8 +127,13 @@ const INITIAL_FORM = {
   businessClosedBy: '',
   agencyBroker: '',
   // POSP
+  pospId: '',
   pospName: '',
   pospCode: '',
+  isDST: false,
+  // Auto-calc
+  autoCalcPremium: true,
+  policyTermYears: 1,
   // Location
   employeeLocation: '',
   branchName: '',
@@ -173,6 +180,52 @@ const MISEntryPage = () => {
     return formData.lob?.startsWith('MOTOR_') || formData.policyType === 'Motor';
   }, [formData.lob, formData.policyType]);
 
+  // Determine if health LOB (multi-year option)
+  const isHealthLOB = useMemo(() => {
+    return formData.lob?.startsWith('HEALTH_');
+  }, [formData.lob]);
+
+  // Premium auto-calculation logic
+  const computePremiumSplits = useCallback((netPremium, policyTermYears, isDST, isRenewal) => {
+    if (!netPremium || netPremium <= 0) return {};
+    const years = policyTermYears || 1;
+    // Multi-year health: (netPremium / N) * 150%
+    const annualizedPremium = years > 1
+      ? (netPremium / years) * 1.50
+      : netPremium;
+
+    const result = { netPremium100: annualizedPremium.toFixed(2) };
+
+    if (!isRenewal) {
+      // New business
+      if (isDST) {
+        // DST gets 100%, no 70/30 split
+        result.netPremium70 = '';
+        result.netPremium30 = '';
+        result.renewalPremium50 = '';
+      } else {
+        // POSP: 70/30 split
+        result.netPremium70 = (annualizedPremium * 0.70).toFixed(2);
+        result.netPremium30 = (annualizedPremium * 0.30).toFixed(2);
+        result.renewalPremium50 = '';
+      }
+    } else {
+      // Renewal
+      if (isDST) {
+        // DST renewal: 50% of 100%
+        result.renewalPremium50 = (annualizedPremium * 0.50).toFixed(2);
+        result.netPremium70 = '';
+        result.netPremium30 = '';
+      } else {
+        // POSP renewal: 50% of 70% = 35% of annualized
+        result.netPremium70 = (annualizedPremium * 0.70).toFixed(2);
+        result.netPremium30 = (annualizedPremium * 0.30).toFixed(2);
+        result.renewalPremium50 = (annualizedPremium * 0.70 * 0.50).toFixed(2);
+      }
+    }
+    return result;
+  }, []);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => {
@@ -185,8 +238,36 @@ const MISEntryPage = () => {
       if (name === 'lob' && value.startsWith('MOTOR_')) {
         setExpandedSections((s) => ({ ...s, motor: true }));
       }
+      // When DST toggled on, clear POSP fields
+      if (name === 'isDST' && checked) {
+        updated.pospId = '';
+        updated.pospName = '';
+        updated.pospCode = '';
+      }
+      // Auto-calc premium splits when relevant fields change
+      const autoCalcTriggers = ['netPremium', 'policyTermYears', 'isDST', 'isRenewal', 'autoCalcPremium'];
+      if (autoCalcTriggers.includes(name) && updated.autoCalcPremium) {
+        const np = parseFloat(updated.netPremium) || 0;
+        const years = parseInt(updated.policyTermYears) || 1;
+        const dst = updated.isDST;
+        const renewal = updated.isRenewal;
+        if (np > 0) {
+          const splits = computePremiumSplits(np, years, dst, renewal);
+          Object.assign(updated, splits);
+        }
+      }
       return updated;
     });
+  };
+
+  // Handle POSP selector change
+  const handlePOSPSelect = (pospData) => {
+    setFormData((prev) => ({
+      ...prev,
+      pospId: pospData.pospId || '',
+      pospName: pospData.pospName || '',
+      pospCode: pospData.pospCode || '',
+    }));
   };
 
   const toggleSection = (section) => {
@@ -199,6 +280,8 @@ const MISEntryPage = () => {
       setSubmitting(true);
       setError(null);
       const payload = { ...formData };
+      // Remove UI-only fields
+      delete payload.autoCalcPremium;
       // Convert numeric fields
       const numericFields = [
         'sumInsured', 'grossPremium', 'netPremium', 'commissionAmount',
@@ -208,6 +291,10 @@ const MISEntryPage = () => {
       numericFields.forEach((f) => {
         payload[f] = payload[f] ? parseFloat(payload[f]) : undefined;
       });
+      // Convert policyTermYears to number
+      if (payload.policyTermYears) {
+        payload.policyTermYears = parseInt(payload.policyTermYears) || 1;
+      }
       // Remove empty string fields
       Object.keys(payload).forEach((key) => {
         if (payload[key] === '') delete payload[key];
@@ -556,27 +643,70 @@ const MISEntryPage = () => {
 
           {/* Section 6: Commission Splits */}
           <div className={sectionClass}>
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Commission Splits</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900">Commission Splits</h3>
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="autoCalcPremium" checked={formData.autoCalcPremium} onChange={handleChange}
+                    className="w-4 h-4 text-teal-600 rounded border-gray-300 focus:ring-teal-500" />
+                  <span className="text-sm text-gray-700 flex items-center gap-1">
+                    <Calculator className="w-3.5 h-3.5" /> Auto-calculate
+                  </span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="isDST" checked={formData.isDST} onChange={handleChange}
+                    className="w-4 h-4 text-orange-600 rounded border-gray-300 focus:ring-orange-500" />
+                  <span className="text-sm text-gray-700">DST (Direct Sales)</span>
+                </label>
+              </div>
+            </div>
+            {/* Policy Term Years - for multi-year health */}
+            {isHealthLOB && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-4">
+                  <label className="text-sm font-medium text-blue-800">Policy Term (Years)</label>
+                  <input type="number" name="policyTermYears" value={formData.policyTermYears} onChange={handleChange}
+                    className="w-20 px-3 py-1.5 border border-blue-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    min="1" max="10" />
+                  {formData.policyTermYears > 1 && (
+                    <span className="text-xs text-blue-600">
+                      Multi-year: (Premium / {formData.policyTermYears}) x 150%
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+            {formData.autoCalcPremium && formData.netPremium && (
+              <div className="mb-3 px-3 py-2 bg-teal-50 border border-teal-200 rounded-lg text-xs text-teal-700">
+                Auto-calculated from Net Premium = {formData.netPremium}
+                {formData.isDST ? ' (DST mode - 100% credit)' : ' (POSP mode - 70/30 split)'}
+                {formData.isRenewal ? ' | Renewal 50% credit applied' : ''}
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <div>
-                <label className={labelClass}>Net Premium 100%</label>
+                <label className={labelClass}>Net Premium 100% {formData.autoCalcPremium && <span className="text-teal-500 text-xs">(Auto)</span>}</label>
                 <input type="number" name="netPremium100" value={formData.netPremium100} onChange={handleChange}
-                  className={inputClass} min="0" step="0.01" placeholder="0.00" />
+                  className={`${inputClass} ${formData.autoCalcPremium ? 'bg-gray-50' : ''}`}
+                  min="0" step="0.01" placeholder="0.00" readOnly={formData.autoCalcPremium} />
               </div>
               <div>
-                <label className={labelClass}>Net Premium 70%</label>
+                <label className={labelClass}>Net Premium 70% {formData.autoCalcPremium && <span className="text-teal-500 text-xs">(Auto)</span>}</label>
                 <input type="number" name="netPremium70" value={formData.netPremium70} onChange={handleChange}
-                  className={inputClass} min="0" step="0.01" placeholder="0.00" />
+                  className={`${inputClass} ${formData.autoCalcPremium ? 'bg-gray-50' : ''}`}
+                  min="0" step="0.01" placeholder={formData.isDST ? 'N/A (DST)' : '0.00'} readOnly={formData.autoCalcPremium} />
               </div>
               <div>
-                <label className={labelClass}>Net Premium 30%</label>
+                <label className={labelClass}>Net Premium 30% {formData.autoCalcPremium && <span className="text-teal-500 text-xs">(Auto)</span>}</label>
                 <input type="number" name="netPremium30" value={formData.netPremium30} onChange={handleChange}
-                  className={inputClass} min="0" step="0.01" placeholder="0.00" />
+                  className={`${inputClass} ${formData.autoCalcPremium ? 'bg-gray-50' : ''}`}
+                  min="0" step="0.01" placeholder={formData.isDST ? 'N/A (DST)' : '0.00'} readOnly={formData.autoCalcPremium} />
               </div>
               <div>
-                <label className={labelClass}>Renewal Premium 50%</label>
+                <label className={labelClass}>Renewal Premium 50% {formData.autoCalcPremium && <span className="text-teal-500 text-xs">(Auto)</span>}</label>
                 <input type="number" name="renewalPremium50" value={formData.renewalPremium50} onChange={handleChange}
-                  className={inputClass} min="0" step="0.01" placeholder="0.00" />
+                  className={`${inputClass} ${formData.autoCalcPremium ? 'bg-gray-50' : ''}`}
+                  min="0" step="0.01" placeholder="0.00" readOnly={formData.autoCalcPremium} />
               </div>
               <div>
                 <label className={labelClass}>Commission Amount</label>
@@ -611,17 +741,24 @@ const MISEntryPage = () => {
           {/* Section 8: POSP & Location */}
           <div className={sectionClass}>
             <h3 className="text-lg font-bold text-gray-900 mb-4">POSP & Location</h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className={labelClass}>POSP Name</label>
-                <input type="text" name="pospName" value={formData.pospName} onChange={handleChange}
-                  className={inputClass} placeholder="POSP agent name" />
+                <label className={labelClass}>POSP Agent {formData.isDST && <span className="text-orange-500 text-xs">(DST - no POSP)</span>}</label>
+                <POSPSelector
+                  value={{ pospId: formData.pospId, pospName: formData.pospName, pospCode: formData.pospCode }}
+                  onChange={handlePOSPSelect}
+                  disabled={formData.isDST}
+                />
               </div>
-              <div>
-                <label className={labelClass}>POSP Code</label>
-                <input type="text" name="pospCode" value={formData.pospCode} onChange={handleChange}
-                  className={inputClass} placeholder="POSP code" />
+              <div className="flex flex-col justify-end gap-2">
+                {formData.pospName && !formData.isDST && (
+                  <div className="text-sm text-gray-600 bg-gray-50 rounded-lg p-2">
+                    <span className="font-medium">Selected:</span> {formData.pospCode ? `[${formData.pospCode}]` : ''} {formData.pospName}
+                  </div>
+                )}
               </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>Employee Location</label>
                 <input type="text" name="employeeLocation" value={formData.employeeLocation} onChange={handleChange}

@@ -1,12 +1,17 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateMISEntryDto } from './dto/create-mis-entry.dto';
 import { UpdateMISEntryDto } from './dto/update-mis-entry.dto';
 import { MISFilterDto } from './dto/mis-filter.dto';
+import { MISVerificationService } from './mis-verification.service';
 
 @Injectable()
 export class MISEntryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => MISVerificationService))
+    private readonly verificationService: MISVerificationService,
+  ) {}
 
   private getDepartment(lob: string): string {
     if (lob.startsWith('HEALTH_')) return 'HEALTH';
@@ -38,6 +43,64 @@ export class MISEntryService {
     if (val === undefined || val === null || val === '') return null;
     const n = Number(val);
     return isNaN(n) ? null : n;
+  }
+
+  /**
+   * Compute premium splits based on DST/POSP, renewal, and multi-year rules:
+   * - Multi-year health: annualized = (netPremium / N) * 1.50
+   * - DST new: netPremium100 = annualized (100% credit)
+   * - POSP new: netPremium100 = annualized, netPremium70 = 70%, netPremium30 = 30%
+   * - DST renewal: renewalPremium50 = annualized * 50% (50% of 100%)
+   * - POSP renewal: renewalPremium50 = annualized * 70% * 50% = 35%
+   */
+  private computePremiumSplits(
+    netPremium: number | null,
+    policyTermYears: number,
+    isDST: boolean,
+    isRenewal: boolean,
+  ) {
+    if (!netPremium || netPremium <= 0) {
+      return { annualizedPremium: null, netPremium100: null, netPremium70: null, netPremium30: null, renewalPremium50: null, renewalCreditPct: null };
+    }
+
+    const years = policyTermYears > 1 ? policyTermYears : 1;
+    const annualizedPremium = years > 1
+      ? (netPremium / years) * 1.50
+      : netPremium;
+
+    const netPremium100 = annualizedPremium;
+    let netPremium70: number | null = null;
+    let netPremium30: number | null = null;
+    let renewalPremium50: number | null = null;
+    let renewalCreditPct: number | null = null;
+
+    if (isRenewal) {
+      if (isDST) {
+        // DST renewal: 50% of 100%
+        renewalPremium50 = annualizedPremium * 0.50;
+        renewalCreditPct = 50.0;
+      } else {
+        // POSP renewal: 50% of 70% = 35%
+        renewalPremium50 = annualizedPremium * 0.70 * 0.50;
+        renewalCreditPct = 35.0;
+      }
+    } else {
+      if (!isDST) {
+        // POSP new business: 70/30 split
+        netPremium70 = annualizedPremium * 0.70;
+        netPremium30 = annualizedPremium * 0.30;
+      }
+      // DST new business: gets 100% (netPremium100 only)
+    }
+
+    return {
+      annualizedPremium: Math.round(annualizedPremium * 100) / 100,
+      netPremium100: Math.round(netPremium100 * 100) / 100,
+      netPremium70: netPremium70 ? Math.round(netPremium70 * 100) / 100 : null,
+      netPremium30: netPremium30 ? Math.round(netPremium30 * 100) / 100 : null,
+      renewalPremium50: renewalPremium50 ? Math.round(renewalPremium50 * 100) / 100 : null,
+      renewalCreditPct,
+    };
   }
 
   async createManualEntry(dto: CreateMISEntryDto, makerId: string) {
@@ -72,6 +135,19 @@ export class MISEntryService {
         if (node) hierarchyNodeId = node.id;
       }
     }
+
+    // Compute premium splits as server-side fallback
+    const isDST = dto.isDST || false;
+    const isRenewal = dto.isRenewal || false;
+    const policyTermYears = dto.policyTermYears || 1;
+    const netPremiumVal = this.toDecimalOrNull(dto.netPremium);
+    const computed = this.computePremiumSplits(netPremiumVal, policyTermYears, isDST, isRenewal);
+
+    // Use user-provided values if present, otherwise use computed fallbacks
+    const finalNetPremium100 = this.toDecimalOrNull(dto.netPremium100) ?? computed.netPremium100;
+    const finalNetPremium70 = this.toDecimalOrNull(dto.netPremium70) ?? computed.netPremium70;
+    const finalNetPremium30 = this.toDecimalOrNull(dto.netPremium30) ?? computed.netPremium30;
+    const finalRenewalPremium50 = this.toDecimalOrNull(dto.renewalPremium50) ?? computed.renewalPremium50;
 
     return this.prisma.mISEntry.create({
       data: {
@@ -111,16 +187,22 @@ export class MISEntryService {
         odPremium: this.toDecimalOrNull(dto.odPremium),
         tpPremium: this.toDecimalOrNull(dto.tpPremium),
         grossPremium: this.toDecimalOrNull(dto.grossPremium),
-        netPremium: this.toDecimalOrNull(dto.netPremium),
+        netPremium: netPremiumVal,
         gstAmount: this.toDecimalOrNull(dto.gstAmount),
         newPremium: this.toDecimalOrNull(dto.newPremium),
 
-        // Commission Splits
-        netPremium100: this.toDecimalOrNull(dto.netPremium100),
-        netPremium70: this.toDecimalOrNull(dto.netPremium70),
-        netPremium30: this.toDecimalOrNull(dto.netPremium30),
-        renewalPremium50: this.toDecimalOrNull(dto.renewalPremium50),
+        // Commission Splits (auto-computed with fallback)
+        netPremium100: finalNetPremium100,
+        netPremium70: finalNetPremium70,
+        netPremium30: finalNetPremium30,
+        renewalPremium50: finalRenewalPremium50,
         commissionAmount: this.toDecimalOrNull(dto.commissionAmount),
+
+        // Premium Auto-Calculation metadata
+        policyTermYears,
+        annualizedPremium: computed.annualizedPremium,
+        renewalCreditPct: computed.renewalCreditPct,
+        isDST,
 
         // Business Source & Sales
         referredBy: dto.referredBy || null,
@@ -135,7 +217,7 @@ export class MISEntryService {
         // Location & Classification
         employeeLocation: dto.employeeLocation || null,
         branchName: dto.branchName || null,
-        isRenewal: dto.isRenewal || false,
+        isRenewal,
         isNewCustomer: dto.isNewCustomer || false,
 
         // Motor-specific
@@ -156,6 +238,22 @@ export class MISEntryService {
         hierarchyNode: { include: { hierarchyLevel: true } },
       },
     });
+
+    // Auto-assign checker based on maker role + hierarchy
+    try {
+      const checkerId = await this.verificationService.resolveChecker(makerId, department);
+      if (checkerId) {
+        await this.prisma.mISEntry.update({
+          where: { id: entry.id },
+          data: { assignedCheckerId: checkerId },
+        });
+        (entry as any).assignedCheckerId = checkerId;
+      }
+    } catch {
+      // Non-blocking: if checker resolution fails, entry still created
+    }
+
+    return entry;
   }
 
   async createFromFileUpload(parsedRows: any[], batchId: string, makerId: string) {

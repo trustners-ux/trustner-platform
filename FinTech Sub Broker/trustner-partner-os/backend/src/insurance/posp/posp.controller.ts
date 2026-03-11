@@ -136,6 +136,36 @@ export class POSPController {
   }
 
   /**
+   * Search POSPs for dropdown selector (by name or code)
+   */
+  @Get('search')
+  @ApiOperation({
+    summary: 'Search POSPs for dropdown',
+    description: 'Search POSP agents by name or code for selector dropdown. Returns top 20 matches.',
+  })
+  @ApiResponse({ status: 200, description: 'POSP search results' })
+  async searchPOSPs(
+    @Query('q') query: string = '',
+    @Query('limit') limit: string = '20',
+  ) {
+    return this.pospService.searchForDropdown(query, parseInt(limit) || 20);
+  }
+
+  /**
+   * POSP self-service dashboard — shows own business + expected earnings
+   */
+  @Get('my-dashboard')
+  @Roles(UserRole.POSP)
+  @ApiOperation({
+    summary: 'POSP self-service dashboard',
+    description: 'Get own business summary, expected earnings, and recent policies',
+  })
+  @ApiResponse({ status: 200, description: 'POSP self-dashboard data' })
+  async getMyDashboard(@CurrentUser() user: any) {
+    return this.pospService.getPOSPSelfDashboard(user.id);
+  }
+
+  /**
    * Register new POSP agent
    */
   @Post('register')
@@ -438,4 +468,5 @@ export class POSPController {
   async getPOSPDashboard(@Param('id') id: string) {
     return this.pospService.getPOSPDashboard(id);
   }
+
 }

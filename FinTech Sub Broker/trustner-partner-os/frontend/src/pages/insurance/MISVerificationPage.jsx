@@ -10,9 +10,11 @@ import {
   Clock,
   Filter,
   AlertTriangle,
+  UserCheck,
 } from 'lucide-react';
 import misAPI from '../../services/mis';
 import { formatCurrency, formatDate } from '../../utils/formatters';
+import { useAuth } from '../../contexts/AuthContext';
 
 const LOB_LABELS = {
   MOTOR_TWO_WHEELER: 'Motor 2W',
@@ -48,9 +50,11 @@ const DEPARTMENTS = ['All', 'Health', 'Life', 'General', 'Motor', 'Travel'];
 
 const MISVerificationPage = () => {
   const navigate = useNavigate();
+  const { user: authUser } = useAuth();
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showAssignedOnly, setShowAssignedOnly] = useState(false);
   const [filters, setFilters] = useState({
     department: 'All',
     dateFrom: '',
@@ -83,6 +87,24 @@ const MISVerificationPage = () => {
       setLoading(false);
     }
   };
+
+  // Sort: assigned to me first
+  const sortedEntries = React.useMemo(() => {
+    let list = [...entries];
+    if (showAssignedOnly) {
+      list = list.filter((e) => e.assignedCheckerId === authUser?.id);
+    } else {
+      // Sort assigned-to-me to top
+      list.sort((a, b) => {
+        const aAssigned = a.assignedCheckerId === authUser?.id ? 0 : 1;
+        const bAssigned = b.assignedCheckerId === authUser?.id ? 0 : 1;
+        return aAssigned - bAssigned;
+      });
+    }
+    return list;
+  }, [entries, showAssignedOnly, authUser?.id]);
+
+  const assignedCount = entries.filter((e) => e.assignedCheckerId === authUser?.id).length;
 
   const handleFilterChange = (field, value) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
@@ -185,6 +207,17 @@ const MISVerificationPage = () => {
             />
           </div>
           <button
+            onClick={() => setShowAssignedOnly(!showAssignedOnly)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+              showAssignedOnly
+                ? 'bg-teal-600 text-white'
+                : 'border border-teal-300 text-teal-700 hover:bg-teal-50'
+            }`}
+          >
+            <UserCheck className="w-4 h-4" />
+            Assigned to me {assignedCount > 0 && `(${assignedCount})`}
+          </button>
+          <button
             onClick={handleApplyFilters}
             className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium transition-colors"
           >
@@ -212,15 +245,24 @@ const MISVerificationPage = () => {
               </tr>
             </thead>
             <tbody>
-              {entries.length > 0 ? (
-                entries.map((entry, idx) => (
+              {sortedEntries.length > 0 ? (
+                sortedEntries.map((entry, idx) => {
+                  const isAssignedToMe = entry.assignedCheckerId === authUser?.id;
+                  return (
                   <tr
                     key={entry.id}
                     className={`border-t border-gray-200 ${
-                      idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                      isAssignedToMe ? 'bg-teal-50/50' : idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
                     } hover:bg-teal-50 transition-colors`}
                   >
-                    <td className="px-6 py-4 font-medium text-teal-600">{entry.misCode || '-'}</td>
+                    <td className="px-6 py-4">
+                      <span className="font-medium text-teal-600">{entry.misCode || '-'}</span>
+                      {isAssignedToMe && (
+                        <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 bg-teal-100 text-teal-700 rounded-full text-[10px] font-semibold">
+                          <UserCheck className="w-3 h-3" /> Assigned to you
+                        </span>
+                      )}
+                    </td>
                     <td className="px-6 py-4 text-gray-900">{entry.customerName}</td>
                     <td className="px-6 py-4 text-gray-600">{LOB_LABELS[entry.lob] || entry.lob}</td>
                     <td className="px-6 py-4 text-gray-600">{entry.department || '-'}</td>
@@ -240,7 +282,8 @@ const MISVerificationPage = () => {
                       </button>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan="9" className="px-6 py-12 text-center text-gray-500">

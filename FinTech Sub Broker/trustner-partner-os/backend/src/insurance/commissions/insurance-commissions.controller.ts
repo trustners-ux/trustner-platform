@@ -9,6 +9,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Request,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -290,5 +291,42 @@ export class InsuranceCommissionsController {
       parseInt(month),
       parseInt(year),
     );
+  }
+
+  // ============================================================================
+  // PAYOUT MODEL CONFIGURATION
+  // ============================================================================
+
+  @Post('payout-config')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.PRINCIPAL_OFFICER)
+  @ApiOperation({
+    summary: 'Set POSP payout configuration',
+    description: 'Configure payout model (Slab-Based, Flat Rate, Custom) for a POSP',
+  })
+  @ApiResponse({ status: 201, description: 'Payout config set' })
+  async setPayoutConfig(@Body() body: { pospId: string; payoutModel: string; flatRatePct?: number; remarks?: string; effectiveFrom?: string; effectiveTo?: string }, @Request() req: any) {
+    return this.commissionsService.setPayoutConfig(body.pospId, body, req.user.id);
+  }
+
+  @Get('payout-config')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.PRINCIPAL_OFFICER)
+  @ApiOperation({
+    summary: 'List all payout configurations',
+    description: 'Get all POSP payout model configurations',
+  })
+  @ApiResponse({ status: 200, description: 'Payout config list' })
+  async listPayoutConfigs(@Query('page') page?: string, @Query('limit') limit?: string) {
+    return this.commissionsService.listPayoutConfigs(Number(page) || 1, Number(limit) || 50);
+  }
+
+  @Get('payout-config/:pospId')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.PRINCIPAL_OFFICER)
+  @ApiOperation({
+    summary: 'Get POSP payout configuration',
+    description: 'Get payout model config for a specific POSP',
+  })
+  @ApiResponse({ status: 200, description: 'Payout config' })
+  async getPayoutConfig(@Param('pospId') pospId: string) {
+    return this.commissionsService.getPayoutConfig(pospId);
   }
 }

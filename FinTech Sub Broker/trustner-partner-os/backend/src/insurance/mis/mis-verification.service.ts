@@ -151,4 +151,77 @@ export class MISVerificationService {
   async removeMISRole(id: string) {
     return this.prisma.mISRoleConfig.update({ where: { id }, data: { isActive: false } });
   }
+
+  /**
+   * Auto-resolve checker for a maker based on:
+   * 1. CheckerAssignmentRule (makerRole → checkerRole mapping)
+   * 2. First try: maker's hierarchy parent if role matches
+   * 3. Fallback: any user with checkerRole + canCheck=true for that department
+   */
+  async resolveChecker(makerId: string, department?: string): Promise<string | null> {
+    try {
+      // Get maker's role
+      const maker = await this.prisma.user.findUnique({ where: { id: makerId } });
+      if (!maker) return null;
+
+      // Find matching assignment rule
+      const rule = await this.prisma.checkerAssignmentRule.findFirst({
+        where: {
+          makerRole: maker.role,
+          isActive: true,
+          OR: [{ department: department as any }, { department: null }],
+        },
+        orderBy: { priority: 'asc' },
+      });
+      if (!rule) return null;
+
+      // Try 1: maker's hierarchy parent
+      const makerNode = await this.prisma.salesHierarchyNode.findFirst({
+        where: { userId: makerId, isActive: true },
+        include: { parent: { include: { user: true } } },
+      });
+      if (makerNode?.parent?.user && makerNode.parent.user.role === rule.checkerRole) {
+        // Verify the parent has canCheck permission
+        const parentConfig = await this.prisma.mISRoleConfig.findFirst({
+          where: {
+            userId: makerNode.parent.userId,
+            canCheck: true,
+            isActive: true,
+            OR: [{ department: department as any }, { department: null }],
+          },
+        });
+        if (parentConfig) return makerNode.parent.userId;
+      }
+
+      // Try 2: any user with checkerRole + canCheck=true
+      const checkerConfig = await this.prisma.mISRoleConfig.findFirst({
+        where: {
+          canCheck: true,
+          isActive: true,
+          OR: [{ department: department as any }, { department: null }],
+          userId: { not: makerId }, // Exclude self
+        },
+        include: { },
+      });
+      if (checkerConfig) {
+        // Verify the user has the right role
+        const checkerUser = await this.prisma.user.findUnique({ where: { id: checkerConfig.userId } });
+        if (checkerUser?.role === rule.checkerRole || checkerUser?.role === 'SUPER_ADMIN') {
+          return checkerConfig.userId;
+        }
+      }
+
+      // Try 3: any canCheck user (broader search)
+      const anyChecker = await this.prisma.mISRoleConfig.findFirst({
+        where: {
+          canCheck: true,
+          isActive: true,
+          userId: { not: makerId },
+        },
+      });
+      return anyChecker?.userId || null;
+    } catch {
+      return null;
+    }
+  }
 }

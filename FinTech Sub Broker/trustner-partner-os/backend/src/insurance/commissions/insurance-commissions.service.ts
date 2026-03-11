@@ -635,4 +635,70 @@ export class InsuranceCommissionsService {
       throw error;
     }
   }
+
+  // ============================================================================
+  // PAYOUT MODEL CONFIGURATION
+  // ============================================================================
+
+  /**
+   * Get payout config for a specific POSP
+   */
+  async getPayoutConfig(pospId: string) {
+    const config = await this.prisma.pOSPPayoutConfig.findUnique({
+      where: { pospId },
+      include: { posp: { select: { agentCode: true, firstName: true, lastName: true } } },
+    });
+    return config || { pospId, payoutModel: 'SLAB_BASED', flatRatePct: null, isActive: false };
+  }
+
+  /**
+   * Set or update payout configuration for a POSP
+   */
+  async setPayoutConfig(
+    pospId: string,
+    data: { payoutModel: string; flatRatePct?: number; remarks?: string; effectiveFrom?: string; effectiveTo?: string },
+    assignedBy: string,
+  ) {
+    return this.prisma.pOSPPayoutConfig.upsert({
+      where: { pospId },
+      update: {
+        payoutModel: data.payoutModel,
+        flatRatePct: data.flatRatePct ?? null,
+        remarks: data.remarks || null,
+        effectiveFrom: data.effectiveFrom ? new Date(data.effectiveFrom) : new Date(),
+        effectiveTo: data.effectiveTo ? new Date(data.effectiveTo) : null,
+        assignedBy,
+        isActive: true,
+      },
+      create: {
+        pospId,
+        payoutModel: data.payoutModel,
+        flatRatePct: data.flatRatePct ?? null,
+        remarks: data.remarks || null,
+        effectiveFrom: data.effectiveFrom ? new Date(data.effectiveFrom) : new Date(),
+        effectiveTo: data.effectiveTo ? new Date(data.effectiveTo) : null,
+        assignedBy,
+        isActive: true,
+      },
+      include: { posp: { select: { agentCode: true, firstName: true, lastName: true } } },
+    });
+  }
+
+  /**
+   * List all payout configs with POSP details
+   */
+  async listPayoutConfigs(page = 1, limit = 50) {
+    const skip = (page - 1) * limit;
+    const [data, total] = await Promise.all([
+      this.prisma.pOSPPayoutConfig.findMany({
+        where: { isActive: true },
+        include: { posp: { select: { agentCode: true, firstName: true, lastName: true, category: true, status: true } } },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.pOSPPayoutConfig.count({ where: { isActive: true } }),
+    ]);
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
+  }
 }

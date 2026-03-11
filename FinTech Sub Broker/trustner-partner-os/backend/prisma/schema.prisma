@@ -638,7 +638,8 @@ model Branch {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  subBrokers  SubBroker[]
+  subBrokers      SubBroker[]
+  hierarchyNodes  SalesHierarchyNode[]
 
   @@index([city, state])
 }
@@ -1409,6 +1410,7 @@ model POSPAgent {
   documents           POSPDocument[]
   targets             POSPTarget[]
   tickets             SupportTicket[]  @relation("TicketAgent")
+  payoutConfig        POSPPayoutConfig?
 
   @@index([status])
   @@index([category])
@@ -2328,6 +2330,7 @@ model SalesHierarchyNode {
   hierarchyLevel   HierarchyLevel      @relation(fields: [hierarchyLevelId], references: [id])
   parent           SalesHierarchyNode? @relation("HierarchyTree", fields: [parentId], references: [id])
   children         SalesHierarchyNode[] @relation("HierarchyTree")
+  branch           Branch?             @relation(fields: [branchId], references: [id])
   misEntries       MISEntry[]          @relation("MISHierarchyNode")
   contestEntries   ContestEntry[]
 
@@ -2438,6 +2441,15 @@ model MISEntry {
   vehicleMake         String?                                 // Vehicle Make/Model
   rtoLocation         String?                                 // RTO Location
 
+  // Premium Auto-Calculation
+  policyTermYears     Int?        @default(1)                 // Multi-year policy: N years
+  annualizedPremium   Decimal?    @db.Decimal(12, 2)          // Computed: (netPremium/N)*150% or netPremium
+  renewalCreditPct    Decimal?    @db.Decimal(8, 4)           // Actual renewal credit % applied
+  isDST               Boolean     @default(false)             // Direct Sales Team (no POSP)
+
+  // Maker-Checker Assignment
+  assignedCheckerId   String?                                 // Auto-assigned checker userId
+
   // Payment Info (recommended)
   paymentMode         String?                                 // Payment mode (Cash/Cheque/Online/UPI)
   paymentReference    String?                                 // UTR / Transaction Reference
@@ -2470,6 +2482,7 @@ model MISEntry {
   @@index([entryMonth])
   @@index([employeeLocation])
   @@index([agencyBroker])
+  @@index([assignedCheckerId])
 }
 
 model MISVerification {
@@ -2494,6 +2507,7 @@ model MISRoleConfig {
   userId          String
   department      InsuranceDepartment?
   regionName      String?
+  branchId        String?
   canMake         Boolean              @default(false)
   canCheck        Boolean              @default(false)
   canViewReports  Boolean              @default(false)
@@ -2506,6 +2520,45 @@ model MISRoleConfig {
   @@unique([userId, department, regionName])
   @@index([userId])
   @@index([department])
+}
+
+// ============================================================================
+// MODULE 35B: CHECKER AUTO-ASSIGNMENT RULES
+// ============================================================================
+
+model CheckerAssignmentRule {
+  id          String              @id @default(cuid())
+  makerRole   UserRole
+  checkerRole UserRole
+  department  InsuranceDepartment?
+  priority    Int                 @default(1)
+  isActive    Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+
+  @@index([makerRole])
+  @@index([isActive])
+}
+
+// ============================================================================
+// MODULE 35C: POSP PAYOUT CONFIGURATION
+// ============================================================================
+
+model POSPPayoutConfig {
+  id            String    @id @default(cuid())
+  pospId        String    @unique
+  payoutModel   String    @default("SLAB_BASED") // SLAB_BASED | FLAT_RATE | CUSTOM
+  flatRatePct   Decimal?  @db.Decimal(8, 4)
+  remarks       String?
+  assignedBy    String
+  effectiveFrom DateTime  @default(now())
+  effectiveTo   DateTime?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  posp          POSPAgent @relation(fields: [pospId], references: [id])
+
+  @@index([isActive])
 }
 
 // ============================================================================
