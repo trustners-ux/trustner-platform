@@ -24,7 +24,13 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
   (response) => {
-    return response.data
+    // Backend wraps responses as { success, data, meta }
+    // Unwrap to return just the actual data payload
+    const body = response.data
+    if (body && body.success === true && body.data !== undefined) {
+      return body.data
+    }
+    return body
   },
   (error) => {
     if (error.response?.status === 401) {
