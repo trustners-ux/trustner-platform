@@ -14,9 +14,11 @@ import {
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { formatCurrency, formatIndianNumber } from '../utils/formatters';
 import api from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 const UnifiedDashboard = () => {
   const navigate = useNavigate();
+  const { user: authUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dashboardData, setDashboardData] = useState({
@@ -37,7 +39,7 @@ const UnifiedDashboard = () => {
   });
 
   const user = {
-    name: 'Rajesh Kumar',
+    name: authUser?.name || authUser?.email || 'User',
   };
 
   useEffect(() => {
@@ -47,22 +49,22 @@ const UnifiedDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      const safeGet = (url) => api.get(url).catch(() => ({ data: null }));
       const [mfRes, insuranceRes, revenueRes, activityRes] = await Promise.all([
-        api.get('/dashboard/mf-summary'),
-        api.get('/dashboard/insurance-summary'),
-        api.get('/dashboard/revenue-chart'),
-        api.get('/dashboard/recent-activity'),
+        safeGet('/dashboard/mf-summary'),
+        safeGet('/dashboard/insurance-summary'),
+        safeGet('/dashboard/revenue-chart'),
+        safeGet('/dashboard/recent-activity'),
       ]);
 
-      setDashboardData({
-        mf: mfRes.data,
-        insurance: insuranceRes.data,
-        revenueChart: revenueRes.data,
-        recentActivity: activityRes.data,
-      });
+      setDashboardData((prev) => ({
+        mf: mfRes.data || prev.mf,
+        insurance: insuranceRes.data || prev.insurance,
+        revenueChart: revenueRes.data || prev.revenueChart,
+        recentActivity: activityRes.data || prev.recentActivity,
+      }));
     } catch (err) {
-      setError('Failed to load dashboard data');
-      console.error(err);
+      console.error('Dashboard data fetch error:', err);
     } finally {
       setLoading(false);
     }
