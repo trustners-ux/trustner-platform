@@ -44,3 +44,50 @@ export class MISReportController {
     return this.reportService.getReport(id);
   }
 }
+
+// =========================================================================
+// DASHBOARD ANALYTICS CONTROLLER — Separate route prefix
+// =========================================================================
+
+@Controller('insurance/mis/dashboard')
+@UseGuards(JwtAuthGuard, RolesGuard)
+export class MISDashboardController {
+  constructor(private readonly reportService: MISReportService) {}
+
+  @Get('renewals-due')
+  getRenewalsDue(@Query('period') period?: string) {
+    const validPeriods = ['today', '7days', '15days', '1month'];
+    const p = validPeriods.includes(period) ? period as any : '7days';
+    return this.reportService.getRenewalsDue(p);
+  }
+
+  @Get('company-distribution')
+  getCompanyDistribution() {
+    return this.reportService.getCompanyWiseDistribution();
+  }
+
+  @Get('lob-distribution')
+  getLOBDistribution() {
+    return this.reportService.getLOBWiseDistribution();
+  }
+
+  @Get('business-summary')
+  getBusinessSummary() {
+    return this.reportService.getBusinessSummary();
+  }
+
+  @Get('growth-metrics')
+  getGrowthMetrics() {
+    return this.reportService.getGrowthMetrics();
+  }
+
+  @Get('client-stats')
+  getClientStats() {
+    return this.reportService.getClientStats();
+  }
+
+  @Get('renewal-loss-ratio')
+  getRenewalLossRatio() {
+    return this.reportService.getRenewalLossRatio();
+  }
+}

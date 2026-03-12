@@ -26,6 +26,15 @@ export const misAPI = {
   getReport: (id) => api.get(`/insurance/mis/reports/${id}`),
   getSummary: (params) => api.get('/insurance/mis/reports/summary', { params }),
 
+  // Dashboard Analytics
+  getRenewalsDue: (period = '7days') => api.get('/insurance/mis/dashboard/renewals-due', { params: { period } }),
+  getCompanyDistribution: () => api.get('/insurance/mis/dashboard/company-distribution'),
+  getLOBDistribution: () => api.get('/insurance/mis/dashboard/lob-distribution'),
+  getBusinessSummary: () => api.get('/insurance/mis/dashboard/business-summary'),
+  getGrowthMetrics: () => api.get('/insurance/mis/dashboard/growth-metrics'),
+  getClientStats: () => api.get('/insurance/mis/dashboard/client-stats'),
+  getRenewalLossRatio: () => api.get('/insurance/mis/dashboard/renewal-loss-ratio'),
+
   // Hierarchy
   getHierarchyTree: (rootId) => api.get('/insurance/hierarchy/tree', { params: { rootId } }),
   getHierarchyLevels: () => api.get('/insurance/hierarchy/levels'),

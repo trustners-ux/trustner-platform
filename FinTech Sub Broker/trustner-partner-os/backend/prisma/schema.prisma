@@ -517,6 +517,7 @@ model User {
   auditLogs         AuditLog[]
   notifications     Notification[]
   hierarchyNodes    SalesHierarchyNode[]
+  createdClients    InsuranceClient[] @relation("ClientCreator")
 
   @@index([email])
   @@index([phone])
@@ -2653,4 +2654,37 @@ model MISReport {
   @@index([reportType, periodYear])
   @@index([department])
   @@index([generatedBy])
+}
+
+// ============================================================================
+// SECTION: INSURANCE CLIENT MASTER
+// ============================================================================
+
+model InsuranceClient {
+  id              String    @id @default(cuid())
+  clientCode      String    @unique             // Auto: TIB-CLT-00001
+  name            String
+  phone           String?
+  email           String?
+  dateOfBirth     DateTime?
+  panNumber       String?
+  aadharNumber    String?
+  address         String?
+  city            String?
+  state           String?
+  pincode         String?
+  groupHeadName   String?                       // VJ Infosoft: Group Head
+  kycStatus       String    @default("PENDING") // PENDING, VERIFIED, INCOMPLETE
+  isActive        Boolean   @default(true)
+  createdBy       String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  creator         User      @relation("ClientCreator", fields: [createdBy], references: [id])
+
+  @@index([name])
+  @@index([phone])
+  @@index([clientCode])
+  @@index([city])
+  @@index([kycStatus])
 }

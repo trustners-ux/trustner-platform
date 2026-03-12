@@ -30,6 +30,30 @@ export class RenewalsController {
   constructor(private renewalsService: RenewalsService) {}
 
   /**
+   * Get renewal stats
+   */
+  @Get('stats')
+  @ApiOperation({ summary: 'Get renewal stats', description: 'Due this month, renewed, lapsed counts' })
+  @ApiResponse({ status: 200, description: 'Stats data' })
+  async getStats() {
+    return this.renewalsService.getStats();
+  }
+
+  /**
+   * List all renewal trackers
+   */
+  @Get()
+  @ApiOperation({ summary: 'List all renewals', description: 'Paginated list of renewal trackers' })
+  @ApiResponse({ status: 200, description: 'Renewals list' })
+  async findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.renewalsService.findAll(Number(page) || 1, Number(limit) || 20, status);
+  }
+
+  /**
    * Scan for renewals (scheduled task)
    */
   @Post('scan')

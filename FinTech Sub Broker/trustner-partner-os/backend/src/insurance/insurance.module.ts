@@ -16,6 +16,7 @@ import { HierarchyModule } from './hierarchy/hierarchy.module';
 import { ProductGradeModule } from './product-grade/product-grade.module';
 import { MISModule } from './mis/mis.module';
 import { ContestModule } from './contest/contest.module';
+import { InsuranceClientsModule } from './clients/insurance-clients.module';
 
 /**
  * Insurance Broking Module
@@ -43,6 +44,7 @@ import { ContestModule } from './contest/contest.module';
     ProductGradeModule,
     MISModule,
     ContestModule,
+    InsuranceClientsModule,
   ],
   controllers: [],
   providers: [],
@@ -63,6 +65,7 @@ import { ContestModule } from './contest/contest.module';
     ProductGradeModule,
     MISModule,
     ContestModule,
+    InsuranceClientsModule,
   ],
 })
 export class InsuranceModule {}

@@ -14,6 +14,50 @@ export class RenewalsService {
   constructor(private prisma: PrismaService) {}
 
   /**
+   * List all renewal trackers with pagination
+   */
+  async findAll(page = 1, limit = 20, status?: string) {
+    const skip = (page - 1) * limit;
+    const where: any = {};
+    if (status) where.status = status;
+
+    const [data, total] = await Promise.all([
+      this.prisma.renewalTracker.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { expiryDate: 'asc' },
+      }),
+      this.prisma.renewalTracker.count({ where }),
+    ]);
+    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
+  }
+
+  /**
+   * Get renewal stats for dashboard
+   */
+  async getStats() {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+    const [dueThisMonth, renewed, lapsed, total] = await Promise.all([
+      this.prisma.renewalTracker.count({
+        where: { expiryDate: { gte: monthStart, lte: monthEnd } },
+      }),
+      this.prisma.renewalTracker.count({
+        where: { status: 'RENEWED' },
+      }),
+      this.prisma.renewalTracker.count({
+        where: { status: 'LAPSED' },
+      }),
+      this.prisma.renewalTracker.count(),
+    ]);
+
+    return { dueThisMonth, renewed, lapsed, total };
+  }
+
+  /**
    * Scan for policies expiring soon and create renewal trackers
    * Called as scheduled task
    */
