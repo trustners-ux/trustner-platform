@@ -489,7 +489,79 @@ export class DataMigrationService {
     return results;
   }
 
-  // ─── 6. Get migration status ──────────────────────────────
+  // ─── 6. SMART IMPORT: auto-detect, import, and sync ────────
+  async smartImport(rows: any[], headers: string[], userId: string) {
+    this.logger.log(`Smart import: ${rows.length} rows, headers: ${headers.slice(0, 5).join(', ')}...`);
+
+    // Auto-detect CSV type from column headers
+    const headerSet = new Set(headers.map(h => h.trim().toLowerCase()));
+    let detectedType: 'clients' | 'policyRegister' | 'payoutData' | 'renewalDue' | 'unknown' = 'unknown';
+
+    // Detection rules based on unique column signatures
+    if (headerSet.has('group head') || headerSet.has('grouphead') ||
+        (headerSet.has('name') && headerSet.has('mobileno') && !headerSet.has('policy no'))) {
+      detectedType = 'clients';
+    } else if (headerSet.has('pos payable amount') || headerSet.has('pospayableamount') ||
+               headerSet.has('rm name') || headerSet.has('rmname')) {
+      detectedType = 'payoutData';
+    } else if ((headerSet.has('end date') || headerSet.has('enddate')) &&
+               (headerSet.has('risk start') || headerSet.has('riskstart')) &&
+               (headerSet.has('contno') || headerSet.has('cont no'))) {
+      detectedType = 'renewalDue';
+    } else if (headerSet.has('policy no') || headerSet.has('policyno') ||
+               headerSet.has('insured name') || headerSet.has('insuredname') ||
+               headerSet.has('insurance type') || headerSet.has('insurancetype')) {
+      detectedType = 'policyRegister';
+    }
+
+    if (detectedType === 'unknown') {
+      // Try broader detection
+      if (headers.some(h => /policy/i.test(h)) && headers.some(h => /premium|insured/i.test(h))) {
+        detectedType = 'policyRegister';
+      } else if (headers.some(h => /name/i.test(h)) && headers.some(h => /mobile|phone/i.test(h))) {
+        detectedType = 'clients';
+      }
+    }
+
+    this.logger.log(`Detected CSV type: ${detectedType}`);
+
+    // Run the appropriate import
+    let importResult: any;
+    switch (detectedType) {
+      case 'clients':
+        importResult = await this.importClients(rows, userId);
+        break;
+      case 'policyRegister':
+        importResult = await this.importPolicyRegister(rows, userId);
+        break;
+      case 'payoutData':
+        importResult = await this.importPayoutData(rows, userId);
+        break;
+      case 'renewalDue':
+        importResult = await this.importRenewalDue(rows, userId);
+        break;
+      default:
+        return {
+          detectedType: 'unknown',
+          error: 'Could not determine CSV type from column headers. Please use the individual import buttons instead.',
+          headers: headers.slice(0, 10),
+        };
+    }
+
+    // Auto-sync to InsurancePolicy (if we imported policy/payout/renewal data)
+    let syncResult = null;
+    if (detectedType !== 'clients') {
+      syncResult = await this.syncMISToInsurancePolicies(userId);
+    }
+
+    return {
+      detectedType,
+      importResult,
+      syncResult,
+    };
+  }
+
+  // ─── 7. Get migration status ──────────────────────────────
   async getMigrationStatus() {
     const [totalClients, totalMIS, importedMIS, importedClients, totalPolicies, syncedPolicies] = await Promise.all([
       this.prisma.insuranceClient.count(),

@@ -259,6 +259,191 @@ function DatasetCard({ dataset, onImport, importState }) {
   );
 }
 
+function QuickImportZone({ onComplete }) {
+  const [dragging, setDragging] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+  const [progress, setProgress] = useState('');
+
+  const TYPE_LABELS = {
+    clients: '👥 Client Master',
+    policyRegister: '📋 GI Policy Register',
+    payoutData: '💰 POS Payout / Commission',
+    renewalDue: '🔄 Renewal Due Report',
+  };
+
+  const handleFiles = async (files) => {
+    setResult(null);
+    setError(null);
+
+    for (const file of files) {
+      if (!file.name.endsWith('.csv') && !file.name.endsWith('.txt')) {
+        setError(`${file.name}: Only CSV files are supported`);
+        continue;
+      }
+
+      setImporting(true);
+      setProgress(`Reading ${file.name}...`);
+
+      try {
+        const text = await file.text();
+        const { headers, rows } = parseCSV(text);
+
+        if (rows.length === 0) {
+          setError(`${file.name}: No data rows found`);
+          setImporting(false);
+          continue;
+        }
+
+        setProgress(`Importing ${rows.length} rows from ${file.name}...`);
+
+        // Send in batches of 200 to handle large files
+        const batchSize = 200;
+        const allResults = [];
+
+        for (let i = 0; i < rows.length; i += batchSize) {
+          const batch = rows.slice(i, i + batchSize);
+          setProgress(`Importing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(rows.length / batchSize)} (${Math.min(i + batchSize, rows.length)}/${rows.length} rows)...`);
+          const batchResult = await dataMigrationAPI.smartImport(batch, headers);
+          allResults.push(batchResult);
+        }
+
+        // Combine batch results
+        const combined = {
+          detectedType: allResults[0]?.detectedType || 'unknown',
+          importResult: { created: 0, skipped: 0, updated: 0, errors: [] },
+          syncResult: allResults[allResults.length - 1]?.syncResult || null,
+        };
+
+        for (const r of allResults) {
+          if (r.importResult) {
+            combined.importResult.created += r.importResult.created || 0;
+            combined.importResult.skipped += r.importResult.skipped || 0;
+            combined.importResult.updated += r.importResult.updated || 0;
+            if (r.importResult.errors) combined.importResult.errors.push(...r.importResult.errors);
+          }
+        }
+
+        setResult({
+          fileName: file.name,
+          ...combined,
+          typeLabel: TYPE_LABELS[combined.detectedType] || combined.detectedType,
+        });
+      } catch (err) {
+        setError(`${file.name}: ${err?.response?.data?.message || err.message}`);
+      } finally {
+        setImporting(false);
+        setProgress('');
+      }
+    }
+
+    if (onComplete) onComplete();
+  };
+
+  const onDrop = (e) => {
+    e.preventDefault();
+    setDragging(false);
+    handleFiles(Array.from(e.dataTransfer.files));
+  };
+
+  const onFileSelect = (e) => {
+    handleFiles(Array.from(e.target.files));
+  };
+
+  return (
+    <div className="mb-8">
+      {/* Drop Zone */}
+      <div
+        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={onDrop}
+        className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${
+          dragging
+            ? 'border-teal-500 bg-teal-50 scale-[1.01]'
+            : importing
+            ? 'border-amber-400 bg-amber-50'
+            : 'border-gray-300 bg-white hover:border-teal-400 hover:bg-teal-50/30'
+        }`}
+      >
+        {importing ? (
+          <div className="space-y-3">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-teal-600 mx-auto"></div>
+            <p className="text-teal-700 font-medium">{progress}</p>
+            <p className="text-xs text-gray-500">Auto-detecting CSV type → Importing → Syncing to Policies</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="text-4xl">📥</div>
+            <div>
+              <p className="text-lg font-semibold text-gray-800">
+                Quick Import — Drop any VJ Infosoft CSV here
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                Auto-detects file type (Client, Policy, Payout, or Renewal) • Imports to MIS • Syncs to Insurance Policies
+              </p>
+            </div>
+            <label className="inline-flex items-center gap-2 px-5 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition cursor-pointer font-medium text-sm">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              Choose CSV File(s)
+              <input type="file" accept=".csv,.txt" multiple onChange={onFileSelect} className="hidden" />
+            </label>
+            <p className="text-xs text-gray-400">Supports multiple files at once</p>
+          </div>
+        )}
+      </div>
+
+      {/* Result */}
+      {result && (
+        <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <span className="text-green-600 text-xl">✅</span>
+            <div className="flex-1">
+              <p className="font-medium text-green-900">
+                {result.fileName} → Detected as {result.typeLabel}
+              </p>
+              <div className="mt-2 flex flex-wrap gap-4 text-sm">
+                {result.importResult?.created > 0 && (
+                  <span className="text-green-700">{result.importResult.created} imported</span>
+                )}
+                {result.importResult?.updated > 0 && (
+                  <span className="text-blue-700">{result.importResult.updated} updated</span>
+                )}
+                {result.importResult?.skipped > 0 && (
+                  <span className="text-gray-600">{result.importResult.skipped} skipped (duplicates)</span>
+                )}
+                {result.syncResult && (
+                  <span className="text-purple-700">
+                    {result.syncResult.synced} synced to policies
+                  </span>
+                )}
+              </div>
+              {result.importResult?.errors?.length > 0 && (
+                <details className="mt-2 text-xs">
+                  <summary className="text-red-600 cursor-pointer">{result.importResult.errors.length} errors</summary>
+                  <ul className="mt-1 text-red-500 list-disc pl-4 max-h-24 overflow-y-auto">
+                    {result.importResult.errors.slice(0, 10).map((err, i) => (
+                      <li key={i}>{err}</li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700">
+          ❌ {error}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function DataMigrationPage() {
   const [status, setStatus] = useState(null);
   const [importStates, setImportStates] = useState({});
@@ -343,6 +528,9 @@ export default function DataMigrationPage() {
           Upload CSV files exported from VJ Infosoft to import data into Trustner Partner OS
         </p>
       </div>
+
+      {/* Quick Import - drag and drop */}
+      <QuickImportZone onComplete={loadStatus} />
 
       {/* Status Cards */}
       {status && (

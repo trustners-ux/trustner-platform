@@ -37,4 +37,12 @@ export class DataMigrationController {
   syncToInsurancePolicies(@Request() req: any) {
     return this.migrationService.syncMISToInsurancePolicies(req.user.id);
   }
+
+  /**
+   * Smart import: auto-detect CSV type from headers, import, and auto-sync to InsurancePolicy
+   */
+  @Post('smart-import')
+  smartImport(@Body() body: { rows: any[]; headers: string[] }, @Request() req: any) {
+    return this.migrationService.smartImport(body.rows, body.headers, req.user.id);
+  }
 }
