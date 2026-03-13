@@ -19,6 +19,7 @@ const PoliciesPage = lazy(() => import('./pages/insurance/PoliciesPage'));
 const PolicyDetail = lazy(() => import('./pages/insurance/PolicyDetail'));
 const ClaimsPage = lazy(() => import('./pages/insurance/ClaimsPage'));
 const ClaimDetail = lazy(() => import('./pages/insurance/ClaimDetail'));
+const ClaimIntimateForm = lazy(() => import('./pages/insurance/ClaimIntimateForm'));
 const EndorsementsPage = lazy(() => import('./pages/insurance/EndorsementsPage'));
 const RenewalsPage = lazy(() => import('./pages/insurance/RenewalsPage'));
 const POSPManagement = lazy(() => import('./pages/insurance/POSPManagement'));
@@ -119,6 +120,7 @@ function App() {
 
             {/* Insurance Routes - Claims */}
             <Route path="/insurance/claims" element={<ClaimsPage />} />
+            <Route path="/insurance/claims/intimate" element={<ClaimIntimateForm />} />
             <Route path="/insurance/claims/:id" element={<ClaimDetail />} />
 
             {/* Insurance Routes - Quotations */}

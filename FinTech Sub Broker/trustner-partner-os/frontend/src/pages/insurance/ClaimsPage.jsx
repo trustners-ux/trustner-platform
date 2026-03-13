@@ -1,8 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Plus, AlertCircle } from 'lucide-react';
+import { Search, Plus, AlertCircle, RefreshCw } from 'lucide-react';
 import api from '../../services/api';
 import { formatCurrency } from '../../utils/formatters';
+
+// Prisma ClaimStatus enum → display map
+const STATUS_MAP = {
+  INTIMATED: { label: 'Intimated', color: 'bg-blue-100 text-blue-800' },
+  DOCUMENTS_PENDING: { label: 'Docs Pending', color: 'bg-yellow-100 text-yellow-800' },
+  DOCUMENTS_SUBMITTED: { label: 'Docs Submitted', color: 'bg-indigo-100 text-indigo-800' },
+  UNDER_INVESTIGATION: { label: 'Investigation', color: 'bg-purple-100 text-purple-800' },
+  SURVEYOR_APPOINTED: { label: 'Surveyor', color: 'bg-cyan-100 text-cyan-800' },
+  SURVEY_COMPLETED: { label: 'Survey Done', color: 'bg-teal-100 text-teal-800' },
+  APPROVED: { label: 'Approved', color: 'bg-green-100 text-green-800' },
+  PARTIALLY_APPROVED: { label: 'Partial Approval', color: 'bg-lime-100 text-lime-800' },
+  REJECTED: { label: 'Rejected', color: 'bg-red-100 text-red-800' },
+  SETTLED: { label: 'Settled', color: 'bg-emerald-100 text-emerald-800' },
+  CLOSED: { label: 'Closed', color: 'bg-gray-100 text-gray-800' },
+  REOPENED: { label: 'Reopened', color: 'bg-orange-100 text-orange-800' },
+};
 
 const ClaimsPage = () => {
   const navigate = useNavigate();
@@ -10,34 +26,52 @@ const ClaimsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filters, setFilters] = useState({
-    status: 'All',
-    type: 'All',
-  });
+  const [page, setPage] = useState(0);
+  const [pagination, setPagination] = useState({ total: 0, pages: 0 });
+  const pageSize = 20;
+  const [statusFilter, setStatusFilter] = useState('');
   const [summary, setSummary] = useState({
-    total: 0,
-    approved: 0,
-    pending: 0,
-    rejected: 0,
+    totalClaims: 0,
+    approvedClaims: 0,
+    settledClaims: 0,
+    rejectedClaims: 0,
   });
-
-  const statusOptions = ['All', 'Intimated', 'Approved', 'Rejected', 'Settled', 'Pending'];
-  const typeOptions = ['All', 'Motor', 'Health', 'Life', 'Travel'];
 
   useEffect(() => {
-    fetchClaims();
-  }, []);
+    fetchData();
+  }, [page, statusFilter]);
 
-  const fetchClaims = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const [claimsRes, summaryRes] = await Promise.all([
-        api.get('/insurance/claims'),
-        api.get('/insurance/claims/summary'),
+      setError(null);
+
+      const params = {
+        skip: page * pageSize,
+        take: pageSize,
+      };
+      if (statusFilter) params.status = statusFilter;
+
+      // Backend: GET /insurance/claims → { data: [...], pagination: { total, pages } }
+      // Backend: GET /insurance/claims/analytics/overview → { summary: {...}, byStatus: [...], byType: [...] }
+      const [claimsRes, analyticsRes] = await Promise.allSettled([
+        api.get('/insurance/claims', { params }),
+        api.get('/insurance/claims/analytics/overview'),
       ]);
 
-      setClaims(claimsRes.data || []);
-      setSummary(summaryRes.data);
+      if (claimsRes.status === 'fulfilled') {
+        const result = claimsRes.value;
+        setClaims(result.data || []);
+        setPagination(result.pagination || { total: 0, pages: 0 });
+      } else {
+        console.error('Claims fetch error:', claimsRes.reason);
+        setError('Failed to load claims');
+      }
+
+      if (analyticsRes.status === 'fulfilled') {
+        const analytics = analyticsRes.value;
+        setSummary(analytics.summary || {});
+      }
     } catch (err) {
       setError('Failed to load claims');
       console.error(err);
@@ -46,31 +80,18 @@ const ClaimsPage = () => {
     }
   };
 
-  const filteredClaims = claims.filter((claim) => {
-    const matchesSearch =
-      !searchQuery ||
-      claim.claimNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      claim.policyNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      claim.customerName.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesStatus = filters.status === 'All' || claim.status === filters.status;
-    const matchesType = filters.type === 'All' || claim.type === filters.type;
-
-    return matchesSearch && matchesStatus && matchesType;
-  });
-
-  const getStatusColor = (status) => {
-    const statusMap = {
-      Intimated: 'bg-blue-100 text-blue-800',
-      Approved: 'bg-green-100 text-green-800',
-      Rejected: 'bg-red-100 text-red-800',
-      Settled: 'bg-green-100 text-green-800',
-      Pending: 'bg-yellow-100 text-yellow-800',
-    };
-    return statusMap[status] || 'bg-gray-100 text-gray-800';
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setPage(0);
+    fetchData();
   };
 
-  if (loading) {
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  if (loading && claims.length === 0) {
     return (
       <div className="p-6">
         <div className="flex items-center justify-center h-96">
@@ -103,41 +124,39 @@ const ClaimsPage = () => {
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-          <div>
+          <div className="flex-1">
             <h3 className="font-medium text-red-900">Error</h3>
             <p className="text-sm text-red-700">{error}</p>
           </div>
+          <button onClick={fetchData} className="text-red-600 hover:text-red-800">
+            <RefreshCw className="w-4 h-4" />
+          </button>
         </div>
       )}
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-sm text-gray-600">Total Claims</p>
-          <p className="text-3xl font-bold mt-2 text-gray-900">{summary.total}</p>
-        </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-sm text-gray-600">Approved</p>
-          <p className="text-3xl font-bold mt-2 text-green-600">{summary.approved}</p>
-        </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-sm text-gray-600">Pending</p>
-          <p className="text-3xl font-bold mt-2 text-yellow-600">{summary.pending}</p>
-        </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-sm text-gray-600">Rejected</p>
-          <p className="text-3xl font-bold mt-2 text-red-600">{summary.rejected}</p>
-        </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Claims', value: summary.totalClaims || 0, color: 'text-blue-800', bg: 'bg-blue-50 border-blue-200' },
+          { label: 'Approved', value: summary.approvedClaims || 0, color: 'text-green-800', bg: 'bg-green-50 border-green-200' },
+          { label: 'Settled', value: summary.settledClaims || 0, color: 'text-emerald-800', bg: 'bg-emerald-50 border-emerald-200' },
+          { label: 'Rejected', value: summary.rejectedClaims || 0, color: 'text-red-800', bg: 'bg-red-50 border-red-200' },
+        ].map((card, idx) => (
+          <div key={idx} className={`rounded-lg border p-4 ${card.bg}`}>
+            <p className="text-xs text-gray-600 font-medium">{card.label}</p>
+            <p className={`text-2xl font-bold mt-1 ${card.color}`}>{card.value}</p>
+          </div>
+        ))}
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
-        <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Search by claim code, policy no, or customer..."
+              placeholder="Search by claim code, policy number, customer..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
@@ -145,29 +164,23 @@ const ClaimsPage = () => {
           </div>
 
           <select
-            value={filters.status}
-            onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+            value={statusFilter}
+            onChange={(e) => { setStatusFilter(e.target.value); setPage(0); }}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm"
           >
-            {statusOptions.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
+            <option value="">All Status</option>
+            {Object.entries(STATUS_MAP).map(([key, { label }]) => (
+              <option key={key} value={key}>{label}</option>
             ))}
           </select>
 
-          <select
-            value={filters.type}
-            onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+          <button
+            type="submit"
+            className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium transition-colors"
           >
-            {typeOptions.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-        </div>
+            Search
+          </button>
+        </form>
       </div>
 
       {/* Claims Table */}
@@ -176,58 +189,99 @@ const ClaimsPage = () => {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left font-medium text-gray-900">Claim Code</th>
-                <th className="px-6 py-3 text-left font-medium text-gray-900">Policy No</th>
-                <th className="px-6 py-3 text-left font-medium text-gray-900">Customer</th>
-                <th className="px-6 py-3 text-left font-medium text-gray-900">Type</th>
-                <th className="px-6 py-3 text-right font-medium text-gray-900">Amount</th>
-                <th className="px-6 py-3 text-left font-medium text-gray-900">Status</th>
-                <th className="px-6 py-3 text-left font-medium text-gray-900">Assigned To</th>
-                <th className="px-6 py-3 text-center font-medium text-gray-900">Action</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-900">Claim Code</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-900">Policy No</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-900">Customer</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-900">Type</th>
+                <th className="px-4 py-3 text-right font-medium text-gray-900">Est. Amount</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-900">Status</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-900">Incident Date</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-900">Intimated</th>
+                <th className="px-4 py-3 text-center font-medium text-gray-900">Action</th>
               </tr>
             </thead>
             <tbody>
-              {filteredClaims.length > 0 ? (
-                filteredClaims.map((claim, idx) => (
-                  <tr
-                    key={claim.id}
-                    className={`border-t border-gray-200 ${
-                      idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                    } hover:bg-blue-50 transition-colors`}
-                  >
-                    <td className="px-6 py-4 font-medium text-gray-900">{claim.claimNo}</td>
-                    <td className="px-6 py-4 text-gray-600">{claim.policyNo}</td>
-                    <td className="px-6 py-4 text-gray-600">{claim.customerName}</td>
-                    <td className="px-6 py-4 text-gray-600">{claim.type}</td>
-                    <td className="px-6 py-4 text-right font-bold text-teal-600">
-                      {formatCurrency(claim.amount)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(claim.status)}`}>
-                        {claim.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-gray-600">{claim.assignedTo || 'Unassigned'}</td>
-                    <td className="px-6 py-4 text-center">
-                      <button
-                        onClick={() => navigate(`/insurance/claims/${claim.id}`)}
-                        className="text-teal-600 hover:text-teal-700 font-medium"
-                      >
-                        View
-                      </button>
-                    </td>
-                  </tr>
-                ))
+              {claims.length > 0 ? (
+                claims.map((claim, idx) => {
+                  const statusInfo = STATUS_MAP[claim.status] || { label: claim.status, color: 'bg-gray-100 text-gray-800' };
+                  return (
+                    <tr
+                      key={claim.id}
+                      className={`border-t border-gray-200 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors cursor-pointer`}
+                      onClick={() => navigate(`/insurance/claims/${claim.id}`)}
+                    >
+                      <td className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap">
+                        {claim.claimCode}
+                      </td>
+                      <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                        {claim.policy?.policyNumber || '—'}
+                      </td>
+                      <td className="px-4 py-3 text-gray-600 max-w-[160px] truncate">
+                        {claim.policy?.customerName || '—'}
+                      </td>
+                      <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                        {claim.claimType || '—'}
+                      </td>
+                      <td className="px-4 py-3 text-right font-bold text-teal-600 whitespace-nowrap">
+                        {claim.estimatedAmount ? formatCurrency(claim.estimatedAmount) : '—'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${statusInfo.color}`}>
+                          {statusInfo.label}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                        {formatDate(claim.incidentDate)}
+                      </td>
+                      <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                        {formatDate(claim.intimationDate)}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); navigate(`/insurance/claims/${claim.id}`); }}
+                          className="text-teal-600 hover:text-teal-700 font-medium"
+                        >
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
-                  <td colSpan="8" className="px-6 py-12 text-center text-gray-500">
-                    No claims found
+                  <td colSpan="9" className="px-6 py-12 text-center text-gray-500">
+                    {loading ? 'Loading...' : 'No claims found. Click "Intimate Claim" to create one.'}
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {pagination.pages > 1 && (
+          <div className="border-t border-gray-200 px-4 py-3 flex items-center justify-between bg-gray-50">
+            <p className="text-sm text-gray-600">
+              Showing {page * pageSize + 1}–{Math.min((page + 1) * pageSize, pagination.total)} of {pagination.total}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPage(Math.max(0, page - 1))}
+                disabled={page === 0}
+                className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-40 hover:bg-gray-100"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setPage(Math.min(pagination.pages - 1, page + 1))}
+                disabled={page >= pagination.pages - 1}
+                className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-40 hover:bg-gray-100"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

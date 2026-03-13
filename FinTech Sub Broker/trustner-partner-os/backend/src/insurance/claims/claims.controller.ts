@@ -91,6 +91,24 @@ export class ClaimsController {
     );
   }
 
+  // ─── Static routes MUST come before :id parameterized route ───
+
+  /**
+   * Get claim analytics
+   */
+  @Get('analytics/overview')
+  @ApiOperation({
+    summary: 'Get claim analytics',
+    description:
+      'Get TAT, approval rate, settlement ratio, claims by status and type',
+  })
+  @ApiResponse({ status: 200, description: 'Analytics data' })
+  async getClaimAnalytics() {
+    return this.claimsService.getClaimAnalytics();
+  }
+
+  // ─── Parameterized routes below ───
+
   /**
    * Get single claim
    */
@@ -266,19 +284,5 @@ export class ClaimsController {
     @Body() body: { settledAmount: number },
   ) {
     return this.claimsService.settleClaim(id, body.settledAmount);
-  }
-
-  /**
-   * Get claim analytics
-   */
-  @Get('analytics/overview')
-  @ApiOperation({
-    summary: 'Get claim analytics',
-    description:
-      'Get TAT, approval rate, settlement ratio, claims by status and type',
-  })
-  @ApiResponse({ status: 200, description: 'Analytics data' })
-  async getClaimAnalytics() {
-    return this.claimsService.getClaimAnalytics();
   }
 }
