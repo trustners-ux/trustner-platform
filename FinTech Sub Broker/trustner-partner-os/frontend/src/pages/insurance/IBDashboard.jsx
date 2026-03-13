@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   TrendingUp,
   DollarSign,
@@ -7,6 +8,7 @@ import {
   Clock,
   Users,
   RefreshCw,
+  Database,
 } from 'lucide-react';
 import {
   BarChart,
@@ -59,8 +61,11 @@ const STATUS_MAP = {
 };
 
 const IBDashboard = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [syncStatus, setSyncStatus] = useState(null); // { needsSync, importedFromVJ, totalInsurancePolicies }
+  const [syncing, setSyncing] = useState(false);
   const [dashboardData, setDashboardData] = useState({
     stats: {
       totalGWP: 0,
@@ -105,6 +110,7 @@ const IBDashboard = () => {
         policiesRes,
         claimsRes,
         renewalRes,
+        migrationRes,
       ] = await Promise.allSettled([
         api.get('/insurance/dashboard/admin'),
         api.get('/insurance/dashboard/charts/sales-performance'),
@@ -113,6 +119,7 @@ const IBDashboard = () => {
         api.get('/insurance/policies', { params: { skip: 0, take: 10 } }),
         api.get('/insurance/dashboard/claims-overview'),
         api.get('/insurance/dashboard/calendars/renewal'),
+        api.get('/insurance/data-migration/status'),
       ]);
 
       const newData = { ...dashboardData };
@@ -166,12 +173,31 @@ const IBDashboard = () => {
         newData.renewalCalendar = renewalRes.value?.entries || {};
       }
 
+      // 8. Migration status — check if data needs syncing
+      if (migrationRes.status === 'fulfilled') {
+        setSyncStatus(migrationRes.value);
+      }
+
       setDashboardData(newData);
     } catch (err) {
       setError('Failed to load dashboard data');
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSyncNow = async () => {
+    try {
+      setSyncing(true);
+      await api.post('/insurance/data-migration/sync-to-policies');
+      // Refresh dashboard data after sync
+      await fetchDashboardData();
+    } catch (err) {
+      console.error('Sync failed:', err);
+      setError('Sync failed. Please try from Data Migration page.');
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -251,6 +277,35 @@ const IBDashboard = () => {
             <h3 className="font-medium text-red-900">Error</h3>
             <p className="text-sm text-red-700">{error}</p>
           </div>
+        </div>
+      )}
+
+      {/* Sync Banner — show when MIS has data but InsurancePolicy is empty/low */}
+      {syncStatus && syncStatus.needsSync > 0 && (
+        <div className="bg-amber-50 border border-amber-300 rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <Database className="w-6 h-6 text-amber-600 flex-shrink-0" />
+          <div className="flex-1">
+            <h3 className="font-bold text-amber-900">
+              {syncStatus.importedFromVJ} VJ Infosoft records imported — {syncStatus.needsSync} not yet synced to Policies
+            </h3>
+            <p className="text-sm text-amber-700 mt-1">
+              Dashboard reads from the Insurance Policies table. Click "Sync Now" to copy your imported data into Policies so it reflects here.
+            </p>
+          </div>
+          <button
+            onClick={handleSyncNow}
+            disabled={syncing}
+            className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 whitespace-nowrap flex items-center gap-2"
+          >
+            {syncing ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                Syncing...
+              </>
+            ) : (
+              'Sync Now'
+            )}
+          </button>
         </div>
       )}
 
