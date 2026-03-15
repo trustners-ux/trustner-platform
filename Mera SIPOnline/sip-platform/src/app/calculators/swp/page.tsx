@@ -33,7 +33,7 @@ export default function SWPCalculatorPage() {
   // Step-up withdrawal state
   const [stepUpEnabled, setStepUpEnabled] = useState(false);
   const [stepUpType, setStepUpType] = useState<'percentage' | 'amount'>('percentage');
-  const [stepUpValue, setStepUpValue] = useState(5);
+  const [stepUpValue, setStepUpValue] = useState(6);
 
   const result = useMemo(
     () => calculateSWP(corpus, monthlyWithdrawal, returnRate, years, stepUpEnabled, stepUpType, stepUpValue),
@@ -189,8 +189,8 @@ export default function SWPCalculatorPage() {
                         prefix={stepUpType === 'amount' ? '₹' : undefined}
                         suffix={stepUpType === 'percentage' ? '%' : undefined}
                         step={stepUpType === 'percentage' ? 1 : 500}
-                        min={stepUpType === 'percentage' ? 1 : 500}
-                        max={stepUpType === 'percentage' ? 25 : 50000}
+                        min={stepUpType === 'percentage' ? 4 : 500}
+                        max={stepUpType === 'percentage' ? 12 : 50000}
                       />
 
                       {/* Preview: Year 1 → Year N */}
