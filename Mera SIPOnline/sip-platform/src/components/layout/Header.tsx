@@ -32,20 +32,20 @@ function ScrollableDropdown({ children }: { children: React.ReactNode }) {
   }, [checkScroll]);
 
   return (
-    <div className="relative">
+    <div className="relative bg-white rounded-lg shadow-dropdown border border-surface-300/50 min-w-[240px] card-accent-border">
       {/* Top fade */}
       {canScrollUp && (
-        <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-white to-transparent z-10 pointer-events-none rounded-t-lg" />
+        <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-white to-transparent z-20 pointer-events-none rounded-t-lg" />
       )}
       <div
         ref={ref}
-        className="bg-white rounded-lg shadow-dropdown border border-surface-300/50 p-2 min-w-[240px] max-h-[70vh] overflow-y-auto overscroll-contain custom-scrollbar card-accent-border"
+        className="p-2 max-h-[70vh] overflow-y-auto overscroll-contain custom-scrollbar"
       >
         {children}
       </div>
       {/* Bottom fade + scroll hint */}
       {canScrollDown && (
-        <div className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none rounded-b-lg">
+        <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none rounded-b-lg">
           <div className="h-8 bg-gradient-to-t from-white to-transparent" />
           <div className="absolute bottom-1 left-1/2 -translate-x-1/2">
             <ChevronsDown className="w-4 h-4 text-slate-400 animate-bounce" />
