@@ -417,6 +417,14 @@ export async function generateCalculatorPDF({ elementId, title, fileName }: PDFO
     }
   });
 
+  // ─── Hide elements marked with data-pdf-hide (e.g., year-by-year table) ───
+  const pdfHiddenElements: { el: HTMLElement; display: string }[] = [];
+  element.querySelectorAll('[data-pdf-hide]').forEach((child) => {
+    const el = child as HTMLElement;
+    pdfHiddenElements.push({ el, display: el.style.display });
+    el.style.display = 'none';
+  });
+
   // Force overflow visible on all descendants
   const constrainedElements: { el: HTMLElement; overflow: string; overflowX: string; overflowY: string; maxHeight: string }[] = [];
   element.querySelectorAll('*').forEach((child) => {
@@ -488,6 +496,7 @@ export async function generateCalculatorPDF({ elementId, title, fileName }: PDFO
   });
   hiddenButtons.forEach(({ el, display }) => { el.style.display = display; });
   hiddenHints.forEach(({ el, display }) => { el.style.display = display; });
+  pdfHiddenElements.forEach(({ el, display }) => { el.style.display = display; });
   spacingOverrides.forEach(({ el, prop, original }) => {
     el.style.setProperty(prop, original);
   });
