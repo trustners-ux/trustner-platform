@@ -502,8 +502,11 @@ export const DEFAULT_PLANNING_DATA: FinancialPlanningData = {
     dependents: 0,
     spouseAge: null,
     childrenAges: [],
+    state: '',
     city: '',
     cityTier: 'metro',
+    otherCity: '',
+    pincode: '',
     residentialStatus: 'rent',
   },
   careerProfile: {

@@ -198,6 +198,7 @@ export const NAVIGATION: NavItem[] = [
           { label: 'Human Life Value', href: '/calculators/human-life-value', badge: 'New' },
           { label: 'Term Insurance', href: '/calculators/term-insurance', badge: 'New' },
           { label: 'Health Insurance', href: '/calculators/health-insurance', badge: 'New' },
+          { label: 'Term Plan + SIP', href: '/calculators/term-plan-sip', badge: 'Exclusive' },
         ],
       },
       {
@@ -221,6 +222,11 @@ export const NAVIGATION: NavItem[] = [
       { label: 'Trustner Fund Selection', href: '/funds/selection', badge: 'New' },
       { label: 'Compare Funds', href: '/funds/compare' },
     ],
+  },
+  {
+    label: 'Financial Planning',
+    href: '/financial-planning',
+    badge: 'FREE',
   },
   {
     label: 'Blog',
@@ -273,6 +279,7 @@ export const FOOTER_LINKS = {
     { label: 'Volatility Simulator', href: '/research/volatility-simulator' },
   ],
   Explore: [
+    { label: 'Financial Health Assessment', href: '/financial-planning' },
     { label: 'Fund Explorer', href: '/funds' },
     { label: 'Trustner Fund Selection', href: '/funds/selection' },
     { label: 'Compare Funds', href: '/funds/compare' },

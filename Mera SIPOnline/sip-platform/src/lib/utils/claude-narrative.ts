@@ -24,7 +24,9 @@ function buildUserPrompt(
 ): string {
   const firstName = userName.split(' ')[0];
   const age = data.personalProfile.age || 30;
-  const city = data.personalProfile.city || 'India';
+  const city = data.personalProfile.city === 'other'
+    ? (data.personalProfile.otherCity || 'India')
+    : (data.personalProfile.city || 'India');
   const dependents = data.personalProfile.dependents || 0;
   const pillars = report.score.pillars;
 

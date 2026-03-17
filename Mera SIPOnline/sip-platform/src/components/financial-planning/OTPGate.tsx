@@ -19,6 +19,7 @@ export function OTPGate({ onVerified }: OTPGateProps) {
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
+  const [otpChannel, setOtpChannel] = useState<'email' | 'sms+email'>('email');
 
   // ── Refs ──
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -86,6 +87,9 @@ export function OTPGate({ onVerified }: OTPGateProps) {
         setError(data.error || 'Failed to send OTP');
         return;
       }
+
+      // Track delivery channel (SMS or email-only)
+      if (data.channel === 'sms+email') setOtpChannel('sms+email');
 
       setStep('verify');
       setOtp(['', '', '', '', '', '']);
@@ -353,18 +357,24 @@ export function OTPGate({ onVerified }: OTPGateProps) {
               {/* Info */}
               <div className="text-center">
                 <p className="text-sm text-slate-600">
-                  We sent a 6-digit code to
+                  {otpChannel === 'sms+email'
+                    ? 'We sent a 6-digit code to your phone and email'
+                    : 'We sent a 6-digit code to'}
                 </p>
                 <p className="font-semibold text-slate-800 mt-1">
-                  {email}
+                  {otpChannel === 'sms+email'
+                    ? `+91 ${phone.slice(0, 5)} ${phone.slice(5)} & ${email}`
+                    : email}
                 </p>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  +91 {phone.slice(0, 5)} {phone.slice(5)}
-                </p>
+                {otpChannel !== 'sms+email' && (
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    +91 {phone.slice(0, 5)} {phone.slice(5)}
+                  </p>
+                )}
               </div>
 
               {/* OTP Inputs */}
-              <div className="flex justify-center gap-2.5">
+              <div className="flex justify-center gap-1.5 sm:gap-2.5">
                 {otp.map((digit, index) => (
                   <input
                     key={index}
@@ -378,7 +388,7 @@ export function OTPGate({ onVerified }: OTPGateProps) {
                     onKeyDown={(e) => handleOtpKeyDown(index, e)}
                     onPaste={index === 0 ? handleOtpPaste : undefined}
                     onFocus={(e) => e.target.select()}
-                    className={`w-11 h-13 text-center text-xl font-bold border-2 rounded-lg
+                    className={`w-10 h-12 sm:w-11 sm:h-13 text-center text-xl font-bold border-2 rounded-lg
                       focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500
                       transition-all
                       ${digit

@@ -18,16 +18,19 @@ interface WizardShellProps {
   steps: WizardStepConfig[];
   onComplete: (data: unknown) => void;
   storageKey?: string;
+  /** Optional per-step validator. Returns error message string if invalid, or empty string/null if valid. */
+  validateStep?: (stepIndex: number) => string | null;
 }
 
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export default function WizardShell({ steps, onComplete, storageKey = 'wizardData' }: WizardShellProps) {
+export default function WizardShell({ steps, onComplete, storageKey = 'wizardData', validateStep }: WizardShellProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [wizardData, setWizardData] = useState<Record<string, unknown>>({});
   const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const totalSteps = steps.length;
   const isFirstStep = currentStep === 0;
@@ -70,6 +73,16 @@ export default function WizardShell({ steps, onComplete, storageKey = 'wizardDat
   // ---------------------------------------------------------------------------
 
   const goNext = useCallback(() => {
+    // Validate current step before proceeding
+    if (validateStep) {
+      const error = validateStep(currentStep);
+      if (error) {
+        setValidationError(error);
+        return;
+      }
+    }
+    setValidationError(null);
+
     if (isLastStep) {
       // Final step — trigger completion
       onComplete(wizardData);
@@ -85,10 +98,11 @@ export default function WizardShell({ steps, onComplete, storageKey = 'wizardDat
     setDirection('forward');
     setCurrentStep(nextStep);
     persist(nextStep, wizardData);
-  }, [currentStep, isLastStep, wizardData, onComplete, persist, storageKey]);
+  }, [currentStep, isLastStep, wizardData, onComplete, persist, storageKey, validateStep]);
 
   const goBack = useCallback(() => {
     if (isFirstStep) return;
+    setValidationError(null);
     const prevStep = currentStep - 1;
     setDirection('backward');
     setCurrentStep(prevStep);
@@ -182,6 +196,14 @@ export default function WizardShell({ steps, onComplete, storageKey = 'wizardDat
             Step {currentStep + 1} of {totalSteps}
           </p>
         </div>
+
+        {/* ---- Validation Error ---- */}
+        {validationError && (
+          <div className="mx-4 sm:mx-6 mb-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-start gap-2">
+            <span className="text-red-500 mt-0.5 shrink-0">!</span>
+            <span>{validationError}</span>
+          </div>
+        )}
 
         {/* ---- Step Content ---- */}
         <div className="px-4 sm:px-6 pb-2">

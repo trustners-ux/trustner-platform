@@ -81,7 +81,7 @@ export function buildAdminReviewNotificationHTML(
 <tr><td style="padding:6px 0;color:#64748b;font-size:13px;">Phone</td><td style="padding:6px 0;color:#1e293b;font-size:13px;">${userPhone || 'Not provided'}</td></tr>
 <tr><td style="padding:6px 0;color:#64748b;font-size:13px;">Score</td><td style="padding:6px 0;font-weight:700;color:#0f766e;font-size:16px;">${score.totalScore}/900 (${score.grade})</td></tr>
 <tr><td style="padding:6px 0;color:#64748b;font-size:13px;">Net Worth</td><td style="padding:6px 0;color:#1e293b;font-size:13px;">${formatINR(report.netWorth.netWorth)}</td></tr>
-<tr><td style="padding:6px 0;color:#64748b;font-size:13px;">Age / City</td><td style="padding:6px 0;color:#1e293b;font-size:13px;">${data.personalProfile.age || '-'} / ${data.personalProfile.city || '-'}</td></tr>
+<tr><td style="padding:6px 0;color:#64748b;font-size:13px;">Age / City</td><td style="padding:6px 0;color:#1e293b;font-size:13px;">${data.personalProfile.age || '-'} / ${data.personalProfile.city === 'other' ? (data.personalProfile.otherCity || 'Other') : (data.personalProfile.city || '-')}</td></tr>
 <tr><td style="padding:6px 0;color:#64748b;font-size:13px;">Risk Profile</td><td style="padding:6px 0;color:#1e293b;font-size:13px;">${data.riskProfile.riskCategory || '-'}</td></tr>
 </table>
 <h3 style="color:#334155;font-size:13px;margin:16px 0 8px;">Pillar Breakdown:</h3>

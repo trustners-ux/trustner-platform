@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { FileCheck, Clock, CheckCircle2, XCircle, Send, RefreshCw } from 'lucide-react';
+import { FileCheck, Clock, XCircle, Send, RefreshCw, Download } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { ReportQueueTable } from '@/components/admin/ReportQueueTable';
 import type { ReportQueueEntry } from '@/types/report-queue';
@@ -11,6 +11,77 @@ interface StatsCard {
   value: number;
   icon: React.ElementType;
   color: string;
+}
+
+function formatAmount(val: number): string {
+  if (val >= 10000000) return `${(val / 10000000).toFixed(2)} Cr`;
+  if (val >= 100000) return `${(val / 100000).toFixed(2)} L`;
+  if (val >= 1000) return `${(val / 1000).toFixed(1)} K`;
+  return val.toString();
+}
+
+function exportToCSV(reports: ReportQueueEntry[]) {
+  const headers = [
+    'Report ID',
+    'Name',
+    'Email',
+    'Phone',
+    'Age',
+    'City',
+    'Score',
+    'Grade',
+    'Net Worth',
+    'Risk Category',
+    'Status',
+    'Cashflow Score',
+    'Protection Score',
+    'Investments Score',
+    'Debt Score',
+    'Retirement Score',
+    'Created At',
+    'Sent At',
+  ];
+
+  const rows = reports.map((r) => [
+    r.id,
+    r.userName,
+    r.userEmail,
+    r.userPhone,
+    r.userAge,
+    r.userCity,
+    r.totalScore,
+    r.grade,
+    r.netWorth,
+    r.riskCategory,
+    r.status,
+    r.pillarScores.cashflow.score,
+    r.pillarScores.protection.score,
+    r.pillarScores.investments.score,
+    r.pillarScores.debt.score,
+    r.pillarScores.retirementReadiness.score,
+    r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-IN') : '',
+    r.sentAt ? new Date(r.sentAt).toLocaleDateString('en-IN') : '',
+  ]);
+
+  const csvContent = [
+    headers.join(','),
+    ...rows.map((row) =>
+      row.map((cell) => {
+        const str = String(cell ?? '');
+        return str.includes(',') || str.includes('"') || str.includes('\n')
+          ? `"${str.replace(/"/g, '""')}"`
+          : str;
+      }).join(',')
+    ),
+  ].join('\n');
+
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `financial-reports-${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 export default function ReportsPage() {
@@ -69,14 +140,25 @@ export default function ReportsPage() {
           <h1 className="text-2xl font-extrabold text-primary-700">Financial Reports</h1>
           <p className="text-sm text-slate-500">Review, approve, and manage financial health reports</p>
         </div>
-        <button
-          onClick={fetchReports}
-          disabled={loading}
-          className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-surface-200 rounded-xl hover:bg-surface-50 transition-colors disabled:opacity-50"
-        >
-          <RefreshCw className={cn('w-3.5 h-3.5', loading && 'animate-spin')} />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          {reports.length > 0 && (
+            <button
+              onClick={() => exportToCSV(reports)}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-green-700 bg-green-50 border border-green-200 rounded-xl hover:bg-green-100 transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Export Excel
+            </button>
+          )}
+          <button
+            onClick={fetchReports}
+            disabled={loading}
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-surface-200 rounded-xl hover:bg-surface-50 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={cn('w-3.5 h-3.5', loading && 'animate-spin')} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards */}

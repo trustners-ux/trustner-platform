@@ -1408,3 +1408,189 @@ export function calculateDailySIPWithGrowth(
     breakdown,
   };
 }
+
+// ── Term Plan Regular Pay + SIP vs Limited Pay ──
+export interface TermPlanSIPYearRow {
+  year: number;
+  phase: 'accumulation' | 'distribution';
+  regularPremium: number;
+  limitedPremium: number;
+  sipInvestment: number;
+  withdrawal: number;
+  corpusValue: number;
+  interestEarned: number;
+}
+
+export interface TermPlanSIPResult {
+  yearlyData: TermPlanSIPYearRow[];
+  sipCorpusAtSwitch: number;
+  remainingCorpusAtMaturity: number;
+  totalRegularPremiums: number;
+  totalLimitedPremiums: number;
+  totalSIPInvested: number;
+  totalWithdrawnForPremiums: number;
+  premiumDifferenceSaved: number;
+  corpusLasts: number;
+  verdict: 'wins' | 'exact' | 'shortfall';
+}
+
+export function calculateTermPlanSIP(
+  policyTerm: number,
+  regularPremium: number,
+  limitedPremium: number,
+  limitedPayPeriod: number,
+  accumulationReturn: number,
+  distributionReturn: number,
+  frequency: 'monthly' | 'yearly',
+  extraLumpsum: number = 0,
+  lumpsumYear: number = 1,
+): TermPlanSIPResult {
+  const premiumDiff = Math.max(0, limitedPremium - regularPremium);
+  const yearlyData: TermPlanSIPYearRow[] = [];
+
+  let corpus = 0;
+  let totalSIPInvested = 0;
+  let totalWithdrawn = 0;
+  let sipCorpusAtSwitch = 0;
+  let corpusLasts = policyTerm;
+  let corpusDepleted = false;
+
+  // Phase 1: Accumulation (year 1 to limitedPayPeriod)
+  const accMonthlyRate = accumulationReturn / 100 / 12;
+
+  for (let y = 1; y <= limitedPayPeriod; y++) {
+    let yearInterest = 0;
+    let yearSIP = 0;
+
+    if (frequency === 'monthly') {
+      const monthlySIP = premiumDiff / 12;
+      for (let m = 0; m < 12; m++) {
+        const interest = corpus * accMonthlyRate;
+        yearInterest += interest;
+        corpus += interest + monthlySIP;
+        yearSIP += monthlySIP;
+      }
+    } else {
+      // Yearly: invest full difference at start of year, compound monthly
+      corpus += premiumDiff;
+      yearSIP = premiumDiff;
+      for (let m = 0; m < 12; m++) {
+        const interest = corpus * accMonthlyRate;
+        yearInterest += interest;
+        corpus += interest;
+      }
+    }
+
+    // Add lumpsum if applicable
+    if (extraLumpsum > 0 && y === lumpsumYear) {
+      corpus += extraLumpsum;
+      yearSIP += extraLumpsum;
+    }
+
+    totalSIPInvested += yearSIP;
+
+    yearlyData.push({
+      year: y,
+      phase: 'accumulation',
+      regularPremium: regularPremium,
+      limitedPremium: limitedPremium,
+      sipInvestment: Math.round(yearSIP),
+      withdrawal: 0,
+      corpusValue: Math.round(corpus),
+      interestEarned: Math.round(yearInterest),
+    });
+  }
+
+  sipCorpusAtSwitch = Math.round(corpus);
+
+  // Phase 2: Distribution (limitedPayPeriod+1 to policyTerm)
+  const distMonthlyRate = distributionReturn / 100 / 12;
+
+  for (let y = limitedPayPeriod + 1; y <= policyTerm; y++) {
+    if (corpusDepleted) {
+      yearlyData.push({
+        year: y,
+        phase: 'distribution',
+        regularPremium: regularPremium,
+        limitedPremium: 0,
+        sipInvestment: 0,
+        withdrawal: 0,
+        corpusValue: 0,
+        interestEarned: 0,
+      });
+      continue;
+    }
+
+    let yearInterest = 0;
+    let yearWithdrawn = 0;
+
+    if (frequency === 'monthly') {
+      const monthlyPremium = regularPremium / 12;
+      for (let m = 0; m < 12; m++) {
+        const interest = corpus * distMonthlyRate;
+        yearInterest += interest;
+        corpus += interest;
+        corpus -= monthlyPremium;
+        yearWithdrawn += monthlyPremium;
+
+        if (corpus <= 0) {
+          corpus = 0;
+          corpusDepleted = true;
+          corpusLasts = y - 1 + (m + 1) / 12;
+          break;
+        }
+      }
+    } else {
+      // Yearly: compound for the year, then deduct premium at year end
+      for (let m = 0; m < 12; m++) {
+        const interest = corpus * distMonthlyRate;
+        yearInterest += interest;
+        corpus += interest;
+      }
+      corpus -= regularPremium;
+      yearWithdrawn = regularPremium;
+
+      if (corpus <= 0) {
+        corpus = 0;
+        corpusDepleted = true;
+        corpusLasts = y;
+      }
+    }
+
+    totalWithdrawn += yearWithdrawn;
+
+    yearlyData.push({
+      year: y,
+      phase: 'distribution',
+      regularPremium: regularPremium,
+      limitedPremium: 0,
+      sipInvestment: 0,
+      withdrawal: Math.round(yearWithdrawn),
+      corpusValue: Math.round(Math.max(0, corpus)),
+      interestEarned: Math.round(yearInterest),
+    });
+  }
+
+  const remaining = Math.round(Math.max(0, corpus));
+  let verdict: 'wins' | 'exact' | 'shortfall';
+  if (remaining > 1000) {
+    verdict = 'wins';
+  } else if (!corpusDepleted) {
+    verdict = 'exact';
+  } else {
+    verdict = 'shortfall';
+  }
+
+  return {
+    yearlyData,
+    sipCorpusAtSwitch,
+    remainingCorpusAtMaturity: remaining,
+    totalRegularPremiums: regularPremium * policyTerm,
+    totalLimitedPremiums: limitedPremium * limitedPayPeriod,
+    totalSIPInvested: Math.round(totalSIPInvested),
+    totalWithdrawnForPremiums: Math.round(totalWithdrawn),
+    premiumDifferenceSaved: premiumDiff * limitedPayPeriod,
+    corpusLasts: Math.round(corpusLasts * 10) / 10,
+    verdict,
+  };
+}

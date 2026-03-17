@@ -55,7 +55,9 @@ export async function POST(request: NextRequest) {
         userEmail,
         userPhone: phone,
         userAge: data.personalProfile.age || 30,
-        userCity: data.personalProfile.city || '-',
+        userCity: data.personalProfile.city === 'other'
+          ? (data.personalProfile.otherCity || 'Other')
+          : (data.personalProfile.city || '-'),
         riskCategory: data.riskProfile.riskCategory || '-',
         totalScore: report.score.totalScore,
         grade: report.score.grade,

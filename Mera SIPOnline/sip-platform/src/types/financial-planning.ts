@@ -17,8 +17,11 @@ export interface PersonalProfile {
   dependents: number;
   spouseAge: number | null;
   childrenAges: number[];
+  state: string;
   city: string;
   cityTier: 'metro' | 'tier1' | 'tier2' | 'tier3';
+  otherCity: string;
+  pincode: string;
   residentialStatus: 'own' | 'rent' | 'family';
 }
 

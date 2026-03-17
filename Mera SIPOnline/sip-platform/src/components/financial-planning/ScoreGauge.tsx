@@ -18,9 +18,9 @@ const GRADE_COLORS: Record<string, { stroke: string; text: string; bg: string }>
 };
 
 const SIZE_CONFIG = {
-  sm: { width: 160, height: 100, strokeWidth: 10, radius: 60, fontSize: 28, labelSize: 10 },
-  md: { width: 240, height: 150, strokeWidth: 14, radius: 90, fontSize: 42, labelSize: 13 },
-  lg: { width: 320, height: 200, strokeWidth: 18, radius: 120, fontSize: 56, labelSize: 16 },
+  sm: { width: 200, height: 120, strokeWidth: 12, radius: 70, fontSize: 30, labelSize: 10, padding: 20 },
+  md: { width: 280, height: 165, strokeWidth: 16, radius: 100, fontSize: 44, labelSize: 13, padding: 25 },
+  lg: { width: 360, height: 210, strokeWidth: 20, radius: 130, fontSize: 58, labelSize: 16, padding: 30 },
 };
 
 export default function ScoreGauge({ score, grade, size = 'md', animate = true }: ScoreGaugeProps) {
@@ -53,19 +53,19 @@ export default function ScoreGauge({ score, grade, size = 'md', animate = true }
 
   // Arc calculation — semicircle (180 degrees)
   const centerX = config.width / 2;
-  const centerY = config.height - 10;
+  const centerY = config.height - config.padding;
   const r = config.radius;
+  const sw = config.strokeWidth;
 
   // SVG arc: start from left (180°) to right (0°)
   const startAngle = Math.PI; // 180 degrees (left)
-  const endAngle = 0; // 0 degrees (right)
   const scorePercent = Math.min(displayScore / 900, 1);
   const currentAngle = startAngle - scorePercent * Math.PI;
 
   const arcStartX = centerX + r * Math.cos(startAngle);
   const arcStartY = centerY - r * Math.sin(startAngle);
-  const arcEndX = centerX + r * Math.cos(endAngle);
-  const arcEndY = centerY - r * Math.sin(endAngle);
+  const arcEndX = centerX + r * Math.cos(0);
+  const arcEndY = centerY - r * Math.sin(0);
   const scoreEndX = centerX + r * Math.cos(currentAngle);
   const scoreEndY = centerY - r * Math.sin(currentAngle);
 
@@ -78,48 +78,76 @@ export default function ScoreGauge({ score, grade, size = 'md', animate = true }
     ? `M ${arcStartX} ${arcStartY} A ${r} ${r} 0 ${largeArcFlag} 1 ${scoreEndX} ${scoreEndY}`
     : '';
 
+  // Tick marks at 0, 180, 360, 540, 720, 900
+  const ticks = [0, 180, 360, 540, 720, 900];
+  const tickMarks = ticks.map((val) => {
+    const pct = val / 900;
+    const angle = startAngle - pct * Math.PI;
+    const innerR = r - sw / 2 - 3;
+    const outerR = r + sw / 2 + 3;
+    return {
+      val,
+      x1: centerX + innerR * Math.cos(angle),
+      y1: centerY - innerR * Math.sin(angle),
+      x2: centerX + outerR * Math.cos(angle),
+      y2: centerY - outerR * Math.sin(angle),
+    };
+  });
+
   return (
     <div className="flex flex-col items-center">
       <svg width={config.width} height={config.height} viewBox={`0 0 ${config.width} ${config.height}`}>
+        <defs>
+          <linearGradient id={`gauge-grad-${size}`} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#DC2626" />
+            <stop offset="20%" stopColor="#EA580C" />
+            <stop offset="40%" stopColor="#D97706" />
+            <stop offset="60%" stopColor="#65A30D" />
+            <stop offset="80%" stopColor="#0F766E" />
+            <stop offset="100%" stopColor="#065F46" />
+          </linearGradient>
+        </defs>
+
         {/* Background arc */}
         <path
           d={bgArcPath}
           fill="none"
           stroke="#E2E8F0"
-          strokeWidth={config.strokeWidth}
+          strokeWidth={sw}
           strokeLinecap="round"
         />
 
         {/* Score arc with gradient */}
         {scoreArcPath && (
-          <>
-            <defs>
-              <linearGradient id={`gauge-grad-${size}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#DC2626" />
-                <stop offset="25%" stopColor="#EA580C" />
-                <stop offset="50%" stopColor="#D97706" />
-                <stop offset="75%" stopColor="#0F766E" />
-                <stop offset="100%" stopColor="#065F46" />
-              </linearGradient>
-            </defs>
-            <path
-              d={scoreArcPath}
-              fill="none"
-              stroke={`url(#gauge-grad-${size})`}
-              strokeWidth={config.strokeWidth}
-              strokeLinecap="round"
-            />
-          </>
+          <path
+            d={scoreArcPath}
+            fill="none"
+            stroke={`url(#gauge-grad-${size})`}
+            strokeWidth={sw}
+            strokeLinecap="round"
+          />
         )}
+
+        {/* Small tick marks */}
+        {tickMarks.map((t) => (
+          <line
+            key={t.val}
+            x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}
+            stroke="#CBD5E1"
+            strokeWidth={1.5}
+          />
+        ))}
 
         {/* Score text */}
         <text
           x={centerX}
-          y={centerY - config.radius * 0.3}
+          y={centerY - r * 0.35}
           textAnchor="middle"
+          dominantBaseline="central"
           fontSize={config.fontSize}
           fontWeight="800"
           fill={colors.text}
+          fontFamily="system-ui, -apple-system, sans-serif"
         >
           {displayScore}
         </text>
@@ -127,17 +155,37 @@ export default function ScoreGauge({ score, grade, size = 'md', animate = true }
         {/* "out of 900" label */}
         <text
           x={centerX}
-          y={centerY - config.radius * 0.3 + config.fontSize * 0.45}
+          y={centerY - r * 0.35 + config.fontSize * 0.5}
           textAnchor="middle"
+          dominantBaseline="central"
           fontSize={config.labelSize}
           fill="#94A3B8"
+          fontFamily="system-ui, -apple-system, sans-serif"
         >
           out of 900
         </text>
 
-        {/* Scale labels */}
-        <text x={arcStartX + 5} y={centerY + 4} fontSize={config.labelSize - 2} fill="#94A3B8" textAnchor="start">0</text>
-        <text x={arcEndX - 5} y={centerY + 4} fontSize={config.labelSize - 2} fill="#94A3B8" textAnchor="end">900</text>
+        {/* Scale labels — placed below the arc ends with padding */}
+        <text
+          x={arcStartX - 2}
+          y={centerY + config.labelSize + 4}
+          fontSize={config.labelSize - 1}
+          fill="#94A3B8"
+          textAnchor="middle"
+          fontFamily="system-ui, -apple-system, sans-serif"
+        >
+          0
+        </text>
+        <text
+          x={arcEndX + 2}
+          y={centerY + config.labelSize + 4}
+          fontSize={config.labelSize - 1}
+          fill="#94A3B8"
+          textAnchor="middle"
+          fontFamily="system-ui, -apple-system, sans-serif"
+        >
+          900
+        </text>
       </svg>
 
       {/* Grade badge */}

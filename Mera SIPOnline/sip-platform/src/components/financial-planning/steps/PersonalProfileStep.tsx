@@ -1,9 +1,10 @@
 'use client';
 
 import { useMemo } from 'react';
-import { User, MapPin, Home } from 'lucide-react';
+import { User, UserRound, Users, MapPin, Home } from 'lucide-react';
 import RadioCards from '@/components/financial-planning/inputs/RadioCards';
 import SelectInput from '@/components/financial-planning/inputs/SelectInput';
+import { INDIA_STATES, TIER_DEFINITIONS } from '@/lib/constants/india-locations';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -17,8 +18,11 @@ interface PersonalProfileData {
   dependents: number;
   spouseAge: number | null;
   childrenAges: number[];
+  state: string;
   city: string;
   cityTier: string;
+  otherCity: string;
+  pincode: string;
   residentialStatus: string;
 }
 
@@ -35,9 +39,9 @@ const INPUT_CLASS =
   'w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none text-sm';
 
 const GENDER_OPTIONS = [
-  { value: 'male', label: 'Male', icon: '👨' },
-  { value: 'female', label: 'Female', icon: '👩' },
-  { value: 'other', label: 'Other', icon: '🧑' },
+  { value: 'male', label: 'Male', icon: <UserRound className="w-5 h-5" /> },
+  { value: 'female', label: 'Female', icon: <User className="w-5 h-5" /> },
+  { value: 'other', label: 'Other', icon: <Users className="w-5 h-5" /> },
 ];
 
 const MARITAL_OPTIONS = [
@@ -45,48 +49,6 @@ const MARITAL_OPTIONS = [
   { value: 'married', label: 'Married' },
   { value: 'divorced', label: 'Divorced' },
   { value: 'widowed', label: 'Widowed' },
-];
-
-const CITY_OPTIONS = [
-  { value: 'Mumbai', label: 'Mumbai' },
-  { value: 'Delhi', label: 'Delhi / NCR' },
-  { value: 'Bangalore', label: 'Bangalore' },
-  { value: 'Hyderabad', label: 'Hyderabad' },
-  { value: 'Chennai', label: 'Chennai' },
-  { value: 'Kolkata', label: 'Kolkata' },
-  { value: 'Pune', label: 'Pune' },
-  { value: 'Ahmedabad', label: 'Ahmedabad' },
-  { value: 'Jaipur', label: 'Jaipur' },
-  { value: 'Lucknow', label: 'Lucknow' },
-  { value: 'Chandigarh', label: 'Chandigarh' },
-  { value: 'Indore', label: 'Indore' },
-  { value: 'Kochi', label: 'Kochi' },
-  { value: 'Coimbatore', label: 'Coimbatore' },
-  { value: 'Nagpur', label: 'Nagpur' },
-  { value: 'other', label: 'Other' },
-];
-
-const CITY_TIER_OPTIONS = [
-  {
-    value: 'metro',
-    label: 'Metro',
-    description: 'Mumbai, Delhi, Bangalore, etc.',
-  },
-  {
-    value: 'tier1',
-    label: 'Tier-1',
-    description: 'Pune, Ahmedabad, Jaipur, etc.',
-  },
-  {
-    value: 'tier2',
-    label: 'Tier-2',
-    description: 'Indore, Coimbatore, Nagpur, etc.',
-  },
-  {
-    value: 'tier3',
-    label: 'Tier-3',
-    description: 'Smaller towns & rural areas',
-  },
 ];
 
 const RESIDENTIAL_OPTIONS = [
@@ -107,6 +69,12 @@ const RESIDENTIAL_OPTIONS = [
   },
 ];
 
+// Build state options for dropdown
+const STATE_OPTIONS = INDIA_STATES.map((s) => ({
+  value: s.value,
+  label: s.label,
+}));
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -117,6 +85,52 @@ export default function PersonalProfileStep({ data, onUpdate }: Props) {
 
   // Today's date string for the date max attribute
   const today = useMemo(() => new Date().toISOString().split('T')[0], []);
+
+  // Get cities for selected state
+  const selectedState = useMemo(
+    () => INDIA_STATES.find((s) => s.value === data.state),
+    [data.state]
+  );
+
+  const cityOptions = useMemo(() => {
+    if (!selectedState) return [];
+    const cities = selectedState.cities.map((c) => ({
+      value: c.value,
+      label: c.label,
+    }));
+    if (cities.length > 0) {
+      cities.push({ value: 'other', label: 'Other (not listed)' });
+    }
+    return cities;
+  }, [selectedState]);
+
+  const isOtherCity = data.city === 'other';
+  const isNRI = data.state === 'NRI';
+
+  // ---- Handlers ----
+
+  const handleStateChange = (stateVal: string) => {
+    // Reset city when state changes, auto-set tier for NRI
+    if (stateVal === 'NRI') {
+      onUpdate({ state: stateVal, city: '', cityTier: 'metro', otherCity: '', pincode: '' });
+    } else {
+      onUpdate({ state: stateVal, city: '', cityTier: '', otherCity: '', pincode: '' });
+    }
+  };
+
+  const handleCityChange = (cityVal: string) => {
+    if (cityVal === 'other') {
+      onUpdate({ city: 'other', cityTier: 'tier3', otherCity: '', pincode: '' });
+    } else if (selectedState) {
+      const cityEntry = selectedState.cities.find((c) => c.value === cityVal);
+      onUpdate({
+        city: cityVal,
+        cityTier: cityEntry?.tier || 'tier3',
+        otherCity: '',
+        pincode: '',
+      });
+    }
+  };
 
   // ---- Handlers for children ages ----
   const addChild = () => {
@@ -321,25 +335,103 @@ export default function PersonalProfileStep({ data, onUpdate }: Props) {
           </h3>
         </div>
 
-        {/* City of Residence */}
+        {/* State */}
         <div className="mb-5">
           <SelectInput
-            label="City of Residence"
-            value={data.city}
-            onChange={(val) => onUpdate({ city: val })}
-            options={CITY_OPTIONS}
-            placeholder="Select your city"
+            label="State / UT"
+            value={data.state}
+            onChange={handleStateChange}
+            options={STATE_OPTIONS}
+            placeholder="Select your state"
+            required
           />
         </div>
 
-        {/* City Tier */}
-        <RadioCards
-          label="City Tier"
-          value={data.cityTier}
-          onChange={(val) => onUpdate({ cityTier: val })}
-          options={CITY_TIER_OPTIONS}
-          columns={4}
-        />
+        {/* City — only show if state is selected and has cities */}
+        {data.state && !isNRI && cityOptions.length > 0 && (
+          <div className="mb-5">
+            <SelectInput
+              label="City"
+              value={data.city}
+              onChange={handleCityChange}
+              options={cityOptions}
+              placeholder="Select your city"
+              required
+            />
+          </div>
+        )}
+
+        {/* Other City — show when "Other" is selected or NRI */}
+        {(isOtherCity || isNRI) && (
+          <div className="mb-5 space-y-4">
+            <div>
+              <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
+                {isNRI ? 'Current City / Country' : 'Enter your city / town name'} <span className="text-negative ml-0.5">*</span>
+              </label>
+              <input
+                type="text"
+                value={data.otherCity}
+                onChange={(e) => onUpdate({ otherCity: e.target.value })}
+                placeholder={isNRI ? 'e.g. Dubai, UAE' : 'e.g. Sivasagar, Tinsukia'}
+                className={INPUT_CLASS}
+              />
+            </div>
+            {!isNRI && (
+              <div>
+                <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
+                  Pincode
+                </label>
+                <input
+                  type="text"
+                  value={data.pincode}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    onUpdate({ pincode: val });
+                  }}
+                  placeholder="e.g. 781001"
+                  maxLength={6}
+                  inputMode="numeric"
+                  className={INPUT_CLASS}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* City Tier — auto-set but allow override */}
+        {data.cityTier && (
+          <div className="mb-2">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[13px] font-semibold text-slate-600">City Tier</span>
+              <span className="text-[11px] text-slate-400">(auto-detected, you can change if needed)</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {(['metro', 'tier1', 'tier2', 'tier3'] as const).map((tier) => {
+                const def = TIER_DEFINITIONS[tier];
+                const isActive = data.cityTier === tier;
+                return (
+                  <button
+                    key={tier}
+                    type="button"
+                    onClick={() => onUpdate({ cityTier: tier })}
+                    className={`p-2.5 rounded-xl border-2 text-left transition-all ${
+                      isActive
+                        ? 'border-brand bg-brand/5 shadow-sm'
+                        : 'border-surface-200 hover:border-surface-300 bg-white'
+                    }`}
+                  >
+                    <div className={`text-xs font-bold ${isActive ? 'text-brand' : 'text-slate-700'}`}>
+                      {def.label}
+                    </div>
+                    <div className="text-[10px] text-slate-400 mt-0.5 leading-tight">
+                      {def.description}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ---------------------------------------------------------- */}

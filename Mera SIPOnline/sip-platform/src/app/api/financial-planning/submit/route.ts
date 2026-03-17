@@ -63,7 +63,9 @@ export async function POST(request: Request) {
           grade: score.grade,
           netWorth: netWorth.netWorth,
           age: data.personalProfile.age,
-          city: data.personalProfile.city,
+          city: data.personalProfile.city === 'other'
+            ? (data.personalProfile.otherCity || 'Other')
+            : (data.personalProfile.city || '-'),
         },
       };
 

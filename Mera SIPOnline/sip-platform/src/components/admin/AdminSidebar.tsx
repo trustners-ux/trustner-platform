@@ -1,16 +1,17 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, TrendingUp, FileText, BarChart3, Users, Settings,
-  Shield, ChevronLeft, ChevronRight, X, Image, FileCheck,
+  ChevronLeft, ChevronRight, X, Image as ImageIcon, FileCheck, UserCog,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { canAccess, ADMIN_NAV, type AdminRole } from '@/lib/auth/config';
 
 const ICON_MAP: Record<string, React.ElementType> = {
-  LayoutDashboard, TrendingUp, FileText, BarChart3, Users, Settings, Image, FileCheck,
+  LayoutDashboard, TrendingUp, FileText, BarChart3, Users, Settings, Image: ImageIcon, FileCheck, UserCog,
 };
 
 export function AdminSidebar({
@@ -48,11 +49,11 @@ export function AdminSidebar({
         <div className="flex items-center justify-between px-4 py-5 border-b border-white/10">
           {!collapsed && (
             <div className="flex items-center gap-2">
-              <Shield className="w-6 h-6 text-brand-300" />
+              <Image src="/Trustner Logo-blue.png" alt="Trustner" width={24} height={24} className="brightness-0 invert opacity-80" />
               <span className="font-bold text-sm">Trustner Admin</span>
             </div>
           )}
-          {collapsed && <Shield className="w-6 h-6 text-brand-300 mx-auto" />}
+          {collapsed && <Image src="/Trustner Logo-blue.png" alt="Trustner" width={24} height={24} className="brightness-0 invert opacity-80 mx-auto" />}
           <button onClick={onMobileClose} className="lg:hidden p-1 text-slate-400 hover:text-white">
             <X className="w-5 h-5" />
           </button>

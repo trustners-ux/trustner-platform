@@ -55,7 +55,7 @@ export default function TeaserDashboard({ data, userName, userEmail }: TeaserDas
       </div>
 
       {/* 5 Pillar Breakdown */}
-      <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
         {PILLAR_CONFIG.map((pillar) => {
           const pillarData = data.score.pillars[pillar.key];
           const percent = Math.round((pillarData.score / 180) * 100);

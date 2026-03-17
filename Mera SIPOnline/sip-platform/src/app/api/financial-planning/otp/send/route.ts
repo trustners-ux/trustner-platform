@@ -91,14 +91,44 @@ export async function POST(request: Request) {
       }
     }
 
+    // Try SMS via MSG91 (if configured — requires DLT registration)
+    const msg91Key = process.env.MSG91_AUTH_KEY;
+    const msg91Template = process.env.MSG91_TEMPLATE_ID;
+    let smsSent = false;
+
+    if (msg91Key && msg91Template) {
+      try {
+        const smsRes = await fetch('https://control.msg91.com/api/v5/otp', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            authkey: msg91Key,
+          },
+          body: JSON.stringify({
+            template_id: msg91Template,
+            mobile: `91${cleanPhone}`,
+            otp,
+            otp_length: 6,
+          }),
+        });
+        smsSent = smsRes.ok;
+        if (!smsRes.ok) {
+          console.error('[FP OTP] MSG91 response:', smsRes.status);
+        }
+      } catch (smsErr) {
+        console.error('[FP OTP] SMS send failed:', smsErr);
+      }
+    }
+
     // Log OTP in development for testing
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[FP OTP] Phone: ${cleanPhone}, Email: ${email}, OTP: ${otp}`);
+      console.log(`[FP OTP] Phone: ${cleanPhone}, Email: ${email}, OTP: ${otp}, SMS: ${smsSent}`);
     }
 
     return NextResponse.json({
       success: true,
-      message: 'OTP sent to your email',
+      message: smsSent ? 'OTP sent to your phone and email' : 'OTP sent to your email',
+      channel: smsSent ? 'sms+email' : 'email',
     });
   } catch (error) {
     console.error('[FP OTP] Send error:', error);

@@ -19,6 +19,7 @@ import GoalsStep from '@/components/financial-planning/steps/GoalsStep';
 import RiskBehaviorStep from '@/components/financial-planning/steps/RiskBehaviorStep';
 import EmergencyTaxStep from '@/components/financial-planning/steps/EmergencyTaxStep';
 import { DEFAULT_PLANNING_DATA } from '@/lib/constants/financial-planning';
+import { INDIA_STATES } from '@/lib/constants/india-locations';
 
 import type {
   FinancialPlanningData,
@@ -47,8 +48,11 @@ type PersonalProfileData = {
   dependents: number;
   spouseAge: number | null;
   childrenAges: number[];
+  state: string;
   city: string;
   cityTier: string;
+  otherCity: string;
+  pincode: string;
   residentialStatus: string;
 };
 
@@ -83,8 +87,11 @@ function extractPersonalProfile(d: FinancialPlanningData): PersonalProfileData {
     dependents: p.dependents,
     spouseAge: p.spouseAge,
     childrenAges: p.childrenAges,
+    state: p.state,
     city: p.city,
     cityTier: p.cityTier,
+    otherCity: p.otherCity,
+    pincode: p.pincode,
     residentialStatus: p.residentialStatus,
   };
 }
@@ -270,6 +277,41 @@ export default function AssessPage() {
     }));
   }, [updateData]);
 
+  // ── Step Validation ──
+  const validateStep = useCallback((stepIndex: number): string | null => {
+    const p = planData.personalProfile;
+    const i = planData.incomeProfile;
+
+    switch (stepIndex) {
+      case 0: {
+        // Personal Profile: name, DOB, gender, state required
+        if (!p.fullName.trim()) return 'Please enter your full name.';
+        if (!p.dateOfBirth) return 'Please select your date of birth.';
+        if (!p.gender) return 'Please select your gender.';
+        if (!p.state) return 'Please select your state.';
+        // If state has cities, city must be selected
+        if (p.state && p.state !== 'NRI') {
+          const st = INDIA_STATES.find((s) => s.value === p.state);
+          if (st && st.cities.length > 0 && !p.city) return 'Please select your city.';
+        }
+        // If "Other" city, must type city name
+        if (p.city === 'other' && !(p.otherCity || '').trim()) return 'Please enter your city / town name.';
+        // If NRI, must type location
+        if (p.state === 'NRI' && !(p.otherCity || '').trim()) return 'Please enter your current city / country.';
+        return null;
+      }
+      case 1: {
+        // Career & Income: monthly salary required
+        if (!i.monthlyInHandSalary && i.monthlyInHandSalary !== 0) return 'Please enter your monthly in-hand salary.';
+        if (i.monthlyInHandSalary <= 0) return 'Monthly salary must be greater than zero.';
+        return null;
+      }
+      // Steps 2-7 have reasonable defaults, no strict validation needed
+      default:
+        return null;
+    }
+  }, [planData]);
+
   // ── Wizard Completion ──
   const handleComplete = useCallback(async () => {
     setSubmitting(true);
@@ -442,7 +484,7 @@ export default function AssessPage() {
           </button>
         </div>
       )}
-      <WizardShell steps={wizardSteps} onComplete={handleComplete} storageKey="fp-wizard-step" />
+      <WizardShell steps={wizardSteps} onComplete={handleComplete} storageKey="fp-wizard-step" validateStep={validateStep} />
     </section>
   );
 }

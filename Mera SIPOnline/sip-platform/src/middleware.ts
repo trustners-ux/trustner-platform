@@ -18,6 +18,9 @@ const ROUTE_ROLES: { pattern: string; role: AdminRole }[] = [
   { pattern: '/api/admin/leads', role: 'editor' },
   { pattern: '/admin/reports', role: 'editor' },
   { pattern: '/api/admin/reports', role: 'editor' },
+  { pattern: '/admin/users', role: 'admin' },
+  { pattern: '/api/admin/users', role: 'admin' },
+  { pattern: '/api/admin/otp', role: 'admin' },
 ];
 
 function hasAccess(userRole: AdminRole, requiredRole: AdminRole): boolean {
@@ -41,8 +44,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Allow login page and auth API routes
-  if (pathname === '/admin/login' || pathname.startsWith('/api/admin/auth/')) {
+  // Allow login page, forgot-password page, and auth API routes
+  if (
+    pathname === '/admin/login' ||
+    pathname === '/admin/forgot-password' ||
+    pathname.startsWith('/api/admin/auth/')
+  ) {
     return NextResponse.next();
   }
 

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Menu, X, ChevronDown, Calculator, BookOpen, Search, GraduationCap, FlaskConical, ArrowRight, Layers, FileText, Activity, LogIn, UserPlus, Camera, ChevronRight, ChevronsDown } from 'lucide-react';
+import { Menu, X, ChevronDown, Calculator, BookOpen, Search, GraduationCap, FlaskConical, ArrowRight, Layers, FileText, Activity, LogIn, UserPlus, Camera, ChevronRight, ChevronsDown, Brain } from 'lucide-react';
 import { NAVIGATION, NavItem } from '@/lib/constants/navigation';
 import { cn } from '@/lib/utils/cn';
 import { StockTicker } from './StockTicker';
@@ -148,6 +148,7 @@ export function Header() {
     Funds: Layers,
     Blog: FileText,
     'Market Pulse': Activity,
+    'Financial Planning': Brain,
     Gallery: Camera,
     Glossary: GraduationCap,
   };
@@ -214,6 +215,11 @@ export function Header() {
                   >
                     {Icon && <Icon className="w-4 h-4" />}
                     {item.label}
+                    {item.badge && (
+                      <span className="ml-1 px-1.5 py-0.5 text-[9px] font-bold bg-amber-400 text-slate-900 rounded-full uppercase leading-none">
+                        {item.badge}
+                      </span>
+                    )}
                     {hasChildren && <ChevronDown className="w-3 h-3 ml-0.5" />}
                   </Link>
 
@@ -280,12 +286,12 @@ export function Header() {
           </nav>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <a
               href="https://trustner.investwell.app/app/#/login"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden lg:inline-flex items-center gap-1.5 text-sm font-bold px-4 py-2.5 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-sm hover:shadow-md"
+              className="hidden lg:inline-flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-full border-2 border-[#4A7CB5] text-[#4A7CB5] bg-white hover:bg-[#4A7CB5] hover:text-white transition-all duration-300 whitespace-nowrap"
             >
               <LogIn className="w-4 h-4" />
               Sign In
@@ -295,8 +301,7 @@ export function Header() {
               href="https://trustner.investwell.app/app/#/kycOnBoarding/mobileSignUp"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-1.5 text-sm font-bold px-5 py-2.5 rounded-md text-white transition-all shadow-sm hover:shadow-md"
-              style={{ background: 'linear-gradient(135deg, #E8553A, #C4381A)' }}
+              className="hidden sm:inline-flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-full bg-[#4A7CB5] text-white hover:bg-[#3D6A9E] transition-all duration-300 shadow-sm hover:shadow-md whitespace-nowrap"
             >
               <UserPlus className="w-4 h-4" />
               Sign Up
@@ -418,6 +423,11 @@ export function Header() {
                     >
                       {Icon && <Icon className="w-4 h-4 text-slate-400" />}
                       {item.label}
+                      {item.badge && (
+                        <span className="ml-1 px-1.5 py-0.5 text-[9px] font-bold bg-amber-400 text-slate-900 rounded-full uppercase leading-none">
+                          {item.badge}
+                        </span>
+                      )}
                     </Link>
                   )}
                 </div>
@@ -426,23 +436,22 @@ export function Header() {
 
             <div className="mt-6 px-4 space-y-3">
               <a
-                href="https://trustner.investwell.app/app/#/kycOnBoarding/mobileSignUp"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3 rounded-lg text-sm font-bold text-white transition-all shadow-md"
-                style={{ background: 'linear-gradient(135deg, #E8553A, #C4381A)' }}
-              >
-                <UserPlus className="w-4 h-4" />
-                Sign Up
-              </a>
-              <a
                 href="https://trustner.investwell.app/app/#/login"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3 rounded-lg text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-full text-sm font-bold border-2 border-[#4A7CB5] text-[#4A7CB5] bg-white hover:bg-[#4A7CB5] hover:text-white transition-all duration-300 whitespace-nowrap"
               >
                 <LogIn className="w-4 h-4" />
                 Sign In
+              </a>
+              <a
+                href="https://trustner.investwell.app/app/#/kycOnBoarding/mobileSignUp"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-full text-sm font-bold bg-[#4A7CB5] text-white hover:bg-[#3D6A9E] transition-all duration-300 shadow-sm hover:shadow-md whitespace-nowrap"
+              >
+                <UserPlus className="w-4 h-4" />
+                Sign Up
               </a>
             </div>
           </div>
