@@ -1444,6 +1444,8 @@ export function calculateTermPlanSIP(
   frequency: 'monthly' | 'yearly',
   extraLumpsum: number = 0,
   lumpsumYear: number = 1,
+  extraWithdrawal: number = 0,
+  withdrawalYear: number = 0,
 ): TermPlanSIPResult {
   const premiumDiff = Math.max(0, limitedPremium - regularPremium);
   const yearlyData: TermPlanSIPYearRow[] = [];
@@ -1524,6 +1526,9 @@ export function calculateTermPlanSIP(
     let yearInterest = 0;
     let yearWithdrawn = 0;
 
+    // Extra one-time withdrawal in specified year
+    const yearExtraWithdrawal = (extraWithdrawal > 0 && y === withdrawalYear) ? extraWithdrawal : 0;
+
     if (frequency === 'monthly') {
       const monthlyPremium = regularPremium / 12;
       for (let m = 0; m < 12; m++) {
@@ -1533,6 +1538,12 @@ export function calculateTermPlanSIP(
         corpus -= monthlyPremium;
         yearWithdrawn += monthlyPremium;
 
+        // Apply extra withdrawal at start of year (first month)
+        if (m === 0 && yearExtraWithdrawal > 0) {
+          corpus -= yearExtraWithdrawal;
+          yearWithdrawn += yearExtraWithdrawal;
+        }
+
         if (corpus <= 0) {
           corpus = 0;
           corpusDepleted = true;
@@ -1541,14 +1552,15 @@ export function calculateTermPlanSIP(
         }
       }
     } else {
-      // Yearly: compound for the year, then deduct premium at year end
+      // Yearly: compound for the year, then deduct premium + extra withdrawal at year end
       for (let m = 0; m < 12; m++) {
         const interest = corpus * distMonthlyRate;
         yearInterest += interest;
         corpus += interest;
       }
       corpus -= regularPremium;
-      yearWithdrawn = regularPremium;
+      corpus -= yearExtraWithdrawal;
+      yearWithdrawn = regularPremium + yearExtraWithdrawal;
 
       if (corpus <= 0) {
         corpus = 0;

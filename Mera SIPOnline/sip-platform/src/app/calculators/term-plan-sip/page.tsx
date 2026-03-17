@@ -61,6 +61,8 @@ export default function TermPlanSIPCalculatorPage() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [extraLumpsum, setExtraLumpsum] = useState(0);
   const [lumpsumYear, setLumpsumYear] = useState(1);
+  const [extraWithdrawal, setExtraWithdrawal] = useState(0);
+  const [withdrawalYear, setWithdrawalYear] = useState(0);
 
   // Max policy term = 100 - current age (if age provided), else 50
   const maxPolicyTerm = investorAge !== null ? Math.max(10, 100 - investorAge) : 50;
@@ -100,9 +102,10 @@ export default function TermPlanSIPCalculatorPage() {
   const result = useMemo(
     () => calculateTermPlanSIP(
       policyTerm, regularPremium, limitedPremium, limitedPayPeriod,
-      accReturn, distReturn, frequency, extraLumpsum, lumpsumYear
+      accReturn, distReturn, frequency, extraLumpsum, lumpsumYear,
+      extraWithdrawal, withdrawalYear
     ),
-    [policyTerm, regularPremium, limitedPremium, limitedPayPeriod, accReturn, distReturn, frequency, extraLumpsum, lumpsumYear]
+    [policyTerm, regularPremium, limitedPremium, limitedPayPeriod, accReturn, distReturn, frequency, extraLumpsum, lumpsumYear, extraWithdrawal, withdrawalYear]
   );
 
   const premiumDiff = Math.max(0, limitedPremium - regularPremium);
@@ -265,11 +268,35 @@ export default function TermPlanSIPCalculatorPage() {
                     <ChevronDown className={cn('w-4 h-4 text-slate-400 transition-transform', showAdvanced && 'rotate-180')} />
                   </button>
                   {showAdvanced && (
-                    <div className="px-4 py-4 space-y-4 border-t border-surface-300">
-                      <NumberInput label="Extra Lumpsum Investment" value={extraLumpsum} onChange={setExtraLumpsum} prefix="₹" step={10000} min={0} max={5000000} hint="One-time additional investment into SIP corpus" />
-                      {extraLumpsum > 0 && (
-                        <NumberInput label="Lumpsum in Year" value={lumpsumYear} onChange={(v) => setLumpsumYear(Math.min(Math.round(v), limitedPayPeriod))} suffix={`of ${limitedPayPeriod}`} step={1} min={1} max={limitedPayPeriod} />
-                      )}
+                    <div className="px-4 py-4 space-y-5 border-t border-surface-300">
+                      {/* Extra Lumpsum during Accumulation */}
+                      <div>
+                        <p className="text-[10px] font-bold text-teal-600 uppercase tracking-wider mb-2">Accumulation Phase</p>
+                        <div className="space-y-3">
+                          <NumberInput label="Extra Lumpsum Investment" value={extraLumpsum} onChange={setExtraLumpsum} prefix="₹" step={10000} min={0} max={5000000} hint="One-time additional investment into SIP corpus" />
+                          {extraLumpsum > 0 && (
+                            <NumberInput label="Lumpsum in Year" value={lumpsumYear} onChange={(v) => setLumpsumYear(Math.min(Math.round(v), limitedPayPeriod))} suffix={`of ${limitedPayPeriod}`} step={1} min={1} max={limitedPayPeriod} />
+                          )}
+                        </div>
+                      </div>
+                      {/* Extra Withdrawal during Distribution */}
+                      <div className="border-t border-surface-200 pt-4">
+                        <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-2">Distribution Phase — SWP / Withdrawal</p>
+                        <div className="space-y-3">
+                          <NumberInput label="Extra One-Time Withdrawal" value={extraWithdrawal} onChange={setExtraWithdrawal} prefix="₹" step={10000} min={0} max={5000000} hint="One-time withdrawal from corpus (on top of regular premiums)" />
+                          {extraWithdrawal > 0 && (
+                            <NumberInput
+                              label="Withdrawal in Year"
+                              value={withdrawalYear || (limitedPayPeriod + 1)}
+                              onChange={(v) => setWithdrawalYear(Math.min(Math.max(Math.round(v), limitedPayPeriod + 1), policyTerm))}
+                              suffix={investorAge !== null ? `(Age ${investorAge + (withdrawalYear || limitedPayPeriod + 1)})` : `of ${policyTerm}`}
+                              step={1}
+                              min={limitedPayPeriod + 1}
+                              max={policyTerm}
+                            />
+                          )}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>

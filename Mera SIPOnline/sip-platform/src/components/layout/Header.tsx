@@ -189,7 +189,7 @@ export function Header() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center justify-center flex-1 gap-0.5 xl:gap-1 mx-2">
             {NAVIGATION.map((item) => {
               const Icon = iconMap[item.label];
               const hasChildren = item.children && item.children.length > 0;
@@ -207,7 +207,7 @@ export function Header() {
                       handleNavClick(e, item.label, !!hasChildren);
                     }}
                     className={cn(
-                      'flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 relative z-10',
+                      'flex items-center gap-1 px-2.5 xl:px-3 py-2 text-[13px] xl:text-sm font-medium rounded-md transition-all duration-200 relative z-10 whitespace-nowrap',
                       isNavActive(pathname, item.href, !!hasChildren)
                         ? 'text-brand bg-brand-50/80 shadow-sm'
                         : 'text-slate-600 hover:text-primary-700 hover:bg-surface-200'
@@ -286,14 +286,14 @@ export function Header() {
           </nav>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 shrink-0">
             <a
               href="https://trustner.investwell.app/app/#/login"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden lg:inline-flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-full border-2 border-[#4A7CB5] text-[#4A7CB5] bg-white hover:bg-[#4A7CB5] hover:text-white transition-all duration-300 whitespace-nowrap"
+              className="hidden lg:inline-flex items-center gap-1.5 text-[13px] font-bold px-4 py-2 rounded-full border-2 border-[#4A7CB5] text-[#4A7CB5] bg-white hover:bg-[#4A7CB5] hover:text-white transition-all duration-300 whitespace-nowrap"
             >
-              <LogIn className="w-4 h-4" />
+              <LogIn className="w-3.5 h-3.5" />
               Sign In
             </a>
 
@@ -301,9 +301,9 @@ export function Header() {
               href="https://trustner.investwell.app/app/#/kycOnBoarding/mobileSignUp"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-2 text-sm font-bold px-5 py-2.5 rounded-full bg-[#4A7CB5] text-white hover:bg-[#3D6A9E] transition-all duration-300 shadow-sm hover:shadow-md whitespace-nowrap"
+              className="hidden sm:inline-flex items-center gap-1.5 text-[13px] font-bold px-4 py-2 rounded-full bg-[#4A7CB5] text-white hover:bg-[#3D6A9E] transition-all duration-300 shadow-sm hover:shadow-md whitespace-nowrap"
             >
-              <UserPlus className="w-4 h-4" />
+              <UserPlus className="w-3.5 h-3.5" />
               Sign Up
             </a>
 
