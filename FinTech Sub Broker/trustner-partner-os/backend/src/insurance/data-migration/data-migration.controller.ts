@@ -1,4 +1,5 @@
-import { Controller, Post, Get, Body, Request, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Post, Get, Body, Request, UseGuards, UsePipes, ValidationPipe, Res } from '@nestjs/common';
+import { Response } from 'express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { DataMigrationService } from './data-migration.service';
@@ -46,8 +47,11 @@ export class DataMigrationController {
   }
 
   @Post('sync-to-policies')
-  syncToInsurancePolicies(@Request() req: any) {
-    return this.migrationService.syncMISToInsurancePolicies(req.user.id);
+  async syncToInsurancePolicies(@Request() req: any, @Res() res: Response) {
+    // Disable request timeout for long-running sync (1653+ entries)
+    req.setTimeout(300000); // 5 minutes
+    const result = await this.migrationService.syncMISToInsurancePolicies(req.user.id);
+    return res.json(result);
   }
 
   /**

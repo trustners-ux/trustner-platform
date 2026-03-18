@@ -110,6 +110,9 @@ export class DataMigrationService {
     });
     const existingPolicies = new Set(existing.map((e) => e.policyNumber?.toUpperCase()));
 
+    // Get the current max MIS entry count for unique misCode generation
+    let misSeq = await this.prisma.mISEntry.count();
+
     for (const row of rows) {
       try {
         const policyNo = this.cleanStr(row.policyNo || row['Policy No'] || row.policyNumber);
@@ -141,13 +144,13 @@ export class DataMigrationService {
         } else if (insType.includes('BURGLARY') || insType.includes('MISC')) {
           lob = 'OTHER';
         } else if (insType.includes('PA') || insType.includes('PERSONAL ACCIDENT')) {
-          lob = 'PERSONAL_ACCIDENT';
+          lob = 'PA_PERSONAL_ACCIDENT';
         }
 
+        misSeq++;
         const now = new Date();
         const date = now.toISOString().slice(0, 10).replace(/-/g, '');
-        const rand = Math.floor(10000 + Math.random() * 90000);
-        const misCode = `MIS-VJ-${date}-${rand}`;
+        const misCode = `MIS-VJ-${date}-${String(misSeq).padStart(6, '0')}`;
 
         const entryDate = this.toDateOrNull(row.from || row.From || row['Policy Start Date']);
 
@@ -198,6 +201,7 @@ export class DataMigrationService {
     this.logger.log(`Importing ${rows.length} payout records as MIS entries...`);
 
     const results = { created: 0, skipped: 0, updated: 0, errors: [] as string[] };
+    let misSeq = await this.prisma.mISEntry.count();
 
     for (const row of rows) {
       try {
@@ -238,15 +242,15 @@ export class DataMigrationService {
         else if (insType.includes('FIRE')) lob = 'FIRE';
         else if (insType.includes('MARINE')) lob = 'MARINE';
 
+        misSeq++;
         const now = new Date();
         const date = now.toISOString().slice(0, 10).replace(/-/g, '');
-        const rand = Math.floor(10000 + Math.random() * 90000);
 
         const payoutPolicyType = this.cleanStr(row['Policy Type'] || row.policyType);
 
         await this.prisma.mISEntry.create({
           data: {
-            misCode: `MIS-VJ-${date}-${rand}`,
+            misCode: `MIS-VJ-${date}-${String(misSeq).padStart(6, '0')}`,
             customerName: customerName || 'Unknown',
             policyNumber: policyNo,
             insurerName: this.cleanStr(row['Company Name'] || row.companyName),
@@ -289,6 +293,7 @@ export class DataMigrationService {
     this.logger.log(`Importing ${rows.length} renewal due records...`);
 
     const results = { created: 0, skipped: 0, updated: 0, errors: [] as string[] };
+    let misSeq = await this.prisma.mISEntry.count();
 
     for (const row of rows) {
       try {
@@ -328,15 +333,15 @@ export class DataMigrationService {
         else if (insType.includes('HEALTH')) lob = 'HEALTH_INDIVIDUAL';
         else if (insType.includes('FIRE')) lob = 'FIRE';
 
+        misSeq++;
         const now = new Date();
         const date = now.toISOString().slice(0, 10).replace(/-/g, '');
-        const rand = Math.floor(10000 + Math.random() * 90000);
 
         const renewalPolicyType = this.cleanStr(row['Product Name'] || row.productName);
 
         await this.prisma.mISEntry.create({
           data: {
-            misCode: `MIS-VJ-${date}-${rand}`,
+            misCode: `MIS-VJ-${date}-${String(misSeq).padStart(6, '0')}`,
             customerName: insuredName || 'Unknown',
             customerPhone: this.cleanStr(row.ContNo || row.contNo),
             customerEmail: this.cleanStr(row.Email || row.email),
@@ -410,6 +415,9 @@ export class DataMigrationService {
 
     let seqCounter = await this.prisma.insurancePolicy.count();
 
+    // Deduplicate MIS entries by policyNumber (keep first occurrence)
+    const seenPolicyNumbers = new Set<string>();
+
     for (const mis of misEntries) {
       try {
         if (!mis.policyNumber) {
@@ -417,11 +425,14 @@ export class DataMigrationService {
           continue;
         }
 
-        // Skip if already synced
-        if (existingPolicySet.has(mis.policyNumber.toUpperCase())) {
+        const policyUpper = mis.policyNumber.toUpperCase();
+
+        // Skip if already synced to InsurancePolicy or already processed in this batch
+        if (existingPolicySet.has(policyUpper) || seenPolicyNumbers.has(policyUpper)) {
           results.skipped++;
           continue;
         }
+        seenPolicyNumbers.add(policyUpper);
 
         // Resolve LOB enum - ensure it's a valid InsuranceLOB value
         const lob = this.resolveValidLOB(mis.lob);
@@ -435,10 +446,10 @@ export class DataMigrationService {
         const productKey = `${companyId}_${productName}`;
         const productId = await this.getOrCreateProduct(productName, companyId, lob, productCache, productKey);
 
-        // Generate internal ref code
+        // Generate internal ref code with unique counter
         seqCounter++;
         const datePrefix = dayjs(mis.entryDate || mis.createdAt).format('YYYYMMDD');
-        const internalRefCode = `TIBPL-POL-${datePrefix}-${String(seqCounter).padStart(5, '0')}`;
+        const internalRefCode = `TIBPL-POL-${datePrefix}-${String(seqCounter).padStart(6, '0')}`;
 
         // Calculate premium fields
         const netPremium = mis.netPremium ? Number(mis.netPremium) : 0;
@@ -487,7 +498,7 @@ export class DataMigrationService {
           },
         });
 
-        existingPolicySet.add(mis.policyNumber.toUpperCase());
+        existingPolicySet.add(policyUpper);
         results.synced++;
       } catch (err) {
         results.errors.push(`MIS ${mis.misCode} (${mis.policyNumber}): ${err.message}`);
@@ -639,10 +650,10 @@ export class DataMigrationService {
       'HEALTH_INDIVIDUAL', 'HEALTH_FAMILY_FLOATER', 'HEALTH_GROUP',
       'HEALTH_CRITICAL_ILLNESS', 'HEALTH_TOP_UP',
       'LIFE_TERM', 'LIFE_ENDOWMENT', 'LIFE_ULIP', 'LIFE_WHOLE_LIFE',
-      'TRAVEL', 'HOME', 'FIRE', 'MARINE', 'LIABILITY', 'PA', 'OTHER',
+      'TRAVEL', 'HOME', 'FIRE', 'MARINE', 'LIABILITY', 'PA_PERSONAL_ACCIDENT', 'CYBER', 'OTHER',
     ];
     if (lob && validLOBs.includes(lob)) return lob;
-    if (lob === 'PERSONAL_ACCIDENT') return 'PA';
+    if (lob === 'PERSONAL_ACCIDENT' || lob === 'PA') return 'PA_PERSONAL_ACCIDENT';
     return 'OTHER';
   }
 
