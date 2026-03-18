@@ -1,6 +1,6 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { PolicyStatus } from '@prisma/client';
+import { PolicyStatus, InsuranceDepartment } from '@prisma/client';
 import dayjs from 'dayjs';
 
 @Injectable()
@@ -151,6 +151,8 @@ export class DataMigrationService {
 
         const entryDate = this.toDateOrNull(row.from || row.From || row['Policy Start Date']);
 
+        const policyTypeStr = this.cleanStr(row.policyType || row['Policy Type'] || row['Insurance Type']);
+
         await this.prisma.mISEntry.create({
           data: {
             misCode,
@@ -158,6 +160,7 @@ export class DataMigrationService {
             policyNumber: policyNo,
             insurerName: this.cleanStr(row.company || row.Company || row['Company Name']),
             lob,
+            department: this.resolveDepartment(lob, policyTypeStr || insType),
             sourceType: 'VJ_INFOSOFT_IMPORT',
             entryDate: entryDate || new Date(),
             entryMonth: this.getEntryMonth(entryDate),
@@ -173,7 +176,7 @@ export class DataMigrationService {
             grossPremium: this.toDecimalOrNull(row.finalPremium || row['Final Premium'] || row['Gross Premium'] || row.Total),
             vehicleRegNo: this.cleanStr(row.regNo || row['Reg No'] || row['Reg. No']),
             vehicleMake: this.cleanStr(row.make || row.Make),
-            policyType: this.cleanStr(row.policyType || row['Policy Type'] || row['Insurance Type']),
+            policyType: policyTypeStr,
             status: 'VERIFIED',
             makerId: userId,
           },
@@ -239,6 +242,8 @@ export class DataMigrationService {
         const date = now.toISOString().slice(0, 10).replace(/-/g, '');
         const rand = Math.floor(10000 + Math.random() * 90000);
 
+        const payoutPolicyType = this.cleanStr(row['Policy Type'] || row.policyType);
+
         await this.prisma.mISEntry.create({
           data: {
             misCode: `MIS-VJ-${date}-${rand}`,
@@ -246,6 +251,7 @@ export class DataMigrationService {
             policyNumber: policyNo,
             insurerName: this.cleanStr(row['Company Name'] || row.companyName),
             lob,
+            department: this.resolveDepartment(lob, payoutPolicyType || insType),
             sourceType: 'VJ_INFOSOFT_IMPORT',
             entryDate: this.toDateOrNull(row['Login Date'] || row.loginDate) || new Date(),
             entryMonth: this.getEntryMonth(this.toDateOrNull(row['Login Date'] || row.loginDate)),
@@ -261,7 +267,7 @@ export class DataMigrationService {
             commissionAmount: this.toDecimalOrNull(row['POS Payable Amount'] || row.posPayableAmount),
             vehicleRegNo: this.cleanStr(row['Reg No'] || row.regNo),
             vehicleMake: this.cleanStr(row.Make || row.make),
-            policyType: this.cleanStr(row['Policy Type'] || row.policyType),
+            policyType: payoutPolicyType,
             referredBy: this.cleanStr(row['RM Name'] || row.rmName),
             status: 'VERIFIED',
             makerId: userId,
@@ -326,6 +332,8 @@ export class DataMigrationService {
         const date = now.toISOString().slice(0, 10).replace(/-/g, '');
         const rand = Math.floor(10000 + Math.random() * 90000);
 
+        const renewalPolicyType = this.cleanStr(row['Product Name'] || row.productName);
+
         await this.prisma.mISEntry.create({
           data: {
             misCode: `MIS-VJ-${date}-${rand}`,
@@ -335,6 +343,7 @@ export class DataMigrationService {
             policyNumber: policyNo ? policyNo.replace(/^\*/, '') : null,
             insurerName: this.cleanStr(row['Ins. Co.'] || row.insCo),
             lob,
+            department: this.resolveDepartment(lob, renewalPolicyType || insType),
             sourceType: 'VJ_INFOSOFT_IMPORT',
             entryDate: this.toDateOrNull(row['Login Date'] || row.loginDate) || new Date(),
             entryMonth: this.getEntryMonth(this.toDateOrNull(row['Login Date'] || row.loginDate)),
@@ -350,7 +359,7 @@ export class DataMigrationService {
             grossPremium: this.toDecimalOrNull(row.Total || row.total),
             vehicleRegNo: this.cleanStr(row['Reg. No'] || row.regNo),
             vehicleMake: this.cleanStr(row.Make || row.make),
-            policyType: this.cleanStr(row['Product Name'] || row.productName),
+            policyType: renewalPolicyType,
             referredBy: this.cleanStr(row['RM Name'] || row.rmName),
             isRenewal: true,
             status: 'VERIFIED',
@@ -602,6 +611,25 @@ export class DataMigrationService {
     const months = ['January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December'];
     return `${months[d.getMonth()]} ${d.getFullYear()}`;
+  }
+
+  /** Determine InsuranceDepartment from LOB or insurance type string */
+  private resolveDepartment(lob: string, insType?: string): InsuranceDepartment {
+    const lobUpper = (lob || '').toUpperCase();
+    const typeUpper = (insType || '').toUpperCase();
+
+    // Life insurance
+    if (lobUpper.startsWith('LIFE_') || typeUpper.includes('LIFE') || typeUpper.includes('ULIP') || typeUpper.includes('ENDOWMENT') || typeUpper.includes('TERM')) {
+      return InsuranceDepartment.LIFE;
+    }
+
+    // Health insurance
+    if (lobUpper.startsWith('HEALTH_') || lobUpper === 'HEALTH' || typeUpper.includes('HEALTH') || typeUpper.includes('MEDICLAIM') || typeUpper.includes('MEDICAL')) {
+      return InsuranceDepartment.HEALTH;
+    }
+
+    // Everything else is General Insurance (motor, fire, marine, PA, travel, home, etc.)
+    return InsuranceDepartment.GENERAL;
   }
 
   /** Ensure LOB value is a valid Prisma InsuranceLOB enum */
