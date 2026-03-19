@@ -583,8 +583,8 @@ export default function LifelineCalculatorPage() {
                   </table>
                 </div>
 
-                {/* Mobile Card Layout */}
-                <div className="sm:hidden px-4 pb-4 space-y-3">
+                {/* Mobile Card Layout — hidden in PDF to avoid duplicate content */}
+                <div className="sm:hidden px-4 pb-4 space-y-3" data-pdf-hide>
                   {result.yearlyData.map((row) => {
                     const hasActivity = row.sipInflows > 0 || row.lumpsumInflows > 0 || row.swpOutflows > 0 || row.lumpsumOutflows > 0;
                     if (!hasActivity && row.interestEarned === 0) return null; // Skip blank years on mobile for brevity

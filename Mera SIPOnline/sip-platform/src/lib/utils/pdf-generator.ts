@@ -200,31 +200,46 @@ function scrapePlanSummary(element: HTMLElement): {
     });
 
     // Capture step-up / increment toggle info from this event card
-    const toggleSwitch = el.querySelector('[role="switch"][aria-checked="true"]');
-    if (toggleSwitch) {
-      const toggleSection = toggleSwitch.closest('.border-t');
-      if (toggleSection) {
-        // Find the active mode button (percentage vs amount) - works for both emerald (SIP) and amber (SWP)
-        const activeBtn = toggleSection.querySelector('button.bg-emerald-500, button.bg-amber-500');
-        const modeText = activeBtn?.textContent?.trim() || '';
+    // Method 1: Check for toggle switch with aria-checked="true"
+    const toggleSwitches = el.querySelectorAll('[role="switch"]');
+    toggleSwitches.forEach((sw) => {
+      if (sw.getAttribute('aria-checked') !== 'true') return;
 
-        // Find the value input for the step-up
-        const stepLabels = toggleSection.querySelectorAll('label');
-        stepLabels.forEach((sl) => {
-          const slText = sl.textContent?.trim() || '';
-          if (slText.toLowerCase().includes('increase') || slText.toLowerCase().includes('step')) {
-            const slWrapper = sl.closest('div');
-            const slInp = slWrapper?.querySelector('input[type="text"]') as HTMLInputElement | null;
-            if (slInp?.value) {
-              const slPrefix = slWrapper?.querySelector('.pl-3.pr-1')?.textContent || '';
-              const slSuffix = slWrapper?.querySelector('.pr-2.text-sm')?.textContent || '';
-              const modeLabel = modeText === '+%' ? 'Percentage' : modeText === '+₹' ? 'Amount' : 'Annual';
-              details.push(`Annual Step-Up (${modeLabel}): ${slPrefix}${slInp.value}${slSuffix ? ' ' + slSuffix : ''}`);
-            }
+      // Walk up to find the border-t section that contains the toggle
+      const toggleSection = sw.closest('div.border-t, [class*="border-t"]');
+      if (!toggleSection) return;
+
+      // Find the active mode button (percentage vs amount) - works for both emerald (SIP) and amber (SWP)
+      const activeBtn = toggleSection.querySelector('button.bg-emerald-500, button.bg-amber-500');
+      const modeText = activeBtn?.textContent?.trim() || '';
+
+      // Determine label from context: "Annual Step-Up" for SIP, "Annual Increment" for SWP
+      const toggleLabel = toggleSection.querySelector('label')?.textContent?.trim() || 'Annual Step-Up';
+
+      // Find the value input for the step-up
+      const stepLabels = toggleSection.querySelectorAll('label');
+      let captured = false;
+      stepLabels.forEach((sl) => {
+        if (captured) return;
+        const slText = sl.textContent?.trim() || '';
+        if (slText.toLowerCase().includes('increase') || slText.toLowerCase().includes('step') || slText.toLowerCase().includes('increment')) {
+          const slWrapper = sl.closest('div');
+          const slInp = slWrapper?.querySelector('input[type="text"]') as HTMLInputElement | null;
+          if (slInp?.value) {
+            const slPrefix = slWrapper?.querySelector('.pl-3.pr-1')?.textContent || '';
+            const slSuffix = slWrapper?.querySelector('.pr-2.text-sm')?.textContent || '';
+            const modeLabel = modeText === '+%' ? 'Percentage' : modeText === '+₹' ? 'Amount' : 'Annual';
+            details.push(`${toggleLabel} (${modeLabel}): ${slPrefix}${slInp.value}${slSuffix ? ' ' + slSuffix : ''}`);
+            captured = true;
           }
-        });
+        }
+      });
+
+      // Fallback: if no label found but toggle is on, just note it's enabled
+      if (!captured) {
+        details.push(`${toggleLabel}: Enabled`);
       }
-    }
+    });
 
     events.push({
       type: typeName,
