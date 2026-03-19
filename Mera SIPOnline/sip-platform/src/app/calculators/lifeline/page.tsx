@@ -36,7 +36,7 @@ const MAX_EVENTS = 15;
 const DEFAULT_EVENTS: LifelineEvent[] = [
   {
     id: 1, type: 'sip', startYear: 1, label: 'Monthly SIP',
-    monthlyAmount: 15000, duration: 15, stepUpEnabled: false, stepUpType: 'percentage', stepUpValue: 10,
+    monthlyAmount: 15000, duration: 15, stepUpEnabled: true, stepUpType: 'percentage', stepUpValue: 10,
   },
 ];
 
@@ -525,7 +525,7 @@ export default function LifelineCalculatorPage() {
               </div>
 
               {/* ── Year-by-Year Table ── */}
-              <div className="card-base overflow-hidden" data-pdf-hide>
+              <div className="card-base overflow-hidden">
                 <div className="p-5 sm:p-6 pb-0">
                   <h3 className="font-bold text-primary-700 mb-1">Year-by-Year Breakdown</h3>
                   <p className="text-sm text-slate-500 mb-4">Complete financial flow across your entire lifeline</p>
