@@ -30,6 +30,7 @@ export function canAccess(role: AdminRole, required: AdminRole): boolean {
 // Admin navigation items with role requirements
 export const ADMIN_NAV = [
   { label: 'Dashboard', href: '/admin', icon: 'LayoutDashboard', role: 'viewer' as AdminRole },
+  { label: 'Analytics', href: '/admin/analytics', icon: 'BarChart2', role: 'viewer' as AdminRole },
   { label: 'Fund Manager', href: '/admin/funds', icon: 'TrendingUp', role: 'editor' as AdminRole },
   { label: 'Blog', href: '/admin/blog', icon: 'FileText', role: 'editor' as AdminRole },
   { label: 'Market Pulse', href: '/admin/market', icon: 'BarChart3', role: 'editor' as AdminRole },
