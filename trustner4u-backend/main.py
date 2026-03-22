@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from routers import cas, reports, portfolio, auth, nav, review  # noqa: E402
+from routers import cas, reports, portfolio, auth, nav, review, mis_data  # noqa: E402
 from routers.employees import router as employees_router  # noqa: E402
 
 app = FastAPI(
@@ -41,6 +41,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(nav.router, prefix="/api", tags=["NAV"])
 app.include_router(review.router, prefix="/api/review", tags=["Review Workflow"])
 app.include_router(employees_router, prefix="/api/employees", tags=["employees"])
+app.include_router(mis_data.router)  # prefix /api/mis defined in router
 
 
 @app.get("/health")
