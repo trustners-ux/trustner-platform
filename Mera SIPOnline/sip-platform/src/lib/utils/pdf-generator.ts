@@ -156,7 +156,17 @@ function scrapePlanSummary(element: HTMLElement): {
     });
   }
 
-  // Step-up / increment toggle info is captured per-event below (not in baseSettings)
+  // Step-up / increment toggle info from data attributes (works for all calculators)
+  const stepUpEls = inputPanel.querySelectorAll('[data-pdf-stepup]');
+  stepUpEls.forEach((el) => {
+    const val = el.getAttribute('data-pdf-stepup');
+    if (val) baseSettings.push({ label: 'Step-Up', value: val });
+  });
+  const incrementEls = inputPanel.querySelectorAll('[data-pdf-increment]');
+  incrementEls.forEach((el) => {
+    const val = el.getAttribute('data-pdf-increment');
+    if (val) baseSettings.push({ label: 'Increment', value: val });
+  });
 
   // Extract events
   const events: { type: string; color: 'green' | 'amber'; details: string[] }[] = [];

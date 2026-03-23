@@ -1207,21 +1207,34 @@ export function calculateDailySIP(
   dailyAmount: number,
   annualReturn: number,
   years: number,
-  mode: 'calendar' | 'working'
+  mode: 'calendar' | 'working',
+  annualStepUp = 0,
+  stepUpType: 'percentage' | 'amount' = 'percentage'
 ): { totalInvested: number; estimatedReturns: number; totalValue: number; daysPerMonth: number; monthlyEquivalent: number } {
   const daysPerMonth = mode === 'calendar' ? 30 : 22;
   const daysPerYear = mode === 'calendar' ? 365 : 264;
   const dailyRate = annualReturn / 100 / daysPerYear;
-  const totalDays = daysPerYear * years;
 
   let corpus = 0;
-  for (let d = 0; d < totalDays; d++) {
-    corpus = (corpus + dailyAmount) * (1 + dailyRate);
+  let currentDaily = dailyAmount;
+  let totalInvested = 0;
+
+  for (let y = 1; y <= years; y++) {
+    if (y > 1 && annualStepUp > 0) {
+      if (stepUpType === 'percentage') {
+        currentDaily *= (1 + annualStepUp / 100);
+      } else {
+        currentDaily += annualStepUp / (daysPerMonth * 12);
+      }
+    }
+    for (let d = 0; d < daysPerYear; d++) {
+      corpus = (corpus + currentDaily) * (1 + dailyRate);
+    }
+    totalInvested += currentDaily * daysPerMonth * 12;
   }
 
-  const totalInvested = dailyAmount * daysPerMonth * 12 * years;
   return {
-    totalInvested,
+    totalInvested: Math.round(totalInvested),
     estimatedReturns: Math.round(corpus - totalInvested),
     totalValue: Math.round(corpus),
     daysPerMonth,
@@ -1233,25 +1246,38 @@ export function calculateDailySIPBreakdown(
   dailyAmount: number,
   annualReturn: number,
   years: number,
-  mode: 'calendar' | 'working'
-): { year: number; invested: number; value: number; returns: number; growthPercent: number }[] {
+  mode: 'calendar' | 'working',
+  annualStepUp = 0,
+  stepUpType: 'percentage' | 'amount' = 'percentage'
+): { year: number; invested: number; value: number; returns: number; growthPercent: number; dailyAmount: number }[] {
   const daysPerYear = mode === 'calendar' ? 365 : 264;
   const daysPerMonth = mode === 'calendar' ? 30 : 22;
   const dailyRate = annualReturn / 100 / daysPerYear;
-  const breakdown: { year: number; invested: number; value: number; returns: number; growthPercent: number }[] = [];
+  const breakdown: { year: number; invested: number; value: number; returns: number; growthPercent: number; dailyAmount: number }[] = [];
 
   let corpus = 0;
+  let currentDaily = dailyAmount;
+  let cumulativeInvested = 0;
+
   for (let y = 1; y <= years; y++) {
-    for (let d = 0; d < daysPerYear; d++) {
-      corpus = (corpus + dailyAmount) * (1 + dailyRate);
+    if (y > 1 && annualStepUp > 0) {
+      if (stepUpType === 'percentage') {
+        currentDaily *= (1 + annualStepUp / 100);
+      } else {
+        currentDaily += annualStepUp / (daysPerMonth * 12);
+      }
     }
-    const invested = dailyAmount * daysPerMonth * 12 * y;
+    for (let d = 0; d < daysPerYear; d++) {
+      corpus = (corpus + currentDaily) * (1 + dailyRate);
+    }
+    cumulativeInvested += currentDaily * daysPerMonth * 12;
     breakdown.push({
       year: y,
-      invested,
+      invested: Math.round(cumulativeInvested),
       value: Math.round(corpus),
-      returns: Math.round(corpus - invested),
-      growthPercent: invested > 0 ? ((corpus - invested) / invested) * 100 : 0,
+      returns: Math.round(corpus - cumulativeInvested),
+      growthPercent: cumulativeInvested > 0 ? ((corpus - cumulativeInvested) / cumulativeInvested) * 100 : 0,
+      dailyAmount: Math.round(currentDaily),
     });
   }
   return breakdown;
@@ -1360,27 +1386,37 @@ export function calculateDailySIPWithGrowth(
   annualReturn: number,
   sipYears: number,
   totalYears: number,
-  mode: 'calendar' | 'working'
-): { result: { totalInvested: number; estimatedReturns: number; totalValue: number; daysPerMonth: number; monthlyEquivalent: number }; breakdown: { year: number; invested: number; value: number; returns: number; growthPercent: number; phase: 'SIP' | 'Growth' }[] } {
+  mode: 'calendar' | 'working',
+  annualStepUp = 0,
+  stepUpType: 'percentage' | 'amount' = 'percentage'
+): { result: { totalInvested: number; estimatedReturns: number; totalValue: number; daysPerMonth: number; monthlyEquivalent: number }; breakdown: { year: number; invested: number; value: number; returns: number; growthPercent: number; phase: 'SIP' | 'Growth'; dailyAmount: number }[] } {
   const daysPerYear = mode === 'calendar' ? 365 : 264;
   const daysPerMonth = mode === 'calendar' ? 30 : 22;
   const dailyRate = annualReturn / 100 / daysPerYear;
-  const breakdown: { year: number; invested: number; value: number; returns: number; growthPercent: number; phase: 'SIP' | 'Growth' }[] = [];
+  const breakdown: { year: number; invested: number; value: number; returns: number; growthPercent: number; phase: 'SIP' | 'Growth'; dailyAmount: number }[] = [];
 
   let corpus = 0;
-  const totalInvested = dailyAmount * daysPerMonth * 12 * sipYears;
+  let currentDaily = dailyAmount;
+  let totalInvested = 0;
 
   // Phase 1: Active SIP
   for (let y = 1; y <= sipYears; y++) {
-    for (let d = 0; d < daysPerYear; d++) {
-      corpus = (corpus + dailyAmount) * (1 + dailyRate);
+    if (y > 1 && annualStepUp > 0) {
+      if (stepUpType === 'percentage') {
+        currentDaily *= (1 + annualStepUp / 100);
+      } else {
+        currentDaily += annualStepUp / (daysPerMonth * 12);
+      }
     }
-    const invested = dailyAmount * daysPerMonth * 12 * y;
+    for (let d = 0; d < daysPerYear; d++) {
+      corpus = (corpus + currentDaily) * (1 + dailyRate);
+    }
+    totalInvested += currentDaily * daysPerMonth * 12;
     breakdown.push({
-      year: y, invested, value: Math.round(corpus),
-      returns: Math.round(corpus - invested),
-      growthPercent: invested > 0 ? ((corpus - invested) / invested) * 100 : 0,
-      phase: 'SIP',
+      year: y, invested: Math.round(totalInvested), value: Math.round(corpus),
+      returns: Math.round(corpus - totalInvested),
+      growthPercent: totalInvested > 0 ? ((corpus - totalInvested) / totalInvested) * 100 : 0,
+      phase: 'SIP', dailyAmount: Math.round(currentDaily),
     });
   }
 
@@ -1390,16 +1426,16 @@ export function calculateDailySIPWithGrowth(
       corpus = corpus * (1 + dailyRate);
     }
     breakdown.push({
-      year: y, invested: totalInvested, value: Math.round(corpus),
+      year: y, invested: Math.round(totalInvested), value: Math.round(corpus),
       returns: Math.round(corpus - totalInvested),
       growthPercent: totalInvested > 0 ? ((corpus - totalInvested) / totalInvested) * 100 : 0,
-      phase: 'Growth',
+      phase: 'Growth', dailyAmount: 0,
     });
   }
 
   return {
     result: {
-      totalInvested,
+      totalInvested: Math.round(totalInvested),
       estimatedReturns: Math.round(corpus - totalInvested),
       totalValue: Math.round(corpus),
       daysPerMonth,
