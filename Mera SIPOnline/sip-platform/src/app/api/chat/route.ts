@@ -819,16 +819,33 @@ function getKeywordResponse(message: string): string | null {
   const contactResp = getContactResponse(message);
   if (contactResp) return contactResp;
 
-  // Search knowledge base — match by keywords
+  // Search knowledge base — require strong keyword match
+  // Score each entry: multi-word keyword matches score higher
+  const messageWords = lower.split(/\s+/).filter((w) => w.length > 2);
+  let bestMatch: { entry: ResponseEntry; score: number } | null = null;
+
   for (const entry of KNOWLEDGE_BASE) {
+    let score = 0;
     for (const keyword of entry.keywords) {
       if (lower.includes(keyword)) {
-        return entry.response;
+        // Multi-word keywords (like "what is sip") are strong signals
+        const wordCount = keyword.split(/\s+/).length;
+        score += wordCount >= 3 ? 5 : wordCount >= 2 ? 3 : 1;
       }
+    }
+    if (score > 0 && (!bestMatch || score > bestMatch.score)) {
+      bestMatch = { entry, score };
     }
   }
 
-  return null; // No keyword match — escalate to Tier 2
+  // Only return static response for strong matches (score >= 3)
+  // This means either: a multi-word keyword matched, or multiple single keywords matched
+  // Weaker matches (score 1-2) fall through to OpenAI with context injection
+  if (bestMatch && bestMatch.score >= 3) {
+    return bestMatch.entry.response;
+  }
+
+  return null; // No strong match — escalate to Tier 2 (OpenAI with context)
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -991,8 +1008,17 @@ async function getOpenAIResponse(
     if (!reply) return getFallbackResponse();
 
     return reply;
-  } catch (error) {
-    console.error('OpenAI API error:', error);
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    console.error('OpenAI API error:', errMsg);
+    // If it's a rate limit or quota error, indicate that
+    if (errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('insufficient')) {
+      return 'I\'m currently experiencing high demand. Let me share some helpful resources instead:\n\n' +
+        '• Explore our Learning Modules at /learn\n' +
+        '• Try our 30+ Calculators at /calculators\n' +
+        '• Browse the Glossary at /glossary\n\n' +
+        'For personalized help, reach us on WhatsApp: +91-6003903737';
+    }
     return getFallbackResponse();
   }
 }
