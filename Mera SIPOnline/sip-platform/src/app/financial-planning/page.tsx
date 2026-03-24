@@ -2,136 +2,70 @@
 
 import Link from 'next/link';
 import {
-  Activity,
-  Shield,
-  TrendingUp,
-  Wallet,
-  Target,
-  FileText,
-  Smartphone,
-  ClipboardList,
+  ArrowRight,
   Zap,
-  Mail,
+  FileText,
+  CheckCircle2,
   Award,
   Users,
   Lock,
   Cpu,
-  ArrowRight,
+  ClipboardList,
+  BarChart3,
+  Mail,
+  Target,
+  GraduationCap,
   Heart,
-  PiggyBank,
-  Scale,
-  CheckCircle2,
+  Home,
+  ShieldAlert,
+  Calculator,
+  Sparkles,
 } from 'lucide-react';
+import TierSelector from '@/components/financial-planning/TierSelector';
+import { STANDALONE_PLANS } from '@/lib/constants/tier-config';
 
 /* ═══════════════════════════════════════════════════════════════════════
-   DATA
+   ICON LOOKUP for standalone plans
    ═══════════════════════════════════════════════════════════════════════ */
 
-const REPORT_CARDS = [
-  {
-    icon: Activity,
-    title: 'Financial Health Score (0-900)',
-    description: 'A single number that captures your complete financial wellness across 5 pillars.',
-    color: 'bg-brand-50 text-brand-700',
-  },
-  {
-    icon: Wallet,
-    title: 'Net Worth Analysis',
-    description: 'Detailed breakdown of your assets vs liabilities with growth trajectory.',
-    color: 'bg-teal-50 text-teal-700',
-  },
-  {
-    icon: PiggyBank,
-    title: 'Retirement Gap Assessment',
-    description: 'How much you need vs how much you are on track for — with clear shortfall analysis.',
-    color: 'bg-amber-50 text-amber-700',
-  },
-  {
-    icon: Target,
-    title: 'Goal Funding Analysis',
-    description: 'Check if your savings rate supports your goals — education, home, travel, and more.',
-    color: 'bg-blue-50 text-blue-700',
-  },
-  {
-    icon: Shield,
-    title: 'Insurance Coverage Check',
-    description: 'Identify gaps in your life, health, and critical illness protection.',
-    color: 'bg-secondary-50 text-secondary-500',
-  },
-  {
-    icon: FileText,
-    title: 'Personalized Action Plan',
-    description: 'Prioritized steps you can take today to improve your financial health.',
-    color: 'bg-emerald-50 text-emerald-700',
-  },
-];
+const ICON_MAP: Record<string, typeof Target> = {
+  Target,
+  GraduationCap,
+  Heart,
+  Home,
+  ShieldAlert,
+  Calculator,
+};
 
-const STEPS = [
+/* ═══════════════════════════════════════════════════════════════════════
+   STATIC DATA
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const HOW_IT_WORKS = [
   {
     step: 1,
-    icon: Smartphone,
-    title: 'Verify Your Identity',
-    description: 'Quick OTP verification to keep your data secure.',
+    icon: Sparkles,
+    title: 'Choose Your Plan',
+    description: 'Pick from a quick health check, goal-based plan, or full financial blueprint.',
   },
   {
     step: 2,
     icon: ClipboardList,
-    title: 'Answer 50+ Questions',
-    description: 'Comprehensive questions covering income, expenses, goals, and assets.',
+    title: 'Fill the Questionnaire',
+    description: 'Answer questions about your income, expenses, goals, and assets.',
   },
   {
     step: 3,
-    icon: Zap,
-    title: 'Get Your Instant Score',
+    icon: BarChart3,
+    title: 'Get Your Score',
     description: 'AI-powered analysis delivers your Financial Health Score in seconds.',
   },
   {
     step: 4,
     icon: Mail,
-    title: 'Receive Detailed PDF Report',
-    description: 'CFP-grade report emailed to you — no data stored on our servers.',
+    title: 'Receive Your Report',
+    description: 'A detailed CFP-grade PDF report emailed to you instantly.',
   },
-];
-
-const PILLARS = [
-  {
-    icon: Wallet,
-    title: 'Cashflow Health',
-    description: 'Income stability, savings rate, and emergency fund adequacy.',
-    weight: '25%',
-  },
-  {
-    icon: Shield,
-    title: 'Protection',
-    description: 'Life, health, and critical illness insurance coverage gaps.',
-    weight: '20%',
-  },
-  {
-    icon: TrendingUp,
-    title: 'Investments',
-    description: 'Asset allocation, diversification, and growth trajectory.',
-    weight: '20%',
-  },
-  {
-    icon: Scale,
-    title: 'Debt Management',
-    description: 'Debt-to-income ratio, EMI burden, and repayment health.',
-    weight: '15%',
-  },
-  {
-    icon: Heart,
-    title: 'Retirement Readiness',
-    description: 'Corpus target vs current trajectory, pension, and withdrawal plan.',
-    weight: '20%',
-  },
-];
-
-const SCORE_BANDS = [
-  { label: 'Critical', range: '0-300', color: 'bg-red-500' },
-  { label: 'Needs Work', range: '301-500', color: 'bg-orange-500' },
-  { label: 'Fair', range: '501-650', color: 'bg-yellow-500' },
-  { label: 'Good', range: '651-780', color: 'bg-teal-500' },
-  { label: 'Excellent', range: '781-900', color: 'bg-emerald-500' },
 ];
 
 const TRUST_POINTS = [
@@ -165,21 +99,13 @@ function ScoreGauge() {
   const radius = 80;
   const stroke = 12;
   const center = 100;
-  const circumference = Math.PI * radius; // half-circle arc length
-
-  // 742 out of 900 = ~82.4%
+  const circumference = Math.PI * radius;
   const scorePercent = 742 / 900;
   const filledLength = circumference * scorePercent;
 
   return (
     <div className="relative flex items-center justify-center">
-      <svg
-        width="200"
-        height="120"
-        viewBox="0 0 200 120"
-        className="drop-shadow-lg"
-      >
-        {/* Background arc */}
+      <svg width="200" height="120" viewBox="0 0 200 120" className="drop-shadow-lg">
         <path
           d={`M ${center - radius} ${center} A ${radius} ${radius} 0 0 1 ${center + radius} ${center}`}
           fill="none"
@@ -187,7 +113,6 @@ function ScoreGauge() {
           strokeWidth={stroke}
           strokeLinecap="round"
         />
-        {/* Score arc */}
         <path
           d={`M ${center - radius} ${center} A ${radius} ${radius} 0 0 1 ${center + radius} ${center}`}
           fill="none"
@@ -204,7 +129,6 @@ function ScoreGauge() {
             <stop offset="100%" stopColor="#F0FDFA" />
           </linearGradient>
         </defs>
-        {/* Score text */}
         <text
           x={center}
           y={center - 16}
@@ -224,8 +148,6 @@ function ScoreGauge() {
           out of 900
         </text>
       </svg>
-
-      {/* Decorative glow ring */}
       <div className="absolute inset-0 rounded-full bg-brand-400/10 blur-2xl pointer-events-none" />
     </div>
   );
@@ -251,49 +173,50 @@ export default function FinancialPlanningPage() {
             <div className="text-center lg:text-left animate-fade-up">
               <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 text-xs font-medium mb-6 border border-white/10">
                 <Zap className="w-3.5 h-3.5 text-accent" />
-                <span>100% Free &middot; No Login Required</span>
+                <span>100% Free Health Check &middot; No Login Required</span>
               </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-display font-extrabold leading-tight mb-6">
-                Know Your{' '}
+                AI-Powered{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-300 via-brand-200 to-accent">
-                  Financial Health Score
+                  Financial Planning
                 </span>
               </h1>
 
-              <p className="text-lg lg:text-xl text-slate-300 leading-relaxed max-w-xl mb-8">
-                India&apos;s first AI-powered financial wellness assessment — absolutely free.
-                Get a CFP-grade analysis of your entire financial life in under 10 minutes.
+              <p className="text-base lg:text-lg text-slate-300 leading-relaxed max-w-xl mb-3 font-semibold">
+                India&apos;s First Free CFP-Grade Financial Health Assessment
+              </p>
+
+              <p className="text-base lg:text-lg text-slate-400 leading-relaxed max-w-xl mb-8">
+                Choose the depth of analysis that matches your needs — from a quick 5-minute health check
+                to a comprehensive financial blueprint rivaling what top CFPs charge &#8377;25,000+ for.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-6">
                 <Link
-                  href="/financial-planning/assess"
+                  href="/financial-planning/basic"
                   className="inline-flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-300 text-slate-900 px-8 py-4 rounded-lg font-bold text-base transition-all shadow-lg shadow-amber-400/25 pulse-ring-coral"
                 >
-                  Start Free Assessment
+                  Start Free Health Check
                   <ArrowRight className="w-5 h-5" />
                 </Link>
                 <a
-                  href="/sample-financial-health-report.pdf"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="#plans"
                   className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white px-6 py-4 rounded-lg font-semibold text-base transition-all border border-white/20"
                 >
                   <FileText className="w-5 h-5" />
-                  View Sample Report
+                  Explore All Plans
                 </a>
               </div>
 
               <p className="text-sm text-slate-400">
-                Takes 8-10 minutes &middot; No credit card needed &middot; Instant score
+                5-30 minutes &middot; No credit card needed &middot; Instant score
               </p>
             </div>
 
             {/* Right — Gauge */}
             <div className="flex justify-center lg:justify-end animate-fade-up" style={{ animationDelay: '0.2s' }}>
               <div className="relative">
-                {/* Glass card container */}
                 <div className="card-glass-dark p-8 sm:p-10 flex flex-col items-center gap-4">
                   <p className="text-xs text-white/50 uppercase tracking-widest font-semibold">
                     Sample Score
@@ -310,7 +233,7 @@ export default function FinancialPlanningPage() {
                         <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
                           <div
                             className="h-full rounded-full bg-gradient-to-r from-brand-400 to-brand-300"
-                            style={{ width: `${65 + Math.random() * 25}%` }}
+                            style={{ width: `${70 + Math.floor(Math.random() * 20)}%` }}
                           />
                         </div>
                       </div>
@@ -323,38 +246,73 @@ export default function FinancialPlanningPage() {
         </div>
       </section>
 
-      {/* ═══════════ 2. WHAT YOU GET ═══════════ */}
-      <section className="bg-mesh section-padding">
+      {/* ═══════════ 2. TIER SELECTOR ═══════════ */}
+      <section id="plans" className="bg-mesh section-padding">
         <div className="container-custom">
           <div className="text-center max-w-2xl mx-auto mb-14">
             <p className="text-sm font-semibold text-brand uppercase tracking-wider mb-3">
-              Your Comprehensive Report
+              Choose Your Plan
             </p>
             <h2 className="text-display-sm text-primary-700 mb-4">
-              What You Get — For Free
+              Financial Plans for Every Need
             </h2>
             <p className="text-lg text-slate-500 leading-relaxed">
-              A detailed financial wellness report that would cost Rs 5,000+ from a certified planner.
-              We believe everyone deserves access to quality financial analysis.
+              From a quick health check to a comprehensive financial blueprint — pick the depth that matches your goals.
+            </p>
+          </div>
+
+          <TierSelector />
+        </div>
+      </section>
+
+      {/* ═══════════ 3. STANDALONE PLANS ═══════════ */}
+      <section className="bg-white section-padding">
+        <div className="container-custom">
+          <div className="text-center max-w-2xl mx-auto mb-14">
+            <p className="text-sm font-semibold text-brand uppercase tracking-wider mb-3">
+              Goal-Specific Modules
+            </p>
+            <h2 className="text-display-sm text-primary-700 mb-4">
+              Plan for Specific Life Goals
+            </h2>
+            <p className="text-lg text-slate-500 leading-relaxed">
+              Need focused planning for one goal? Choose a standalone module and get a targeted action plan.
             </p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {REPORT_CARDS.map((card) => (
-              <div key={card.title} className="card-base p-6 hover-lift group">
-                <div className={`w-12 h-12 rounded-xl ${card.color} flex items-center justify-center mb-4 transition-transform group-hover:scale-110`}>
-                  <card.icon className="w-6 h-6" />
-                </div>
-                <h3 className="text-lg font-bold text-primary-700 mb-2">{card.title}</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">{card.description}</p>
-              </div>
-            ))}
+            {STANDALONE_PLANS.map((plan) => {
+              const IconComp = ICON_MAP[plan.iconName] || Target;
+              return (
+                <Link
+                  key={plan.slug}
+                  href={`/financial-planning/${plan.slug}`}
+                  className="card-base p-6 hover-lift group transition-all"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-brand-50 text-brand-700 flex items-center justify-center mb-4 transition-transform group-hover:scale-110">
+                    <IconComp className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-lg font-bold text-primary-700 mb-2 group-hover:text-brand-700 transition-colors">
+                    {plan.title}
+                  </h3>
+                  <p className="text-sm text-slate-500 leading-relaxed mb-4">
+                    {plan.description}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-slate-400 bg-surface-200 px-3 py-1 rounded-full">
+                      {plan.reportPages}-page report
+                    </span>
+                    <ArrowRight className="w-4 h-4 text-brand-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* ═══════════ 3. HOW IT WORKS ═══════════ */}
-      <section className="bg-white section-padding">
+      {/* ═══════════ 4. HOW IT WORKS ═══════════ */}
+      <section className="bg-mesh section-padding">
         <div className="container-custom">
           <div className="text-center max-w-2xl mx-auto mb-14">
             <p className="text-sm font-semibold text-brand uppercase tracking-wider mb-3">
@@ -364,14 +322,13 @@ export default function FinancialPlanningPage() {
               How It Works
             </h2>
             <p className="text-lg text-slate-500 leading-relaxed">
-              Four simple steps to your complete financial health report.
+              Four simple steps to your personalized financial plan.
             </p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {STEPS.map((item) => (
+            {HOW_IT_WORKS.map((item) => (
               <div key={item.step} className="relative text-center group">
-                {/* Connector line (hidden on last item and mobile) */}
                 {item.step < 4 && (
                   <div className="hidden lg:block absolute top-10 left-[60%] w-[calc(100%-20%)] h-px bg-gradient-to-r from-brand-200 to-transparent" />
                 )}
@@ -387,73 +344,6 @@ export default function FinancialPlanningPage() {
                 <p className="text-sm text-slate-500 leading-relaxed max-w-xs mx-auto">{item.description}</p>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ═══════════ 4. SCORE EXPLAINER ═══════════ */}
-      <section className="bg-mesh section-padding">
-        <div className="container-custom">
-          <div className="text-center max-w-2xl mx-auto mb-14">
-            <p className="text-sm font-semibold text-brand uppercase tracking-wider mb-3">
-              The 5 Pillars
-            </p>
-            <h2 className="text-display-sm text-primary-700 mb-4">
-              What Makes Up Your Score
-            </h2>
-            <p className="text-lg text-slate-500 leading-relaxed">
-              Your Financial Health Score is a weighted composite of 5 critical financial dimensions.
-            </p>
-          </div>
-
-          {/* Pillar cards */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-14">
-            {PILLARS.map((pillar) => (
-              <div key={pillar.title} className="card-base p-5 text-center hover-lift group">
-                <div className="w-12 h-12 rounded-xl bg-brand-50 text-brand-700 flex items-center justify-center mx-auto mb-3 transition-transform group-hover:scale-110">
-                  <pillar.icon className="w-6 h-6" />
-                </div>
-                <h3 className="text-sm font-bold text-primary-700 mb-1">{pillar.title}</h3>
-                <p className="text-xs text-slate-400 leading-relaxed mb-3">{pillar.description}</p>
-                <span className="inline-block bg-brand-50 text-brand-700 text-xs font-bold px-2.5 py-1 rounded-full">
-                  {pillar.weight}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* Score scale visualization */}
-          <div className="max-w-3xl mx-auto">
-            <div className="card-base p-6 sm:p-8">
-              <h3 className="text-lg font-bold text-primary-700 mb-6 text-center">
-                Score Grade Bands
-              </h3>
-
-              {/* Bar visualization */}
-              <div className="flex rounded-full overflow-hidden h-5 mb-4">
-                {SCORE_BANDS.map((band) => (
-                  <div key={band.label} className={`flex-1 ${band.color}`} />
-                ))}
-              </div>
-
-              {/* Labels */}
-              <div className="flex">
-                {SCORE_BANDS.map((band) => (
-                  <div key={band.label} className="flex-1 text-center">
-                    <p className="text-xs font-bold text-primary-700">{band.label}</p>
-                    <p className="text-[10px] text-slate-400">{band.range}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Example marker */}
-              <div className="relative mt-4">
-                <div className="flex items-center justify-center gap-2 text-sm text-brand-700 font-semibold">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>Score of 742 = &ldquo;Good&rdquo; financial health</span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -497,23 +387,23 @@ export default function FinancialPlanningPage() {
 
         <div className="container-custom relative z-10 text-center max-w-3xl mx-auto">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-tight mb-6">
-            Your financial health matters.
+            Start Your Free Financial
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-300 to-accent">
-              Start your free assessment now.
+              Health Check Today
             </span>
           </h2>
 
           <p className="text-lg text-slate-300 mb-10 max-w-xl mx-auto leading-relaxed">
             Join thousands of Indians who have taken control of their financial future.
-            It takes less than 10 minutes and costs absolutely nothing.
+            It takes just 5 minutes and costs absolutely nothing.
           </p>
 
           <Link
-            href="/financial-planning/assess"
+            href="/financial-planning/basic"
             className="inline-flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-300 text-slate-900 px-10 py-4 rounded-lg font-bold text-lg transition-all shadow-lg shadow-amber-400/25 pulse-ring"
           >
-            Get My Financial Health Score
+            Start Free Health Check
             <ArrowRight className="w-5 h-5" />
           </Link>
 

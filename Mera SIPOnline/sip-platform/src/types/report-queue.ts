@@ -17,9 +17,12 @@ export interface EditHistoryEntry {
   details?: string;
 }
 
+export type PlanTierLabel = 'basic' | 'standard' | 'comprehensive';
+
 export interface ReportQueueEntry {
   id: string; // "rpt-{timestamp}-{random6}"
   status: ReportStatus;
+  tier?: PlanTierLabel; // Financial planning tier (basic/standard/comprehensive)
 
   // User info (denormalized for table display)
   userName: string;

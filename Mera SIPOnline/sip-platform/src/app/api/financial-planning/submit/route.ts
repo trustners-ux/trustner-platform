@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 import type { FinancialPlanningData, FinancialHealthReport } from '@/types/financial-planning';
+import type { PlanTier } from '@/types/financial-planning-v2';
 import {
   calculateFinancialHealthScore,
   calculateNetWorth,
@@ -37,6 +38,7 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const data = body.data as FinancialPlanningData;
+    const tier: PlanTier = body.tier || 'standard'; // Default to standard for backward compatibility
 
     if (!data || !data.personalProfile?.fullName) {
       return NextResponse.json({ error: 'Invalid questionnaire data' }, { status: 400 });
@@ -46,7 +48,7 @@ export async function POST(request: Request) {
     const userEmail = data.personalProfile.email;
     const userPhone = data.personalProfile.phone || '';
 
-    console.log(`[FP Submit] Starting for ${userName} (${userEmail})`);
+    console.log(`[FP Submit] Starting for ${userName} (${userEmail}) — Tier: ${tier}`);
 
     // Step 1: Run all calculations
     const score = calculateFinancialHealthScore(data);
@@ -132,6 +134,7 @@ export async function POST(request: Request) {
           },
           topActions: report.actionPlan.slice(0, 5).map(a => `[${a.impact}] ${a.action}`),
           claudeNarrative: narrative,
+          tier,
         },
         pdfBuffer || Buffer.from('PDF generation pending'),
         data

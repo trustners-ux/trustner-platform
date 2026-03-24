@@ -29,6 +29,7 @@ export async function createReportQueueEntry(
     pillarScores: ReportQueueEntry['pillarScores'];
     topActions: string[];
     claudeNarrative: string;
+    tier?: ReportQueueEntry['tier'];
   },
   pdfBuffer: Buffer,
   planningData: FinancialPlanningData
@@ -57,6 +58,7 @@ export async function createReportQueueEntry(
   const entry: ReportQueueEntry = {
     id,
     status: 'pending_review',
+    tier: params.tier || 'standard',
     userName: params.userName,
     userEmail: params.userEmail,
     userPhone: params.userPhone,
