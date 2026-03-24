@@ -7,7 +7,7 @@ import {
   Clock, Eye, Mail, MapPin,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
-import type { ReportQueueEntry, ReportStatus } from '@/types/report-queue';
+import type { ReportQueueEntry, ReportStatus, PlanTierLabel } from '@/types/report-queue';
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -21,6 +21,14 @@ const STATUS_CONFIG: Record<ReportStatus, { label: string; bg: string; text: str
 };
 
 const ALL_STATUSES: (ReportStatus | 'all')[] = ['all', 'pending_review', 'approved', 'sent', 'rejected'];
+
+const ALL_TIERS: (PlanTierLabel | 'all')[] = ['all', 'basic', 'standard', 'comprehensive'];
+
+const TIER_BADGE_CONFIG: Record<PlanTierLabel, { bg: string; text: string }> = {
+  basic: { bg: 'bg-emerald-100', text: 'text-emerald-700' },
+  standard: { bg: 'bg-teal-100', text: 'text-teal-700' },
+  comprehensive: { bg: 'bg-amber-100', text: 'text-amber-700' },
+};
 
 const PAGE_SIZE = 15;
 
@@ -71,6 +79,7 @@ export function ReportQueueTable({
   const [reports, setReports] = useState<ReportQueueEntry[]>(initialReports);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<ReportStatus | 'all'>('all');
+  const [tierFilter, setTierFilter] = useState<PlanTierLabel | 'all'>('all');
   const [page, setPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>('createdAt');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
@@ -84,6 +93,7 @@ export function ReportQueueTable({
   const filtered = reports
     .filter((r) => {
       if (statusFilter !== 'all' && r.status !== statusFilter) return false;
+      if (tierFilter !== 'all' && r.tier !== tierFilter) return false;
       if (search) {
         const q = search.toLowerCase();
         if (
@@ -110,7 +120,7 @@ export function ReportQueueTable({
   const paged = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   // Reset page when filters change
-  useEffect(() => { setPage(1); }, [search, statusFilter]);
+  useEffect(() => { setPage(1); }, [search, statusFilter, tierFilter]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -157,6 +167,34 @@ export function ReportQueueTable({
             >
               {s === 'all' ? 'All' : STATUS_CONFIG[s as ReportStatus].label}
               <span className={cn('ml-1.5', isActive ? 'text-white/70' : 'text-slate-400')}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Tier filter pills */}
+      <div className="flex flex-wrap gap-2">
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider self-center mr-1">Tier:</span>
+        {ALL_TIERS.map((t) => {
+          const isActive = tierFilter === t;
+          const count = t === 'all' ? reports.length : reports.filter((r) => r.tier === t).length;
+          return (
+            <button
+              key={t}
+              onClick={() => setTierFilter(t)}
+              className={cn(
+                'px-3 py-1.5 rounded-full text-xs font-semibold transition-all',
+                isActive
+                  ? t === 'all'
+                    ? 'bg-primary-700 text-white shadow-sm'
+                    : cn(TIER_BADGE_CONFIG[t as PlanTierLabel].bg, TIER_BADGE_CONFIG[t as PlanTierLabel].text, 'ring-2 ring-offset-1 ring-current')
+                  : 'bg-surface-100 text-slate-600 hover:bg-surface-200'
+              )}
+            >
+              {t === 'all' ? 'All Tiers' : t.charAt(0).toUpperCase() + t.slice(1)}
+              <span className={cn('ml-1.5', isActive ? (t === 'all' ? 'text-white/70' : 'opacity-70') : 'text-slate-400')}>
                 {count}
               </span>
             </button>
@@ -223,7 +261,18 @@ export function ReportQueueTable({
                       onClick={() => router.push(`/admin/reports/${report.id}`)}
                     >
                       <td className="px-4 py-3">
-                        <div className="font-semibold text-primary-700 whitespace-nowrap">{report.userName}</div>
+                        <div className="font-semibold text-primary-700 whitespace-nowrap">
+                          {report.userName}
+                          {report.tier && (
+                            <span className={cn(
+                              'ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase',
+                              TIER_BADGE_CONFIG[report.tier].bg,
+                              TIER_BADGE_CONFIG[report.tier].text
+                            )}>
+                              {report.tier}
+                            </span>
+                          )}
+                        </div>
                         <div className="text-xs text-slate-400 flex items-center gap-1">
                           <Mail className="w-3 h-3" />
                           {report.userEmail}
