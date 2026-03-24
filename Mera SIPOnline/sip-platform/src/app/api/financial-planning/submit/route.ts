@@ -12,6 +12,8 @@ import {
 import { addLead } from '@/lib/admin/leads-store';
 import { generateClaudeNarrative } from '@/lib/utils/claude-narrative';
 import { generateFinancialReport } from '@/lib/utils/financial-planning-pdf';
+import { calculate5YearCashflow } from '@/lib/utils/cashflow-projection';
+import { calculateAllocationMatrix } from '@/lib/utils/allocation-matrix';
 import { createReportQueueEntry } from '@/lib/admin/report-queue-store';
 import { buildAdminReviewNotificationHTML } from '@/lib/utils/report-email-builders';
 import { Resend } from 'resend';
@@ -98,9 +100,24 @@ export async function POST(request: Request) {
 
     const report: FinancialHealthReport = { ...baseReport, claudeNarrative: narrative };
 
+    // Step 3b: Comprehensive-only calculations
+    let cashflowProjection;
+    let allocationMatrix;
+    if (tier === 'comprehensive') {
+      try {
+        cashflowProjection = calculate5YearCashflow(data, body.comprehensiveProfile);
+        allocationMatrix = calculateAllocationMatrix(data, baseReport.goalGaps);
+        console.log(`[FP Submit] Comprehensive calculations complete (5Y cashflow + allocation matrix)`);
+      } catch (compErr) {
+        console.error('[FP Submit] Comprehensive calculations failed:', compErr);
+      }
+    }
+
     // Step 4: Generate PDF
     let pdfBuffer: Buffer | null = null;
     try {
+      // Pass tier + comprehensive data if the function supports it (Phase 3 update)
+      // For now, the base 3-arg signature still works for basic/standard
       pdfBuffer = generateFinancialReport(report, data, userName);
       console.log(`[FP Submit] PDF generated (${(pdfBuffer.length / 1024).toFixed(0)}KB)`);
     } catch (pdfErr) {
