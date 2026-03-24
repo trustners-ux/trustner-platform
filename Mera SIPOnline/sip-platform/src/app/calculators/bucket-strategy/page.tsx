@@ -6,14 +6,14 @@ import {
   ArrowLeft, IndianRupee, Calendar, TrendingUp, Wallet,
   Lightbulb, Droplets, PiggyBank, BarChart3, ArrowRightLeft,
   ChevronDown, ChevronUp, Settings2, Target, Clock, Banknote,
-  AlertTriangle, CheckCircle2, Info, RefreshCcw, ArrowRight,
+  AlertTriangle, CheckCircle2, Info, RefreshCcw, ArrowRight, Trash2,
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, BarChart, Bar, ComposedChart, Line, ReferenceLine,
 } from 'recharts';
 import { calculateBucketStrategy } from '@/lib/utils/bucket-strategy-calc';
-import type { BucketStrategyInputs, BucketInsight } from '@/lib/utils/bucket-strategy-calc';
+import type { BucketStrategyInputs, BucketInsight, RetirementIncomeSource } from '@/lib/utils/bucket-strategy-calc';
 import { formatINR } from '@/lib/utils/formatters';
 import { cn } from '@/lib/utils/cn';
 import { DISCLAIMER } from '@/lib/constants/company';
@@ -51,8 +51,8 @@ export default function BucketStrategyPage() {
   // Corpus inputs
   const [hasLumpsum, setHasLumpsum] = useState(true);
   const [lumpsumCorpus, setLumpsumCorpus] = useState(20000000);
-  const [hasMonthlyIncome, setHasMonthlyIncome] = useState(false);
-  const [monthlyPension, setMonthlyPension] = useState(25000);
+  // Income sources
+  const [incomeSources, setIncomeSources] = useState<RetirementIncomeSource[]>([]);
 
   // Pre-retirement
   const [existingSavings, setExistingSavings] = useState(0);
@@ -64,6 +64,36 @@ export default function BucketStrategyPage() {
 
   const yearsToRetirement = Math.max(retirementAge - currentAge, 0);
   const showPreRetirement = yearsToRetirement > 0 || (!hasLumpsum || lumpsumCorpus === 0);
+
+  // ── Income Source Helpers ──
+  const addIncomeSource = (type: RetirementIncomeSource['type']) => {
+    const defaults: Record<RetirementIncomeSource['type'], Partial<RetirementIncomeSource>> = {
+      pension: { label: 'Employer Pension', monthlyAmount: 25000, growthRate: 0 },
+      rental: { label: 'Rental Income', monthlyAmount: 20000, growthRate: 5 },
+      scss: { label: 'SCSS Interest', monthlyAmount: 10000, growthRate: 0, endYear: 5 },
+      nps: { label: 'NPS Annuity', monthlyAmount: 15000, growthRate: 0 },
+      swp: { label: 'SWP from MF', monthlyAmount: 30000, growthRate: 0 },
+      epf_pension: { label: 'EPF Pension (EPS-95)', monthlyAmount: 7500, growthRate: 0 },
+      other: { label: 'Other Income', monthlyAmount: 10000, growthRate: 0 },
+    };
+    const d = defaults[type];
+    setIncomeSources(prev => [...prev, {
+      type,
+      label: d.label || type,
+      monthlyAmount: d.monthlyAmount || 10000,
+      startYear: 0,
+      growthRate: d.growthRate ?? 0,
+      ...d,
+    }]);
+  };
+
+  const updateIncomeSource = (index: number, updates: Partial<RetirementIncomeSource>) => {
+    setIncomeSources(prev => prev.map((s, i) => i === index ? { ...s, ...updates } : s));
+  };
+
+  const removeIncomeSource = (index: number) => {
+    setIncomeSources(prev => prev.filter((_, i) => i !== index));
+  };
 
   // ── Calculation ──
   const result = useMemo(() => {
@@ -78,7 +108,8 @@ export default function BucketStrategyPage() {
       assetAllocationReturn: customReturns ? assetAllocationReturn : 10,
       equityReturn: customReturns ? equityReturn : 12,
       lumpsumCorpus: hasLumpsum ? lumpsumCorpus : 0,
-      additionalMonthlyIncome: hasMonthlyIncome ? monthlyPension : 0,
+      additionalMonthlyIncome: incomeSources.reduce((sum, s) => sum + s.monthlyAmount, 0),
+      incomeSources,
       existingInvestments: existingSavings,
       preRetirementReturn,
     };
@@ -86,7 +117,7 @@ export default function BucketStrategyPage() {
   }, [
     currentAge, retirementAge, lifeExpectancy, monthlyExpenses, inflationRate,
     customReturns, liquidReturn, debtReturn, assetAllocationReturn, equityReturn,
-    hasLumpsum, lumpsumCorpus, hasMonthlyIncome, monthlyPension,
+    hasLumpsum, lumpsumCorpus, incomeSources,
     existingSavings, preRetirementReturn,
   ]);
 
@@ -94,6 +125,13 @@ export default function BucketStrategyPage() {
   const depletionChartData = result.depletionSchedule.map((row) => ({
     age: row.age,
     corpus: row.yearEndCorpus,
+    bucket0: row.bucket0Balance || 0,
+    bucket1: row.bucket1Balance || 0,
+    bucket2: row.bucket2Balance || 0,
+    bucket3: row.bucket3Balance || 0,
+    bucket4: row.bucket4Balance || 0,
+    annualWithdrawal: row.annualWithdrawal,
+    total: row.yearEndCorpus,
   }));
 
   const pieData = result.buckets
@@ -253,27 +291,79 @@ export default function BucketStrategyPage() {
                   )}
                 </div>
 
-                {/* Monthly Income Toggle */}
-                <div className={cn('rounded-xl border p-3', hasMonthlyIncome ? 'border-teal-200 bg-teal-50/50' : 'border-surface-300 bg-surface-50')}>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-medium text-slate-600">I have additional monthly income</label>
+              </div>
+
+              {/* Card E: Retirement Income Sources */}
+              <div className="card-base p-4 sm:p-5 border-t-4 border-teal-500 mb-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Wallet className="w-5 h-5 text-teal-600" />
+                  <h3 className="text-sm font-bold text-primary-700">Retirement Income Sources</h3>
+                </div>
+
+                <p className="text-xs text-slate-500 mb-3">
+                  Add any income you&apos;ll receive during retirement — pension, rental, SCSS, NPS, SWP, etc.
+                  These reduce how much you need to withdraw from your buckets.
+                </p>
+
+                {/* Add Source Buttons */}
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {([
+                    { type: 'pension', label: 'Pension', icon: '\u{1F3DB}\uFE0F' },
+                    { type: 'rental', label: 'Rental', icon: '\u{1F3E0}' },
+                    { type: 'scss', label: 'SCSS', icon: '\u{1F3E6}' },
+                    { type: 'nps', label: 'NPS', icon: '\u{1F4CA}' },
+                    { type: 'swp', label: 'SWP', icon: '\u{1F4B0}' },
+                    { type: 'epf_pension', label: 'EPF Pension', icon: '\u{1F477}' },
+                    { type: 'other', label: 'Other', icon: '\u{2795}' },
+                  ] as const).map(({ type, label, icon }) => (
                     <button
-                      role="switch"
-                      aria-checked={hasMonthlyIncome}
-                      onClick={() => setHasMonthlyIncome(!hasMonthlyIncome)}
-                      className={cn('relative inline-flex h-6 w-11 items-center rounded-full transition-colors', hasMonthlyIncome ? 'bg-teal-500' : 'bg-slate-300')}
+                      key={type}
+                      onClick={() => addIncomeSource(type)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-semibold rounded-lg border border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100 transition-colors"
                       data-pdf-hide
                     >
-                      <span className={cn('inline-block h-4 w-4 rounded-full bg-white transition-transform shadow-sm', hasMonthlyIncome ? 'translate-x-6' : 'translate-x-1')} />
+                      <span>{icon}</span> {label}
                     </button>
-                  </div>
-                  <div className="text-[10px] text-slate-500">{hasMonthlyIncome ? 'Pension/rental income reduces withdrawal need' : 'No additional income in retirement'}</div>
-                  {hasMonthlyIncome && (
-                    <div className="mt-3 animate-in">
-                      <NumberInput label="Monthly Pension/Rental" value={monthlyPension} onChange={setMonthlyPension} prefix="₹" step={5000} min={0} max={500000} />
-                    </div>
-                  )}
+                  ))}
                 </div>
+
+                {/* Income Source Cards */}
+                {incomeSources.map((source, idx) => (
+                  <div key={idx} className="rounded-lg border border-slate-200 p-3 mb-2 bg-white">
+                    <div className="flex items-center justify-between mb-2">
+                      <input
+                        type="text"
+                        value={source.label}
+                        onChange={(e) => updateIncomeSource(idx, { label: e.target.value })}
+                        className="text-xs font-semibold text-slate-700 bg-transparent border-none outline-none flex-1"
+                      />
+                      <button onClick={() => removeIncomeSource(idx)} className="text-slate-400 hover:text-red-500 p-1" data-pdf-hide>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <NumberInput label="Monthly Amount" value={source.monthlyAmount} onChange={(v) => updateIncomeSource(idx, { monthlyAmount: v })} prefix="\u20B9" step={1000} min={0} max={500000} />
+                      {source.type === 'rental' && (
+                        <NumberInput label="Annual Growth" value={source.growthRate || 0} onChange={(v) => updateIncomeSource(idx, { growthRate: v })} suffix="%" step={1} min={0} max={15} />
+                      )}
+                      {source.type === 'scss' && (
+                        <NumberInput label="Term (Years)" value={source.endYear || 5} onChange={(v) => updateIncomeSource(idx, { endYear: v })} suffix="Yrs" step={1} min={1} max={10} />
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Total Income Summary */}
+                {incomeSources.length > 0 && (
+                  <div className="mt-3 p-3 rounded-lg bg-teal-50 border border-teal-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-teal-700">Total Monthly Income (Year 1)</span>
+                      <span className="text-sm font-bold text-teal-700">
+                        {formatINR(incomeSources.reduce((sum, s) => sum + s.monthlyAmount, 0))}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Card D: Pre-Retirement Planning */}
@@ -330,7 +420,7 @@ export default function BucketStrategyPage() {
               </div>
 
               {/* ── Row 1: Key Metrics ── */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
                 <div className="card-base p-4 border-t-4 border-emerald-500">
                   <div className="text-[10px] text-slate-400 uppercase tracking-wider">Total Corpus Needed</div>
                   <div className="text-lg font-extrabold text-emerald-700 mt-1">{formatINR(result.totalCorpusNeeded)}</div>
@@ -346,6 +436,11 @@ export default function BucketStrategyPage() {
                 <div className="card-base p-4 border-t-4 border-amber-500">
                   <div className="text-[10px] text-slate-400 uppercase tracking-wider">Monthly at Retirement</div>
                   <div className="text-lg font-extrabold text-amber-700 mt-1">{formatINR(result.monthlyExpenseAtRetirement)}</div>
+                </div>
+                <div className="card-base p-4 border-t-4 border-teal-500">
+                  <div className="text-[10px] text-slate-400 uppercase tracking-wider">Income Covers</div>
+                  <div className="text-lg font-extrabold text-teal-700 mt-1">{result.incomeCoversPercent?.toFixed(0) || 0}%</div>
+                  <div className="text-xs text-slate-500 mt-1">of Year 1 expenses</div>
                 </div>
                 <div className="card-base p-4 border-t-4 border-blue-500">
                   <div className="text-[10px] text-slate-400 uppercase tracking-wider">Retirement Duration</div>
@@ -542,15 +637,9 @@ export default function BucketStrategyPage() {
                   <h3 className="text-sm font-bold text-primary-700 mb-4 flex items-center gap-2">
                     <TrendingUp className="w-4 h-4 text-brand-600" /> Corpus Depletion Over Time
                   </h3>
-                  <div className="h-[320px]">
+                  <div className="h-[360px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={depletionChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="corpusGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#0F766E" stopOpacity={0.3} />
-                            <stop offset="95%" stopColor="#0F766E" stopOpacity={0.02} />
-                          </linearGradient>
-                        </defs>
+                      <ComposedChart data={depletionChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
                         <XAxis
                           dataKey="age"
@@ -566,18 +655,47 @@ export default function BucketStrategyPage() {
                             return `${(v / 1000).toFixed(0)}K`;
                           }}
                         />
-                        <Tooltip content={<CustomTooltip />} />
-                        <ReferenceLine y={0} stroke="#DC2626" strokeDasharray="4 4" label={{ value: '₹0', fill: '#DC2626', fontSize: 10 }} />
-                        <Area
-                          type="monotone"
-                          dataKey="corpus"
-                          stroke="#0F766E"
-                          strokeWidth={2.5}
-                          fill="url(#corpusGrad)"
-                          name="Remaining Corpus"
-                        />
-                      </AreaChart>
+                        <Tooltip formatter={(v) => formatINR(v as number)} contentStyle={{ borderRadius: 12, border: '1px solid #E2E8F0', fontSize: 12 }} />
+                        <Area type="monotone" dataKey="bucket4" stackId="1" stroke="#10B981" fill="#10B981" fillOpacity={0.6} name="Bucket 4 (Equity)" />
+                        <Area type="monotone" dataKey="bucket3" stackId="1" stroke="#F59E0B" fill="#F59E0B" fillOpacity={0.6} name="Bucket 3 (Growth)" />
+                        <Area type="monotone" dataKey="bucket2" stackId="1" stroke="#8B5CF6" fill="#8B5CF6" fillOpacity={0.6} name="Bucket 2 (Balanced)" />
+                        <Area type="monotone" dataKey="bucket1" stackId="1" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.6} name="Bucket 1 (Liquid)" />
+                        <Area type="monotone" dataKey="bucket0" stackId="1" stroke="#EF4444" fill="#EF4444" fillOpacity={0.6} name="Bucket 0 (Emergency)" />
+                        <Line type="monotone" dataKey="annualWithdrawal" stroke="#1A1A2E" strokeWidth={2} strokeDasharray="5 5" dot={false} name="Annual Withdrawal" />
+                        <ReferenceLine y={0} stroke="#666" />
+                      </ComposedChart>
                     </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Bucket Rebalancing Timeline ── */}
+              {result.rebalancingEvents && result.rebalancingEvents.length > 0 && (
+                <div className="card-base p-4 sm:p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <RefreshCcw className="w-5 h-5 text-brand" />
+                    <h3 className="text-base font-bold text-primary-700">Bucket Rebalancing Timeline</h3>
+                  </div>
+                  <p className="text-xs text-slate-500 mb-3">
+                    When a bucket&apos;s balance falls below 3 months&apos; expenses, it gets refilled from the next higher bucket.
+                    This is the cascade that keeps your income flowing.
+                  </p>
+                  <div className="space-y-2">
+                    {result.rebalancingEvents.map((event, idx) => (
+                      <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg bg-surface-100 border border-surface-200">
+                        <div className={cn('w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold', BUCKET_STYLES[event.fromBucket]?.badge)}>
+                          {event.fromBucket}
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-slate-400" />
+                        <div className={cn('w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold', BUCKET_STYLES[event.toBucket]?.badge)}>
+                          {event.toBucket}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-slate-700">Year {event.year} — {formatINR(event.amount)} transferred</p>
+                          <p className="text-[10px] text-slate-500">{event.trigger}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -597,38 +715,36 @@ export default function BucketStrategyPage() {
 
                 {showYearlyDetails && (
                   <div className="mt-4 overflow-x-auto animate-in">
-                    <table className="w-full text-xs min-w-[640px]">
+                    <table className="w-full text-xs min-w-[960px]">
                       <thead>
                         <tr className="border-b-2 border-surface-300">
-                          <th className="text-left py-2 text-slate-500 font-medium">Year</th>
+                          <th className="text-left py-2 text-slate-500 font-medium">Yr</th>
                           <th className="text-left py-2 text-slate-500 font-medium">Age</th>
-                          <th className="text-left py-2 text-slate-500 font-medium">Active Bucket</th>
-                          <th className="text-right py-2 text-slate-500 font-medium">Start Corpus</th>
                           <th className="text-right py-2 text-slate-500 font-medium">Withdrawal</th>
-                          <th className="text-right py-2 text-slate-500 font-medium">Return</th>
+                          <th className="text-right py-2 text-red-400 font-medium">B0</th>
+                          <th className="text-right py-2 text-blue-400 font-medium">B1</th>
+                          <th className="text-right py-2 text-purple-400 font-medium">B2</th>
+                          <th className="text-right py-2 text-amber-400 font-medium">B3</th>
+                          <th className="text-right py-2 text-emerald-400 font-medium">B4</th>
                           <th className="text-right py-2 text-slate-500 font-medium">End Corpus</th>
+                          <th className="text-left py-2 text-slate-500 font-medium">Refill Events</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {result.depletionSchedule.map((row, i) => {
-                          const bucketIdx = row.activeBucket;
-                          const style = bucketIdx >= 0 && bucketIdx < 5 ? BUCKET_STYLES[bucketIdx] : BUCKET_STYLES[4];
-                          return (
-                            <tr key={i} className="border-b border-surface-200/60 hover:bg-surface-50">
-                              <td className="py-2 font-medium text-primary-700">{row.year}</td>
-                              <td className="py-2 text-slate-600">{row.age}</td>
-                              <td className="py-2">
-                                <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold', style.bg, style.text)}>
-                                  Bucket {row.activeBucket}
-                                </span>
-                              </td>
-                              <td className="py-2 text-right text-slate-600">{formatINR(row.yearStartCorpus)}</td>
-                              <td className="py-2 text-right text-red-600 font-medium">{formatINR(row.annualWithdrawal)}</td>
-                              <td className="py-2 text-right text-emerald-600">{formatINR(row.annualReturn)}</td>
-                              <td className="py-2 text-right font-bold text-primary-700">{formatINR(row.yearEndCorpus)}</td>
-                            </tr>
-                          );
-                        })}
+                        {result.depletionSchedule.map((row, i) => (
+                          <tr key={i} className="border-b border-surface-200/60 hover:bg-surface-50">
+                            <td className="py-2 font-medium text-primary-700">{row.year}</td>
+                            <td className="py-2 text-slate-600">{row.age}</td>
+                            <td className="py-2 text-right text-red-600 font-medium">{formatINR(row.annualWithdrawal)}</td>
+                            <td className="py-2 text-right text-red-600">{formatINR(row.bucket0Balance || 0)}</td>
+                            <td className="py-2 text-right text-blue-600">{formatINR(row.bucket1Balance || 0)}</td>
+                            <td className="py-2 text-right text-purple-600">{formatINR(row.bucket2Balance || 0)}</td>
+                            <td className="py-2 text-right text-amber-600">{formatINR(row.bucket3Balance || 0)}</td>
+                            <td className="py-2 text-right text-emerald-600">{formatINR(row.bucket4Balance || 0)}</td>
+                            <td className="py-2 text-right font-bold text-primary-700">{formatINR(row.yearEndCorpus)}</td>
+                            <td className="py-2 text-left text-[10px] text-slate-500">{row.refillEvents?.join(', ') || '—'}</td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
                   </div>
