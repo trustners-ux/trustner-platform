@@ -114,13 +114,14 @@ export default function BucketStrategyPage() {
       incomeSources,
       existingInvestments: existingSavings,
       preRetirementReturn,
+      currentMonthlySavings: showCurrentSavings ? monthlySavings : 0,
     };
     return calculateBucketStrategy(inputs);
   }, [
     currentAge, retirementAge, lifeExpectancy, monthlyExpenses, inflationRate,
     customReturns, liquidReturn, debtReturn, assetAllocationReturn, equityReturn,
     hasLumpsum, lumpsumCorpus, incomeSources,
-    existingSavings, preRetirementReturn,
+    existingSavings, preRetirementReturn, showCurrentSavings, monthlySavings,
   ]);
 
   // ── Chart Data ──

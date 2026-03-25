@@ -41,6 +41,7 @@ export interface BucketStrategyInputs {
 
   existingInvestments: number;
   preRetirementReturn: number;
+  currentMonthlySavings?: number;   // Monthly SIP/savings the person is already doing
 }
 
 export interface BucketAllocation {
@@ -468,24 +469,37 @@ export function calculateBucketStrategy(
   let monthlySIPNeeded = 0;
   let stepUpSIPNeeded = 0;
 
+  const monthlyRate = preRetirementReturn / 100 / 12;
+  const totalMonths = yearsToRetirement * 12;
+
+  // FV of existing lumpsum investments
   const fvExisting =
     yearsToRetirement > 0 && existingInvestments > 0
-      ? existingInvestments * Math.pow(1 + preRetirementReturn / 100 / 12, yearsToRetirement * 12)
+      ? existingInvestments * Math.pow(1 + monthlyRate, totalMonths)
       : existingInvestments;
 
+  // FV of current monthly savings/SIPs (if person is already saving regularly)
+  const currentMonthlySavings = inputs.currentMonthlySavings || 0;
+  const fvMonthlySavings =
+    yearsToRetirement > 0 && currentMonthlySavings > 0
+      ? currentMonthlySavings * ((Math.pow(1 + monthlyRate, totalMonths) - 1) / monthlyRate)
+      : 0;
+
+  // Total projected corpus at retirement from existing savings + ongoing SIPs
+  const projectedFromSavings = fvExisting + fvMonthlySavings;
+
   // Available corpus at retirement:
-  // - If lumpsum is provided, it's the total expected corpus (may include FV of existing)
-  //   so take the LARGER of the two to avoid double-counting
-  // - If only existing investments, use their FV
-  // - If neither, assume ideal corpus (no shortfall/surplus)
+  // - If lumpsum is provided, it represents the total expected corpus at retirement
+  //   (user knows their number). Add FV of monthly savings ON TOP since those are
+  //   additional savings the person is making beyond the lumpsum expectation.
+  // - If no lumpsum but existing + monthly savings, use their combined FV
+  // - If nothing provided, assume ideal corpus
   let availableCorpus: number;
-  if (lumpsumCorpus > 0 && fvExisting > 0) {
-    // User provided both -- lumpsum is likely the total, existing is part of it
-    availableCorpus = Math.max(lumpsumCorpus, fvExisting);
-  } else if (lumpsumCorpus > 0) {
-    availableCorpus = lumpsumCorpus;
-  } else if (fvExisting > 0) {
-    availableCorpus = fvExisting;
+  if (lumpsumCorpus > 0) {
+    // Lumpsum is the base corpus; add FV of monthly savings if person is saving additionally
+    availableCorpus = lumpsumCorpus + fvMonthlySavings;
+  } else if (projectedFromSavings > 0) {
+    availableCorpus = projectedFromSavings;
   } else {
     availableCorpus = totalCorpusNeeded; // Assume ideal if nothing provided
   }
