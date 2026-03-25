@@ -13,7 +13,7 @@ import {
   PieChart, Pie, Cell, Legend, BarChart, Bar, ComposedChart, Line, ReferenceLine,
 } from 'recharts';
 import { calculateBucketStrategy } from '@/lib/utils/bucket-strategy-calc';
-import type { BucketStrategyInputs, BucketInsight, RetirementIncomeSource } from '@/lib/utils/bucket-strategy-calc';
+import type { BucketStrategyInputs, BucketInsight, RetirementIncomeSource, LumpsumEvent } from '@/lib/utils/bucket-strategy-calc';
 import { formatINR } from '@/lib/utils/formatters';
 import { cn } from '@/lib/utils/cn';
 import { DISCLAIMER } from '@/lib/constants/company';
@@ -59,6 +59,10 @@ export default function BucketStrategyPage() {
   const [preRetirementReturn, setPreRetirementReturn] = useState(12);
   const [showCurrentSavings, setShowCurrentSavings] = useState(false);
   const [monthlySavings, setMonthlySavings] = useState(50000);
+
+  // Lumpsum events during retirement
+  const [lumpsumEvents, setLumpsumEvents] = useState<LumpsumEvent[]>([]);
+  let lumpsumEventId = lumpsumEvents.length;
 
   // UI state
   const [showYearlyDetails, setShowYearlyDetails] = useState(false);
@@ -115,6 +119,7 @@ export default function BucketStrategyPage() {
       existingInvestments: existingSavings,
       preRetirementReturn,
       currentMonthlySavings: showCurrentSavings ? monthlySavings : 0,
+      lumpsumEvents: lumpsumEvents.length > 0 ? lumpsumEvents : undefined,
     };
     return calculateBucketStrategy(inputs);
   }, [
@@ -122,6 +127,7 @@ export default function BucketStrategyPage() {
     customReturns, liquidReturn, debtReturn, assetAllocationReturn, equityReturn,
     hasLumpsum, lumpsumCorpus, incomeSources,
     existingSavings, preRetirementReturn, showCurrentSavings, monthlySavings,
+    lumpsumEvents,
   ]);
 
   // ── Chart Data ──
@@ -369,7 +375,74 @@ export default function BucketStrategyPage() {
                 )}
               </div>
 
-              {/* Card D: Pre-Retirement Planning */}
+              {/* Card D: Lumpsum Events During Retirement */}
+              <div className="card-base p-4 sm:p-5 border-t-4 border-rose-500 mb-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <ArrowRightLeft className="w-4 h-4 text-rose-600" />
+                  <h3 className="text-sm font-bold text-primary-700">Lumpsum Events</h3>
+                </div>
+                <p className="text-[11px] text-slate-500 mb-3">
+                  Add one-time investments (inheritance, property sale) or withdrawals
+                  (child marriage, medical, house) at specific ages during retirement.
+                </p>
+
+                <div className="flex gap-2 mb-3">
+                  <button
+                    onClick={() => setLumpsumEvents(prev => [...prev, { id: Date.now(), type: 'invest', label: 'Inheritance', amount: 2000000, atAge: retirementAge + 5 }])}
+                    className="flex-1 text-[11px] font-semibold py-2 px-3 rounded-lg border border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                  >
+                    + Investment
+                  </button>
+                  <button
+                    onClick={() => setLumpsumEvents(prev => [...prev, { id: Date.now() + 1, type: 'withdraw', label: 'Child Marriage', amount: 3000000, atAge: retirementAge + 3 }])}
+                    className="flex-1 text-[11px] font-semibold py-2 px-3 rounded-lg border border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors"
+                  >
+                    + Withdrawal
+                  </button>
+                </div>
+
+                {lumpsumEvents.map((ev, idx) => (
+                  <div key={ev.id} className={cn('rounded-lg border p-3 mb-2', ev.type === 'invest' ? 'border-emerald-200 bg-emerald-50/50' : 'border-amber-200 bg-amber-50/50')}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={cn('text-[10px] font-bold uppercase px-2 py-0.5 rounded-full', ev.type === 'invest' ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white')}>
+                        {ev.type === 'invest' ? 'Investment' : 'Withdrawal'}
+                      </span>
+                      <button onClick={() => setLumpsumEvents(prev => prev.filter((_, i) => i !== idx))} className="p-1 hover:bg-red-100 rounded text-slate-400 hover:text-red-600">
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <input
+                      type="text" placeholder="Label" value={ev.label}
+                      onChange={(e) => setLumpsumEvents(prev => prev.map((p, i) => i === idx ? { ...p, label: e.target.value } : p))}
+                      className="w-full text-xs bg-white/60 border border-slate-200 rounded-lg px-2.5 py-1.5 mb-2 outline-none focus:ring-1 focus:ring-brand-300"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <NumberInput
+                        label="Amount" value={ev.amount}
+                        onChange={(v) => setLumpsumEvents(prev => prev.map((p, i) => i === idx ? { ...p, amount: v } : p))}
+                        prefix="Rs." step={100000} min={100000} max={100000000}
+                      />
+                      <NumberInput
+                        label="At Age" value={ev.atAge}
+                        onChange={(v) => setLumpsumEvents(prev => prev.map((p, i) => i === idx ? { ...p, atAge: v } : p))}
+                        step={1} min={retirementAge + 1} max={lifeExpectancy}
+                      />
+                    </div>
+                  </div>
+                ))}
+
+                {lumpsumEvents.length > 0 && (
+                  <div className="mt-2 p-2 rounded-lg bg-slate-50 text-[11px] text-slate-600">
+                    <span className="font-semibold">Net Impact: </span>
+                    <span className={cn('font-bold', lumpsumEvents.reduce((s, e) => s + (e.type === 'invest' ? e.amount : -e.amount), 0) >= 0 ? 'text-emerald-600' : 'text-amber-600')}>
+                      {formatINR(Math.abs(lumpsumEvents.reduce((s, e) => s + (e.type === 'invest' ? e.amount : -e.amount), 0)))}
+                      {' '}{lumpsumEvents.reduce((s, e) => s + (e.type === 'invest' ? e.amount : -e.amount), 0) >= 0 ? 'inflow' : 'outflow'}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Card E: Pre-Retirement Planning */}
               {showPreRetirement && yearsToRetirement > 0 && (
                 <div className="card-base p-4 sm:p-5 border-t-4 border-purple-500 mb-5">
                   <div className="flex items-center gap-2 mb-4">

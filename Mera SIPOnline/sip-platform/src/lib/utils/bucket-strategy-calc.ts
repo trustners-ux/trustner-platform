@@ -23,6 +23,15 @@ export interface RebalancingEvent {
   trigger: string;
 }
 
+// Lumpsum event during retirement (one-time investment or withdrawal at a specific age)
+export interface LumpsumEvent {
+  id: number;
+  type: 'invest' | 'withdraw';
+  label: string;
+  amount: number;
+  atAge: number;           // Age when this event occurs
+}
+
 export interface BucketStrategyInputs {
   currentAge: number;
   retirementAge: number;
@@ -42,6 +51,7 @@ export interface BucketStrategyInputs {
   existingInvestments: number;
   preRetirementReturn: number;
   currentMonthlySavings?: number;   // Monthly SIP/savings the person is already doing
+  lumpsumEvents?: LumpsumEvent[];   // One-time investments/withdrawals during retirement
 }
 
 export interface BucketAllocation {
@@ -379,75 +389,59 @@ export function calculateBucketStrategy(
   const monthlyAAReturn = assetAllocationReturn / 100 / 12;
   const monthlyEquityReturn = equityReturn / 100 / 12;
 
-  // ── Bucket boundaries (months from retirement) ──
-  const b0Start = 0;
+  // ── Helper: round UP to next lakh ──
+  const ceilToLakh = (v: number) => Math.ceil(v / 100000) * 100000;
+
+  // ── Bucket 0 — Emergency Fund (6 months expenses in Bank FD/Liquid) ──
+  // Always kept untouched unless all other buckets are depleted
   const b0Duration = 6;
-  const b1Start = 0;
+  const emergencyFundRaw = netMonthlyNeed * b0Duration;
+  const emergencyFund = ceilToLakh(emergencyFundRaw);
+
+  // ── Bucket 1 — Short-Term Income (Years 1-3, Liquid/Ultra Short/FD) ──
+  // Exact amount needed for 36 months of inflation-adjusted withdrawals net of income
   const b1Duration = Math.min(36, retirementMonths);
-  const b2Start = 36;
-  const b2Duration = retirementMonths > 36 ? Math.min(36, retirementMonths - 36) : 0;
-  const b3Start = 72;
-  const b3Duration = retirementMonths > 72 ? Math.min(48, retirementMonths - 72) : 0;
-  const b4Start = 120;
-  const b4Duration = retirementMonths > 120 ? retirementMonths - 120 : 0;
-
-  // Bucket 0 — Emergency Fund (6 months, no inflation adjustment)
-  const emergencyFund = Math.round(netMonthlyNeed * b0Duration);
-
-  // Bucket 1 — PV of months 1-36 at liquidReturn (income-aware)
-  const bucket1Corpus = Math.round(
-    pvOfInflatedWithdrawalsNetOfIncome(monthlyExpenseAtRetirement, monthlyInflation, monthlyLiquidReturn, b1Start, b1Duration, incomeSources)
+  const bucket1Raw = pvOfInflatedWithdrawalsNetOfIncome(
+    monthlyExpenseAtRetirement, monthlyInflation, monthlyLiquidReturn, 0, b1Duration, incomeSources
   );
+  const bucket1Corpus = ceilToLakh(bucket1Raw);
 
-  // Bucket 2 — PV of months 37-72 at debtReturn, discounted back (income-aware)
-  const bucket2Corpus = b2Duration > 0
-    ? Math.round(
-        pvOfInflatedWithdrawalsNetOfIncome(monthlyExpenseAtRetirement, monthlyInflation, monthlyDebtReturn, b2Start, b2Duration, incomeSources)
-          / Math.pow(1 + monthlyDebtReturn, 36)
-      )
-    : 0;
+  // ── Total needed for B0 + B1 (fixed allocation) ──
+  const fixedAllocation = emergencyFund + bucket1Corpus;
 
-  // Bucket 3 — PV of months 73-120 at assetAllocationReturn, discounted back (income-aware)
-  const bucket3Corpus = b3Duration > 0
-    ? Math.round(
-        pvOfInflatedWithdrawalsNetOfIncome(monthlyExpenseAtRetirement, monthlyInflation, monthlyAAReturn, b3Start, b3Duration, incomeSources)
-          / Math.pow(1 + monthlyAAReturn, 72)
-      )
-    : 0;
+  // ── Remaining corpus: split 35% / 35% / 30% into B2 / B3 / B4 ──
+  // This allows B2-B4 to compound at higher returns and potentially leave
+  // a legacy corpus for spouse/dependents beyond life expectancy
+  const totalRetirementNeed = pvOfInflatedWithdrawalsNetOfIncome(
+    monthlyExpenseAtRetirement, monthlyInflation, monthlyLiquidReturn, 0, retirementMonths, incomeSources
+  );
+  const totalCorpusNeeded = ceilToLakh(fixedAllocation + Math.max(0, totalRetirementNeed - bucket1Raw) * 1.05);
+  // 5% buffer for longevity risk (may live 2-3 years beyond life expectancy)
 
-  // Bucket 4 — PV of months 121+ at equityReturn, discounted back (income-aware)
-  const bucket4Corpus = b4Duration > 0
-    ? Math.round(
-        pvOfInflatedWithdrawalsNetOfIncome(monthlyExpenseAtRetirement, monthlyInflation, monthlyEquityReturn, b4Start, b4Duration, incomeSources)
-          / Math.pow(1 + monthlyEquityReturn, 120)
-      )
-    : 0;
+  const remainingForGrowth = Math.max(0, totalCorpusNeeded - fixedAllocation);
+  const bucket2Corpus = ceilToLakh(remainingForGrowth * 0.35); // 35% in Equity Savings/BAF/MAAF
+  const bucket3Corpus = ceilToLakh(remainingForGrowth * 0.35); // 35% in Multi-Asset/Flexi/Large & Mid
+  const bucket4Corpus = Math.max(0, remainingForGrowth - bucket2Corpus - bucket3Corpus); // ~30% in Multi Cap/Equity
 
-  // Total corpus
-  const totalCorpusNeeded = emergencyFund + bucket1Corpus + bucket2Corpus + bucket3Corpus + bucket4Corpus;
-
-  // Allocation percentages
-  const pct = (v: number) => (totalCorpusNeeded > 0 ? Math.round((v / totalCorpusNeeded) * 10000) / 100 : 0);
+  // Allocation percentages — actualTotal is the true totalCorpusNeeded
+  const actualTotal = emergencyFund + bucket1Corpus + bucket2Corpus + bucket3Corpus + bucket4Corpus;
+  // Override totalCorpusNeeded to match the actual sum of all 5 buckets (after rounding up)
+  const totalCorpusNeededFinal = actualTotal;
+  const pct = (v: number) => (actualTotal > 0 ? Math.round((v / actualTotal) * 10000) / 100 : 0);
 
   // Build bucket allocations
   const bucketCorpuses = [emergencyFund, bucket1Corpus, bucket2Corpus, bucket3Corpus, bucket4Corpus];
   const bucketReturns = [liquidReturn, liquidReturn, debtReturn, assetAllocationReturn, equityReturn];
   const bucketTimelines = [
-    '6 months',
-    '1-36 months',
-    '37-72 months',
-    '73-120 months',
-    retirementMonths > 120 ? `121-${retirementMonths} months` : 'N/A',
+    '6 months (Emergency)',
+    `Years 1-3 (${b1Duration} months)`,
+    'Years 4-6 (Growth Phase 1)',
+    'Years 7-10 (Growth Phase 2)',
+    'Years 10+ (Long-Term Equity)',
   ];
-  const bucketMonthsFrom = [b0Start, b1Start, b2Start, b3Start, b4Start];
-  const bucketMonthsTo = [
-    b0Duration - 1,
-    b1Start + b1Duration - 1,
-    b2Duration > 0 ? b2Start + b2Duration - 1 : b2Start,
-    b3Duration > 0 ? b3Start + b3Duration - 1 : b3Start,
-    b4Duration > 0 ? b4Start + b4Duration - 1 : b4Start,
-  ];
-  const bucketDurations = [b0Duration, b1Duration, b2Duration, b3Duration, b4Duration];
+  const bucketMonthsFrom = [0, 0, 36, 72, 120];
+  const bucketMonthsTo = [5, 35, 71, 119, retirementMonths - 1];
+  const bucketDurations = [6, b1Duration, 36, 48, Math.max(0, retirementMonths - 120)];
 
   const buckets: BucketAllocation[] = Array.from({ length: 5 }, (_, i) => ({
     bucketNumber: i,
@@ -502,14 +496,14 @@ export function calculateBucketStrategy(
   if (totalAvailable > 0) {
     availableCorpus = totalAvailable;
   } else {
-    availableCorpus = totalCorpusNeeded; // Assume ideal if nothing provided
+    availableCorpus = totalCorpusNeededFinal; // Assume ideal if nothing provided
   }
 
-  const shortfall = Math.max(0, totalCorpusNeeded - availableCorpus);
-  const surplus = Math.max(0, availableCorpus - totalCorpusNeeded);
+  const shortfall = Math.max(0, totalCorpusNeededFinal - availableCorpus);
+  const surplus = Math.max(0, availableCorpus - totalCorpusNeededFinal);
 
   // SIP needed = gap between available and needed
-  const sipTarget = Math.max(0, totalCorpusNeeded - availableCorpus);
+  const sipTarget = Math.max(0, totalCorpusNeededFinal - availableCorpus);
   if (yearsToRetirement > 0 && sipTarget > 0) {
     monthlySIPNeeded = Math.round(
       pmt(preRetirementReturn / 100 / 12, yearsToRetirement * 12, sipTarget)
@@ -530,7 +524,8 @@ export function calculateBucketStrategy(
     bucketReturns,
     startingCorpus,
     incomeSources,
-    monthlyExpenseAtRetirement
+    monthlyExpenseAtRetirement,
+    inputs.lumpsumEvents
   );
 
   const { depletionSchedule, rebalancingEvents, bucket4InitialBalance } = cascadeResult;
@@ -553,7 +548,7 @@ export function calculateBucketStrategy(
   // Insights
   const insights = generateInsights(
     inputs,
-    totalCorpusNeeded,
+    totalCorpusNeededFinal,
     surplus,
     shortfall,
     isSustainable,
@@ -574,7 +569,7 @@ export function calculateBucketStrategy(
     monthlyExpenseAtRetirement: Math.round(monthlyExpenseAtRetirement),
     netMonthlyNeed: Math.round(netMonthlyNeed),
     buckets,
-    totalCorpusNeeded,
+    totalCorpusNeeded: totalCorpusNeededFinal,
     emergencyFund,
     lumpsumAvailable: availableCorpus,
     shortfall,
@@ -612,7 +607,8 @@ function buildDepletionScheduleWithCascade(
   bucketReturnRates: number[],
   startingCorpus: number,
   incomeSources: RetirementIncomeSource[],
-  monthlyExpenseAtRetirement: number
+  monthlyExpenseAtRetirement: number,
+  lumpsumEvents?: LumpsumEvent[]
 ): CascadeResult {
   const schedule: DepletionYear[] = [];
   const allRebalancingEvents: RebalancingEvent[] = [];
@@ -634,13 +630,39 @@ function buildDepletionScheduleWithCascade(
 
   for (let y = 1; y <= retirementYears; y++) {
     const age = retirementAge + y;
-    const yearStartCorpus = bal.reduce((s, v) => s + v, 0);
     const yearRefillEvents: string[] = [];
     let yearWithdrawal = 0;
     let yearReturn = 0;
     let yearGrossExpense = 0;
     let yearIncome = 0;
     let yearFunding = 0;
+
+    // Process lumpsum events at this age (before monthly simulation)
+    if (lumpsumEvents && lumpsumEvents.length > 0) {
+      for (const ev of lumpsumEvents) {
+        if (ev.atAge === age && ev.amount > 0) {
+          if (ev.type === 'invest') {
+            // Add investment to Bucket 4 (highest growth) for compounding
+            bal[4] += ev.amount;
+            yearFunding += ev.amount;
+            yearRefillEvents.push(`+Rs.${formatLakhs(ev.amount)} ${ev.label || 'Lumpsum'}`);
+          } else {
+            // Withdrawal: deduct from highest bucket first (B4 -> B3 -> B2 -> B1)
+            let rem = ev.amount;
+            for (let b = 4; b >= 1; b--) {
+              if (rem <= 0) break;
+              const deducted = Math.min(bal[b], rem);
+              bal[b] -= deducted;
+              rem -= deducted;
+            }
+            yearWithdrawal += ev.amount;
+            yearRefillEvents.push(`-Rs.${formatLakhs(ev.amount)} ${ev.label || 'Withdrawal'}`);
+          }
+        }
+      }
+    }
+
+    const yearStartCorpus = bal.reduce((s, v) => s + v, 0);
 
     // Simulate 12 months for this year
     for (let m = 0; m < 12; m++) {
@@ -687,62 +709,55 @@ function buildDepletionScheduleWithCascade(
         remaining -= deducted;
       }
 
-      // Step 6: Refill triggers — when a bucket's balance drops below 3 months' expenses
-      const threeMonthThreshold = netWithdrawal > 0 ? netWithdrawal * 3 : 0;
+      // Step 6: Refill — ONLY when a bucket is FULLY EMPTY (depleted)
+      // This is the real bucket strategy: let each bucket run its course,
+      // then refill from the next higher bucket which has been compounding
 
-      if (threeMonthThreshold > 0) {
-        // Bucket 1 low -> refill from Bucket 2 (transfer 12 months' worth)
-        if (bal[1] < threeMonthThreshold && bal[2] > 0) {
-          const refillAmount = Math.min(bal[2], netWithdrawal * 12);
-          if (refillAmount > 0) {
-            bal[2] -= refillAmount;
-            bal[1] += refillAmount;
-            yearFunding += refillAmount;
-            yearRefillEvents.push(`B2 ->B1: Rs.${formatLakhs(refillAmount)}`);
-            allRebalancingEvents.push({
-              year: y,
-              fromBucket: 2,
-              toBucket: 1,
-              amount: Math.round(refillAmount),
-              trigger: 'Bucket 1 balance below 3-month threshold',
-            });
-          }
+      // When Bucket 1 is empty -> refill with 12 months' worth from Bucket 2
+      if (bal[1] <= 0 && bal[2] > 0) {
+        const refillAmount = Math.min(bal[2], netWithdrawal * 12);
+        if (refillAmount > 0) {
+          bal[2] -= refillAmount;
+          bal[1] += refillAmount;
+          yearFunding += refillAmount;
+          yearRefillEvents.push(`B2 ->B1: Rs.${formatLakhs(refillAmount)}`);
+          allRebalancingEvents.push({
+            year: y, fromBucket: 2, toBucket: 1,
+            amount: Math.round(refillAmount),
+            trigger: 'Bucket 1 depleted -- refilled from Bucket 2',
+          });
         }
+      }
 
-        // Bucket 2 low -> refill from Bucket 3
-        if (bal[2] < threeMonthThreshold && bal[3] > 0) {
-          const refillAmount = Math.min(bal[3], netWithdrawal * 12);
-          if (refillAmount > 0) {
-            bal[3] -= refillAmount;
-            bal[2] += refillAmount;
-            yearFunding += refillAmount;
-            yearRefillEvents.push(`B3 ->B2: Rs.${formatLakhs(refillAmount)}`);
-            allRebalancingEvents.push({
-              year: y,
-              fromBucket: 3,
-              toBucket: 2,
-              amount: Math.round(refillAmount),
-              trigger: 'Bucket 2 balance below 3-month threshold',
-            });
-          }
+      // When Bucket 2 is empty -> refill from Bucket 3
+      if (bal[2] <= 0 && bal[3] > 0) {
+        const refillAmount = Math.min(bal[3], netWithdrawal * 12);
+        if (refillAmount > 0) {
+          bal[3] -= refillAmount;
+          bal[2] += refillAmount;
+          yearFunding += refillAmount;
+          yearRefillEvents.push(`B3 ->B2: Rs.${formatLakhs(refillAmount)}`);
+          allRebalancingEvents.push({
+            year: y, fromBucket: 3, toBucket: 2,
+            amount: Math.round(refillAmount),
+            trigger: 'Bucket 2 depleted -- refilled from Bucket 3',
+          });
         }
+      }
 
-        // Bucket 3 low -> refill from Bucket 4 (the growth engine)
-        if (bal[3] < threeMonthThreshold && bal[4] > 0) {
-          const refillAmount = Math.min(bal[4], netWithdrawal * 12);
-          if (refillAmount > 0) {
-            bal[4] -= refillAmount;
-            bal[3] += refillAmount;
-            yearFunding += refillAmount;
-            yearRefillEvents.push(`B4 ->B3: Rs.${formatLakhs(refillAmount)}`);
-            allRebalancingEvents.push({
-              year: y,
-              fromBucket: 4,
-              toBucket: 3,
-              amount: Math.round(refillAmount),
-              trigger: 'Bucket 3 balance below 3-month threshold',
-            });
-          }
+      // When Bucket 3 is empty -> refill from Bucket 4 (the equity growth engine)
+      if (bal[3] <= 0 && bal[4] > 0) {
+        const refillAmount = Math.min(bal[4], netWithdrawal * 12);
+        if (refillAmount > 0) {
+          bal[4] -= refillAmount;
+          bal[3] += refillAmount;
+          yearFunding += refillAmount;
+          yearRefillEvents.push(`B4 ->B3: Rs.${formatLakhs(refillAmount)}`);
+          allRebalancingEvents.push({
+            year: y, fromBucket: 4, toBucket: 3,
+            amount: Math.round(refillAmount),
+            trigger: 'Bucket 3 depleted -- refilled from Bucket 4',
+          });
         }
       }
     }
