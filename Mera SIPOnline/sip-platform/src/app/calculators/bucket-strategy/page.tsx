@@ -57,6 +57,8 @@ export default function BucketStrategyPage() {
   // Pre-retirement
   const [existingSavings, setExistingSavings] = useState(0);
   const [preRetirementReturn, setPreRetirementReturn] = useState(12);
+  const [showCurrentSavings, setShowCurrentSavings] = useState(false);
+  const [monthlySavings, setMonthlySavings] = useState(50000);
 
   // UI state
   const [showYearlyDetails, setShowYearlyDetails] = useState(false);
@@ -342,7 +344,7 @@ export default function BucketStrategyPage() {
                       </button>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
-                      <NumberInput label="Monthly Amount" value={source.monthlyAmount} onChange={(v) => updateIncomeSource(idx, { monthlyAmount: v })} prefix="\u20B9" step={1000} min={0} max={500000} />
+                      <NumberInput label="Monthly Amount" value={source.monthlyAmount} onChange={(v) => updateIncomeSource(idx, { monthlyAmount: v })} prefix="₹" step={1000} min={0} max={500000} />
                       {source.type === 'rental' && (
                         <NumberInput label="Annual Growth" value={source.growthRate || 0} onChange={(v) => updateIncomeSource(idx, { growthRate: v })} suffix="%" step={1} min={0} max={15} />
                       )}
@@ -376,6 +378,34 @@ export default function BucketStrategyPage() {
                   <div className="space-y-4">
                     <NumberInput label="Existing Retirement Savings" value={existingSavings} onChange={setExistingSavings} prefix="₹" step={100000} min={0} max={100000000} />
                     <NumberInput label="Expected Pre-retirement Return" value={preRetirementReturn} onChange={setPreRetirementReturn} suffix="% p.a." step={0.5} min={6} max={20} />
+
+                    {/* Optional: Current Monthly Savings */}
+                    <div className="pt-3 border-t border-purple-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <label className="text-[11px] font-medium text-slate-600">I save regularly (optional)</label>
+                        <button
+                          role="switch" aria-checked={showCurrentSavings}
+                          onClick={() => setShowCurrentSavings(!showCurrentSavings)}
+                          className={cn('relative inline-flex h-5 w-9 items-center rounded-full transition-colors', showCurrentSavings ? 'bg-purple-500' : 'bg-slate-300')}
+                        >
+                          <span className={cn('inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform shadow-sm', showCurrentSavings ? 'translate-x-[18px]' : 'translate-x-[3px]')} />
+                        </button>
+                      </div>
+                      {showCurrentSavings && (
+                        <div className="space-y-3 mt-2 animate-in">
+                          <NumberInput label="Current Monthly Savings/SIP" value={monthlySavings} onChange={setMonthlySavings} prefix="₹" step={5000} min={0} max={1000000} />
+                          <p className="text-[10px] text-slate-400">Include all SIPs, RDs, PPF, NPS contributions you make monthly</p>
+                          {monthlySavings > 0 && result.monthlySIPNeeded > 0 && (
+                            <div className={cn('rounded-lg p-2.5 text-xs font-medium', monthlySavings >= result.monthlySIPNeeded ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200')}>
+                              {monthlySavings >= result.monthlySIPNeeded
+                                ? `You're saving enough! Your ${formatINR(monthlySavings)}/mo exceeds the ${formatINR(result.monthlySIPNeeded)}/mo needed.`
+                                : `Gap: You save ${formatINR(monthlySavings)}/mo but need ${formatINR(result.monthlySIPNeeded)}/mo. Increase by ${formatINR(result.monthlySIPNeeded - monthlySavings)}/mo.`
+                              }
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   {result.monthlySIPNeeded > 0 && (
                     <div className="mt-4 bg-gradient-to-r from-purple-50 to-brand-50 rounded-xl p-3">
