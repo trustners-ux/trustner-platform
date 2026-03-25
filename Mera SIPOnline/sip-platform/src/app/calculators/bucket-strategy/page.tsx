@@ -416,18 +416,16 @@ export default function BucketStrategyPage() {
                       onChange={(e) => setLumpsumEvents(prev => prev.map((p, i) => i === idx ? { ...p, label: e.target.value } : p))}
                       className="w-full text-xs bg-white/60 border border-slate-200 rounded-lg px-2.5 py-1.5 mb-2 outline-none focus:ring-1 focus:ring-brand-300"
                     />
-                    <div className="grid grid-cols-2 gap-2">
-                      <NumberInput
-                        label="Amount" value={ev.amount}
-                        onChange={(v) => setLumpsumEvents(prev => prev.map((p, i) => i === idx ? { ...p, amount: v } : p))}
-                        prefix="Rs." step={100000} min={100000} max={100000000}
-                      />
-                      <NumberInput
-                        label="At Age" value={ev.atAge}
-                        onChange={(v) => setLumpsumEvents(prev => prev.map((p, i) => i === idx ? { ...p, atAge: v } : p))}
-                        step={1} min={retirementAge + 1} max={lifeExpectancy}
-                      />
-                    </div>
+                    <NumberInput
+                      label="Amount" value={ev.amount}
+                      onChange={(v) => setLumpsumEvents(prev => prev.map((p, i) => i === idx ? { ...p, amount: v } : p))}
+                      prefix="₹" step={100000} min={100000} max={100000000}
+                    />
+                    <NumberInput
+                      label="At Age" value={ev.atAge}
+                      onChange={(v) => setLumpsumEvents(prev => prev.map((p, i) => i === idx ? { ...p, atAge: v } : p))}
+                      suffix="years" step={1} min={currentAge + 1} max={lifeExpectancy}
+                    />
                   </div>
                 ))}
 
