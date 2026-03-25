@@ -281,7 +281,7 @@ export default function BucketStrategyPage() {
                 {/* Lumpsum Toggle */}
                 <div className={cn('rounded-xl border p-3 mb-3', hasLumpsum ? 'border-amber-200 bg-amber-50/50' : 'border-surface-300 bg-surface-50')}>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-medium text-slate-600">I have a lumpsum corpus at retirement</label>
+                    <label className="text-xs font-medium text-slate-600">I know my retirement corpus</label>
                     <button
                       role="switch"
                       aria-checked={hasLumpsum}
@@ -292,10 +292,10 @@ export default function BucketStrategyPage() {
                       <span className={cn('inline-block h-4 w-4 rounded-full bg-white transition-transform shadow-sm', hasLumpsum ? 'translate-x-6' : 'translate-x-1')} />
                     </button>
                   </div>
-                  <div className="text-[10px] text-slate-500">{hasLumpsum ? 'Enter your expected retirement corpus' : 'Will calculate how much you need'}</div>
+                  <div className="text-[10px] text-slate-500">{hasLumpsum ? 'Total money you will have at retirement (PF + MF + FD + all savings)' : 'Calculator will tell you how much you need to accumulate'}</div>
                   {hasLumpsum && (
                     <div className="mt-3 animate-in">
-                      <NumberInput label="Lumpsum Corpus" value={lumpsumCorpus} onChange={setLumpsumCorpus} prefix="₹" step={500000} min={0} max={500000000} />
+                      <NumberInput label="Total Retirement Corpus" value={lumpsumCorpus} onChange={setLumpsumCorpus} prefix="₹" step={500000} min={0} max={500000000} />
                     </div>
                   )}
                 </div>
