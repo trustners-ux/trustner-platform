@@ -198,6 +198,33 @@ function pvOfInflatedWithdrawals(
 }
 
 /**
+ * Present value of inflation-adjusted monthly withdrawals NET of income sources.
+ * This accounts for income changes over time (e.g. SCSS ending after 5 years,
+ * rental growing, etc.) so each bucket's corpus correctly reflects the actual
+ * withdrawal needed during its time horizon.
+ */
+function pvOfInflatedWithdrawalsNetOfIncome(
+  baseExpenseAtRetirement: number,
+  monthlyInflation: number,
+  monthlyDiscountRate: number,
+  startMonth: number,
+  durationMonths: number,
+  incomeSources: RetirementIncomeSource[]
+): number {
+  let pv = 0;
+  for (let m = 0; m < durationMonths; m++) {
+    const month = startMonth + m;
+    const retirementYear = Math.floor(month / 12);
+    const grossExpense = baseExpenseAtRetirement * Math.pow(1 + monthlyInflation, month);
+    const monthlyIncome = getMonthlyIncomeForYear(incomeSources, retirementYear);
+    const netWithdrawal = Math.max(0, grossExpense - monthlyIncome);
+    const discount = Math.pow(1 + monthlyDiscountRate, month);
+    pv += netWithdrawal / discount;
+  }
+  return pv;
+}
+
+/**
  * Average monthly withdrawal for a bucket (simple average of all
  * inflation-adjusted withdrawals over the bucket's duration).
  */
@@ -363,31 +390,31 @@ export function calculateBucketStrategy(
   // Bucket 0 — Emergency Fund (6 months, no inflation adjustment)
   const emergencyFund = Math.round(netMonthlyNeed * b0Duration);
 
-  // Bucket 1 — PV of months 1-36 at liquidReturn
+  // Bucket 1 — PV of months 1-36 at liquidReturn (income-aware)
   const bucket1Corpus = Math.round(
-    pvOfInflatedWithdrawals(netMonthlyNeed, monthlyInflation, monthlyLiquidReturn, b1Start, b1Duration)
+    pvOfInflatedWithdrawalsNetOfIncome(monthlyExpenseAtRetirement, monthlyInflation, monthlyLiquidReturn, b1Start, b1Duration, incomeSources)
   );
 
-  // Bucket 2 — PV of months 37-72 at debtReturn, discounted back
+  // Bucket 2 — PV of months 37-72 at debtReturn, discounted back (income-aware)
   const bucket2Corpus = b2Duration > 0
     ? Math.round(
-        pvOfInflatedWithdrawals(netMonthlyNeed, monthlyInflation, monthlyDebtReturn, b2Start, b2Duration)
+        pvOfInflatedWithdrawalsNetOfIncome(monthlyExpenseAtRetirement, monthlyInflation, monthlyDebtReturn, b2Start, b2Duration, incomeSources)
           / Math.pow(1 + monthlyDebtReturn, 36)
       )
     : 0;
 
-  // Bucket 3 — PV of months 73-120 at assetAllocationReturn, discounted back
+  // Bucket 3 — PV of months 73-120 at assetAllocationReturn, discounted back (income-aware)
   const bucket3Corpus = b3Duration > 0
     ? Math.round(
-        pvOfInflatedWithdrawals(netMonthlyNeed, monthlyInflation, monthlyAAReturn, b3Start, b3Duration)
+        pvOfInflatedWithdrawalsNetOfIncome(monthlyExpenseAtRetirement, monthlyInflation, monthlyAAReturn, b3Start, b3Duration, incomeSources)
           / Math.pow(1 + monthlyAAReturn, 72)
       )
     : 0;
 
-  // Bucket 4 — PV of months 121+ at equityReturn, discounted back
+  // Bucket 4 — PV of months 121+ at equityReturn, discounted back (income-aware)
   const bucket4Corpus = b4Duration > 0
     ? Math.round(
-        pvOfInflatedWithdrawals(netMonthlyNeed, monthlyInflation, monthlyEquityReturn, b4Start, b4Duration)
+        pvOfInflatedWithdrawalsNetOfIncome(monthlyExpenseAtRetirement, monthlyInflation, monthlyEquityReturn, b4Start, b4Duration, incomeSources)
           / Math.pow(1 + monthlyEquityReturn, 120)
       )
     : 0;
@@ -403,10 +430,10 @@ export function calculateBucketStrategy(
   const bucketReturns = [liquidReturn, liquidReturn, debtReturn, assetAllocationReturn, equityReturn];
   const bucketTimelines = [
     '6 months',
-    '1\u201336 months',
-    '37\u201372 months',
-    '73\u2013120 months',
-    retirementMonths > 120 ? `121\u2013${retirementMonths} months` : 'N/A',
+    '1-36 months',
+    '37-72 months',
+    '73-120 months',
+    retirementMonths > 120 ? `121-${retirementMonths} months` : 'N/A',
   ];
   const bucketMonthsFrom = [b0Start, b1Start, b2Start, b3Start, b4Start];
   const bucketMonthsTo = [
@@ -446,23 +473,39 @@ export function calculateBucketStrategy(
       ? existingInvestments * Math.pow(1 + preRetirementReturn / 100 / 12, yearsToRetirement * 12)
       : existingInvestments;
 
-  const sipShortfall = Math.max(0, totalCorpusNeeded - fvExisting);
+  // Available corpus at retirement:
+  // - If lumpsum is provided, it's the total expected corpus (may include FV of existing)
+  //   so take the LARGER of the two to avoid double-counting
+  // - If only existing investments, use their FV
+  // - If neither, assume ideal corpus (no shortfall/surplus)
+  let availableCorpus: number;
+  if (lumpsumCorpus > 0 && fvExisting > 0) {
+    // User provided both -- lumpsum is likely the total, existing is part of it
+    availableCorpus = Math.max(lumpsumCorpus, fvExisting);
+  } else if (lumpsumCorpus > 0) {
+    availableCorpus = lumpsumCorpus;
+  } else if (fvExisting > 0) {
+    availableCorpus = fvExisting;
+  } else {
+    availableCorpus = totalCorpusNeeded; // Assume ideal if nothing provided
+  }
 
-  if (yearsToRetirement > 0 && sipShortfall > 0) {
+  const shortfall = Math.max(0, totalCorpusNeeded - availableCorpus);
+  const surplus = Math.max(0, availableCorpus - totalCorpusNeeded);
+
+  // SIP needed = gap between available and needed
+  const sipTarget = Math.max(0, totalCorpusNeeded - availableCorpus);
+  if (yearsToRetirement > 0 && sipTarget > 0) {
     monthlySIPNeeded = Math.round(
-      pmt(preRetirementReturn / 100 / 12, yearsToRetirement * 12, sipShortfall)
+      pmt(preRetirementReturn / 100 / 12, yearsToRetirement * 12, sipTarget)
     );
     stepUpSIPNeeded = Math.round(
-      stepUpSIP(preRetirementReturn, yearsToRetirement, 10, sipShortfall)
+      stepUpSIP(preRetirementReturn, yearsToRetirement, 10, sipTarget)
     );
   }
 
-  // Corpus vs available
-  const shortfall = lumpsumCorpus > 0 ? Math.max(0, totalCorpusNeeded - lumpsumCorpus) : 0;
-  const surplus = lumpsumCorpus > 0 ? Math.max(0, lumpsumCorpus - totalCorpusNeeded) : 0;
-
   // Month-by-month depletion simulation with bucket refill cascade
-  const startingCorpus = lumpsumCorpus > 0 ? lumpsumCorpus : totalCorpusNeeded;
+  const startingCorpus = availableCorpus;
   const cascadeResult = buildDepletionScheduleWithCascade(
     retirementAge,
     retirementYears,
@@ -518,7 +561,7 @@ export function calculateBucketStrategy(
     buckets,
     totalCorpusNeeded,
     emergencyFund,
-    lumpsumAvailable: lumpsumCorpus,
+    lumpsumAvailable: availableCorpus,
     shortfall,
     surplus,
     yearsToRetirement,
@@ -634,7 +677,7 @@ function buildDepletionScheduleWithCascade(
           if (refillAmount > 0) {
             bal[2] -= refillAmount;
             bal[1] += refillAmount;
-            yearRefillEvents.push(`B2\u2192B1: \u20B9${formatLakhs(refillAmount)}`);
+            yearRefillEvents.push(`B2 ->B1: Rs.${formatLakhs(refillAmount)}`);
             allRebalancingEvents.push({
               year: y,
               fromBucket: 2,
@@ -651,7 +694,7 @@ function buildDepletionScheduleWithCascade(
           if (refillAmount > 0) {
             bal[3] -= refillAmount;
             bal[2] += refillAmount;
-            yearRefillEvents.push(`B3\u2192B2: \u20B9${formatLakhs(refillAmount)}`);
+            yearRefillEvents.push(`B3 ->B2: Rs.${formatLakhs(refillAmount)}`);
             allRebalancingEvents.push({
               year: y,
               fromBucket: 3,
@@ -668,7 +711,7 @@ function buildDepletionScheduleWithCascade(
           if (refillAmount > 0) {
             bal[4] -= refillAmount;
             bal[3] += refillAmount;
-            yearRefillEvents.push(`B4\u2192B3: \u20B9${formatLakhs(refillAmount)}`);
+            yearRefillEvents.push(`B4 ->B3: Rs.${formatLakhs(refillAmount)}`);
             allRebalancingEvents.push({
               year: y,
               fromBucket: 4,
@@ -755,7 +798,7 @@ function generateInsights(
     insights.push({
       type: 'positive',
       title: 'Sustainable Strategy',
-      description: 'Your bucket strategy is sustainable \u2014 corpus lasts through your life expectancy.',
+      description: 'Your bucket strategy is sustainable  -- corpus lasts through your life expectancy.',
     });
   } else {
     insights.push({
@@ -775,7 +818,7 @@ function generateInsights(
     insights.push({
       type: coverLabel === 'good' ? 'positive' : coverLabel === 'moderate' ? 'tip' : 'warning',
       title: 'Income Coverage',
-      description: `Your ${activeNames || 'income sources'} cover${incomeSources.length === 1 ? 's' : ''} ${incomeCoversPercent.toFixed(1)}% of Year 1 expenses \u2014 ${coverLabel}. This reduces withdrawal pressure on your bucket corpus.`,
+      description: `Your ${activeNames || 'income sources'} cover${incomeSources.length === 1 ? 's' : ''} ${incomeCoversPercent.toFixed(1)}% of Year 1 expenses  -- ${coverLabel}. This reduces withdrawal pressure on your bucket corpus.`,
     });
   }
 
@@ -784,7 +827,7 @@ function generateInsights(
     insights.push({
       type: 'tip',
       title: 'SCSS Tax Benefit',
-      description: 'SCSS @ 8.2% is tax-efficient for the first \u20B950,000 interest per year under Section 80TTB for senior citizens. Renew after 5 years if the scheme is still available.',
+      description: 'SCSS @ 8.2% is tax-efficient for the first Rs.50,000 interest per year under Section 80TTB for senior citizens. Renew after 5 years if the scheme is still available.',
     });
   }
 
@@ -793,7 +836,7 @@ function generateInsights(
     insights.push({
       type: 'tip',
       title: 'Consider NPS',
-      description: 'Consider NPS for additional tax benefit under Section 80CCD(1B) \u2014 \u20B950,000 extra deduction over and above Section 80C limit.',
+      description: 'Consider NPS for additional tax benefit under Section 80CCD(1B)  -- Rs.50,000 extra deduction over and above Section 80C limit.',
     });
   }
 
@@ -803,7 +846,7 @@ function generateInsights(
       insights.push({
         type: 'warning',
         title: 'High SWP Withdrawal',
-        description: `Your SWP of \u20B9${formatLakhs(swp.monthlyAmount)}/month is substantial. Ensure the underlying mutual fund corpus supports a withdrawal rate below 4% annually for sustainability.`,
+        description: `Your SWP of Rs.${formatLakhs(swp.monthlyAmount)}/month is substantial. Ensure the underlying mutual fund corpus supports a withdrawal rate below 4% annually for sustainability.`,
       });
     }
   }
@@ -813,7 +856,7 @@ function generateInsights(
     insights.push({
       type: 'positive',
       title: 'Equity Compounding Power',
-      description: `Bucket 4 grew from \u20B9${formatLakhs(bucket4Initial)} to \u20B9${formatLakhs(bucket4Final)} over retirement (${bucket4GrowthMultiple}x) \u2014 equity compounding protected your corpus while other buckets funded your income.`,
+      description: `Bucket 4 grew from Rs.${formatLakhs(bucket4Initial)} to Rs.${formatLakhs(bucket4Final)} over retirement (${bucket4GrowthMultiple}x)  -- equity compounding protected your corpus while other buckets funded your income.`,
     });
   } else if (bucket4Initial > 0 && bucket4Final <= 0) {
     insights.push({
@@ -828,7 +871,7 @@ function generateInsights(
     insights.push({
       type: 'tip',
       title: 'Rebalancing Activity',
-      description: `Rebalancing occurred ${rebalancingEvents.length} time${rebalancingEvents.length === 1 ? '' : 's'} over retirement \u2014 each time the growth bucket cascaded funds down to sustain your income.`,
+      description: `Rebalancing occurred ${rebalancingEvents.length} time${rebalancingEvents.length === 1 ? '' : 's'} over retirement  -- each time the growth bucket cascaded funds down to sustain your income.`,
     });
   }
 
@@ -837,7 +880,7 @@ function generateInsights(
     insights.push({
       type: 'warning',
       title: 'Low Equity Return Assumption',
-      description: 'Consider higher equity allocation for Bucket 4 \u2014 equity return should ideally be 4%+ above inflation for long-term growth.',
+      description: 'Consider higher equity allocation for Bucket 4  -- equity return should ideally be 4%+ above inflation for long-term growth.',
     });
   }
 
@@ -869,7 +912,7 @@ function generateInsights(
   }
 
   // 12. Shortfall
-  if (shortfall > 0 && inputs.lumpsumCorpus > 0) {
+  if (shortfall > 0) {
     insights.push({
       type: 'critical',
       title: 'Corpus Shortfall',
@@ -881,7 +924,7 @@ function generateInsights(
   insights.push({
     type: 'tip',
     title: 'Never Skip the Emergency Fund',
-    description: 'Bucket 0 (Emergency Fund) is critical \u2014 it prevents forced withdrawals from growth buckets during market downturns or unexpected expenses.',
+    description: 'Bucket 0 (Emergency Fund) is critical  -- it prevents forced withdrawals from growth buckets during market downturns or unexpected expenses.',
   });
 
   return insights;
