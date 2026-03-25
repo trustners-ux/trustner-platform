@@ -489,17 +489,15 @@ export function calculateBucketStrategy(
   const projectedFromSavings = fvExisting + fvMonthlySavings;
 
   // Available corpus at retirement:
-  // - If lumpsum is provided, it represents the total expected corpus at retirement
-  //   (user knows their number). Add FV of monthly savings ON TOP since those are
-  //   additional savings the person is making beyond the lumpsum expectation.
-  // - If no lumpsum but existing + monthly savings, use their combined FV
-  // - If nothing provided, assume ideal corpus
+  // All sources are ADDITIVE:
+  // - Lumpsum: one-time corpus at retirement (inheritance, property sale, gratuity, etc.)
+  // - FV of existing savings: current investments compounded to retirement
+  // - FV of monthly savings: ongoing SIPs compounded to retirement
+  // If nothing is provided at all, assume ideal corpus (no shortfall)
+  const totalAvailable = lumpsumCorpus + fvExisting + fvMonthlySavings;
   let availableCorpus: number;
-  if (lumpsumCorpus > 0) {
-    // Lumpsum is the base corpus; add FV of monthly savings if person is saving additionally
-    availableCorpus = lumpsumCorpus + fvMonthlySavings;
-  } else if (projectedFromSavings > 0) {
-    availableCorpus = projectedFromSavings;
+  if (totalAvailable > 0) {
+    availableCorpus = totalAvailable;
   } else {
     availableCorpus = totalCorpusNeeded; // Assume ideal if nothing provided
   }
