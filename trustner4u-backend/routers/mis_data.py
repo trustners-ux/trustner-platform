@@ -227,11 +227,53 @@ def _fetch_import_data(supabase, import_id: str) -> dict:
 # Endpoints
 # ---------------------------------------------------------------------------
 
+def _dedup_key_gi(row: dict) -> str:
+    """Generate dedup key for GI policy: policy_no + customer_name."""
+    pno = str(row.get("policy_no") or row.get("policyNo") or "").strip().lower()
+    name = str(row.get("customer_name") or row.get("customerName") or "").strip().lower()
+    return f"{pno}|{name}"
+
+def _dedup_key_health(row: dict) -> str:
+    """Generate dedup key for Health: customer_name + premium + date."""
+    name = str(row.get("customer_name") or row.get("customerName") or "").strip().lower()
+    prem = str(row.get("premium") or "0")
+    dt = str(row.get("date") or "").strip()
+    return f"{name}|{prem}|{dt}"
+
+def _dedup_key_life(row: dict) -> str:
+    """Generate dedup key for Life: policy_no + customer_name."""
+    pno = str(row.get("policy_no") or row.get("policyNo") or "").strip().lower()
+    name = str(row.get("customer_name") or row.get("customerName") or "").strip().lower()
+    return f"{pno}|{name}"
+
+def _dedup_key_mf(row: dict) -> str:
+    """Generate dedup key for MF: client_name + scheme + txn_date + amount."""
+    name = str(row.get("client_name") or row.get("clientName") or "").strip().lower()
+    scheme = str(row.get("scheme_name") or row.get("schemeName") or "").strip().lower()
+    dt = str(row.get("transaction_date") or row.get("transactionDate") or "").strip()
+    amt = str(row.get("amount") or "0")
+    return f"{name}|{scheme}|{dt}|{amt}"
+
+def _dedup_key_mtd(row: dict) -> str:
+    """Generate dedup key for MTD: name + region."""
+    name = str(row.get("name") or "").strip().lower()
+    region = str(row.get("region") or "").strip().lower().replace(" ", "")
+    return f"{name}|{region}"
+
+_DEDUP_FN = {
+    "mis_gi": _dedup_key_gi,
+    "mis_health": _dedup_key_health,
+    "mis_life": _dedup_key_life,
+    "mis_mf": _dedup_key_mf,
+    "mis_mtd": _dedup_key_mtd,
+}
+
+
 @router.post("/import", response_model=MISImportResponse)
 async def import_mis_data(payload: MISImportRequest):
     """
-    Import MIS data for a given month/year.
-    If data already exists for that month+year it is replaced (upsert).
+    Import MIS data — MERGES with existing data instead of replacing.
+    Deduplicates by key fields (policy_no+name for GI/Life, name+premium+date for Health, etc.)
     """
     try:
         sb = get_supabase()
@@ -245,38 +287,89 @@ async def import_mis_data(payload: MISImportRequest):
             .execute()
         )
 
-        # Delete old import if it exists (CASCADE removes child rows)
-        if existing.data:
-            old_id = existing.data[0]["id"]
-            sb.table("mis_imports").delete().eq("id", old_id).execute()
-
-        # Create new import record
-        import_record = {
-            "month": payload.month,
-            "year": payload.year,
-            "file_name": payload.fileName,
-            "gi_count": len(payload.gi),
-            "health_count": len(payload.health),
-            "life_count": len(payload.life),
-            "mf_count": len(payload.mf),
-            "mtd_count": len(payload.mtd),
+        import_id = None
+        existing_keys: Dict[str, set] = {
+            "mis_gi": set(), "mis_health": set(), "mis_life": set(),
+            "mis_mf": set(), "mis_mtd": set(),
         }
-        result = sb.table("mis_imports").insert(import_record).execute()
-        import_id = result.data[0]["id"]
 
-        # Insert data into child tables (batched)
-        _batch_insert(sb, "mis_gi", payload.gi, import_id)
-        _batch_insert(sb, "mis_health", payload.health, import_id)
-        _batch_insert(sb, "mis_life", payload.life, import_id)
-        _batch_insert(sb, "mis_mf", payload.mf, import_id)
-        _batch_insert(sb, "mis_mtd", payload.mtd, import_id)
+        if existing.data:
+            # MERGE MODE: keep existing import, add only new records
+            import_id = existing.data[0]["id"]
+            logger.info(f"Merging into existing import {import_id}")
+
+            # Build dedup keys from existing rows
+            for table_name, dedup_fn in _DEDUP_FN.items():
+                try:
+                    existing_rows = _fetch_all_rows(sb, table_name, import_id)
+                    for r in existing_rows:
+                        # Convert to camelCase for consistent key generation
+                        camel_row = {_snake_to_camel(k): v for k, v in r.items()}
+                        existing_keys[table_name].add(dedup_fn(camel_row))
+                except Exception as e:
+                    logger.warning(f"Could not fetch existing {table_name}: {e}")
+        else:
+            # NEW IMPORT: create fresh import record
+            import_record = {
+                "month": payload.month,
+                "year": payload.year,
+                "file_name": payload.fileName,
+                "gi_count": 0,
+                "health_count": 0,
+                "life_count": 0,
+                "mf_count": 0,
+                "mtd_count": 0,
+            }
+            result = sb.table("mis_imports").insert(import_record).execute()
+            import_id = result.data[0]["id"]
+
+        # Filter out duplicates from new data
+        new_gi = [r for r in payload.gi if _dedup_key_gi(r) not in existing_keys["mis_gi"]]
+        new_health = [r for r in payload.health if _dedup_key_health(r) not in existing_keys["mis_health"]]
+        new_life = [r for r in payload.life if _dedup_key_life(r) not in existing_keys["mis_life"]]
+        new_mf = [r for r in payload.mf if _dedup_key_mf(r) not in existing_keys["mis_mf"]]
+        # MTD: always replace (it's a summary, not individual records)
+        if payload.mtd:
+            try:
+                sb.table("mis_mtd").delete().eq("import_id", import_id).execute()
+            except Exception:
+                pass
+        new_mtd = payload.mtd
+
+        logger.info(f"Merge: {len(new_gi)} new GI, {len(new_health)} new Health, "
+                     f"{len(new_life)} new Life, {len(new_mf)} new MF, {len(new_mtd)} MTD")
+
+        # Insert only new records
+        _batch_insert(sb, "mis_gi", new_gi, import_id)
+        _batch_insert(sb, "mis_health", new_health, import_id)
+        _batch_insert(sb, "mis_life", new_life, import_id)
+        _batch_insert(sb, "mis_mf", new_mf, import_id)
+        _batch_insert(sb, "mis_mtd", new_mtd, import_id)
+
+        # Update import record counts (total = existing + new)
+        total_gi = len(existing_keys["mis_gi"]) + len(new_gi)
+        total_health = len(existing_keys["mis_health"]) + len(new_health)
+        total_life = len(existing_keys["mis_life"]) + len(new_life)
+        total_mf = len(existing_keys["mis_mf"]) + len(new_mf)
+        total_mtd = len(new_mtd)
+        try:
+            sb.table("mis_imports").update({
+                "gi_count": total_gi,
+                "health_count": total_health,
+                "life_count": total_life,
+                "mf_count": total_mf,
+                "mtd_count": total_mtd,
+                "file_name": payload.fileName,
+            }).eq("id", import_id).execute()
+        except Exception as e:
+            logger.warning(f"Failed to update import counts: {e}")
 
         return MISImportResponse(
             import_id=import_id,
-            gi_count=len(payload.gi),
-            health_count=len(payload.health),
-            life_count=len(payload.life),
-            mf_count=len(payload.mf),
+            gi_count=total_gi,
+            health_count=total_health,
+            life_count=total_life,
+            mf_count=total_mf,
             mtd_count=len(payload.mtd),
         )
 
@@ -347,7 +440,7 @@ async def get_mis_data(month: str, year: str):
 
 @router.get("/latest")
 async def get_latest_mis_data():
-    """Return the most recent MIS import and its data."""
+    """Return the MIS import with the most total records (largest dataset)."""
     try:
         sb = get_supabase()
 
@@ -355,14 +448,18 @@ async def get_latest_mis_data():
             sb.table("mis_imports")
             .select("*")
             .order("imported_at", desc=True)
-            .limit(1)
+            .limit(10)
             .execute()
         )
 
         if not imp.data:
             raise HTTPException(status_code=404, detail="No MIS imports found")
 
-        import_row = imp.data[0]
+        # Pick the import with the most total records
+        import_row = max(
+            imp.data,
+            key=lambda r: (r.get("gi_count", 0) or 0) + (r.get("health_count", 0) or 0) + (r.get("life_count", 0) or 0) + (r.get("mf_count", 0) or 0) + (r.get("mtd_count", 0) or 0)
+        )
         data = _fetch_import_data(sb, import_row["id"])
 
         return {
