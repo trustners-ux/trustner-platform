@@ -52,6 +52,7 @@ export interface BucketStrategyInputs {
   preRetirementReturn: number;
   currentMonthlySavings?: number;   // Monthly SIP/savings the person is already doing
   lumpsumEvents?: LumpsumEvent[];   // One-time investments/withdrawals during retirement
+  legacyPercent?: number;           // 0-25%, extra corpus buffer to leave for nominee/spouse post LE
 }
 
 export interface BucketAllocation {
@@ -415,8 +416,9 @@ export function calculateBucketStrategy(
   const totalRetirementNeed = pvOfInflatedWithdrawalsNetOfIncome(
     monthlyExpenseAtRetirement, monthlyInflation, monthlyLiquidReturn, 0, retirementMonths, incomeSources
   );
-  const totalCorpusNeeded = ceilToLakh(fixedAllocation + Math.max(0, totalRetirementNeed - bucket1Raw) * 1.05);
-  // 5% buffer for longevity risk (may live 2-3 years beyond life expectancy)
+  // Legacy buffer: extra corpus to leave for nominee/spouse after life expectancy
+  const legacyMultiplier = 1 + (inputs.legacyPercent || 0) / 100;
+  const totalCorpusNeeded = ceilToLakh((fixedAllocation + Math.max(0, totalRetirementNeed - bucket1Raw)) * legacyMultiplier);
 
   const remainingForGrowth = Math.max(0, totalCorpusNeeded - fixedAllocation);
   const bucket2Corpus = ceilToLakh(remainingForGrowth * 0.35); // 35% in Equity Savings/BAF/MAAF
@@ -614,37 +616,12 @@ function buildDepletionScheduleWithCascade(
   const allRebalancingEvents: RebalancingEvent[] = [];
 
   // Initialize each bucket with its allocated corpus.
-  // PRIORITY FUNDING: B0 (emergency) and B1 (short-term income) get funded FIRST.
-  // Only remaining corpus goes to growth buckets B2/B3/B4 in 35/35/30 ratio.
-  // This ensures the first 3 years of income are always secure.
+  // Scale proportionally if user has more or less than needed.
   const allocatedTotal = bucketCorpuses.reduce((s, v) => s + v, 0);
+  const scaleFactor = allocatedTotal > 0 ? startingCorpus / allocatedTotal : 1;
 
-  let bal: number[];
-  if (startingCorpus >= allocatedTotal) {
-    // Surplus: fund all buckets fully, excess stays in B4 (equity growth engine)
-    bal = [...bucketCorpuses];
-    const excess = startingCorpus - allocatedTotal;
-    bal[4] += excess; // Extra money compounds in equity
-  } else {
-    // Shortfall: fund B0 and B1 first, then distribute remainder
-    bal = [0, 0, 0, 0, 0];
-    let remaining = startingCorpus;
-
-    // Priority 1: Emergency fund (B0) — must be fully funded
-    bal[0] = Math.min(bucketCorpuses[0], remaining);
-    remaining -= bal[0];
-
-    // Priority 2: Short-term income (B1) — first 3 years of withdrawals
-    bal[1] = Math.min(bucketCorpuses[1], remaining);
-    remaining -= bal[1];
-
-    // Priority 3: Remaining goes to growth buckets in 35/35/30 ratio
-    if (remaining > 0) {
-      bal[2] = Math.round(remaining * 0.35);
-      bal[3] = Math.round(remaining * 0.35);
-      bal[4] = remaining - bal[2] - bal[3]; // ~30%
-    }
-  }
+  // Bucket balances: each bucket gets its proportional share
+  const bal = bucketCorpuses.map(c => c * scaleFactor);
 
   // Monthly return rates for each bucket
   const monthlyRates = bucketReturnRates.map(r => r / 100 / 12);

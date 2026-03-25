@@ -60,6 +60,10 @@ export default function BucketStrategyPage() {
   const [showCurrentSavings, setShowCurrentSavings] = useState(false);
   const [monthlySavings, setMonthlySavings] = useState(50000);
 
+  // Legacy
+  const [wantsLegacy, setWantsLegacy] = useState(false);
+  const [legacyPercent, setLegacyPercent] = useState(5);
+
   // Lumpsum events during retirement
   const [lumpsumEvents, setLumpsumEvents] = useState<LumpsumEvent[]>([]);
   let lumpsumEventId = lumpsumEvents.length;
@@ -120,11 +124,13 @@ export default function BucketStrategyPage() {
       preRetirementReturn,
       currentMonthlySavings: showCurrentSavings ? monthlySavings : 0,
       lumpsumEvents: lumpsumEvents.length > 0 ? lumpsumEvents : undefined,
+      legacyPercent: wantsLegacy ? legacyPercent : 0,
     };
     return calculateBucketStrategy(inputs);
   }, [
     currentAge, retirementAge, lifeExpectancy, monthlyExpenses, inflationRate,
     customReturns, liquidReturn, debtReturn, assetAllocationReturn, equityReturn,
+    wantsLegacy, legacyPercent,
     hasLumpsum, lumpsumCorpus, incomeSources,
     existingSavings, preRetirementReturn, showCurrentSavings, monthlySavings,
     lumpsumEvents,
@@ -292,10 +298,50 @@ export default function BucketStrategyPage() {
                       <span className={cn('inline-block h-4 w-4 rounded-full bg-white transition-transform shadow-sm', hasLumpsum ? 'translate-x-6' : 'translate-x-1')} />
                     </button>
                   </div>
-                  <div className="text-[10px] text-slate-500">{hasLumpsum ? 'Total money you will have at retirement (PF + MF + FD + all savings)' : 'Calculator will tell you how much you need to accumulate'}</div>
+                  <div className="text-[10px] text-slate-500">
+                    {hasLumpsum
+                      ? 'This is the total money you expect to have at retirement — PF + MF + FD + gratuity + all savings combined. The calculator will distribute this across 5 buckets and show how long it lasts.'
+                      : 'Calculator will show the ideal corpus needed and the SIP required to build it before retirement.'}
+                  </div>
                   {hasLumpsum && (
                     <div className="mt-3 animate-in">
                       <NumberInput label="Total Retirement Corpus" value={lumpsumCorpus} onChange={setLumpsumCorpus} prefix="₹" step={500000} min={0} max={500000000} />
+                      <div className="mt-2 p-2 rounded-lg bg-amber-50 border border-amber-200">
+                        <p className="text-[10px] text-amber-700 leading-relaxed">
+                          <strong>How it works:</strong> This amount gets distributed across all 5 buckets proportionally.
+                          If it is less than the ideal corpus, the calculator shows when it will deplete and how much additional
+                          SIP you need. If it is more, the surplus stays invested for your nominee/spouse.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Legacy Toggle */}
+                <div className={cn('rounded-xl border p-3 mt-3', wantsLegacy ? 'border-purple-200 bg-purple-50/50' : 'border-surface-300 bg-surface-50')}>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-medium text-slate-600">Leave legacy for nominee/spouse</label>
+                    <button
+                      role="switch"
+                      aria-checked={wantsLegacy}
+                      onClick={() => setWantsLegacy(!wantsLegacy)}
+                      className={cn('relative inline-flex h-6 w-11 items-center rounded-full transition-colors', wantsLegacy ? 'bg-purple-500' : 'bg-slate-300')}
+                      data-pdf-hide
+                    >
+                      <span className={cn('inline-block h-4 w-4 rounded-full bg-white transition-transform shadow-sm', wantsLegacy ? 'translate-x-6' : 'translate-x-1')} />
+                    </button>
+                  </div>
+                  <div className="text-[10px] text-slate-500">
+                    {wantsLegacy
+                      ? 'Extra corpus buffer so money outlasts your life expectancy for your family.'
+                      : 'Corpus planned to last exactly till life expectancy.'}
+                  </div>
+                  {wantsLegacy && (
+                    <div className="mt-3 animate-in">
+                      <NumberInput label="Legacy Buffer" value={legacyPercent} onChange={setLegacyPercent} suffix="%" step={1} min={0} max={25} />
+                      <div className="mt-1 text-[10px] text-purple-600 font-medium">
+                        Adds {legacyPercent}% extra to your required corpus for your nominee/spouse
+                      </div>
                     </div>
                   )}
                 </div>
