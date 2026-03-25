@@ -102,8 +102,11 @@ export interface DepletionYear {
   age: number;
   activeBucket: number;
   yearStartCorpus: number;
-  annualWithdrawal: number;
+  grossExpense: number;         // Total expense before income offset
+  annualIncome: number;         // Total income from all sources (pension, rental, SCSS, etc.)
+  annualWithdrawal: number;     // Net withdrawal from buckets (expense - income)
   annualReturn: number;
+  annualFunding: number;        // Total refill/rebalancing amount transferred between buckets
   yearEndCorpus: number;
   cumulativeWithdrawn: number;
   // Individual bucket balances
@@ -635,6 +638,9 @@ function buildDepletionScheduleWithCascade(
     const yearRefillEvents: string[] = [];
     let yearWithdrawal = 0;
     let yearReturn = 0;
+    let yearGrossExpense = 0;
+    let yearIncome = 0;
+    let yearFunding = 0;
 
     // Simulate 12 months for this year
     for (let m = 0; m < 12; m++) {
@@ -659,6 +665,8 @@ function buildDepletionScheduleWithCascade(
       // Step 4: Net withdrawal from buckets = expense minus income
       const netWithdrawal = Math.max(0, monthlyExpense - monthlyIncome);
       yearWithdrawal += netWithdrawal;
+      yearGrossExpense += monthlyExpense;
+      yearIncome += monthlyIncome;
 
       // Step 5: Withdraw from Bucket 1 first, then cascade upward
       // Bucket 0 (emergency) is NOT touched for regular withdrawals
@@ -689,6 +697,7 @@ function buildDepletionScheduleWithCascade(
           if (refillAmount > 0) {
             bal[2] -= refillAmount;
             bal[1] += refillAmount;
+            yearFunding += refillAmount;
             yearRefillEvents.push(`B2 ->B1: Rs.${formatLakhs(refillAmount)}`);
             allRebalancingEvents.push({
               year: y,
@@ -706,6 +715,7 @@ function buildDepletionScheduleWithCascade(
           if (refillAmount > 0) {
             bal[3] -= refillAmount;
             bal[2] += refillAmount;
+            yearFunding += refillAmount;
             yearRefillEvents.push(`B3 ->B2: Rs.${formatLakhs(refillAmount)}`);
             allRebalancingEvents.push({
               year: y,
@@ -723,6 +733,7 @@ function buildDepletionScheduleWithCascade(
           if (refillAmount > 0) {
             bal[4] -= refillAmount;
             bal[3] += refillAmount;
+            yearFunding += refillAmount;
             yearRefillEvents.push(`B4 ->B3: Rs.${formatLakhs(refillAmount)}`);
             allRebalancingEvents.push({
               year: y,
@@ -754,8 +765,11 @@ function buildDepletionScheduleWithCascade(
       age,
       activeBucket,
       yearStartCorpus: Math.round(yearStartCorpus),
+      grossExpense: Math.round(yearGrossExpense),
+      annualIncome: Math.round(yearIncome),
       annualWithdrawal: Math.round(yearWithdrawal),
       annualReturn: Math.round(yearReturn),
+      annualFunding: Math.round(yearFunding),
       yearEndCorpus: Math.round(yearEndCorpus),
       cumulativeWithdrawn: Math.round(cumWithdrawn),
       bucket0Balance: Math.round(Math.max(0, bal[0])),

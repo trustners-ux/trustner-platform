@@ -746,36 +746,57 @@ export default function BucketStrategyPage() {
 
                 {showYearlyDetails && (
                   <div className="mt-4 overflow-x-auto animate-in">
-                    <table className="w-full text-xs min-w-[960px]">
+                    <table className="w-full text-xs min-w-[1200px]">
                       <thead>
-                        <tr className="border-b-2 border-surface-300">
-                          <th className="text-left py-2 text-slate-500 font-medium">Yr</th>
-                          <th className="text-left py-2 text-slate-500 font-medium">Age</th>
-                          <th className="text-right py-2 text-slate-500 font-medium">Withdrawal</th>
-                          <th className="text-right py-2 text-red-400 font-medium">B0</th>
-                          <th className="text-right py-2 text-blue-400 font-medium">B1</th>
-                          <th className="text-right py-2 text-purple-400 font-medium">B2</th>
-                          <th className="text-right py-2 text-amber-400 font-medium">B3</th>
-                          <th className="text-right py-2 text-emerald-400 font-medium">B4</th>
-                          <th className="text-right py-2 text-slate-500 font-medium">End Corpus</th>
-                          <th className="text-left py-2 text-slate-500 font-medium">Refill Events</th>
+                        <tr className="border-b-2 border-surface-300 bg-surface-50">
+                          <th className="text-left py-2.5 px-2 text-slate-500 font-semibold">Yr</th>
+                          <th className="text-left py-2.5 px-1 text-slate-500 font-semibold">Age</th>
+                          <th className="text-right py-2.5 px-2 text-slate-500 font-semibold">Start Corpus</th>
+                          <th className="text-right py-2.5 px-2 text-red-500 font-semibold">Gross Expense</th>
+                          <th className="text-right py-2.5 px-2 text-emerald-500 font-semibold">Income</th>
+                          <th className="text-right py-2.5 px-2 text-red-600 font-semibold">Net Withdrawal</th>
+                          <th className="text-right py-2.5 px-2 text-brand-500 font-semibold">Returns</th>
+                          <th className="text-right py-2.5 px-2 text-purple-500 font-semibold">Refill Amt</th>
+                          <th className="text-center py-2.5 px-1 text-slate-400 font-semibold">Active</th>
+                          <th className="text-right py-2.5 px-2 text-primary-700 font-semibold">End Corpus</th>
+                          <th className="text-right py-2.5 px-2 text-slate-400 font-semibold">Cumulative Out</th>
+                          <th className="text-left py-2.5 px-2 text-slate-400 font-semibold">Refill Events</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {result.depletionSchedule.map((row, i) => (
-                          <tr key={i} className="border-b border-surface-200/60 hover:bg-surface-50">
-                            <td className="py-2 font-medium text-primary-700">{row.year}</td>
-                            <td className="py-2 text-slate-600">{row.age}</td>
-                            <td className="py-2 text-right text-red-600 font-medium">{formatINR(row.annualWithdrawal)}</td>
-                            <td className="py-2 text-right text-red-600">{formatINR(row.bucket0Balance || 0)}</td>
-                            <td className="py-2 text-right text-blue-600">{formatINR(row.bucket1Balance || 0)}</td>
-                            <td className="py-2 text-right text-purple-600">{formatINR(row.bucket2Balance || 0)}</td>
-                            <td className="py-2 text-right text-amber-600">{formatINR(row.bucket3Balance || 0)}</td>
-                            <td className="py-2 text-right text-emerald-600">{formatINR(row.bucket4Balance || 0)}</td>
-                            <td className="py-2 text-right font-bold text-primary-700">{formatINR(row.yearEndCorpus)}</td>
-                            <td className="py-2 text-left text-[10px] text-slate-500">{row.refillEvents?.join(', ') || '—'}</td>
-                          </tr>
-                        ))}
+                        {result.depletionSchedule.map((row, i) => {
+                          const bucketLabels = ['Emergency', 'Liquid', 'Debt', 'Balanced', 'Equity'];
+                          const bucketColors = ['bg-red-100 text-red-700', 'bg-blue-100 text-blue-700', 'bg-purple-100 text-purple-700', 'bg-amber-100 text-amber-700', 'bg-emerald-100 text-emerald-700'];
+                          return (
+                            <tr key={i} className={cn('border-b border-surface-200/60 hover:bg-surface-50', i % 5 === 4 && 'border-b-2 border-surface-300')}>
+                              <td className="py-2 px-2 font-medium text-primary-700">{row.year}</td>
+                              <td className="py-2 px-1 text-slate-600">{row.age}</td>
+                              <td className="py-2 px-2 text-right text-slate-600">{formatINR(row.yearStartCorpus)}</td>
+                              <td className="py-2 px-2 text-right text-red-500">{formatINR(row.grossExpense || row.annualWithdrawal)}</td>
+                              <td className="py-2 px-2 text-right text-emerald-600 font-medium">{row.annualIncome > 0 ? `+${formatINR(row.annualIncome)}` : '—'}</td>
+                              <td className="py-2 px-2 text-right text-red-600 font-bold">{formatINR(row.annualWithdrawal)}</td>
+                              <td className="py-2 px-2 text-right text-brand-600">{formatINR(row.annualReturn)}</td>
+                              <td className="py-2 px-2 text-right text-purple-600">{row.annualFunding > 0 ? formatINR(row.annualFunding) : '—'}</td>
+                              <td className="py-2 px-1 text-center"><span className={cn('inline-block px-1.5 py-0.5 rounded text-[9px] font-bold', bucketColors[row.activeBucket])}>{bucketLabels[row.activeBucket]}</span></td>
+                              <td className="py-2 px-2 text-right font-extrabold text-primary-700">{formatINR(row.yearEndCorpus)}</td>
+                              <td className="py-2 px-2 text-right text-slate-400">{formatINR(row.cumulativeWithdrawn)}</td>
+                              <td className="py-2 px-2 text-left text-[10px] text-slate-500 max-w-[180px] truncate" title={row.refillEvents?.join(', ') || ''}>{row.refillEvents?.length > 0 ? row.refillEvents.join(', ') : '—'}</td>
+                            </tr>
+                          );
+                        })}
+                        {/* Totals row */}
+                        <tr className="bg-surface-100 border-t-2 border-surface-300 font-bold">
+                          <td className="py-3 px-2 text-primary-700" colSpan={3}>Total</td>
+                          <td className="py-3 px-2 text-right text-red-500">{formatINR(result.depletionSchedule.reduce((s, r) => s + (r.grossExpense || r.annualWithdrawal), 0))}</td>
+                          <td className="py-3 px-2 text-right text-emerald-600">{formatINR(result.depletionSchedule.reduce((s, r) => s + (r.annualIncome || 0), 0))}</td>
+                          <td className="py-3 px-2 text-right text-red-600">{formatINR(result.depletionSchedule.reduce((s, r) => s + r.annualWithdrawal, 0))}</td>
+                          <td className="py-3 px-2 text-right text-brand-600">{formatINR(result.depletionSchedule.reduce((s, r) => s + r.annualReturn, 0))}</td>
+                          <td className="py-3 px-2 text-right text-purple-600">{formatINR(result.depletionSchedule.reduce((s, r) => s + (r.annualFunding || 0), 0))}</td>
+                          <td className="py-3 px-1" />
+                          <td className="py-3 px-2 text-right text-primary-700">{formatINR(result.depletionSchedule[result.depletionSchedule.length - 1]?.yearEndCorpus || 0)}</td>
+                          <td className="py-3 px-2 text-right text-slate-400">{formatINR(result.depletionSchedule[result.depletionSchedule.length - 1]?.cumulativeWithdrawn || 0)}</td>
+                          <td className="py-3 px-2" />
+                        </tr>
                       </tbody>
                     </table>
                   </div>
