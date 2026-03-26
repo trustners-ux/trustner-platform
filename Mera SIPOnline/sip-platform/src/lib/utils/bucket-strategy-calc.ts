@@ -276,7 +276,29 @@ export function calculateBucketStrategy(inputs: BucketInputs): BucketResult {
     let activeBucket = 'B1';
     const refillEvents: string[] = [];
 
+    // Process lumpsum events FIRST (at start of year) so investments
+    // boost corpus before withdrawals, and withdrawals reduce corpus before growth
+    let lumpsumEventStr: string | undefined;
+    const eventsThisYear = lumpsumEvents.filter((e) => e.atAge === age);
+    for (const ev of eventsThisYear) {
+      if (ev.type === 'investment') {
+        bal[4] += ev.amount; // Investments go to equity bucket (growth engine)
+        lumpsumEventStr = (lumpsumEventStr ? lumpsumEventStr + ', ' : '') + `${ev.label} +${formatLakhs(ev.amount)}`;
+      } else {
+        let toDeduct = ev.amount;
+        for (let bi = 4; bi >= 1; bi--) {
+          if (toDeduct <= 0) break;
+          const deducted = Math.min(bal[bi], toDeduct);
+          bal[bi] -= deducted;
+          toDeduct -= deducted;
+        }
+        lumpsumEventStr = (lumpsumEventStr ? lumpsumEventStr + ', ' : '') + `${ev.label} -${formatLakhs(ev.amount)}`;
+      }
+    }
+
     // Month-by-month simulation
+    let refillDoneThisYear = false; // Only one refill per year
+
     for (let m = 0; m < 12; m++) {
       // Grow each bucket
       for (let bi = 0; bi < 5; bi++) {
@@ -300,43 +322,28 @@ export function calculateBucketStrategy(inputs: BucketInputs): BucketResult {
         activeBucket = 'Depleted';
       }
 
-      // Refill logic: cascade when a bucket empties
-      if (bal[1] <= 0 && bal[2] > 0) {
-        const refillAmt = Math.min(bal[2], gap * 36);
-        bal[1] += refillAmt;
-        bal[2] -= refillAmt;
-        refillEvents.push(`B2->B1: ${formatLakhs(refillAmt)}`);
-      }
-      if (bal[2] <= 0 && bal[3] > 0) {
-        const refillAmt = Math.min(bal[3], gap * 36);
-        bal[2] += refillAmt;
-        bal[3] -= refillAmt;
-        refillEvents.push(`B3->B2: ${formatLakhs(refillAmt)}`);
-      }
-      if (bal[3] <= 0 && bal[4] > 0) {
-        const refillAmt = Math.min(bal[4], gap * 48);
-        bal[3] += refillAmt;
-        bal[4] -= refillAmt;
-        refillEvents.push(`B4->B3: ${formatLakhs(refillAmt)}`);
-      }
-    }
-
-    // Lumpsum events at this age
-    let lumpsumEventStr: string | undefined;
-    const eventsThisYear = lumpsumEvents.filter((e) => e.atAge === age);
-    for (const ev of eventsThisYear) {
-      if (ev.type === 'investment') {
-        bal[4] += ev.amount;
-        lumpsumEventStr = `${ev.label} +${formatLakhs(ev.amount)}`;
-      } else {
-        let toDeduct = ev.amount;
-        for (let bi = 4; bi >= 1; bi--) {
-          if (toDeduct <= 0) break;
-          const deducted = Math.min(bal[bi], toDeduct);
-          bal[bi] -= deducted;
-          toDeduct -= deducted;
+      // Refill logic: cascade ONLY when a bucket is fully empty
+      // and ONLY ONCE per year to avoid draining upper buckets
+      if (!refillDoneThisYear) {
+        if (bal[1] <= 0 && bal[2] > 0) {
+          const refillAmt = Math.min(bal[2], gap * 36); // 3 years' worth
+          bal[1] += refillAmt;
+          bal[2] -= refillAmt;
+          refillEvents.push(`B2->B1: ${formatLakhs(refillAmt)}`);
+          refillDoneThisYear = true;
+        } else if (bal[2] <= 0 && bal[3] > 0) {
+          const refillAmt = Math.min(bal[3], gap * 36); // 3 years' worth
+          bal[2] += refillAmt;
+          bal[3] -= refillAmt;
+          refillEvents.push(`B3->B2: ${formatLakhs(refillAmt)}`);
+          refillDoneThisYear = true;
+        } else if (bal[3] <= 0 && bal[4] > 0) {
+          const refillAmt = Math.min(bal[4], gap * 48); // 4 years' worth
+          bal[3] += refillAmt;
+          bal[4] -= refillAmt;
+          refillEvents.push(`B4->B3: ${formatLakhs(refillAmt)}`);
+          refillDoneThisYear = true;
         }
-        lumpsumEventStr = `${ev.label} -${formatLakhs(ev.amount)}`;
       }
     }
 
