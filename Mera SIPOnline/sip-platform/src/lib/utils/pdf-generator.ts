@@ -96,11 +96,21 @@ function scrapePlanSummary(element: HTMLElement): {
   const ageInput = inputPanel.querySelector('input[inputMode="decimal"]') as HTMLInputElement | null;
   const investorName = nameInput?.value || '';
 
-  // Find age — look for the input after the "Current Age" or "Age" label
+  // Find age — look for the input after the "Current Age" label specifically
+  // Must match "Current Age" and NOT "Retirement Age" or "Life Expectancy"
   let investorAge = '';
   const allLabels = inputPanel.querySelectorAll('label');
   allLabels.forEach((lbl) => {
-    if (lbl.textContent?.toLowerCase().includes('age')) {
+    const labelText = lbl.textContent?.trim().toLowerCase() || '';
+    // Only match "Current Age" or "Your Age" or just "Age" (exact or near-exact)
+    // Skip "Retirement Age", "Life Expectancy", "At Age" etc.
+    if (
+      investorAge === '' && // Only take the FIRST match
+      (labelText === 'current age' || labelText === 'your age' || labelText === 'age') &&
+      !labelText.includes('retirement') &&
+      !labelText.includes('expectancy') &&
+      !labelText.includes('at age')
+    ) {
       const parentDiv = lbl.closest('div');
       if (parentDiv) {
         const ageInp = parentDiv.querySelector('input[inputMode="decimal"]') as HTMLInputElement | null;
