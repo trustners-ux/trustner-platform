@@ -65,6 +65,7 @@ export interface ReportQueueEntry {
   reviewedBy: string | null;
   approvedBy: string | null;
   rejectionReason: string | null;
+  adminNotes: string | null;
   editHistory: EditHistoryEntry[];
 
   // Reminder tracking

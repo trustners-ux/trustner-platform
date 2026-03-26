@@ -15,8 +15,13 @@ import type { FinancialHealthReport } from '@/types/financial-planning';
 
 export const maxDuration = 30;
 
-function getResend() {
-  return new Resend(process.env.RESEND_API_KEY);
+function getResend(): Resend | null {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) {
+    console.warn('[Approve] RESEND_API_KEY not set — email will be skipped');
+    return null;
+  }
+  return new Resend(key);
 }
 
 export async function POST(
@@ -26,6 +31,15 @@ export async function POST(
   try {
     const { id } = await params;
     const adminEmail = request.headers.get('x-admin-email') || 'unknown';
+
+    // Parse optional adminNotes from request body
+    let adminNotes: string | undefined;
+    try {
+      const body = await request.json();
+      adminNotes = body?.adminNotes;
+    } catch {
+      // Body may be empty for legacy calls — that's fine
+    }
 
     const entry = await getReportEntry(id);
     if (!entry) {
@@ -66,41 +80,82 @@ export async function POST(
       return NextResponse.json({ error: 'PDF not found — cannot send report' }, { status: 500 });
     }
 
-    // Send report email to user
-    const narrative = entry.editedNarrative || entry.claudeNarrative;
-    const insights = entry.topActions.slice(0, 3);
+    // Send report email to user — wrapped so email failure doesn't block approval
+    let emailSent = false;
+    let emailWarning: string | undefined;
 
-    await getResend().emails.send({
-      from: 'Mera SIP Online <leads@merasip.com>',
-      to: entry.userEmail,
-      subject: `Your Trustner Financial Health Report - Score: ${entry.totalScore}/900`,
-      html: buildReportEmailHTML(entry.userName, entry.totalScore, entry.grade, insights),
-      attachments: [{
-        filename: 'Trustner-Financial-Health-Report.pdf',
-        content: pdfBuffer.toString('base64'),
-      }],
-    });
-    console.log(`[Approve] Report email sent to ${entry.userEmail}`);
+    const resend = getResend();
+    if (!resend) {
+      emailWarning = 'RESEND_API_KEY not configured — email was not sent';
+    } else {
+      try {
+        const insights = entry.topActions.slice(0, 3);
+        const notesForEmail = adminNotes?.trim() || entry.adminNotes?.trim() || undefined;
 
-    // Update entry status
+        await resend.emails.send({
+          from: 'Mera SIP Online <leads@merasip.com>',
+          to: entry.userEmail,
+          subject: `Your Trustner Financial Health Report - Score: ${entry.totalScore}/900`,
+          html: buildReportEmailHTML(
+            entry.userName,
+            entry.totalScore,
+            entry.grade,
+            insights,
+            notesForEmail
+          ),
+          attachments: [{
+            filename: 'Trustner-Financial-Health-Report.pdf',
+            content: pdfBuffer.toString('base64'),
+          }],
+        });
+        emailSent = true;
+        console.log(`[Approve] Report email sent to ${entry.userEmail}`);
+      } catch (emailError) {
+        console.error('[Approve] Email send failed:', emailError);
+        emailWarning = `Email delivery failed: ${emailError instanceof Error ? emailError.message : 'Unknown error'}. Report marked as approved.`;
+      }
+    }
+
+    // Update entry status — always mark as approved even if email failed
     const historyEntry: EditHistoryEntry = {
       timestamp: new Date().toISOString(),
       adminEmail,
       action: 'approved',
-      details: `Report approved and sent to ${entry.userEmail}`,
+      details: emailSent
+        ? `Report approved and sent to ${entry.userEmail}`
+        : `Report approved (email not sent: ${emailWarning})`,
     };
 
-    await updateReportEntry(id, {
-      status: 'sent',
+    const updatePayload: Partial<typeof entry> = {
+      status: emailSent ? 'sent' : 'approved',
       approvedAt: new Date().toISOString(),
       approvedBy: adminEmail,
-      sentAt: new Date().toISOString(),
       editHistory: [...entry.editHistory, historyEntry],
-    });
+    };
 
-    return NextResponse.json({ success: true, message: 'Report approved and sent' });
+    if (emailSent) {
+      updatePayload.sentAt = new Date().toISOString();
+    }
+
+    if (adminNotes !== undefined) {
+      updatePayload.adminNotes = adminNotes;
+    }
+
+    await updateReportEntry(id, updatePayload);
+
+    return NextResponse.json({
+      success: true,
+      emailSent,
+      message: emailSent
+        ? 'Report approved and sent'
+        : 'Report approved but email was not sent',
+      warning: emailWarning,
+    });
   } catch (error) {
     console.error('[Approve] Error:', error);
-    return NextResponse.json({ error: 'Failed to approve and send report' }, { status: 500 });
+    return NextResponse.json(
+      { error: `Failed to approve report: ${error instanceof Error ? error.message : 'Unknown error'}` },
+      { status: 500 }
+    );
   }
 }

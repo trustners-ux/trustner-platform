@@ -12,7 +12,8 @@ export function buildReportEmailHTML(
   userName: string,
   score: number,
   grade: string,
-  insights: string[]
+  insights: string[],
+  adminNotes?: string
 ): string {
   const firstName = userName.split(' ')[0];
   const gradeColors: Record<string, string> = {
@@ -42,6 +43,10 @@ export function buildReportEmailHTML(
 </td></tr></table>
 ${insights.length > 0 ? `<p style="color:#334155;font-size:14px;font-weight:600;margin:0 0 12px;">Key Insights:</p>
 ${insights.map(i => `<p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 8px;padding-left:16px;border-left:3px solid #0f766e;">${i}</p>`).join('')}` : ''}
+${adminNotes ? `<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:14px 16px;margin:16px 0;">
+<p style="color:#0369a1;font-size:13px;font-weight:600;margin:0 0 6px;">A note from your advisor:</p>
+<p style="color:#475569;font-size:13px;line-height:1.6;margin:0;">${adminNotes.replace(/\n/g, '<br/>')}</p>
+</div>` : ''}
 <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
 <tr><td style="text-align:center;">
 <p style="color:#475569;font-size:13px;margin:0 0 12px;">Ready to turn insights into action?</p>

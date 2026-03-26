@@ -20,7 +20,7 @@ export async function GET(
   }
 }
 
-// PATCH /api/admin/reports/[id] — Update narrative text (save draft)
+// PATCH /api/admin/reports/[id] — Update narrative text or admin notes
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -28,11 +28,15 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { editedNarrative } = body as { editedNarrative: string };
+    const { editedNarrative, adminNotes } = body as {
+      editedNarrative?: string;
+      adminNotes?: string;
+    };
     const adminEmail = request.headers.get('x-admin-email') || 'unknown';
 
-    if (!editedNarrative || editedNarrative.trim().length === 0) {
-      return NextResponse.json({ error: 'Narrative text is required' }, { status: 400 });
+    // Must provide at least one field to update
+    if (!editedNarrative?.trim() && adminNotes === undefined) {
+      return NextResponse.json({ error: 'No update fields provided' }, { status: 400 });
     }
 
     const entry = await getReportEntry(id);
@@ -40,20 +44,39 @@ export async function PATCH(
       return NextResponse.json({ error: 'Report not found' }, { status: 404 });
     }
 
-    const historyEntry: EditHistoryEntry = {
-      timestamp: new Date().toISOString(),
-      adminEmail,
-      action: 'narrative_edited',
-      details: `Narrative edited (${editedNarrative.length} chars)`,
-    };
-
-    const updated = await updateReportEntry(id, {
-      editedNarrative,
-      narrativeVersion: entry.narrativeVersion + 1,
+    const updates: Record<string, unknown> = {
       reviewedAt: new Date().toISOString(),
       reviewedBy: adminEmail,
-      editHistory: [...entry.editHistory, historyEntry],
-    });
+    };
+
+    const historyEntries: EditHistoryEntry[] = [];
+
+    if (editedNarrative?.trim()) {
+      updates.editedNarrative = editedNarrative;
+      updates.narrativeVersion = entry.narrativeVersion + 1;
+      historyEntries.push({
+        timestamp: new Date().toISOString(),
+        adminEmail,
+        action: 'narrative_edited',
+        details: `Narrative edited (${editedNarrative.length} chars)`,
+      });
+    }
+
+    if (adminNotes !== undefined) {
+      updates.adminNotes = adminNotes || null;
+      historyEntries.push({
+        timestamp: new Date().toISOString(),
+        adminEmail,
+        action: 'reviewed',
+        details: adminNotes ? `Admin notes updated (${adminNotes.length} chars)` : 'Admin notes cleared',
+      });
+    }
+
+    if (historyEntries.length > 0) {
+      updates.editHistory = [...entry.editHistory, ...historyEntries];
+    }
+
+    const updated = await updateReportEntry(id, updates);
 
     return NextResponse.json({ report: updated });
   } catch (error) {

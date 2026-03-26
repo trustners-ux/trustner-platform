@@ -83,6 +83,7 @@ export async function createReportQueueEntry(
     reviewedBy: null,
     approvedBy: null,
     rejectionReason: null,
+    adminNotes: null,
     editHistory: [],
     remindersSent: 0,
     lastReminderAt: null,

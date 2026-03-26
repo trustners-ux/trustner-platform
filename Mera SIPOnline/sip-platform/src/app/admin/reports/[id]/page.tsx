@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft, User, Mail, Phone, MapPin, Shield, Clock,
   CheckCircle2, XCircle, RefreshCw, Edit3, Save, Download,
-  Sparkles, AlertTriangle, FileText, Activity,
+  Sparkles, AlertTriangle, FileText, Activity, MessageSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import type { ReportQueueEntry } from '@/types/report-queue';
@@ -76,6 +76,10 @@ export default function ReportDetailPage() {
   const [editingNarrative, setEditingNarrative] = useState(false);
   const [narrativeText, setNarrativeText] = useState('');
 
+  // Admin notes
+  const [adminNotes, setAdminNotes] = useState('');
+  const [notesSaved, setNotesSaved] = useState(false);
+
   // Reject modal
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
@@ -88,6 +92,7 @@ export default function ReportDetailPage() {
       if (data.report) {
         setReport(data.report);
         setNarrativeText(data.report.editedNarrative || data.report.claudeNarrative);
+        setAdminNotes(data.report.adminNotes || '');
       }
     } catch (err) {
       console.error('Failed to fetch report:', err);
@@ -136,15 +141,43 @@ export default function ReportDetailPage() {
     }
   };
 
+  const handleSaveNotes = async () => {
+    if (!report) return;
+    setActionLoading('saveNotes');
+    try {
+      const res = await fetch(`/api/admin/reports/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminNotes }),
+      });
+      if (res.ok) {
+        setNotesSaved(true);
+        setTimeout(() => setNotesSaved(false), 2000);
+        await fetchReport();
+      }
+    } catch (err) {
+      console.error('Save notes failed:', err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const handleApprove = async () => {
     if (!report) return;
     setActionLoading('approve');
     try {
-      const res = await fetch(`/api/admin/reports/${id}/approve`, { method: 'POST' });
+      const res = await fetch(`/api/admin/reports/${id}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminNotes: adminNotes || undefined }),
+      });
+      const data = await res.json();
       if (res.ok) {
+        if (data.warning) {
+          alert(`Approved with warning: ${data.warning}`);
+        }
         await fetchReport();
       } else {
-        const data = await res.json();
         alert(data.error || 'Failed to approve');
       }
     } catch (err) {
@@ -416,6 +449,53 @@ export default function ReportDetailPage() {
           </div>
         ) : (
           <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">{currentNarrative}</p>
+        )}
+      </div>
+
+      {/* Admin Notes */}
+      <div className="card-base p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+            <MessageSquare className="w-4 h-4 text-blue-500" />
+            Admin Notes / Comments
+            {report.adminNotes && !isPending && (
+              <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">
+                Has notes
+              </span>
+            )}
+          </h3>
+          {isPending && (
+            <button
+              onClick={handleSaveNotes}
+              disabled={actionLoading === 'saveNotes'}
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors disabled:opacity-50"
+            >
+              <Save className="w-3 h-3" />
+              {notesSaved ? 'Saved!' : actionLoading === 'saveNotes' ? 'Saving...' : 'Save Notes'}
+            </button>
+          )}
+        </div>
+        {isPending ? (
+          <div>
+            <textarea
+              value={adminNotes}
+              onChange={(e) => setAdminNotes(e.target.value)}
+              rows={4}
+              placeholder="Add review comments or a personalized note for the user. Notes will be included in the report email as a message from the advisor..."
+              className="w-full p-3 text-sm text-slate-700 border border-surface-200 rounded-xl focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none resize-y"
+            />
+            <p className="text-xs text-slate-400 mt-1">
+              These notes will appear in the email sent to the user under &quot;A note from your advisor&quot;.
+            </p>
+          </div>
+        ) : (
+          <p className="text-sm leading-relaxed whitespace-pre-line">
+            {report.adminNotes ? (
+              <span className="text-slate-600">{report.adminNotes}</span>
+            ) : (
+              <span className="text-slate-400 italic">No admin notes added</span>
+            )}
+          </p>
         )}
       </div>
 
