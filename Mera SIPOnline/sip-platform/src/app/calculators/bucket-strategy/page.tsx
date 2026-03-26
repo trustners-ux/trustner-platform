@@ -538,12 +538,12 @@ export default function BucketStrategyPage() {
               )}
 
               <div className="card-base overflow-hidden">
-                <button onClick={() => setShowYearlyTable(!showYearlyTable)} className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50 transition-colors">
+                <button onClick={() => setShowYearlyTable(!showYearlyTable)} className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50 transition-colors" data-pdf-hide>
                   <h3 className="font-bold text-slate-800">Year-by-Year Breakdown</h3>
                   {showYearlyTable ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
                 </button>
-                {showYearlyTable && (
-                  <div className="overflow-x-auto">
+                <h3 className="font-bold text-slate-800 px-5 pt-4 hidden" data-pdf-show>Year-by-Year Breakdown</h3>
+                <div className="overflow-x-auto" style={showYearlyTable ? {} : { maxHeight: 0, overflow: 'hidden' }} data-pdf-show={!showYearlyTable ? '' : undefined}>
                     <table className="w-full text-[11px]">
                       <thead>
                         <tr className="bg-slate-100 text-slate-600 font-semibold">
@@ -572,7 +572,6 @@ export default function BucketStrategyPage() {
                       </tbody>
                     </table>
                   </div>
-                )}
               </div>
 
               {result.insights.length > 0 && (

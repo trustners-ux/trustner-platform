@@ -429,11 +429,18 @@ export async function generateCalculatorPDF({ elementId, title, fileName }: PDFO
   });
 
   // ─── Show elements marked with data-pdf-show (hidden on screen, visible in PDF) ───
-  const pdfShownElements: { el: HTMLElement; display: string }[] = [];
+  const pdfShownElements: { el: HTMLElement; display: string; maxHeight: string; overflow: string }[] = [];
   element.querySelectorAll('[data-pdf-show]').forEach((child) => {
     const el = child as HTMLElement;
-    pdfShownElements.push({ el, display: el.style.display });
+    pdfShownElements.push({
+      el,
+      display: el.style.display,
+      maxHeight: el.style.maxHeight,
+      overflow: el.style.overflow,
+    });
     el.style.display = 'block';
+    el.style.maxHeight = 'none';
+    el.style.overflow = 'visible';
   });
 
   // Force overflow visible on all descendants
@@ -508,7 +515,11 @@ export async function generateCalculatorPDF({ elementId, title, fileName }: PDFO
   hiddenButtons.forEach(({ el, display }) => { el.style.display = display; });
   hiddenHints.forEach(({ el, display }) => { el.style.display = display; });
   pdfHiddenElements.forEach(({ el, display }) => { el.style.display = display; });
-  pdfShownElements.forEach(({ el, display }) => { el.style.display = display; });
+  pdfShownElements.forEach(({ el, display, maxHeight, overflow }) => {
+    el.style.display = display;
+    el.style.maxHeight = maxHeight;
+    el.style.overflow = overflow;
+  });
   spacingOverrides.forEach(({ el, prop, original }) => {
     el.style.setProperty(prop, original);
   });
