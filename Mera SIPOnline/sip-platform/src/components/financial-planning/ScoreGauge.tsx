@@ -97,18 +97,7 @@ export default function ScoreGauge({ score, grade, size = 'md', animate = true }
   return (
     <div className="flex flex-col items-center">
       <svg width={config.width} height={config.height} viewBox={`0 0 ${config.width} ${config.height}`}>
-        <defs>
-          <linearGradient id={`gauge-grad-${size}`} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#DC2626" />
-            <stop offset="20%" stopColor="#EA580C" />
-            <stop offset="40%" stopColor="#D97706" />
-            <stop offset="60%" stopColor="#65A30D" />
-            <stop offset="80%" stopColor="#0F766E" />
-            <stop offset="100%" stopColor="#065F46" />
-          </linearGradient>
-        </defs>
-
-        {/* Background arc */}
+        {/* Background arc — multi-color band showing the full scale */}
         <path
           d={bgArcPath}
           fill="none"
@@ -117,13 +106,13 @@ export default function ScoreGauge({ score, grade, size = 'md', animate = true }
           strokeLinecap="round"
         />
 
-        {/* Score arc with gradient */}
+        {/* Score arc — solid color based on grade */}
         {scoreArcPath && (
           <path
             d={scoreArcPath}
             fill="none"
-            stroke={`url(#gauge-grad-${size})`}
-            strokeWidth={sw}
+            stroke={colors.stroke}
+            strokeWidth={sw + 2}
             strokeLinecap="round"
           />
         )}
