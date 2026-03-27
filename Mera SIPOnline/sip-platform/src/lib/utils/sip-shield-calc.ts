@@ -23,6 +23,7 @@ export interface RecurringCost {
   frequency: PaymentFrequency;
   totalTenure: number;
   alreadyPaidYears: number;
+  inflationRate: number; // Per-cost inflation (health insurance 5-8%, others 0%)
 }
 
 export interface LumpsumEvent {
@@ -159,43 +160,37 @@ function round2(v: number): number {
 }
 
 /**
- * Total annual cost across all recurring costs for a given year,
- * applying a single inflation rate.
+ * Total annual cost across all recurring costs for a given year.
+ * Uses each cost's own inflationRate (health insurance may have 5-8%, others 0%).
  */
 function totalAnnualCostForYear(
   costs: RecurringCost[],
-  inflationRate: number,
+  _sharedInflation: number, // kept for backward compat, per-cost rate takes priority
   yearFromStart: number,
 ): number {
   let total = 0;
   for (const cost of costs) {
-    const remainingYears = cost.totalTenure - cost.alreadyPaidYears;
-    if (yearFromStart > remainingYears) continue;   // cost tenure ended
-    const baseCost = cost.amount * FREQUENCY_MULTIPLIER[cost.frequency];
-    const effectiveYear = cost.alreadyPaidYears + yearFromStart;
-    if (inflationRate <= 0) {
-      total += baseCost;
-    } else {
-      total += baseCost * Math.pow(1 + inflationRate / 100, effectiveYear);
-    }
+    total += singleCostAnnualForYear(cost, 0, yearFromStart);
   }
   return total;
 }
 
 /**
  * Annual cost for a single cost item (used for per-cost breakdown tracking).
+ * Uses the cost's own inflationRate field.
  */
 function singleCostAnnualForYear(
   cost: RecurringCost,
-  inflationRate: number,
+  _sharedInflation: number, // ignored, uses cost.inflationRate
   yearFromStart: number,
 ): number {
   const remainingYears = cost.totalTenure - cost.alreadyPaidYears;
   if (yearFromStart > remainingYears) return 0;
   const baseCost = cost.amount * FREQUENCY_MULTIPLIER[cost.frequency];
+  const costInflation = cost.inflationRate || 0;
   const effectiveYear = cost.alreadyPaidYears + yearFromStart;
-  if (inflationRate <= 0) return baseCost;
-  return baseCost * Math.pow(1 + inflationRate / 100, effectiveYear);
+  if (costInflation <= 0) return baseCost;
+  return baseCost * Math.pow(1 + costInflation / 100, effectiveYear);
 }
 
 function sipInflowForYear(inputs: SIPShieldInputs, year: number): number {

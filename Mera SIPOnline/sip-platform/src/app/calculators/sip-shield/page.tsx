@@ -70,6 +70,7 @@ function defaultCost(type: CostType = 'term_plan'): RecurringCost {
     frequency: 'yearly' as PaymentFrequency,
     totalTenure: 30,
     alreadyPaidYears: 0,
+    inflationRate: type === 'health_insurance' ? 5 : 0,
   };
 }
 
@@ -154,6 +155,8 @@ export default function SIPShieldPage() {
   const [swpEnabled, setSwpEnabled] = useState(false);
   const [swpAmount, setSwpAmount] = useState(10000);
   const [swpFrequency, setSwpFrequency] = useState<SWPFrequency>('monthly');
+  const [swpStartYear, setSwpStartYear] = useState(0); // 0 = same as withdrawal phase start
+  const [swpInflationAdjusted, setSwpInflationAdjusted] = useState(false);
 
   // Section 4: Lumpsum Events
   const [lumpsumEvents, setLumpsumEvents] = useState<LumpsumEvent[]>([]);
@@ -171,10 +174,11 @@ export default function SIPShieldPage() {
 
   const handleCostTypeChange = (id: string, type: CostType) => {
     const label = COST_TYPE_OPTIONS.find(o => o.key === type)?.label ?? 'Recurring Payment';
-    updateCost(id, { type, label });
-    // Auto-set inflation for first cost only as a default hint
+    const inflRate = type === 'health_insurance' ? 5 : 0;
+    updateCost(id, { type, label, inflationRate: inflRate });
+    // Keep shared inflation for backward compat
     if (costs[0]?.id === id) {
-      setCostInflation(INSURANCE_TYPES.includes(type) ? 0 : 5);
+      setCostInflation(inflRate);
     }
   };
 
@@ -329,6 +333,20 @@ export default function SIPShieldPage() {
                       </div>
                       <NumberInput label="Total Tenure" value={cost.totalTenure} onChange={v => updateCost(cost.id, { totalTenure: v })} suffix="years" step={1} min={5} max={50} />
                       <NumberInput label="Already Paid" value={cost.alreadyPaidYears} onChange={v => updateCost(cost.id, { alreadyPaidYears: Math.min(v, cost.totalTenure - 1) })} suffix="years" step={1} min={0} max={cost.totalTenure - 1} />
+
+                      {/* Per-cost inflation — shown only for health insurance */}
+                      {cost.type === 'health_insurance' && (
+                        <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-[11px] font-medium text-amber-700">Premium Inflation</label>
+                            <Toggle enabled={cost.inflationRate > 0} onChange={(v) => updateCost(cost.id, { inflationRate: v ? 5 : 0 })} label="Adjust for Inflation" />
+                          </div>
+                          {cost.inflationRate > 0 && (
+                            <NumberInput label="" value={cost.inflationRate} onChange={v => updateCost(cost.id, { inflationRate: v })} suffix="% p.a." step={0.5} min={1} max={15} />
+                          )}
+                          <p className="text-[9px] text-amber-600 mt-1">Health premiums typically increase 5-8% annually</p>
+                        </div>
+                      )}
                     </div>
                   ))}
 
@@ -336,9 +354,6 @@ export default function SIPShieldPage() {
                   <button type="button" onClick={addCost} className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-semibold text-red-700 border border-red-300 border-dashed rounded-lg hover:bg-red-50 transition-colors" data-pdf-hide>
                     <Plus className="w-3.5 h-3.5" /> Add Cost
                   </button>
-
-                  {/* Shared inflation */}
-                  <NumberInput label="Cost Inflation" value={costInflation} onChange={setCostInflation} suffix="%" step={0.5} min={0} max={15} hint="0% for fixed premiums, 5-8% for variable costs" />
                 </div>
               </div>
 
@@ -346,22 +361,21 @@ export default function SIPShieldPage() {
               <div className="border-t-4 border-brand rounded-xl bg-white p-4">
                 <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><TrendingUp className="w-4 h-4 text-brand" /> Your SIP Strategy</h3>
                 <div className="space-y-3">
-                  {/* SIP Amount + Frequency pills side-by-side */}
+                  {/* SIP Frequency — full width pills */}
                   <div>
-                    <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">SIP Amount</label>
-                    <div className="flex items-end gap-2">
-                      <div className="flex-1">
-                        <NumberInput label="" value={monthlySIP} onChange={setMonthlySIP} prefix="Rs." step={500} min={1000} max={500000} />
-                      </div>
-                      <div className="flex gap-1 mb-[2px]" data-pdf-hide>
-                        {([{ key: 'monthly' as SIPFrequency, label: 'Monthly' }, { key: 'yearly' as SIPFrequency, label: 'Yearly' }]).map(o => (
-                          <button key={o.key} type="button" onClick={() => setSipFrequency(o.key)} className={cn('px-3 py-2 text-xs font-semibold rounded-lg border transition-all', sipFrequency === o.key ? 'bg-brand text-white border-brand' : 'bg-white text-slate-500 border-surface-300 hover:border-brand-200')}>
-                            {o.label}
-                          </button>
-                        ))}
-                      </div>
+                    <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">SIP Frequency</label>
+                    <div className="grid grid-cols-2 gap-2" data-pdf-hide>
+                      {([{ key: 'monthly' as SIPFrequency, label: 'Monthly SIP' }, { key: 'yearly' as SIPFrequency, label: 'Yearly SIP' }]).map(o => (
+                        <button key={o.key} type="button" onClick={() => setSipFrequency(o.key)} className={cn('py-2.5 text-sm font-bold rounded-xl border-2 transition-all', sipFrequency === o.key ? 'bg-brand text-white border-brand shadow-sm' : 'bg-white text-slate-500 border-surface-300 hover:border-brand-200')}>
+                          {o.label}
+                        </button>
+                      ))}
                     </div>
+                    <div className="hidden" data-pdf-show><span className="text-xs text-brand font-semibold">{sipFrequency === 'monthly' ? 'Monthly SIP' : 'Yearly SIP'}</span></div>
                   </div>
+
+                  {/* SIP Amount */}
+                  <NumberInput label={`SIP Amount (${sipFrequency === 'monthly' ? 'per month' : 'per year'})`} value={monthlySIP} onChange={setMonthlySIP} prefix="Rs." step={sipFrequency === 'monthly' ? 500 : 5000} min={sipFrequency === 'monthly' ? 1000 : 12000} max={sipFrequency === 'monthly' ? 500000 : 5000000} />
 
                   <NumberInput label="SIP Duration" value={sipDuration} onChange={setSipDuration} suffix="years" step={1} min={5} max={40} />
                   <NumberInput label="Expected SIP Return" value={sipReturn} onChange={setSipReturn} suffix="% p.a." step={0.5} min={8} max={18} />
@@ -403,20 +417,26 @@ export default function SIPShieldPage() {
                   <NumberInput label="Withdrawal Phase Return" value={withdrawalReturn} onChange={setWithdrawalReturn} suffix="% p.a." step={0.5} min={5} max={12} />
 
                   {/* SWP Section */}
-                  <div>
-                    <Toggle enabled={swpEnabled} onChange={setSwpEnabled} label="Enable SWP" />
+                  <div className="rounded-lg border border-teal-200 bg-teal-50/30 p-3">
+                    <Toggle enabled={swpEnabled} onChange={setSwpEnabled} label="Enable SWP (Additional Income)" />
+                    <p className="text-[10px] text-slate-400 mt-1">{swpEnabled ? 'Withdraw additional monthly income from corpus' : 'No additional withdrawals beyond recurring costs'}</p>
                     {swpEnabled && (
-                      <div className="mt-2 space-y-2">
-                        <NumberInput label="SWP Amount" value={swpAmount} onChange={setSwpAmount} prefix="Rs." step={1000} min={0} max={2500000} />
+                      <div className="mt-3 space-y-2">
+                        <NumberInput label="SWP Amount" value={swpAmount} onChange={setSwpAmount} prefix="Rs." step={1000} min={1000} max={500000} />
                         <div>
                           <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">SWP Frequency</label>
-                          <div className="flex gap-1.5" data-pdf-hide>
+                          <div className="grid grid-cols-2 gap-1.5" data-pdf-hide>
                             {([{ key: 'monthly' as SWPFrequency, label: 'Monthly' }, { key: 'yearly' as SWPFrequency, label: 'Yearly' }]).map(o => (
-                              <button key={o.key} type="button" onClick={() => setSwpFrequency(o.key)} className={cn('flex-1 py-2 text-xs font-semibold rounded-lg border transition-all', swpFrequency === o.key ? 'bg-brand text-white border-brand' : 'bg-white text-slate-500 border-surface-300 hover:border-brand-200')}>
+                              <button key={o.key} type="button" onClick={() => setSwpFrequency(o.key)} className={cn('py-2 text-xs font-semibold rounded-lg border transition-all', swpFrequency === o.key ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-slate-500 border-surface-300 hover:border-teal-200')}>
                                 {o.label}
                               </button>
                             ))}
                           </div>
+                        </div>
+                        <NumberInput label="SWP Starts From Year" value={swpStartYear || (sipDuration + (growthPhaseEnabled ? growthPeriod : 0) + 1)} onChange={setSwpStartYear} suffix="year" step={1} min={1} max={50} hint="When SWP withdrawals begin (default: after SIP + growth phase)" />
+                        <div>
+                          <Toggle enabled={swpInflationAdjusted} onChange={setSwpInflationAdjusted} label="Inflation Adjusted SWP" />
+                          <p className="text-[10px] text-slate-400 mt-0.5">{swpInflationAdjusted ? 'SWP amount increases 5% annually to maintain purchasing power' : 'Fixed SWP amount throughout'}</p>
                         </div>
                       </div>
                     )}
