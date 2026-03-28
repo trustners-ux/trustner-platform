@@ -226,6 +226,7 @@ export default function SIPShieldPage() {
       swpEnabled,
       swpAmount: swpEnabled ? swpAmount : 0,
       swpFrequency,
+      swpStartYear: swpEnabled ? swpStartYear : 0,
       swpInflationAdjusted: swpEnabled ? swpInflationAdjusted : false,
       swpInflationRate: 5,
       lumpsumEvents,
@@ -235,7 +236,7 @@ export default function SIPShieldPage() {
   }, [
     clientName, currentAge, costInflation, monthlySIP, sipFrequency, sipDuration, sipReturn,
     stepUpEnabled, stepUpType, stepUpValue, growthPhaseEnabled, growthPeriod, growthReturn,
-    withdrawalReturn, swpEnabled, swpAmount, swpFrequency, swpInflationAdjusted,
+    withdrawalReturn, swpEnabled, swpAmount, swpFrequency, swpStartYear, swpInflationAdjusted,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     JSON.stringify(costs),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -460,7 +461,7 @@ export default function SIPShieldPage() {
                       <div className="flex-1 space-y-2">
                         <span className={cn('inline-block px-2 py-0.5 text-[10px] font-bold rounded-full uppercase', ev.type === 'investment' ? 'bg-emerald-200 text-emerald-800' : 'bg-red-200 text-red-800')}>{ev.type}</span>
                         <input type="text" value={ev.label} onChange={e => setLumpsumEvents(prev => prev.map(l => l.id === ev.id ? { ...l, label: e.target.value } : l))} className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md bg-white text-slate-600" placeholder="Label" />
-                        <NumberInput label="Amount" value={ev.amount} onChange={v => setLumpsumEvents(prev => prev.map(l => l.id === ev.id ? { ...l, amount: v } : l))} prefix="Rs." step={1000} min={0} max={2500000} />
+                        <NumberInput label="Amount" value={ev.amount} onChange={v => setLumpsumEvents(prev => prev.map(l => l.id === ev.id ? { ...l, amount: v } : l))} prefix="Rs." step={10000} min={0} max={10000000} />
                         <NumberInput label="At Year" value={ev.atYear} onChange={v => setLumpsumEvents(prev => prev.map(l => l.id === ev.id ? { ...l, atYear: v } : l))} suffix="" step={1} min={1} max={maxRemainingTenure} />
                       </div>
                       <button onClick={() => setLumpsumEvents(prev => prev.filter(l => l.id !== ev.id))} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors mt-1" data-pdf-hide><Trash2 className="w-4 h-4" /></button>

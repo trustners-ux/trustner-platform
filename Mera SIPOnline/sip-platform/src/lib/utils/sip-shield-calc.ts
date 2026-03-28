@@ -61,6 +61,7 @@ export interface SIPShieldInputs {
   swpEnabled: boolean;
   swpAmount: number;
   swpFrequency: SWPFrequency;
+  swpStartYear: number; // absolute year when SWP begins (0 = start of withdrawal phase)
   swpInflationAdjusted: boolean;
   swpInflationRate: number; // default 5%
 
@@ -285,8 +286,12 @@ export function calculateSIPShield(inputs: SIPShieldInputs): SIPShieldResult {
       phase = 'Withdrawal';
       returnRate = inputs.withdrawalReturn;
       costFromCorpus = totalAnnualCostForYear(costs, inflationRate, yr);
-      const withdrawalYearIndex = yr - sipDuration - growthPhaseYears;
-      swpThisYear = annualSWP(inputs, withdrawalYearIndex);
+      // SWP only starts from the specified year (swpStartYear is absolute year number)
+      const swpEffectiveStart = inputs.swpStartYear > 0 ? inputs.swpStartYear : (sipDuration + growthPhaseYears + 1);
+      if (yr >= swpEffectiveStart) {
+        const swpYearsSinceStart = yr - swpEffectiveStart + 1;
+        swpThisYear = annualSWP(inputs, swpYearsSinceStart);
+      }
       for (const c of costs) {
         const amt = singleCostAnnualForYear(c, inflationRate, yr);
         costTotalMap.set(c.id, (costTotalMap.get(c.id) ?? 0) + amt);
