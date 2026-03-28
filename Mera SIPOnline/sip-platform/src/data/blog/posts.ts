@@ -1,6 +1,6 @@
 import { BlogPost } from '@/types/blog';
 
-const AUTHOR = { name: 'Trustner Research', role: 'Investment Education Team' };
+const AUTHOR = { name: 'CFP Ram Shah', role: 'Certified Financial Planner | Founder, Trustner Asset Services' };
 
 export const blogPosts: BlogPost[] = [
 
