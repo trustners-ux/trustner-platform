@@ -9534,4 +9534,285 @@ export const blogPosts: BlogPost[] = [
     ],
   },
 
+  // ───────────────────────────── POST 74 ────────────────────────────
+  {
+    id: 'post-074',
+    title: '48 Hours Left: Your Complete Financial Year-End Checklist Before March 31',
+    slug: 'financial-year-end-checklist-march-2026-tax-saving-sip-portfolio-review',
+    excerpt:
+      'March 31 is two days away. Have you maxed out your 80C? Reviewed your SIP portfolio? Booked tax-loss harvesting? Submitted investment proofs? Here is a 15-point checklist that could save you lakhs in taxes and set your portfolio up for a strong FY27.',
+    author: AUTHOR,
+    date: '2026-03-29',
+    category: 'Tax Planning',
+    readTime: '10 min read',
+    tags: ['financial year end checklist 2026', 'tax saving before March 31', 'Section 80C investments', 'ELSS SIP', 'tax loss harvesting', 'portfolio review FY26', 'NPS tax benefit', 'health insurance 80D', 'FY26 tax planning', 'mutual fund tax saving'],
+    featured: true,
+    coverGradient: 'from-amber-800 to-red-900',
+    content: [
+      {
+        type: 'paragraph',
+        text: 'March 29, 2026. You have exactly 48 hours before the financial year ends. March 31 is a holiday (Mahavir Jayanti), which means today and Monday are your last working windows to make any tax-saving investments, file proofs, or rebalance your portfolio for FY26. If you miss these deadlines, you cannot go back. The tax deductions you do not claim are gone forever.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Whether you are a salaried professional, a business owner, or a retired investor — this 15-point checklist will ensure you leave no money on the table. Print it. Check off each item. Share it with your spouse and parents. Two hours of effort today can save you Rs 50,000 to Rs 2,00,000 in taxes.',
+      },
+      {
+        type: 'heading',
+        text: 'Section 1: Tax Saving — The Non-Negotiables',
+      },
+      {
+        type: 'subheading',
+        text: '1. Max Out Your Section 80C (Rs 1.5 Lakh)',
+      },
+      {
+        type: 'paragraph',
+        text: 'Section 80C allows a deduction of up to Rs 1,50,000 from your taxable income. If you are in the 30% tax bracket, this saves you Rs 46,800 in taxes (including cess). Check if you have fully utilized this limit. Remember — EPF contributions, PPF, ELSS mutual funds, life insurance premiums, children\'s tuition fees, home loan principal, and Sukanya Samriddhi all count towards 80C.',
+      },
+      {
+        type: 'table',
+        rows: [
+          ['80C Investment', 'Lock-in Period', 'Expected Return', 'Best For'],
+          ['ELSS Mutual Fund (SIP)', '3 years', '12-15% (equity)', 'Wealth creation + tax saving'],
+          ['PPF', '15 years', '7.1% (guaranteed)', 'Risk-averse, long-term savings'],
+          ['NPS Tier 1', 'Till retirement', '9-12% (mixed)', 'Additional Rs 50K under 80CCD(1B)'],
+          ['SCSS (Senior Citizens)', '5 years', '8.2% (guaranteed)', 'Regular income for retirees'],
+          ['Sukanya Samriddhi', '21 years', '8.2% (guaranteed)', 'Girl child education/marriage'],
+          ['5-Year Tax Saver FD', '5 years', '7-7.5% (guaranteed)', 'No market risk, but taxable interest'],
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'tip',
+        text: 'If you have not started an ELSS SIP yet, you can still invest a lumpsum before March 31 to claim the 80C deduction for FY26. ELSS has the shortest lock-in (3 years) among all 80C options and historically delivers the highest returns. It is the only 80C instrument that creates real wealth.',
+      },
+      {
+        type: 'subheading',
+        text: '2. Claim the Extra Rs 50,000 NPS Deduction (Section 80CCD(1B))',
+      },
+      {
+        type: 'paragraph',
+        text: 'This is the most underused tax benefit in India. Over and above the Rs 1.5 lakh under 80C, you can claim an additional Rs 50,000 deduction by investing in the National Pension System (NPS) Tier 1 account. If you are in the 30% bracket, this saves you an extra Rs 15,600 in taxes. You can invest online in under 10 minutes through your NPS account.',
+      },
+      {
+        type: 'subheading',
+        text: '3. Health Insurance Premium — Section 80D',
+      },
+      {
+        type: 'paragraph',
+        text: 'Check if you have health insurance for yourself, your family, and your parents. The deduction limits are generous:',
+      },
+      {
+        type: 'list',
+        items: [
+          'Self + Family (below 60): Up to Rs 25,000 deduction',
+          'Parents (below 60): Additional Rs 25,000 deduction',
+          'Parents (above 60 — senior citizen): Additional Rs 50,000 deduction',
+          'Total possible deduction: Rs 75,000 (if parents are senior citizens)',
+          'Preventive health check-up: Rs 5,000 included within the above limits',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'If your parents do not have health insurance, buy them a policy before March 31. At their age, the premium will be higher, but the tax saving alone covers 30-40% of the cost. And the financial protection is priceless.',
+      },
+      {
+        type: 'heading',
+        text: 'Section 2: Portfolio Review — The Smart Money Moves',
+      },
+      {
+        type: 'subheading',
+        text: '4. Review and Rebalance Your SIP Portfolio',
+      },
+      {
+        type: 'paragraph',
+        text: 'The market correction has likely shifted your asset allocation. If your target was 70% equity and 30% debt, the 20% fall in equity means you might now be at 60:40. Year-end is the perfect time to rebalance:',
+      },
+      {
+        type: 'list',
+        items: [
+          'Check the current allocation across equity, debt, and gold in your portfolio',
+          'If equity is underweight, add more through SIP top-up or lumpsum via STP',
+          'If any fund has consistently underperformed its benchmark for 2+ years, consider switching',
+          'Ensure you have no duplicate funds — two large-cap funds doing the same thing waste diversification',
+          'Check if your SIP amounts are aligned with your financial goals — use our Goal-Based Calculator',
+        ],
+      },
+      {
+        type: 'subheading',
+        text: '5. Tax-Loss Harvesting on Equity Mutual Funds',
+      },
+      {
+        type: 'paragraph',
+        text: 'This is a powerful strategy that most investors miss. If you have equity mutual fund units that are currently showing a loss, you can sell them before March 31 to "book" the loss. This loss can be set off against any long-term capital gains (LTCG) you have realized during FY26, reducing your tax liability.',
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        text: 'Example: You sold some equity funds earlier in FY26 and made Rs 2,00,000 in LTCG (above the Rs 1.25 lakh exemption). You also hold units showing an unrealized loss of Rs 80,000. By selling those loss-making units before March 31 and immediately reinvesting in a similar (not identical) fund, you save Rs 10,000 in taxes (12.5% of Rs 80,000) while maintaining your market exposure. This is completely legal and widely used by smart investors.',
+      },
+      {
+        type: 'subheading',
+        text: '6. Harvest Your Rs 1.25 Lakh LTCG Exemption',
+      },
+      {
+        type: 'paragraph',
+        text: 'Long-term capital gains up to Rs 1,25,000 per financial year are tax-free on equity mutual funds. If you have units with unrealized gains, consider selling Rs 1.25 lakh worth of gains before March 31 and reinvesting immediately. This resets your purchase price higher, reducing future tax liability. You pay zero tax today and reduce the tax you will pay in future years.',
+      },
+      {
+        type: 'subheading',
+        text: '7. Step Up Your SIPs for FY27',
+      },
+      {
+        type: 'paragraph',
+        text: 'If your income has increased during FY26, your SIP should increase too. A simple rule: increase your SIP by at least 10% every year, or match it to your salary hike percentage. A Rs 10,000 monthly SIP with a 10% annual step-up creates 2.5x more wealth over 20 years compared to a flat SIP.',
+      },
+      {
+        type: 'table',
+        rows: [
+          ['Monthly SIP', 'Flat SIP (20 Years)', '10% Step-Up SIP (20 Years)', 'Extra Wealth Created'],
+          ['Rs 10,000', 'Rs 99.9 Lakh', 'Rs 2.56 Crore', '+Rs 1.56 Crore (156% more)'],
+          ['Rs 25,000', 'Rs 2.50 Crore', 'Rs 6.40 Crore', '+Rs 3.90 Crore (156% more)'],
+          ['Rs 50,000', 'Rs 4.99 Crore', 'Rs 12.80 Crore', '+Rs 7.81 Crore (156% more)'],
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'warning',
+        text: 'The biggest SIP mistake is not stepping up. If you started a Rs 10,000 SIP five years ago and your salary has grown 50% since then, you should be doing at least Rs 15,000 by now. Most investors set and forget their SIP amount — that is the equivalent of getting a pay cut from inflation every year. April 1 is the perfect date to increase your SIP.',
+      },
+      {
+        type: 'heading',
+        text: 'Section 3: Documentation and Compliance',
+      },
+      {
+        type: 'subheading',
+        text: '8. Submit Investment Proofs to Your Employer',
+      },
+      {
+        type: 'paragraph',
+        text: 'If you declared tax-saving investments at the beginning of the year but have not submitted proofs, do it now. Without proofs, your employer will deduct higher TDS from your March salary. Common proofs needed: ELSS mutual fund statements, PPF passbook, NPS contribution receipt, home loan interest certificate, health insurance premium receipt, HRA rent receipts.',
+      },
+      {
+        type: 'subheading',
+        text: '9. Advance Tax — Final Installment Due March 15 (Already Passed)',
+      },
+      {
+        type: 'paragraph',
+        text: 'If you had income beyond salary (capital gains, rental income, freelancing) and missed the March 15 advance tax deadline, you will face interest under Section 234C. Calculate your shortfall and pay it as early as possible to minimize the interest. Use the income tax portal to make the payment online.',
+      },
+      {
+        type: 'subheading',
+        text: '10. Download All Fund Statements and Consolidated Account Statement (CAS)',
+      },
+      {
+        type: 'paragraph',
+        text: 'Request your Consolidated Account Statement from CAMS or KFintech (covers all mutual fund holdings across all AMCs). This is your single-source-of-truth for portfolio review, tax computation, and ITR filing. Also download individual capital gains statements from each AMC — you will need these for ITR filing in July.',
+      },
+      {
+        type: 'heading',
+        text: 'Section 4: Insurance and Protection',
+      },
+      {
+        type: 'subheading',
+        text: '11. Review Your Term Insurance Coverage',
+      },
+      {
+        type: 'paragraph',
+        text: 'Your term insurance should cover at least 10-15 times your annual income. If you got married, had a child, or took a home loan during FY26, your coverage needs have increased. Term insurance premiums increase significantly with age — buying now is always cheaper than buying next year.',
+      },
+      {
+        type: 'subheading',
+        text: '12. Check Emergency Fund Adequacy',
+      },
+      {
+        type: 'paragraph',
+        text: 'With markets volatile and economic uncertainty elevated, your emergency fund should cover 6-9 months of expenses. If the market correction has made you anxious, it might be because your emergency fund is inadequate — not because your SIP strategy is wrong. Park emergency funds in a liquid or ultra-short-duration fund, not a savings account.',
+      },
+      {
+        type: 'heading',
+        text: 'Section 5: Forward Planning for FY27',
+      },
+      {
+        type: 'subheading',
+        text: '13. Set Up New SIPs for Goals You Have Been Postponing',
+      },
+      {
+        type: 'paragraph',
+        text: 'April 1 is a fresh start. If you have been meaning to start a SIP for your child\'s education, your retirement top-up, or a house down payment — do it now. Every month you delay costs you compounding. A Rs 10,000 SIP started today vs 2 years later means Rs 8-10 lakh less wealth over 15 years.',
+      },
+      {
+        type: 'subheading',
+        text: '14. Choose Between Old and New Tax Regime for FY27',
+      },
+      {
+        type: 'paragraph',
+        text: 'The new tax regime (no deductions, lower slab rates) is now the default. But if you have significant deductions — home loan interest above Rs 2 lakh, 80C of Rs 1.5 lakh, NPS of Rs 50K, 80D of Rs 50K+ — the old regime might still save you more tax. Do the math before April 1. Your employer will ask you to declare your regime choice at the start of FY27.',
+      },
+      {
+        type: 'table',
+        rows: [
+          ['Total Deductions Available', 'Better Regime', 'Why'],
+          ['Less than Rs 3.75 Lakh', 'New Regime', 'Lower slab rates outweigh deductions'],
+          ['Rs 3.75L - Rs 5 Lakh', 'Compare Both', 'Depends on income level and specific deductions'],
+          ['More than Rs 5 Lakh', 'Old Regime (likely)', 'High deductions make old regime more beneficial'],
+        ],
+      },
+      {
+        type: 'subheading',
+        text: '15. Set a Calendar Reminder for Quarterly Reviews',
+      },
+      {
+        type: 'paragraph',
+        text: 'The best investors review their portfolio quarterly — not daily. Set 4 reminders: July 1, October 1, January 1, and April 1. During each review, check your asset allocation, SIP performance vs benchmarks, and goal progress. This prevents both panic selling during corrections and complacency during rallies.',
+      },
+      {
+        type: 'heading',
+        text: 'Your 48-Hour Priority Action Card',
+      },
+      {
+        type: 'table',
+        rows: [
+          ['Action', 'Deadline', 'Tax Saving Potential', 'Time Needed'],
+          ['Max out 80C (ELSS lumpsum)', 'Mar 31', 'Up to Rs 46,800', '15 minutes'],
+          ['NPS 80CCD(1B) contribution', 'Mar 31', 'Up to Rs 15,600', '10 minutes'],
+          ['Health insurance for parents', 'Mar 31', 'Up to Rs 15,600', '30 minutes'],
+          ['Tax-loss harvesting', 'Mar 31', 'Varies (12.5% of loss)', '20 minutes'],
+          ['LTCG harvesting (Rs 1.25L)', 'Mar 31', 'Saves future tax', '15 minutes'],
+          ['Submit investment proofs', 'Before March salary', 'Prevents excess TDS', '30 minutes'],
+          ['Step up SIP for FY27', 'Apr 1', 'No tax — builds wealth', '5 minutes'],
+          ['Download CAS statement', 'Anytime', 'Needed for ITR filing', '5 minutes'],
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'tip',
+        text: 'The single most impactful thing you can do in the next 48 hours is invest in ELSS and NPS. Together, they give you Rs 2 lakh in deductions, saving up to Rs 62,400 in taxes. That is free money. If you have not done it yet, stop reading and do it now. Then come back and finish the rest of the checklist.',
+      },
+      {
+        type: 'heading',
+        text: 'A Note on This Market Correction and Year-End Investing',
+      },
+      {
+        type: 'paragraph',
+        text: 'Some investors hesitate to invest their tax-saving money during a market correction. This is backwards thinking. The Nifty at 22,819 means your ELSS investment today buys more units at lower NAVs than it would have 3 months ago when the Nifty was at 26,000+. Your tax-saving investment is getting a 15-20% discount compared to investors who invested in December. The correction is a gift for year-end tax-saving investors.',
+      },
+      {
+        type: 'quote',
+        text: 'The financial year waits for no one. Every deduction you do not claim, every SIP you do not step up, every tax-loss you do not harvest — these are opportunities that expire on March 31 and never come back. Two hours of effort today. Lakhs of rupees saved. That is the best return on investment you will ever earn.',
+      },
+      {
+        type: 'cta',
+        text: 'Plan Your Tax Savings and SIP Step-Up',
+        items: ['Use our Income Tax Calculator to compare old vs new regime, or the Step-Up SIP Calculator to see how much extra wealth a 10% annual increase creates over your investment horizon.'],
+        buttonText: 'Open Tax Calculator',
+        buttonHref: '/calculators/income-tax',
+      },
+      {
+        type: 'disclaimer',
+        text: 'Tax rates, deduction limits, and exemptions mentioned are based on the Income Tax Act as applicable for FY2025-26 (AY2026-27). Tax laws are subject to change. This article is for educational and informational purposes only and does not constitute tax advice, legal advice, or investment recommendations. Investors should consult a qualified Chartered Accountant or tax advisor for personalized tax planning. Mutual fund investments are subject to market risks — read all scheme-related documents carefully. Trustner Asset Services Pvt. Ltd. is an AMFI-registered Mutual Fund Distributor (ARN-286886).',
+      },
+    ],
+  },
+
 ];
