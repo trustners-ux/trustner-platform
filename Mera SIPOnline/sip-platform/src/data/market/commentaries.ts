@@ -5,7 +5,7 @@ export const marketCommentaries: MarketCommentary[] = [
     id: 'week-2026-03-24',
     title: 'Fifth Straight Weekly Loss: Goldman Cuts India to Market Weight, Oil Near $108 & Rupee Breaches 94',
     date: '2026-03-27',
-    weekRange: 'Mar 24 - Mar 27, 2026',
+    weekRange: 'Mar 22 - Mar 28, 2026',
     summary:
       'Indian markets fell for a fifth consecutive week in a holiday-shortened 3-day week (Ram Navami closed markets on March 26), with the Nifty 50 declining 1.28% to 22,819 and Sensex falling 1.3% to 73,583. The week\'s defining shock was Goldman Sachs simultaneously slashing India\'s 2026 GDP forecast to 5.9% (from 7%), downgrading Indian equities from "overweight" to "market weight," and flagging a possible 50bps RBI rate hike — a rare triple-blow from a single global broker. Brent crude climbed to ~$108/barrel (6th consecutive weekly gain) as the Strait of Hormuz disruption showed no signs of resolution. The rupee breached 94 against the dollar for the first time ever (closing at 94.46), FIIs net sold ~₹8,315 crore for the week, and India VIX surged 8.77% to 26.80 on Thursday\'s sharp 2.09% single-day crash.',
     keyPoints: [
@@ -43,7 +43,7 @@ export const marketCommentaries: MarketCommentary[] = [
     id: 'week-2026-03-10',
     title: 'Worst Week in 4 Years: Sensex Crashes 5%, Oil Surge & FII Exodus Hammer Markets',
     date: '2026-03-13',
-    weekRange: 'Mar 10 - Mar 14, 2026',
+    weekRange: 'Mar 8 - Mar 14, 2026',
     summary:
       'Indian markets suffered their worst week in four years as the Sensex plunged over 4,300 points (~5.3%) to close near 74,564. Nifty 50 crashed below 23,300, losing over 1,200 points for the week. Brent crude surging past $100/barrel on Strait of Hormuz disruption fears, massive FII outflows exceeding Rs 21,000 crore in March, and rupee hitting record lows near Rs 92.5 against the dollar created a perfect storm. Bank Nifty collapsed 2.4% on Friday alone to 53,758. Gold corrected 2% to Rs 1.60 lakh/10g on dollar strength. DII buying of Rs 6,250 crore daily prevented a sharper crash. Investor wealth eroded by Rs 19 lakh crore during the week.',
     keyPoints: [
@@ -62,7 +62,7 @@ export const marketCommentaries: MarketCommentary[] = [
     id: 'week-2026-03-03',
     title: 'Oil Shock Hits Markets: Crude Crosses $92, Sensex Falls 2-3% as Geopolitical Crisis Deepens',
     date: '2026-03-07',
-    weekRange: 'Mar 3 - Mar 7, 2026',
+    weekRange: 'Mar 1 - Mar 7, 2026',
     summary:
       'Markets had a shortened and volatile week (Holi holiday on March 3). Brent crude surged 30% to cross $92/barrel after the reported killing of Iran\'s Supreme Leader escalated Middle East tensions and raised fears of Strait of Hormuz disruption. Sensex fell 2-3% for the week as FIIs sold Rs 4,630 crore while DIIs absorbed Rs 24,312 crore. India VIX jumped 40% to near 20. Nifty broke below its 200-DMA for the first time in 7 months. Metal and healthcare sectors provided rare support, while IT and realty were worst hit.',
     keyPoints: [
@@ -81,7 +81,7 @@ export const marketCommentaries: MarketCommentary[] = [
     id: 'week-2026-02-24',
     title: 'Markets Slide 2.5% as US-Iran Tensions Escalate; Sensex Falls Below 82,000',
     date: '2026-02-28',
-    weekRange: 'Feb 24 - Feb 28, 2026',
+    weekRange: 'Feb 22 - Feb 28, 2026',
     summary:
       'Indian markets had a difficult week, with the Sensex declining 2,033 points (-2.4%) and Nifty 50 shedding 646 points (-2.5%) to close at 25,179. The sell-off was driven by escalating US-Iran geopolitical tensions, a sharp spike in crude oil prices, persistent FII selling, and the rupee hitting fresh record lows. A single-day crash on Thursday wiped out Rs 7.5 lakh crore in investor wealth. Investor wealth eroded by Rs 16.3 lakh crore for the full week. India VIX surged 8% on Sensex derivatives expiry day.',
     keyPoints: [
@@ -100,7 +100,7 @@ export const marketCommentaries: MarketCommentary[] = [
     id: 'week-2026-02-17',
     title: 'Markets Rebound on Metal, Power & Banking Strength; Geopolitical Tensions Absorbed',
     date: '2026-02-21',
-    weekRange: 'Feb 17 - Feb 21, 2026',
+    weekRange: 'Feb 15 - Feb 21, 2026',
     summary:
       'Indian equity markets ended the week on a positive note despite intra-week volatility triggered by rising US-Iran geopolitical tensions. The Sensex closed at 82,815, up 0.38% on Friday, while Nifty 50 settled at 25,571, gaining 0.46%. Metal, power, and banking stocks led the recovery. Bank Nifty closed at 61,172 after staging a strong rebound from intra-week lows. Gold surged past Rs 1.59 lakh per 10 grams on safe-haven demand. The rupee weakened further to Rs 90.73 against the US dollar.',
     keyPoints: [
