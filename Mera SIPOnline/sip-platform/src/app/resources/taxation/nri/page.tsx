@@ -48,15 +48,19 @@ export default function NRITaxationGuidePage() {
               and repatriation rules for FY 2025-26.
             </p>
             <div className="flex flex-wrap gap-3 mt-8">
-              <span className="inline-flex items-center gap-1.5 bg-white/10 border border-white/10 rounded-full px-3 py-1.5 text-xs">
-                <Flag className="w-3 h-3" /> US / Canada
-              </span>
-              <span className="inline-flex items-center gap-1.5 bg-white/10 border border-white/10 rounded-full px-3 py-1.5 text-xs">
-                <Flag className="w-3 h-3" /> UK / Europe
-              </span>
-              <span className="inline-flex items-center gap-1.5 bg-white/10 border border-white/10 rounded-full px-3 py-1.5 text-xs">
-                <Flag className="w-3 h-3" /> UAE / GCC
-              </span>
+              {[
+                { label: 'US / Canada', target: 'us-citizens' },
+                { label: 'UK / Europe', target: 'european-residents' },
+                { label: 'UAE / GCC', target: 'uae-gcc' },
+              ].map((btn) => (
+                <button
+                  key={btn.target}
+                  onClick={() => document.getElementById(btn.target)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-full px-4 py-2 text-xs cursor-pointer transition-colors"
+                >
+                  <Flag className="w-3 h-3" /> {btn.label}
+                </button>
+              ))}
               <span className="inline-flex items-center gap-1.5 bg-white/10 border border-white/10 rounded-full px-3 py-1.5 text-xs">
                 <Calendar className="w-3 h-3" /> Updated FY 2025-26
               </span>
@@ -75,22 +79,26 @@ export default function NRITaxationGuidePage() {
               </h2>
               <div className="grid sm:grid-cols-2 gap-3">
                 {[
-                  { num: '1', label: 'NRI Investment in Indian MFs — Basics' },
-                  { num: '2', label: 'TDS for NRIs — The Key Difference' },
-                  { num: '3', label: 'US Citizens & Green Card Holders (PFIC)' },
-                  { num: '4', label: 'Canadian Residents' },
-                  { num: '5', label: 'European Residents (UK, Germany, France)' },
-                  { num: '6', label: 'UAE / GCC Residents' },
-                  { num: '7', label: 'DTAA — Double Tax Avoidance Agreements' },
-                  { num: '8', label: 'Practical Steps for NRI MF Investors' },
-                  { num: '9', label: 'Recent Regulatory Changes' },
+                  { num: '1', label: 'NRI Investment in Indian MFs — Basics', id: 'nri-basics' },
+                  { num: '2', label: 'TDS for NRIs — The Key Difference', id: 'tds-nri' },
+                  { num: '3', label: 'US Citizens & Green Card Holders (PFIC)', id: 'us-citizens' },
+                  { num: '4', label: 'Canadian Residents', id: 'canadian-residents' },
+                  { num: '5', label: 'European Residents (UK, Germany, France)', id: 'european-residents' },
+                  { num: '6', label: 'UAE / GCC Residents', id: 'uae-gcc' },
+                  { num: '7', label: 'DTAA — Double Tax Avoidance Agreements', id: 'dtaa' },
+                  { num: '8', label: 'Practical Steps for NRI MF Investors', id: 'practical-steps' },
+                  { num: '9', label: 'Recent Regulatory Changes', id: 'regulatory-changes' },
                 ].map((item) => (
-                  <div key={item.num} className="flex items-center gap-3 text-sm text-slate-600">
+                  <button
+                    key={item.num}
+                    onClick={() => document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                    className="flex items-center gap-3 text-sm text-slate-600 hover:text-primary-700 transition-colors cursor-pointer text-left"
+                  >
                     <span className="flex-shrink-0 w-7 h-7 rounded-full bg-primary-100 text-primary-700 font-bold text-xs flex items-center justify-center">
                       {item.num}
                     </span>
                     {item.label}
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
@@ -99,7 +107,7 @@ export default function NRITaxationGuidePage() {
       </section>
 
       {/* ═══════════ SECTION 1: NRI BASICS ═══════════ */}
-      <section className="section-padding bg-white">
+      <section id="nri-basics" className="section-padding bg-white scroll-mt-20">
         <div className="container-custom">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center gap-3 mb-6">
@@ -177,7 +185,7 @@ export default function NRITaxationGuidePage() {
       </section>
 
       {/* ═══════════ SECTION 2: TDS FOR NRIs ═══════════ */}
-      <section className="section-padding bg-surface-100">
+      <section id="tds-nri" className="section-padding bg-surface-100 scroll-mt-20">
         <div className="container-custom">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center gap-3 mb-6">
@@ -311,7 +319,7 @@ export default function NRITaxationGuidePage() {
       </section>
 
       {/* ═══════════ SECTION 3: US CITIZENS & GREEN CARD HOLDERS ═══════════ */}
-      <section className="section-padding bg-white">
+      <section id="us-citizens" className="section-padding bg-white scroll-mt-20">
         <div className="container-custom">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center gap-3 mb-6">
@@ -530,7 +538,7 @@ export default function NRITaxationGuidePage() {
       </section>
 
       {/* ═══════════ SECTION 4: CANADIAN RESIDENTS ═══════════ */}
-      <section className="section-padding bg-surface-100">
+      <section id="canadian-residents" className="section-padding bg-surface-100 scroll-mt-20">
         <div className="container-custom">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center gap-3 mb-6">
@@ -622,7 +630,7 @@ export default function NRITaxationGuidePage() {
       </section>
 
       {/* ═══════════ SECTION 5: EUROPEAN RESIDENTS ═══════════ */}
-      <section className="section-padding bg-white">
+      <section id="european-residents" className="section-padding bg-white scroll-mt-20">
         <div className="container-custom">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center gap-3 mb-6">
@@ -765,7 +773,7 @@ export default function NRITaxationGuidePage() {
       </section>
 
       {/* ═══════════ SECTION 6: UAE / GCC ═══════════ */}
-      <section className="section-padding bg-surface-100">
+      <section id="uae-gcc" className="section-padding bg-surface-100 scroll-mt-20">
         <div className="container-custom">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center gap-3 mb-6">
@@ -915,7 +923,7 @@ export default function NRITaxationGuidePage() {
       </section>
 
       {/* ═══════════ SECTION 7: DTAA TABLE ═══════════ */}
-      <section className="section-padding bg-white">
+      <section id="dtaa" className="section-padding bg-white scroll-mt-20">
         <div className="container-custom">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center gap-3 mb-6">
@@ -1040,7 +1048,7 @@ export default function NRITaxationGuidePage() {
       </section>
 
       {/* ═══════════ SECTION 8: PRACTICAL STEPS ═══════════ */}
-      <section className="section-padding bg-surface-100">
+      <section id="practical-steps" className="section-padding bg-surface-100 scroll-mt-20">
         <div className="container-custom">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center gap-3 mb-6">
@@ -1126,7 +1134,7 @@ export default function NRITaxationGuidePage() {
       </section>
 
       {/* ═══════════ SECTION 9: REGULATORY CHANGES TIMELINE ═══════════ */}
-      <section className="section-padding bg-white">
+      <section id="regulatory-changes" className="section-padding bg-white scroll-mt-20">
         <div className="container-custom">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center gap-3 mb-6">
