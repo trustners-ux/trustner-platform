@@ -231,20 +231,17 @@ export const NAVIGATION: NavItem[] = [
     badge: 'FREE',
   },
   {
-    label: 'Blog',
-    href: '/blog',
-  },
-  {
-    label: 'Market Pulse',
-    href: '/market-pulse',
-  },
-  {
-    label: 'Gallery',
-    href: '/gallery',
-  },
-  {
-    label: 'Glossary',
-    href: '/glossary',
+    label: 'Resources',
+    href: '/resources',
+    children: [
+      { label: 'Learning Academy', href: '/learn' },
+      { label: 'SIP Glossary', href: '/glossary' },
+      { label: 'Taxation Guide', href: '/resources/taxation', badge: 'New' },
+      { label: 'NRI Taxation', href: '/resources/taxation/nri', badge: 'New' },
+      { label: 'Blog', href: '/blog' },
+      { label: 'Market Pulse', href: '/market-pulse' },
+      { label: 'Gallery', href: '/gallery' },
+    ],
   },
 ];
 

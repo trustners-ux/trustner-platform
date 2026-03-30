@@ -101,5 +101,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE_URL}/gallery`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.6 },
   ];
 
-  return [...staticPages, ...calculatorPages, ...researchPages, ...blogPages, ...financialPlanningPages, ...galleryPage, ...modulePages];
+  // Resources / Taxation pages
+  const resourcePages: MetadataRoute.Sitemap = [
+    { url: `${BASE_URL}/resources/taxation`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8 },
+    { url: `${BASE_URL}/resources/taxation/nri`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8 },
+  ];
+
+  return [...staticPages, ...calculatorPages, ...researchPages, ...blogPages, ...financialPlanningPages, ...galleryPage, ...resourcePages, ...modulePages];
 }
