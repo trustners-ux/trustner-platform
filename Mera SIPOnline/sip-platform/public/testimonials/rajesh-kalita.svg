@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="bg-rk" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="50%" stop-color="#EA580C"/>
+      <stop offset="100%" stop-color="#C2410C"/>
+    </linearGradient>
+    <clipPath id="clip-rk">
+      <circle cx="100" cy="100" r="96"/>
+    </clipPath>
+    <radialGradient id="glow-rk" cx="50%" cy="30%" r="55%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="100" cy="100" r="98" fill="none" stroke="#F59E0B" stroke-opacity="0.3" stroke-width="2"/>
+  <circle cx="100" cy="100" r="96" fill="url(#bg-rk)"/>
+  <circle cx="100" cy="100" r="96" fill="url(#glow-rk)"/>
+  <g clip-path="url(#clip-rk)" fill="#ffffff" fill-opacity="0.92">
+    <ellipse cx="100" cy="70" rx="27" ry="30"/>
+    <path d="M73 62 Q72 42 82 32 Q92 23 100 21 Q108 23 118 32 Q128 42 127 62 Q125 50 118 43 Q110 36 100 34 Q90 36 82 43 Q75 50 73 62 Z"/>
+    <path d="M90 80 Q100 86 110 80" fill="none" stroke="#EA580C" stroke-opacity="0.35" stroke-width="1.5" stroke-linecap="round"/>
+    <rect x="91" y="97" width="18" height="18" rx="3"/>
+    <path d="M100 112 Q135 112 155 135 Q170 155 172 180 L172 220 L28 220 L28 180 Q30 155 45 135 Q65 112 100 112 Z"/>
+    <path d="M85 112 L75 145 L92 135 Z" fill="#EA580C" fill-opacity="0.25"/>
+    <path d="M115 112 L125 145 L108 135 Z" fill="#EA580C" fill-opacity="0.25"/>
+    <path d="M97 118 L100 115 L103 118 L102 155 L100 160 L98 155 Z" fill="#EA580C" fill-opacity="0.3"/>
+  </g>
+</svg>

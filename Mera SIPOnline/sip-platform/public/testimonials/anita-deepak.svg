@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="bg-ad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#14B8A6"/>
+      <stop offset="50%" stop-color="#0D9488"/>
+      <stop offset="100%" stop-color="#0F766E"/>
+    </linearGradient>
+    <clipPath id="clip-ad">
+      <circle cx="100" cy="100" r="96"/>
+    </clipPath>
+    <radialGradient id="glow-ad" cx="45%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="100" cy="100" r="98" fill="none" stroke="#14B8A6" stroke-opacity="0.3" stroke-width="2"/>
+  <circle cx="100" cy="100" r="96" fill="url(#bg-ad)"/>
+  <circle cx="100" cy="100" r="96" fill="url(#glow-ad)"/>
+  <g clip-path="url(#clip-ad)">
+    <g fill="#ffffff" fill-opacity="0.7">
+      <ellipse cx="82" cy="68" rx="24" ry="27"/>
+      <path d="M58 60 Q57 42 66 33 Q74 25 82 23 Q90 25 98 33 Q107 42 106 60 Q104 50 98 44 Q92 38 82 36 Q72 38 66 44 Q60 50 58 60 Z"/>
+      <rect x="74" y="92" width="16" height="16" rx="3"/>
+      <path d="M82 106 Q55 108 40 130 Q28 148 25 175 L25 220 L110 220 L110 175 Q108 148 100 135 Q92 118 82 106 Z"/>
+    </g>
+    <g fill="#ffffff" fill-opacity="0.92">
+      <ellipse cx="118" cy="70" rx="23" ry="26"/>
+      <path d="M95 63 Q93 45 100 36 Q108 27 118 24 Q128 27 136 36 Q143 45 141 63 Q140 52 136 46 Q130 38 118 36 Q106 38 100 46 Q96 52 95 63 Z"/>
+      <path d="M95 63 Q90 75 89 88 Q88 95 91 100 L97 95 Q96 85 97 75 Q97 68 95 63 Z"/>
+      <path d="M141 63 Q146 75 147 88 Q148 95 145 100 L139 95 Q140 85 139 75 Q139 68 141 63 Z"/>
+      <rect x="110" y="93" width="16" height="16" rx="3"/>
+      <path d="M118 107 Q145 107 160 128 Q172 148 175 175 L175 220 L60 220 L60 175 Q62 155 70 140 Q85 115 118 107 Z"/>
+      <path d="M108 107 Q118 120 128 107" fill="none" stroke="#0D9488" stroke-opacity="0.3" stroke-width="2"/>
+    </g>
+  </g>
+</svg>
