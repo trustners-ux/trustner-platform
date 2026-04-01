@@ -40,7 +40,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // --- Content Protection Headers for all public pages ---
-  if (!pathname.startsWith('/admin') && !pathname.startsWith('/api/admin')) {
+  if (!pathname.startsWith('/admin') && !pathname.startsWith('/api/admin') && !pathname.startsWith('/partner') && !pathname.startsWith('/api/partner')) {
     const response = NextResponse.next();
 
     // Prevent embedding in iframes (anti-cloning)

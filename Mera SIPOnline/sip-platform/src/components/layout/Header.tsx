@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Menu, X, ChevronDown, Calculator, BookOpen, Search, GraduationCap, FlaskConical, ArrowRight, Layers, FileText, Activity, LogIn, UserPlus, Camera, ChevronRight, ChevronsDown, Brain, MoreHorizontal } from 'lucide-react';
+import { Menu, X, ChevronDown, Calculator, BookOpen, Search, GraduationCap, FlaskConical, ArrowRight, Layers, FileText, Activity, LogIn, UserPlus, Camera, ChevronRight, ChevronsDown, Brain, MoreHorizontal, Users, Briefcase, Handshake, ExternalLink } from 'lucide-react';
 import { NAVIGATION, NavItem } from '@/lib/constants/navigation';
 import { cn } from '@/lib/utils/cn';
 import { StockTicker } from './StockTicker';
@@ -347,21 +347,106 @@ export function Header() {
 
           {/* Right Actions */}
           <div className="flex items-center gap-2 shrink-0">
-            <a
-              href="https://trustner.investwell.app/app/#/login"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden lg:inline-flex items-center gap-1.5 text-[13px] font-bold px-4 py-2 rounded-full border-2 border-[#4A7CB5] text-[#4A7CB5] bg-white hover:bg-[#4A7CB5] hover:text-white transition-all duration-300 whitespace-nowrap"
+            {/* Sign In Dropdown */}
+            <div
+              className="relative hidden lg:block"
+              data-nav-dropdown
+              onMouseEnter={() => handleMouseEnter('__signin__')}
+              onMouseLeave={handleMouseLeave}
             >
-              <LogIn className="w-3.5 h-3.5" />
-              Sign In
-            </a>
+              <button
+                type="button"
+                onClick={(e) => {
+                  if (!isTouchDevice.current) return;
+                  if (activeDropdown === '__signin__') {
+                    setActiveDropdown(null);
+                    return;
+                  }
+                  e.preventDefault();
+                  setActiveDropdown('__signin__');
+                }}
+                className="inline-flex items-center gap-1.5 text-[13px] font-bold px-4 py-2 rounded-full border-2 border-[#4A7CB5] text-[#4A7CB5] bg-white hover:bg-[#4A7CB5] hover:text-white transition-all duration-300 whitespace-nowrap"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                Sign In
+                <ChevronDown className="w-3 h-3" />
+              </button>
+
+              {activeDropdown === '__signin__' && (
+                <div className="absolute top-full right-0 pt-2 animate-fade-in z-50">
+                  <div className="bg-white rounded-xl shadow-dropdown border border-surface-300/50 min-w-[260px] p-2 card-accent-border">
+                    <div className="px-3 py-2 mb-1">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Choose your portal</p>
+                    </div>
+
+                    {/* Clients */}
+                    <a
+                      href="https://trustner.investwell.app/app/#/login"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-50 transition-colors group"
+                    >
+                      <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-100 text-blue-600 group-hover:bg-blue-200 transition-colors">
+                        <Users className="w-4.5 h-4.5" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-slate-700">Clients</p>
+                        <p className="text-[11px] text-slate-400">Portfolio & investments</p>
+                      </div>
+                      <ExternalLink className="w-3.5 h-3.5 text-slate-300 group-hover:text-blue-400" />
+                    </a>
+
+                    {/* Employees */}
+                    <Link
+                      href="/admin/login"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-emerald-50 transition-colors group"
+                    >
+                      <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600 group-hover:bg-emerald-200 transition-colors">
+                        <Briefcase className="w-4.5 h-4.5" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-slate-700">Employees</p>
+                        <p className="text-[11px] text-slate-400">MIS & incentive dashboard</p>
+                      </div>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-emerald-400" />
+                    </Link>
+
+                    {/* Partners */}
+                    <Link
+                      href="/partner/login"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-amber-50 transition-colors group"
+                    >
+                      <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-amber-100 text-amber-600 group-hover:bg-amber-200 transition-colors">
+                        <Handshake className="w-4.5 h-4.5" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-slate-700">Partners</p>
+                        <p className="text-[11px] text-slate-400">POSP / Sub-broker / Referral</p>
+                      </div>
+                      <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-amber-400" />
+                    </Link>
+
+                    <div className="border-t border-surface-200 mt-2 pt-2 px-3 pb-1">
+                      <a
+                        href="https://trustner.investwell.app/app/#/kycOnBoarding/mobileSignUp"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 w-full py-2 rounded-lg text-[12px] font-bold bg-[#4A7CB5] text-white hover:bg-[#3D6A9E] transition-all duration-300"
+                      >
+                        <UserPlus className="w-3.5 h-3.5" />
+                        New Client? Sign Up Free
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
 
             <a
               href="https://trustner.investwell.app/app/#/kycOnBoarding/mobileSignUp"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-1.5 text-[13px] font-bold px-4 py-2 rounded-full bg-[#4A7CB5] text-white hover:bg-[#3D6A9E] transition-all duration-300 shadow-sm hover:shadow-md whitespace-nowrap"
+              className="hidden sm:inline-flex lg:hidden items-center gap-1.5 text-[13px] font-bold px-4 py-2 rounded-full bg-[#4A7CB5] text-white hover:bg-[#3D6A9E] transition-all duration-300 shadow-sm hover:shadow-md whitespace-nowrap"
             >
               <UserPlus className="w-3.5 h-3.5" />
               Sign Up
@@ -494,24 +579,65 @@ export function Header() {
               );
             })}
 
-            <div className="mt-6 px-4 space-y-3">
+            <div className="mt-6 px-4 space-y-2">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1 mb-2">Sign In As</p>
+
+              {/* Mobile: Clients */}
               <a
                 href="https://trustner.investwell.app/app/#/login"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3 rounded-full text-sm font-bold border-2 border-[#4A7CB5] text-[#4A7CB5] bg-white hover:bg-[#4A7CB5] hover:text-white transition-all duration-300 whitespace-nowrap"
+                className="flex items-center gap-3 w-full px-4 py-3 rounded-xl border border-blue-200 bg-blue-50/50 hover:bg-blue-100 transition-colors"
               >
-                <LogIn className="w-4 h-4" />
-                Sign In
+                <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-100 text-blue-600">
+                  <Users className="w-4 h-4" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-slate-700">Client Login</p>
+                  <p className="text-[11px] text-slate-400">Portfolio & investments</p>
+                </div>
+                <ExternalLink className="w-4 h-4 text-slate-300" />
               </a>
+
+              {/* Mobile: Employees */}
+              <Link
+                href="/admin/login"
+                className="flex items-center gap-3 w-full px-4 py-3 rounded-xl border border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100 transition-colors"
+              >
+                <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600">
+                  <Briefcase className="w-4 h-4" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-slate-700">Employee Login</p>
+                  <p className="text-[11px] text-slate-400">MIS & incentive dashboard</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-300" />
+              </Link>
+
+              {/* Mobile: Partners */}
+              <Link
+                href="/partner/login"
+                className="flex items-center gap-3 w-full px-4 py-3 rounded-xl border border-amber-200 bg-amber-50/50 hover:bg-amber-100 transition-colors"
+              >
+                <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-amber-100 text-amber-600">
+                  <Handshake className="w-4 h-4" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-slate-700">Partner Login</p>
+                  <p className="text-[11px] text-slate-400">POSP / Sub-broker / Referral</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-300" />
+              </Link>
+
+              {/* Mobile: Sign Up CTA */}
               <a
                 href="https://trustner.investwell.app/app/#/kycOnBoarding/mobileSignUp"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3 rounded-full text-sm font-bold bg-[#4A7CB5] text-white hover:bg-[#3D6A9E] transition-all duration-300 shadow-sm hover:shadow-md whitespace-nowrap"
+                className="flex items-center justify-center gap-2 w-full py-3 mt-2 rounded-full text-sm font-bold bg-[#4A7CB5] text-white hover:bg-[#3D6A9E] transition-all duration-300 shadow-sm hover:shadow-md whitespace-nowrap"
               >
                 <UserPlus className="w-4 h-4" />
-                Sign Up
+                New Client? Sign Up Free
               </a>
             </div>
           </div>

@@ -37,6 +37,7 @@ export const ADMIN_NAV = [
   { label: 'Leads', href: '/admin/leads', icon: 'Users', role: 'editor' as AdminRole },
   { label: 'Reports', href: '/admin/reports', icon: 'FileCheck', role: 'editor' as AdminRole },
   { label: 'Gallery', href: '/admin/gallery', icon: 'Image', role: 'editor' as AdminRole },
+  { label: 'MIS Dashboard', href: '/admin/mis', icon: 'BarChart3', role: 'admin' as AdminRole },
   { label: 'Users', href: '/admin/users', icon: 'UserCog', role: 'admin' as AdminRole },
   { label: 'Settings', href: '/admin/settings', icon: 'Settings', role: 'admin' as AdminRole },
 ];
