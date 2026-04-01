@@ -70,7 +70,7 @@ export default function TaxationGuidePage() {
 
             <p className="text-base sm:text-lg text-slate-300 leading-relaxed mb-6 max-w-2xl">
               Complete A-to-Z tax guide for Indian mutual fund investors — updated for{' '}
-              <span className="font-semibold text-white">FY 2025-26 (AY 2026-27)</span>. Covers
+              <span className="font-semibold text-white">FY 2026-27 (AY 2027-28)</span>. Covers
               equity, debt, hybrid funds, SIP taxation, ELSS, NRI rules, and recent budget changes.
             </p>
 
@@ -849,7 +849,7 @@ export default function TaxationGuidePage() {
               <div>
                 <p className="font-semibold text-blue-800 mb-1">Practical Example</p>
                 <p className="text-sm text-blue-700 leading-relaxed">
-                  In FY 2025-26, you have LTCG of Rs 2,00,000 from Fund A (equity). You also hold
+                  In FY 2026-27, you have LTCG of Rs 2,00,000 from Fund A (equity). You also hold
                   Fund B which is at a loss of Rs 50,000 (held &gt;12 months). If you redeem Fund B,
                   you book an LTCL of Rs 50,000. Net LTCG = Rs 2,00,000 - Rs 50,000 = Rs 1,50,000.
                   After Rs 1,25,000 exemption, taxable LTCG = Rs 25,000. Tax = 12.5% of Rs 25,000 =
@@ -1013,7 +1013,7 @@ export default function TaxationGuidePage() {
             </div>
             <div>
               <h2 className="text-2xl font-bold text-slate-800">10. Key Due Dates for MF Investors</h2>
-              <p className="text-sm text-slate-500">FY 2025-26 (AY 2026-27) tax calendar</p>
+              <p className="text-sm text-slate-500">FY 2026-27 (AY 2027-28) tax calendar</p>
             </div>
           </div>
 
@@ -1062,8 +1062,8 @@ export default function TaxationGuidePage() {
                   </td>
                 </tr>
                 <tr className="bg-amber-50/50">
-                  <td className="p-3 font-medium text-amber-800">31 March 2026</td>
-                  <td className="p-3 text-slate-600 font-medium">End of FY 2025-26</td>
+                  <td className="p-3 font-medium text-amber-800">31 March 2027</td>
+                  <td className="p-3 text-slate-600 font-medium">End of FY 2026-27</td>
                   <td className="p-3 text-slate-600">
                     Last date for tax-loss harvesting, 80C investments (ELSS), and booking LTCG
                     within Rs 1.25L exemption
@@ -1167,7 +1167,7 @@ export default function TaxationGuidePage() {
                 <p className="text-xs text-slate-500 leading-relaxed mb-2">
                   Tax laws are subject to change. The information on this page is based on the
                   Income Tax Act, 1961 as amended by the Finance Act 2024 and applicable for FY
-                  2025-26 (AY 2026-27). Rates mentioned are exclusive of surcharge and 4% health &
+                  2026-27 (AY 2027-28). Rates mentioned are exclusive of surcharge and 4% health &
                   education cess unless stated otherwise. Please consult your Chartered Accountant
                   or tax professional for advice specific to your situation.
                 </p>
@@ -1179,7 +1179,7 @@ export default function TaxationGuidePage() {
           </div>
 
           <p className="text-center text-xs text-slate-400 mt-4">
-            Last updated: March 2026 | Content reviewed for FY 2025-26 (AY 2026-27)
+            Last updated: April 2026 | Content reviewed for FY 2026-27 (AY 2027-28)
           </p>
         </div>
       </section>

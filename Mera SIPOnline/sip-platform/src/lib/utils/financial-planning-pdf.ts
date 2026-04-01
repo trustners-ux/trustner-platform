@@ -1500,7 +1500,7 @@ function pCompAssumptions(
     const sources = [
       'Return assumptions based on historical data from NSE, BSE, AMFI, RBI. Past performance does not guarantee future results.',
       'Insurance coverage recommendations follow IRDAI guidelines and industry benchmarks.',
-      'Tax calculations based on Income Tax Act provisions for FY 2025-26. Consult a CA for personalized tax advice.',
+      'Tax calculations based on Income Tax Act provisions for FY 2026-27. Consult a CA for personalized tax advice.',
       'All projections use self-reported data. Accuracy depends on data quality provided during assessment.',
     ];
     for (const src of sources) {

@@ -1361,7 +1361,7 @@ export const blogPosts: BlogPost[] = [
       },
       {
         type: 'heading',
-        text: 'Equity Mutual Fund SIP Taxation (FY 2025-26)',
+        text: 'Equity Mutual Fund SIP Taxation (FY 2026-27)',
       },
       {
         type: 'paragraph',
@@ -9810,7 +9810,7 @@ export const blogPosts: BlogPost[] = [
       },
       {
         type: 'disclaimer',
-        text: 'Tax rates, deduction limits, and exemptions mentioned are based on the Income Tax Act as applicable for FY2025-26 (AY2026-27). Tax laws are subject to change. This article is for educational and informational purposes only and does not constitute tax advice, legal advice, or investment recommendations. Investors should consult a qualified Chartered Accountant or tax advisor for personalized tax planning. Mutual fund investments are subject to market risks — read all scheme-related documents carefully. Trustner Asset Services Pvt. Ltd. is an AMFI-registered Mutual Fund Distributor (ARN-286886).',
+        text: 'Tax rates, deduction limits, and exemptions mentioned are based on the Income Tax Act as applicable for FY2026-27 (AY2027-28). Tax laws are subject to change. This article is for educational and informational purposes only and does not constitute tax advice, legal advice, or investment recommendations. Investors should consult a qualified Chartered Accountant or tax advisor for personalized tax planning. Mutual fund investments are subject to market risks — read all scheme-related documents carefully. Trustner Asset Services Pvt. Ltd. is an AMFI-registered Mutual Fund Distributor (ARN-286886).',
       },
     ],
   },

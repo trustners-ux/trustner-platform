@@ -103,6 +103,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   // Resources / Taxation pages
   const resourcePages: MetadataRoute.Sitemap = [
+    { url: `${BASE_URL}/resources`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.7 },
     { url: `${BASE_URL}/resources/taxation`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8 },
     { url: `${BASE_URL}/resources/taxation/nri`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8 },
   ];

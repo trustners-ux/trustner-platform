@@ -270,7 +270,7 @@ export const FOOTER_LINKS = {
     { label: 'Rent vs Buy', href: '/calculators/rent-vs-buy' },
     { label: 'Emergency Fund', href: '/calculators/emergency-fund' },
     { label: 'Term Insurance', href: '/calculators/term-insurance' },
-    { label: 'All 30 Calculators', href: '/calculators' },
+    { label: 'All 33+ Calculators', href: '/calculators' },
   ],
   Research: [
     { label: 'Historical Returns', href: '/research/historical-returns' },
@@ -284,8 +284,11 @@ export const FOOTER_LINKS = {
     { label: 'Fund Explorer', href: '/funds' },
     { label: 'Trustner Fund Selection', href: '/funds/selection' },
     { label: 'Compare Funds', href: '/funds/compare' },
+    { label: 'MF Taxation Guide', href: '/resources/taxation' },
+    { label: 'NRI Taxation Guide', href: '/resources/taxation/nri' },
     { label: 'Blog', href: '/blog' },
     { label: 'Market Pulse', href: '/market-pulse' },
+    { label: 'Gallery', href: '/gallery' },
   ],
   Company: [
     { label: 'About Trustner', href: '/about' },

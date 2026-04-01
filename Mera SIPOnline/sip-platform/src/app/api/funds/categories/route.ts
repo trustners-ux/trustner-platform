@@ -32,7 +32,7 @@ export async function GET() {
       },
       {
         headers: {
-          'Cache-Control': 'public, max-age=86400',
+          'Cache-Control': 'public, s-maxage=86400',
         },
       }
     );

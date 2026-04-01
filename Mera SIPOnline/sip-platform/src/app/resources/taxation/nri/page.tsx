@@ -45,7 +45,7 @@ export default function NRITaxationGuidePage() {
             <p className="text-lg text-slate-300 leading-relaxed max-w-2xl">
               Complete tax guide for Non-Resident Indians investing in Indian mutual funds
               &mdash; US, Canada, Europe, UAE &amp; more. Understand TDS, DTAA, PFIC,
-              and repatriation rules for FY 2025-26.
+              and repatriation rules for FY 2026-27.
             </p>
             <div className="flex flex-wrap gap-3 mt-8">
               {[
@@ -62,7 +62,7 @@ export default function NRITaxationGuidePage() {
                 </button>
               ))}
               <span className="inline-flex items-center gap-1.5 bg-white/10 border border-white/10 rounded-full px-3 py-1.5 text-xs">
-                <Calendar className="w-3 h-3" /> Updated FY 2025-26
+                <Calendar className="w-3 h-3" /> Updated FY 2026-27
               </span>
             </div>
           </div>
@@ -212,7 +212,7 @@ export default function NRITaxationGuidePage() {
             {/* TDS Rate Table */}
             <div className="card-base overflow-hidden mb-8">
               <div className="bg-primary-700 text-white px-5 py-3">
-                <h3 className="font-semibold text-sm">NRI TDS Rates on Mutual Fund Redemption — FY 2025-26</h3>
+                <h3 className="font-semibold text-sm">NRI TDS Rates on Mutual Fund Redemption — FY 2026-27</h3>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -830,7 +830,7 @@ export default function NRITaxationGuidePage() {
                   <p>
                     India and the UAE have a <strong>limited DTAA</strong> that primarily covers exchange of
                     information and does not provide comprehensive relief for individual investors on capital gains.
-                    As of FY 2025-26, there is <strong>no mechanism for UAE-based NRIs to claim Indian TDS as a
+                    As of FY 2026-27, there is <strong>no mechanism for UAE-based NRIs to claim Indian TDS as a
                     credit</strong> against any local tax (since there is none).
                   </p>
                   <p>
@@ -1254,7 +1254,7 @@ export default function NRITaxationGuidePage() {
                   <strong>NRI investors must consult qualified professionals</strong> — an Indian Chartered Accountant
                   for Indian tax matters, and a CPA (US), CA (Canada), tax advisor (UK/EU), or equivalent professional
                   in their country of residence for local tax implications. The information in this guide is based
-                  on tax laws and regulations as understood as of FY 2025-26 and may not reflect subsequent changes.
+                  on tax laws and regulations as understood as of FY 2026-27 and may not reflect subsequent changes.
                 </p>
                 <p>
                   Mutual fund investments are subject to market risks. Read all scheme-related documents carefully before

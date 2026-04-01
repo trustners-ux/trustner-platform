@@ -265,13 +265,13 @@ const categories: Category[] = [
     items: [
       {
         name: 'Income Tax Calculator',
-        description: 'Compare Old vs New tax regime with FY 2025-26 slabs and HRA exemption.',
+        description: 'Compare Old vs New tax regime with FY 2026-27 slabs and HRA exemption.',
         href: '/calculators/income-tax',
         icon: IndianRupee,
         gradient: 'from-emerald-500 to-green-600',
         bgLight: 'bg-emerald-50',
         textColor: 'text-emerald-600',
-        tag: 'FY 2025-26',
+        tag: 'FY 2026-27',
       },
       {
         name: 'Capital Gains Tax Calculator',

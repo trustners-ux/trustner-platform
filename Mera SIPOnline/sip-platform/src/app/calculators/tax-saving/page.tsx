@@ -52,7 +52,7 @@ function computeOldRegimeTax(taxableIncome: number): number {
 }
 
 function computeNewRegimeTax(taxableIncome: number): number {
-  // FY 2025-26 new regime slabs (after ₹75K standard deduction)
+  // FY 2026-27 new regime slabs (after ₹75K standard deduction)
   let tax = 0;
   const slabs = [
     { limit: 400000, rate: 0 },

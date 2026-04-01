@@ -66,7 +66,7 @@ export default function IncomeTaxCalculatorPage() {
       return tax;
     };
 
-    // ── New Regime Tax Slabs (FY 2025-26) ──
+    // ── New Regime Tax Slabs (FY 2026-27) ──
     const calcNewTax = (income: number): number => {
       if (income <= 400000) return 0;
       let tax = 0;
@@ -189,7 +189,7 @@ export default function IncomeTaxCalculatorPage() {
               <Calculator className="w-7 h-7 text-accent" />
             </div>
             <div>
-              <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-1">FY 2025-26</p>
+              <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-1">FY 2026-27</p>
               <h1 className="text-3xl sm:text-4xl font-extrabold">Income Tax Calculator</h1>
               <p className="text-slate-300 mt-1">Compare Old vs New regime and find which saves you more tax</p>
             </div>
@@ -297,7 +297,7 @@ export default function IncomeTaxCalculatorPage() {
             <div className="space-y-8">
               {/* PDF Download */}
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-primary-700">Results &mdash; FY 2025-26</h3>
+                <h3 className="font-bold text-primary-700">Results &mdash; FY 2026-27</h3>
                 <DownloadPDFButton elementId="calculator-results" title="Income Tax Calculator" fileName="income-tax-calculator" />
               </div>
 
@@ -565,7 +565,7 @@ export default function IncomeTaxCalculatorPage() {
                         <li>You are not claiming home loan interest deduction (24b). If you have a home loan, claiming up to <span className="font-semibold text-amber-700">₹2,00,000</span> could shift the balance towards Old Regime.</li>
                       )}
                       <li>
-                        The New Regime offers a standard deduction of <span className="font-semibold text-blue-700">₹75,000</span> and full tax rebate up to <span className="font-semibold text-blue-700">₹12L</span> taxable income (FY 2025-26).
+                        The New Regime offers a standard deduction of <span className="font-semibold text-blue-700">₹75,000</span> and full tax rebate up to <span className="font-semibold text-blue-700">₹12L</span> taxable income (FY 2026-27).
                       </li>
                       {result.totalDeductionsOld < 375000 && (
                         <li className="text-amber-700">
@@ -581,7 +581,7 @@ export default function IncomeTaxCalculatorPage() {
               <div className="card-base p-6 bg-gradient-to-r from-amber-50 to-orange-50" data-pdf-keep-together>
                 <h3 className="font-bold text-primary-700 mb-2">Important Note</h3>
                 <p className="text-sm text-slate-600 leading-relaxed">
-                  This calculator provides an indicative comparison based on the FY 2025-26 tax slabs. Actual tax liability may differ
+                  This calculator provides an indicative comparison based on the FY 2026-27 tax slabs. Actual tax liability may differ
                   based on additional exemptions, allowances (LTA, food coupons), capital gains, other income sources, and specific employer
                   salary structure. The New Regime is the default regime; you need to explicitly opt for the Old Regime while filing returns.
                   Consult a qualified tax professional for personalized tax planning.

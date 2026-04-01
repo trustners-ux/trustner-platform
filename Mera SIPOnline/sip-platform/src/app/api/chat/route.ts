@@ -255,7 +255,7 @@ const KNOWLEDGE_BASE: ResponseEntry[] = [
   {
     keywords: ['tax on mutual fund', 'ltcg', 'stcg', 'capital gain', 'mutual fund tax', 'tax rate mutual'],
     response:
-      'Mutual Fund Taxation (FY 2025-26):\n\n' +
+      'Mutual Fund Taxation (FY 2026-27):\n\n' +
       '📊 Equity Funds (held >65% in equities):\n' +
       '• STCG (held < 12 months): 20% flat\n' +
       '• LTCG (held > 12 months): 12.5% above ₹1.25 lakh exemption\n\n' +

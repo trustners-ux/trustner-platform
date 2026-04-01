@@ -330,7 +330,7 @@ export const advancedSIPModule: LearningModule = {
           'First-in-first-out (FIFO) method for redemption tax calculation',
           'Tax harvesting: Redeem and reinvest to utilize annual LTCG exemption',
         ],
-        formula: 'Equity Fund Tax (FY 2025-26):\nSTCG (held < 12 months): 20%\nLTCG (held > 12 months): 12.5% above ₹1.25L exemption\n\nDebt Fund Tax (from April 2023):\nAll gains: Taxed at investor\'s income tax slab rate\nNo indexation benefit',
+        formula: 'Equity Fund Tax (FY 2026-27):\nSTCG (held < 12 months): 20%\nLTCG (held > 12 months): 12.5% above ₹1.25L exemption\n\nDebt Fund Tax (from April 2023):\nAll gains: Taxed at investor\'s income tax slab rate\nNo indexation benefit',
         faq: [
           {
             question: 'What is LTCG tax harvesting in SIP?',

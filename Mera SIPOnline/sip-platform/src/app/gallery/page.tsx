@@ -184,24 +184,14 @@ export default function GalleryPage() {
                   onClick={() => openLightbox(index)}
                 >
                   <div className="relative aspect-[3/2] overflow-hidden">
-                    {image.src.startsWith('http') ? (
-                      // External URL (Vercel Blob)
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={image.src}
-                        alt={image.caption}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                    ) : (
-                      // Local file
-                      <Image
-                        src={image.src}
-                        alt={image.caption}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      />
-                    )}
+                    <Image
+                      src={image.src}
+                      alt={image.caption}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      unoptimized={image.src.startsWith('http')}
+                    />
                     {/* Caption Overlay */}
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-4 pt-10">
                       <p className="text-white text-sm font-medium leading-snug">
@@ -240,23 +230,15 @@ export default function GalleryPage() {
 
               {/* Image */}
               <div className="relative aspect-[3/2] w-full rounded-xl overflow-hidden bg-black">
-                {currentImage.src.startsWith('http') ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={currentImage.src}
-                    alt={currentImage.caption}
-                    className="w-full h-full object-contain"
-                  />
-                ) : (
-                  <Image
-                    src={currentImage.src}
-                    alt={currentImage.caption}
-                    fill
-                    className="object-contain"
-                    sizes="(max-width: 1280px) 100vw, 1280px"
-                    priority
-                  />
-                )}
+                <Image
+                  src={currentImage.src}
+                  alt={currentImage.caption}
+                  fill
+                  className="object-contain"
+                  sizes="(max-width: 1280px) 100vw, 1280px"
+                  priority
+                  unoptimized={currentImage.src.startsWith('http')}
+                />
               </div>
 
               {/* Caption */}
