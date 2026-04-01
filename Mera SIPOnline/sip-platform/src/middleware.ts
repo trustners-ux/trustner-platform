@@ -9,6 +9,7 @@ const ROLE_HIERARCHY: Record<AdminRole, number> = { admin: 3, editor: 2, viewer:
 // Routes requiring specific minimum roles
 const ROUTE_ROLES: { pattern: string; role: AdminRole }[] = [
   { pattern: '/admin/settings', role: 'admin' },
+  { pattern: '/admin/mis', role: 'admin' },
   { pattern: '/admin/funds', role: 'editor' },
   { pattern: '/admin/blog', role: 'editor' },
   { pattern: '/admin/market', role: 'editor' },
@@ -33,27 +34,44 @@ function getRequiredRole(pathname: string): AdminRole | null {
       return route.role;
     }
   }
-  return null; // no restriction beyond being authenticated
+  return null;
 }
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // --- Content Protection Headers for all public pages ---
-  if (!pathname.startsWith('/admin') && !pathname.startsWith('/api/admin') && !pathname.startsWith('/partner') && !pathname.startsWith('/api/partner')) {
+  // ─── RM Portal Routes (separate auth) ───
+  // Allow RM login page and RM auth API without auth
+  if (
+    pathname === '/rm/login' ||
+    pathname.startsWith('/api/rm/auth') ||
+    pathname.startsWith('/api/mis/') // MIS API handles its own auth via cookies
+  ) {
+    return NextResponse.next();
+  }
+
+  // RM protected pages — check rm-session cookie exists (verification happens in API)
+  if (pathname.startsWith('/rm') && pathname !== '/rm/login') {
+    const rmToken = request.cookies.get('rm-session')?.value;
+    if (!rmToken) {
+      return NextResponse.redirect(new URL('/rm/login', request.url));
+    }
+    return NextResponse.next();
+  }
+
+  // ─── Partner Portal Routes ───
+  if (pathname.startsWith('/partner') || pathname.startsWith('/api/partner')) {
+    return NextResponse.next();
+  }
+
+  // ─── Content Protection Headers for all public pages ───
+  if (!pathname.startsWith('/admin') && !pathname.startsWith('/api/admin')) {
     const response = NextResponse.next();
 
-    // Prevent embedding in iframes (anti-cloning)
     response.headers.set('X-Frame-Options', 'SAMEORIGIN');
     response.headers.set('Content-Security-Policy', "frame-ancestors 'self'");
-
-    // Prevent MIME sniffing
     response.headers.set('X-Content-Type-Options', 'nosniff');
-
-    // Referrer policy
     response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-
-    // Permissions policy - restrict what features can be used
     response.headers.set(
       'Permissions-Policy',
       'camera=(), microphone=(), geolocation=(self), interest-cohort=()'
@@ -62,6 +80,7 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
+  // ─── Admin Routes ───
   // Allow login page, forgot-password page, and auth API routes
   if (
     pathname === '/admin/login' ||
@@ -97,7 +116,6 @@ export async function middleware(request: NextRequest) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
-    // Redirect unauthorized users to dashboard
     return NextResponse.redirect(new URL('/admin', request.url));
   }
 
@@ -115,6 +133,13 @@ export const config = {
     // Admin routes
     '/admin/:path*',
     '/api/admin/:path*',
+    // RM routes
+    '/rm/:path*',
+    '/api/rm/:path*',
+    '/api/mis/:path*',
+    // Partner routes
+    '/partner/:path*',
+    '/api/partner/:path*',
     // Public pages (for security headers)
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)).*)',
   ],
