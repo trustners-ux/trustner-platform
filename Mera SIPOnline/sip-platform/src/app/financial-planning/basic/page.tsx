@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, IndianRupee, Camera, Loader2 } from 'lucide-react';
 
@@ -111,6 +111,29 @@ export default function BasicPlanPage() {
     }
     return { ...DEFAULT_PLANNING_DATA };
   });
+
+  // Check for pre-verified session from landing page
+  useEffect(() => {
+    if (verified) return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('verified') === '1') {
+        const session = localStorage.getItem('fp-session');
+        if (session) {
+          const { token, phone, email } = JSON.parse(session);
+          if (token && phone && email) {
+            setSessionToken(token);
+            setVerified(true);
+            setPlanData((prev) => ({
+              ...prev,
+              personalProfile: { ...prev.personalProfile, phone, email },
+            }));
+            localStorage.removeItem('fp-session');
+          }
+        }
+      }
+    } catch { /* ignore */ }
+  }, [verified]);
 
   const updateData = useCallback(
     (updater: (prev: FinancialPlanningData) => FinancialPlanningData) => {

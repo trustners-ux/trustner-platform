@@ -1,6 +1,8 @@
 'use client';
 
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   ArrowRight,
   Zap,
@@ -22,6 +24,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import TierSelector from '@/components/financial-planning/TierSelector';
+import { OTPGate } from '@/components/financial-planning/OTPGate';
 import { STANDALONE_PLANS } from '@/lib/constants/tier-config';
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -92,72 +95,27 @@ const TRUST_POINTS = [
 ];
 
 /* ═══════════════════════════════════════════════════════════════════════
-   HERO GAUGE SVG
-   ═══════════════════════════════════════════════════════════════════════ */
-
-function ScoreGauge() {
-  const radius = 80;
-  const stroke = 12;
-  const center = 100;
-  const circumference = Math.PI * radius;
-  const scorePercent = 742 / 900;
-  const filledLength = circumference * scorePercent;
-
-  return (
-    <div className="relative flex items-center justify-center">
-      <svg width="200" height="120" viewBox="0 0 200 120" className="drop-shadow-lg">
-        <path
-          d={`M ${center - radius} ${center} A ${radius} ${radius} 0 0 1 ${center + radius} ${center}`}
-          fill="none"
-          stroke="rgba(255,255,255,0.15)"
-          strokeWidth={stroke}
-          strokeLinecap="round"
-        />
-        <path
-          d={`M ${center - radius} ${center} A ${radius} ${radius} 0 0 1 ${center + radius} ${center}`}
-          fill="none"
-          stroke="url(#gaugeGradient)"
-          strokeWidth={stroke}
-          strokeLinecap="round"
-          strokeDasharray={`${filledLength} ${circumference}`}
-          className="transition-all duration-1000"
-        />
-        <defs>
-          <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#14B8A6" />
-            <stop offset="50%" stopColor="#5EEAD4" />
-            <stop offset="100%" stopColor="#F0FDFA" />
-          </linearGradient>
-        </defs>
-        <text
-          x={center}
-          y={center - 16}
-          textAnchor="middle"
-          className="fill-white text-[2.75rem] font-extrabold"
-          style={{ fontSize: '2.75rem', fontWeight: 800 }}
-        >
-          742
-        </text>
-        <text
-          x={center}
-          y={center + 6}
-          textAnchor="middle"
-          className="fill-white/70 text-[0.65rem] font-medium tracking-widest uppercase"
-          style={{ fontSize: '0.65rem' }}
-        >
-          out of 900
-        </text>
-      </svg>
-      <div className="absolute inset-0 rounded-full bg-brand-400/10 blur-2xl pointer-events-none" />
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════════════
    PAGE COMPONENT
    ═══════════════════════════════════════════════════════════════════════ */
 
 export default function FinancialPlanningPage() {
+  const router = useRouter();
+  const [selectedTier, setSelectedTier] = useState<'basic' | 'standard' | 'comprehensive'>('basic');
+
+  const handleVerified = useCallback((token: string, phone: string, email: string) => {
+    // Store the session token + contact info for the wizard to pick up
+    try {
+      localStorage.setItem('fp-session', JSON.stringify({ token, phone, email, tier: selectedTier }));
+    } catch { /* ignore */ }
+
+    // Redirect to the selected tier's wizard
+    const tierRoutes: Record<string, string> = {
+      basic: '/financial-planning/basic',
+      standard: '/financial-planning/assess',
+      comprehensive: '/financial-planning/comprehensive',
+    };
+    router.push(`${tierRoutes[selectedTier]}?verified=1`);
+  }, [selectedTier, router]);
   return (
     <>
       {/* ═══════════ 1. HERO SECTION ═══════════ */}
@@ -192,55 +150,42 @@ export default function FinancialPlanningPage() {
                 to a comprehensive financial blueprint rivaling what top CFPs charge &#8377;25,000+ for.
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-6">
-                <Link
-                  href="/financial-planning/basic"
-                  className="inline-flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-300 text-slate-900 px-8 py-4 rounded-lg font-bold text-base transition-all shadow-lg shadow-amber-400/25 pulse-ring-coral"
-                >
-                  Start Free Health Check
-                  <ArrowRight className="w-5 h-5" />
-                </Link>
-                <a
-                  href="#plans"
-                  className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white px-6 py-4 rounded-lg font-semibold text-base transition-all border border-white/20"
-                >
-                  <FileText className="w-5 h-5" />
-                  Explore All Plans
-                </a>
+              {/* Tier Quick-Select */}
+              <div className="flex flex-wrap gap-2 justify-center lg:justify-start mb-6">
+                {[
+                  { key: 'basic' as const, label: 'Health Check', time: '5 min', color: 'emerald' },
+                  { key: 'standard' as const, label: 'Goal Plan', time: '15 min', color: 'brand' },
+                  { key: 'comprehensive' as const, label: 'Full Blueprint', time: '30 min', color: 'amber' },
+                ].map((t) => (
+                  <button
+                    key={t.key}
+                    onClick={() => setSelectedTier(t.key)}
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${
+                      selectedTier === t.key
+                        ? 'bg-white text-slate-900 border-white shadow-lg'
+                        : 'bg-white/10 text-white/80 border-white/20 hover:bg-white/20'
+                    }`}
+                  >
+                    {t.label}
+                    <span className={`ml-1.5 text-xs ${selectedTier === t.key ? 'text-slate-500' : 'text-white/50'}`}>
+                      {t.time}
+                    </span>
+                  </button>
+                ))}
               </div>
 
-              <p className="text-sm text-slate-400">
-                5-30 minutes &middot; No credit card needed &middot; Instant score
-              </p>
+              <a
+                href="#plans"
+                className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors"
+              >
+                <FileText className="w-4 h-4" />
+                Compare all plans in detail
+              </a>
             </div>
 
-            {/* Right — Gauge */}
+            {/* Right — Sign Up Form */}
             <div className="flex justify-center lg:justify-end animate-fade-up" style={{ animationDelay: '0.2s' }}>
-              <div className="relative">
-                <div className="card-glass-dark p-8 sm:p-10 flex flex-col items-center gap-4">
-                  <p className="text-xs text-white/50 uppercase tracking-widest font-semibold">
-                    Sample Score
-                  </p>
-                  <ScoreGauge />
-                  <div className="flex items-center gap-2 mt-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <span className="text-sm text-emerald-300 font-medium">Good Financial Health</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3 mt-4 w-full">
-                    {['Cashflow', 'Protection', 'Growth'].map((label) => (
-                      <div key={label} className="text-center">
-                        <div className="text-xs text-white/40 mb-1">{label}</div>
-                        <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
-                          <div
-                            className="h-full rounded-full bg-gradient-to-r from-brand-400 to-brand-300"
-                            style={{ width: `${70 + Math.floor(Math.random() * 20)}%` }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <OTPGate onVerified={handleVerified} />
             </div>
           </div>
         </div>
@@ -399,13 +344,14 @@ export default function FinancialPlanningPage() {
             It takes just 5 minutes and costs absolutely nothing.
           </p>
 
-          <Link
-            href="/financial-planning/basic"
-            className="inline-flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-300 text-slate-900 px-10 py-4 rounded-lg font-bold text-lg transition-all shadow-lg shadow-amber-400/25 pulse-ring"
+          <a
+            href="#start"
+            onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            className="inline-flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-300 text-slate-900 px-10 py-4 rounded-lg font-bold text-lg transition-all shadow-lg shadow-amber-400/25 pulse-ring cursor-pointer"
           >
             Start Free Health Check
             <ArrowRight className="w-5 h-5" />
-          </Link>
+          </a>
 
           <p className="mt-6 text-sm text-slate-400">
             No credit card &middot; No login &middot; Instant results
