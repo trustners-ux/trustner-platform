@@ -2,6 +2,7 @@
 // Core operational module — RMs log daily business here
 
 import { isLocal, getCurrentMonth } from '@/lib/db/config';
+import { getSupabaseAdmin } from '@/lib/db/supabase';
 import { MonthlyBusinessEntry } from '@/lib/mis/types';
 import { SEED_BUSINESS_ENTRIES } from '@/lib/mis/seed-business-entries';
 import { PRODUCTS, getTierMultiplier } from '@/lib/mis/employee-data';
@@ -33,6 +34,28 @@ export interface BusinessEntryFilters {
   status?: string;
 }
 
+// ─── Map Supabase row to MonthlyBusinessEntry ───
+function mapRow(row: Record<string, unknown>): MonthlyBusinessEntry {
+  return {
+    id: row.id as number,
+    employeeId: row.employee_id as number,
+    month: row.month as string,
+    productId: row.product_id as number,
+    channelId: row.channel_id as number | undefined,
+    rawAmount: Number(row.raw_amount) || 0,
+    productCreditPct: Number(row.product_credit_pct) || 0,
+    channelPayoutPct: Number(row.channel_payout_pct) || 0,
+    companyMarginPct: Number(row.company_margin_pct) || 100,
+    marginCreditFactor: row.channel_payout_pct ? (100 - Number(row.channel_payout_pct)) / 100 : 1,
+    tierMultiplier: Number(row.tier_multiplier) || 100,
+    weightedAmount: Number(row.weighted_amount) || 0,
+    isFpRoute: row.is_fp_route as boolean || false,
+    policyNumber: row.policy_number as string | undefined,
+    clientName: row.client_name as string | undefined,
+    insurer: row.insurer as string | undefined,
+  };
+}
+
 /**
  * Get business entries with filters
  */
@@ -46,7 +69,20 @@ export async function getBusinessEntries(
     if (filters?.productId) result = result.filter(e => e.productId === filters.productId);
     return result;
   }
-  return [];
+
+  // ─── Supabase Path ───
+  const sb = getSupabaseAdmin();
+  if (!sb) throw new Error('Supabase not configured');
+
+  let query = sb.from('business_entries').select('*');
+  if (filters?.employeeId) query = query.eq('employee_id', filters.employeeId);
+  if (filters?.month) query = query.eq('month', filters.month);
+  if (filters?.productId) query = query.eq('product_id', filters.productId);
+  if (filters?.status) query = query.eq('status', filters.status);
+
+  const { data, error } = await query.order('created_at', { ascending: false });
+  if (error) throw new Error(`Business entries query failed: ${error.message}`);
+  return (data || []).map(mapRow);
 }
 
 /**
@@ -86,27 +122,25 @@ export async function createBusinessEntry(
     isFpRoute: input.isFpRoute || false,
   });
 
-  const entry: MonthlyBusinessEntry = {
-    id: 0, // will be set
-    employeeId: input.employeeId,
-    month: input.month || getCurrentMonth(),
-    productId: input.productId,
-    channelId: input.channelId,
-    rawAmount: input.rawAmount,
-    productCreditPct,
-    channelPayoutPct,
-    companyMarginPct: 100 - channelPayoutPct,
-    marginCreditFactor: channelPayoutPct > 0 ? (100 - channelPayoutPct) / 100 : 1,
-    tierMultiplier,
-    weightedAmount,
-    isFpRoute: input.isFpRoute || false,
-    policyNumber: input.policyNumber,
-    clientName: input.clientName,
-    insurer: input.insurer,
-  };
-
   if (isLocal) {
-    entry.id = localNextId++;
+    const entry: MonthlyBusinessEntry = {
+      id: localNextId++,
+      employeeId: input.employeeId,
+      month: input.month || getCurrentMonth(),
+      productId: input.productId,
+      channelId: input.channelId,
+      rawAmount: input.rawAmount,
+      productCreditPct,
+      channelPayoutPct,
+      companyMarginPct: 100 - channelPayoutPct,
+      marginCreditFactor: channelPayoutPct > 0 ? (100 - channelPayoutPct) / 100 : 1,
+      tierMultiplier,
+      weightedAmount,
+      isFpRoute: input.isFpRoute || false,
+      policyNumber: input.policyNumber,
+      clientName: input.clientName,
+      insurer: input.insurer,
+    };
     localEntries.push(entry);
 
     await writeAuditLog({
@@ -120,8 +154,50 @@ export async function createBusinessEntry(
     return entry;
   }
 
-  // TODO: Supabase insert
-  throw new Error('Supabase not configured');
+  // ─── Supabase Path ───
+  const sb = getSupabaseAdmin();
+  if (!sb) throw new Error('Supabase not configured');
+
+  const { data, error } = await sb
+    .from('business_entries')
+    .insert({
+      employee_id: input.employeeId,
+      month: input.month || getCurrentMonth(),
+      product_id: input.productId,
+      channel_id: input.channelId || null,
+      raw_amount: input.rawAmount,
+      product_credit_pct: productCreditPct,
+      channel_payout_pct: channelPayoutPct,
+      company_margin_pct: 100 - channelPayoutPct,
+      tier_multiplier: tierMultiplier,
+      weighted_amount: weightedAmount,
+      is_fp_route: input.isFpRoute || false,
+      policy_number: input.policyNumber || null,
+      client_name: input.clientName || null,
+      client_pan: input.clientPan || null,
+      insurer: input.insurer || null,
+      status: 'draft',
+      created_by: input.employeeId,
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(`Business entry insert failed: ${error.message}`);
+
+  await writeAuditLog({
+    tableName: 'business_entries',
+    recordId: data.id,
+    action: 'INSERT',
+    changedBy: createdBy,
+    newValues: {
+      rawAmount: input.rawAmount,
+      weightedAmount,
+      productId: input.productId,
+      clientName: input.clientName,
+    },
+  });
+
+  return mapRow(data);
 }
 
 /**
@@ -138,7 +214,6 @@ export async function updateBusinessEntry(
 
     const old = localEntries[idx];
 
-    // Recalculate if amount or product changed
     if (updates.rawAmount !== undefined || updates.productId !== undefined) {
       const productId = updates.productId || old.productId;
       const product = PRODUCTS.find(p => p.id === productId);
@@ -182,17 +257,79 @@ export async function updateBusinessEntry(
 
     return localEntries[idx];
   }
-  return null;
+
+  // ─── Supabase Path ───
+  const sb = getSupabaseAdmin();
+  if (!sb) return null;
+
+  // Get current entry
+  const { data: oldData } = await sb.from('business_entries').select('*').eq('id', id).single();
+  if (!oldData) return null;
+
+  // Recalculate if needed
+  const dbUpdates: Record<string, unknown> = {};
+
+  if (updates.rawAmount !== undefined || updates.productId !== undefined) {
+    const productId = updates.productId || oldData.product_id;
+    const product = PRODUCTS.find(p => p.id === productId);
+    if (!product) throw new Error(`Product not found: ${productId}`);
+
+    const rawAmount = updates.rawAmount ?? Number(oldData.raw_amount);
+    const channelPayoutPct = updates.channelPayoutPct ?? Number(oldData.channel_payout_pct);
+    const tierMultiplier = getTierMultiplier(product.tier);
+    const isFpRoute = updates.isFpRoute ?? oldData.is_fp_route;
+
+    const weightedAmount = calculateWeightedBusiness({
+      rawAmount,
+      productCreditPct: product.creditPct,
+      channelPayoutPct,
+      tierMultiplier,
+      isFpRoute,
+    });
+
+    dbUpdates.raw_amount = rawAmount;
+    dbUpdates.product_id = productId;
+    dbUpdates.product_credit_pct = product.creditPct;
+    dbUpdates.channel_payout_pct = channelPayoutPct;
+    dbUpdates.company_margin_pct = 100 - channelPayoutPct;
+    dbUpdates.tier_multiplier = tierMultiplier;
+    dbUpdates.weighted_amount = weightedAmount;
+    dbUpdates.is_fp_route = isFpRoute;
+  }
+
+  if (updates.clientName !== undefined) dbUpdates.client_name = updates.clientName;
+  if (updates.policyNumber !== undefined) dbUpdates.policy_number = updates.policyNumber;
+  if (updates.insurer !== undefined) dbUpdates.insurer = updates.insurer;
+
+  const { data, error } = await sb
+    .from('business_entries')
+    .update(dbUpdates)
+    .eq('id', id)
+    .eq('status', 'draft') // Can only edit drafts
+    .select()
+    .single();
+
+  if (error) throw new Error(`Business entry update failed: ${error.message}`);
+
+  await writeAuditLog({
+    tableName: 'business_entries',
+    recordId: id,
+    action: 'UPDATE',
+    changedBy: updatedBy,
+    oldValues: { raw_amount: oldData.raw_amount },
+    newValues: dbUpdates,
+  });
+
+  return data ? mapRow(data) : null;
 }
 
 /**
- * Delete a business entry
+ * Delete a business entry (draft only)
  */
 export async function deleteBusinessEntry(id: number, deletedBy: string): Promise<boolean> {
   if (isLocal) {
     const idx = localEntries.findIndex(e => e.id === id);
     if (idx === -1) return false;
-
     const old = localEntries[idx];
     localEntries.splice(idx, 1);
 
@@ -203,10 +340,99 @@ export async function deleteBusinessEntry(id: number, deletedBy: string): Promis
       changedBy: deletedBy,
       oldValues: { rawAmount: old.rawAmount, clientName: old.clientName },
     });
-
     return true;
   }
-  return false;
+
+  const sb = getSupabaseAdmin();
+  if (!sb) return false;
+
+  const { data: oldData } = await sb.from('business_entries').select('*').eq('id', id).single();
+
+  const { error } = await sb
+    .from('business_entries')
+    .delete()
+    .eq('id', id)
+    .eq('status', 'draft'); // Can only delete drafts
+
+  if (error) return false;
+
+  await writeAuditLog({
+    tableName: 'business_entries',
+    recordId: id,
+    action: 'DELETE',
+    changedBy: deletedBy,
+    oldValues: oldData ? { raw_amount: oldData.raw_amount, client_name: oldData.client_name } : undefined,
+  });
+
+  return true;
+}
+
+/**
+ * Submit entries for approval (change draft → submitted)
+ */
+export async function submitMonthEntries(
+  employeeId: number,
+  month: string,
+  submittedBy: string
+): Promise<number> {
+  if (isLocal) return 0; // No-op in local mode
+
+  const sb = getSupabaseAdmin();
+  if (!sb) return 0;
+
+  const { data, error } = await sb
+    .from('business_entries')
+    .update({ status: 'submitted', submitted_at: new Date().toISOString() })
+    .eq('employee_id', employeeId)
+    .eq('month', month)
+    .eq('status', 'draft')
+    .select();
+
+  if (error) throw new Error(`Submit failed: ${error.message}`);
+
+  await writeAuditLog({
+    tableName: 'business_entries',
+    action: 'UPDATE',
+    changedBy: submittedBy,
+    newValues: { action: 'bulk_submit', employeeId, month, count: data?.length },
+  });
+
+  return data?.length || 0;
+}
+
+/**
+ * Approve a submitted entry (admin only)
+ */
+export async function approveBusinessEntry(
+  id: number,
+  approvedBy: string,
+  approverEmployeeId: number
+): Promise<boolean> {
+  if (isLocal) return true; // No-op in local mode
+
+  const sb = getSupabaseAdmin();
+  if (!sb) return false;
+
+  const { error } = await sb
+    .from('business_entries')
+    .update({
+      status: 'approved',
+      approved_by: approverEmployeeId,
+      approved_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .eq('status', 'submitted');
+
+  if (error) return false;
+
+  await writeAuditLog({
+    tableName: 'business_entries',
+    recordId: id,
+    action: 'APPROVE',
+    changedBy: approvedBy,
+  });
+
+  return true;
 }
 
 /**
