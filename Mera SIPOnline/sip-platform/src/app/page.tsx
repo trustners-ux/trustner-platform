@@ -360,7 +360,7 @@ export default function HomePage() {
                 { name: 'Subhasish Kar', role: 'Institutional Sales', experience: '30 Years', initials: 'SK', color: 'from-emerald-400 to-emerald-600' },
                 { name: 'Rafiquddin Ahmed', role: 'Consultant — GI Team', experience: '38 Years', initials: 'RA', color: 'from-rose-400 to-rose-600' },
                 { name: 'Tamanna Somani', role: 'Head HNI Division', experience: '21 Years', initials: 'TS', color: 'from-violet-400 to-violet-600' },
-                { name: 'Raju Chakraborty', role: 'Area Manager CDM', experience: '25 Years', initials: 'RC', color: 'from-cyan-400 to-cyan-600' },
+                { name: 'Raju Chakraborty', role: 'Regional Manager North East', experience: '25 Years', initials: 'RC', color: 'from-cyan-400 to-cyan-600' },
               ]}
               visibleCount={4}
               interval={3000}
