@@ -29,7 +29,7 @@ const UPGRADE_CONFIG: Record<string, {
     color: 'text-brand-700',
     bgColor: 'bg-gradient-to-r from-brand-50 to-teal-50',
     borderColor: 'border-brand-200',
-    href: '/financial-planning/standard',
+    href: '/financial-planning/upgrade?from=basic',
   },
   standard: {
     nextTier: 'comprehensive',
@@ -40,7 +40,7 @@ const UPGRADE_CONFIG: Record<string, {
     color: 'text-amber-700',
     bgColor: 'bg-gradient-to-r from-amber-50 to-orange-50',
     borderColor: 'border-amber-200',
-    href: '/financial-planning/comprehensive',
+    href: '/financial-planning/upgrade?from=standard',
   },
 };
 

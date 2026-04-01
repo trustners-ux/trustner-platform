@@ -390,7 +390,7 @@ export default function BasicPlanPage() {
           Want goal-wise SIP recommendations and a detailed action plan?
         </p>
         <a
-          href="/financial-planning/standard"
+          href="/financial-planning/upgrade?from=basic"
           className="inline-block mt-2 text-xs font-bold text-white bg-brand px-4 py-2 rounded-lg hover:bg-brand-600 transition-colors"
         >
           Upgrade to Standard Plan →
