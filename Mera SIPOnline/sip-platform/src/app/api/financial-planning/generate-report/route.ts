@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    console.log(`[Generate Report] Starting for ${userName} (${userEmail})`);
+    console.log('[Generate Report] Starting report generation');
 
     // Step 1: Generate full report (without narrative)
     const baseReport = generateFullReport(data);

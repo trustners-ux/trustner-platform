@@ -122,7 +122,7 @@ export async function POST(request: Request) {
 
     // Log OTP in development for testing
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[FP OTP] Phone: ${cleanPhone}, Email: ${email}, OTP: ${otp}, SMS: ${smsSent}`);
+      console.log(`[FP OTP] OTP sent successfully, SMS: ${smsSent}`);
     }
 
     return NextResponse.json({

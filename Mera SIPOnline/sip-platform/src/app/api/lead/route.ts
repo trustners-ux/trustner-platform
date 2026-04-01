@@ -124,10 +124,7 @@ export async function POST(request: Request) {
       console.error('Lead store failed:', storeErr);
     }
 
-    console.log('Lead captured:', {
-      ...leadData,
-      timestamp: new Date().toISOString(),
-    });
+    console.log('[Lead] New lead captured');
 
     return NextResponse.json({
       success: true,

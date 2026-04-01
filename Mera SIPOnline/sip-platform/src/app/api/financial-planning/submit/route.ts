@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     const userEmail = data.personalProfile.email;
     const userPhone = data.personalProfile.phone || '';
 
-    console.log(`[FP Submit] Starting for ${userName} (${userEmail}) — Tier: ${tier}`);
+    console.log(`[FP Submit] Starting — Tier: ${tier}`);
 
     // Step 1: Run all calculations
     const score = calculateFinancialHealthScore(data);
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
             : (data.personalProfile.city || '-'),
         },
       });
-      console.log(`[FP Submit] Lead captured for ${userName}`);
+      console.log('[FP Submit] Lead captured');
     } catch (leadErr) {
       console.error('[FP Submit] Lead capture failed:', leadErr);
       // Non-critical — continue with report generation
@@ -183,7 +183,7 @@ export async function POST(request: Request) {
       // Non-critical — report is already in queue, admin will see it
     }
 
-    console.log(`[FP Submit] ✅ Complete for ${userName} — Report ID: ${reportId}`);
+    console.log(`[FP Submit] ✅ Complete — Report ID: ${reportId}`);
 
     return NextResponse.json({
       success: true,

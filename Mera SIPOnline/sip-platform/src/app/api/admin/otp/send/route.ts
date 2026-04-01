@@ -111,7 +111,7 @@ export async function POST(request: Request) {
 
     // Log OTP in development for testing
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[Admin OTP] Action: ${action}, Target: ${targetEmail || 'N/A'}, Email OTP: ${emailOtp}`);
+      console.log(`[Admin OTP] OTP sent for action: ${action}`);
     }
 
     return NextResponse.json({

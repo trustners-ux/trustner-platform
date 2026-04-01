@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       console.warn('[Newsletter] RESEND_API_KEY not configured — email not sent');
     }
 
-    console.log('[Newsletter Signup]', email, source || 'homepage', new Date().toISOString());
+    console.log(`[Newsletter] New signup from ${source || 'homepage'}`);
 
     return NextResponse.json({ success: true, message: 'Subscribed successfully!' });
   } catch (error) {
