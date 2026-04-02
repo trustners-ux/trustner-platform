@@ -100,6 +100,17 @@ def determine_slab(achievement_pct: float, slab_table: str, slabs: list[dict]) -
                 "achievement_max": a_max,
             }
 
+    # If achievement exceeds highest slab, use the highest slab
+    if filtered and achievement_pct > float(filtered[-1].get("achievement_max", 0)):
+        top_slab = filtered[-1]
+        return {
+            "slab_label": top_slab.get("slab_label", ""),
+            "incentive_rate": float(top_slab["incentive_rate"]),
+            "multiplier": float(top_slab["multiplier"]),
+            "achievement_min": float(top_slab["achievement_min"]),
+            "achievement_max": float(top_slab["achievement_max"]),
+        }
+
     # Below minimum threshold
     return {
         "slab_label": "No Incentive",
