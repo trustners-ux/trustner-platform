@@ -236,6 +236,84 @@ async def setup_employee_incentive(employee_id: str, setup: dict, user: dict = D
     return {"updated": True, "employee_id": employee_id, "fields": update_data}
 
 
+# ─── Schema Fix (Temporary) ──────────────────────────────────────────────
+
+@router.post("/fix-schema")
+async def fix_schema(user: dict = Depends(_require_admin)):
+    """Add missing incentive columns to employees table and seed Ram Shah data."""
+    import httpx
+
+    SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+    SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
+    ref = SUPABASE_URL.replace("https://", "").replace(".supabase.co", "")
+
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    # Step 1: ALTER TABLE to add missing columns
+    alter_sql = """
+    ALTER TABLE employees
+      ADD COLUMN IF NOT EXISTS employee_code VARCHAR(20),
+      ADD COLUMN IF NOT EXISTS phone VARCHAR(15),
+      ADD COLUMN IF NOT EXISTS doj DATE,
+      ADD COLUMN IF NOT EXISTS job_responsibility TEXT,
+      ADD COLUMN IF NOT EXISTS gross_salary DECIMAL(12,2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS entity VARCHAR(10),
+      ADD COLUMN IF NOT EXISTS annual_ctc DECIMAL(12,2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS level_code VARCHAR(5),
+      ADD COLUMN IF NOT EXISTS segment VARCHAR(50),
+      ADD COLUMN IF NOT EXISTS reporting_manager_id UUID,
+      ADD COLUMN IF NOT EXISTS location VARCHAR(50),
+      ADD COLUMN IF NOT EXISTS target_multiplier DECIMAL(5,2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS monthly_target DECIMAL(14,2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS annual_target DECIMAL(14,2) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS tenure_years DECIMAL(4,1) DEFAULT 0,
+      ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+    """
+
+    # Step 2: Seed Ram Shah + Sangeeta Shah + some key employees
+    seed_sql = """
+    UPDATE employees SET
+      employee_code = 'TAS001', segment = 'Direct Sales', level_code = 'L1',
+      gross_salary = 150000, monthly_target = 500000, annual_target = 6000000,
+      entity = 'TAS', job_responsibility = 'Direct Sales', target_multiplier = 1.0,
+      tenure_years = 5, is_active = true
+    WHERE LOWER(name) LIKE '%ram%shah%';
+
+    UPDATE employees SET
+      employee_code = 'TAS002', segment = 'Direct Sales', level_code = 'L1',
+      gross_salary = 150000, monthly_target = 500000, annual_target = 6000000,
+      entity = 'TAS', job_responsibility = 'Direct Sales', target_multiplier = 1.0,
+      tenure_years = 5, is_active = true
+    WHERE LOWER(name) LIKE '%sangeeta%shah%';
+
+    UPDATE employees SET
+      segment = 'Direct Sales', level_code = 'L3', entity = 'TAS',
+      gross_salary = 35000, monthly_target = 200000, annual_target = 2400000,
+      job_responsibility = 'Direct Sales', target_multiplier = 0.8,
+      tenure_years = 1, is_active = true
+    WHERE segment IS NULL AND is_active IS NOT false;
+    """
+
+    results = []
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        for label, sql in [("alter_table", alter_sql), ("seed_data", seed_sql)]:
+            try:
+                resp = await client.post(
+                    f"https://{ref}.supabase.co/pg/query",
+                    headers=headers,
+                    json={"query": sql},
+                )
+                results.append({"step": label, "status": resp.status_code, "response": resp.text[:500]})
+            except Exception as e:
+                results.append({"step": label, "error": str(e)})
+
+    return {"results": results}
+
+
 # ─── Cost Analysis ────────────────────────────────────────────────────────
 
 @router.get("/cost-analysis")
