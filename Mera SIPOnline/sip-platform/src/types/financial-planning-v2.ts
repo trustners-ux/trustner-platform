@@ -61,13 +61,23 @@ export interface CashflowProjectionYear {
   cumulativeSavings: number;
 }
 
+export interface CashflowProjectionWarning {
+  year: number;
+  type: 'negative-surplus' | 'no-income' | 'high-emi-ratio';
+  message: string;
+}
+
 export interface CashflowProjection {
   years: CashflowProjectionYear[];
   assumptions: {
     incomeGrowthRate: number;
     expenseInflationRate: number;
+    educationInflationRate: number;
+    medicalInflationRate: number;
     sipStepUpRate: number;
+    premiumInflationRate: number;
   };
+  warnings: CashflowProjectionWarning[];
 }
 
 // Asset Allocation Matrix
@@ -88,6 +98,7 @@ export interface AssetAllocationMatrix {
   entries: GoalAllocationEntry[];
   overallRecommended: AssetAllocation;
   rebalancingFrequency: 'quarterly' | 'semi-annually' | 'annually';
+  disclaimer: string;
 }
 
 // Executive Summary (Comprehensive only)

@@ -1,11 +1,20 @@
 // Trustner Financial Planning — Asset Allocation Matrix Engine
 // Maps each goal to recommended asset allocation based on time horizon and risk profile
+// All recommendations for Regular plans via MFD (ARN-286886)
 
 import type { FinancialPlanningData, GoalGapResult, AssetAllocation } from '@/types/financial-planning';
 import type { GoalAllocationEntry, AssetAllocationMatrix } from '@/types/financial-planning-v2';
 
 // ---------------------------------------------------------------------------
-// Allocation bucket (internal)
+// MFD Disclaimer
+// ---------------------------------------------------------------------------
+
+const MFD_DISCLAIMER =
+  'All recommendations are for Regular plan mutual funds via MFD (ARN-286886). ' +
+  'Trustner Asset Services Pvt Ltd. Past performance does not guarantee future results.';
+
+// ---------------------------------------------------------------------------
+// Allocation bands (XLFP/QPFP methodology)
 // ---------------------------------------------------------------------------
 
 interface AllocationBucket {
@@ -16,72 +25,76 @@ interface AllocationBucket {
   expectedReturn: number;
 }
 
+type BandKey = '0-1' | '1-3' | '3-5' | '5-10' | '10+';
+
+const ALLOCATION_BANDS: Record<BandKey, AllocationBucket> = {
+  '0-1':  { liquid: 70, debt: 30, gold: 0,  equity: 0,  expectedReturn: 5.8  },
+  '1-3':  { liquid: 10, debt: 60, gold: 10, equity: 20, expectedReturn: 6.6  },
+  '3-5':  { liquid: 5,  debt: 40, gold: 15, equity: 40, expectedReturn: 8.6  },
+  '5-10': { liquid: 0,  debt: 20, gold: 10, equity: 70, expectedReturn: 10.2 },
+  '10+':  { liquid: 0,  debt: 5,  gold: 5,  equity: 90, expectedReturn: 10.6 },
+};
+
+const BAND_ORDER: BandKey[] = ['0-1', '1-3', '3-5', '5-10', '10+'];
+
 /**
- * Asset Allocation based on XLFP/QPFP methodology:
- *
- * Time Horizon -> Allocation:
- * 0-1 year:  70% liquid, 30% debt, 0% gold, 0% equity  -> 5.8% return
- * 1-3 years: 10% liquid, 60% debt, 10% gold, 20% equity -> 6.6% return
- * 3-5 years: 5% liquid, 40% debt, 15% gold, 40% equity  -> 8.6% return
- * 5-10 years: 0% liquid, 20% debt, 10% gold, 70% equity -> 10.2% return
- * 10+ years: 0% liquid, 5% debt, 5% gold, 90% equity    -> 10.6% return
- *
- * Risk profile adjusts equity allocation +/-10-15%
+ * Get the default band for a given time horizon in years.
+ */
+function getBandForYears(years: number): BandKey {
+  if (years <= 1) return '0-1';
+  if (years <= 3) return '1-3';
+  if (years <= 5) return '3-5';
+  if (years <= 10) return '5-10';
+  return '10+';
+}
+
+/**
+ * Risk profile adjustment:
+ * - Conservative: shift one band shorter (e.g., 5-10Y uses 3-5Y allocation)
+ * - Aggressive: shift one band longer (e.g., 3-5Y uses 5-10Y allocation)
+ * - Moderate: use default bands
  */
 function getAllocationForHorizon(years: number, riskCategory: string): AllocationBucket {
-  let base: AllocationBucket;
+  const defaultBand = getBandForYears(years);
+  const bandIndex = BAND_ORDER.indexOf(defaultBand);
 
-  if (years <= 1) {
-    base = { equity: 0, debt: 30, gold: 0, liquid: 70, expectedReturn: 5.8 };
-  } else if (years <= 3) {
-    base = { equity: 20, debt: 60, gold: 10, liquid: 10, expectedReturn: 6.6 };
-  } else if (years <= 5) {
-    base = { equity: 40, debt: 40, gold: 15, liquid: 5, expectedReturn: 8.6 };
-  } else if (years <= 10) {
-    base = { equity: 70, debt: 20, gold: 10, liquid: 0, expectedReturn: 10.2 };
-  } else {
-    base = { equity: 90, debt: 5, gold: 5, liquid: 0, expectedReturn: 10.6 };
-  }
-
-  // Adjust for risk profile
+  let effectiveBand: BandKey;
   if (riskCategory === 'conservative') {
-    const shift = Math.min(15, base.equity);
-    base.equity -= shift;
-    base.debt += shift;
-    base.expectedReturn -= (shift / 100) * 4; // equity premium ~4%
-  } else if (riskCategory === 'aggressive' && years > 3) {
-    const shift = Math.min(10, base.debt);
-    base.debt -= shift;
-    base.equity += shift;
-    base.expectedReturn += (shift / 100) * 4;
+    // Shift one band shorter (more conservative), but clamp at index 0
+    effectiveBand = BAND_ORDER[Math.max(0, bandIndex - 1)];
+  } else if (riskCategory === 'aggressive') {
+    // Shift one band longer (more aggressive), but clamp at last index
+    effectiveBand = BAND_ORDER[Math.min(BAND_ORDER.length - 1, bandIndex + 1)];
+  } else {
+    effectiveBand = defaultBand;
   }
 
-  return base;
+  // Return a copy so we don't mutate the constant
+  return { ...ALLOCATION_BANDS[effectiveBand] };
 }
 
 // ---------------------------------------------------------------------------
-// Recommended investment vehicles per allocation bucket
+// Recommended investment vehicles per allocation bucket (categories only)
 // ---------------------------------------------------------------------------
 
 function getRecommendedVehicles(allocation: AllocationBucket, years: number): string[] {
   const vehicles: string[] = [];
 
   if (allocation.liquid > 0) {
-    vehicles.push(years <= 1 ? 'Liquid Fund' : 'Ultra Short Duration Fund');
+    vehicles.push('Liquid Fund');
   }
   if (allocation.debt > 0) {
-    if (years <= 1) vehicles.push('Overnight / Liquid Fund');
-    else if (years <= 3) vehicles.push('Short Duration Debt Fund');
-    else if (years <= 5) vehicles.push('Corporate Bond Fund');
-    else vehicles.push('Medium to Long Duration Debt Fund');
+    if (years <= 1) vehicles.push('Liquid Fund / Overnight Fund');
+    else if (years <= 3) vehicles.push('Short Duration Fund');
+    else vehicles.push('Corporate Bond Fund');
   }
   if (allocation.gold > 0) {
-    vehicles.push('Gold ETF / Sovereign Gold Bond');
+    vehicles.push('Sovereign Gold Bond / Gold ETF');
   }
   if (allocation.equity > 0) {
-    if (years <= 5) vehicles.push('Large Cap / Index Fund');
-    else if (years <= 10) vehicles.push('Flexi Cap / Large & Mid Cap Fund');
-    else vehicles.push('Flexi Cap / Mid Cap Fund');
+    if (years <= 5) vehicles.push('Large Cap Fund / Flexi Cap Fund');
+    else if (years <= 10) vehicles.push('Flexi Cap Fund / Large & Mid Cap Fund');
+    else vehicles.push('Mid Cap Fund / Small Cap Fund');
   }
 
   return vehicles;
@@ -154,6 +167,7 @@ export function calculateAllocationMatrix(
     entries,
     overallRecommended,
     rebalancingFrequency: riskCategory === 'conservative' ? 'annually' : 'semi-annually',
+    disclaimer: MFD_DISCLAIMER,
   };
 }
 

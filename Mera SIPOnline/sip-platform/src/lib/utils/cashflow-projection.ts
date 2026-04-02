@@ -2,26 +2,47 @@
 // Comprehensive tier: year-by-year income, expenses, EMIs, premiums, SIPs, surplus
 
 import type { FinancialPlanningData } from '@/types/financial-planning';
-import type { CashflowProjection, CashflowProjectionYear, ComprehensiveProfile } from '@/types/financial-planning-v2';
+import type {
+  CashflowProjection,
+  CashflowProjectionYear,
+  CashflowProjectionWarning,
+  ComprehensiveProfile,
+} from '@/types/financial-planning-v2';
+
+// ---------------------------------------------------------------------------
+// Inflation rates by category
+// ---------------------------------------------------------------------------
+
+const INCOME_GROWTH_RATES = {
+  conservative: 0.06,
+  moderate: 0.08,
+  optimistic: 0.12,
+} as const;
+
+const GENERAL_INFLATION = 0.06;
+const EDUCATION_INFLATION = 0.10;
+const MEDICAL_INFLATION = 0.12;
+const SIP_STEP_UP = 0.10;
+const PREMIUM_INFLATION = 0.05;
 
 /**
  * Generate a 5-year cashflow projection showing year-by-year:
  * - Gross income (with growth)
- * - Total expenses (with inflation)
+ * - Total expenses (with category-specific inflation)
  * - EMIs (reducing as loans end)
  * - Insurance premiums (with 5% annual increase)
  * - SIP commitments (with 10% step-up)
- * - Surplus
+ * - Surplus (income - all outflows)
  * - Cumulative savings
+ * - Warnings for negative surplus and other red flags
  */
 export function calculate5YearCashflow(
   data: FinancialPlanningData,
   comprehensiveProfile?: ComprehensiveProfile
 ): CashflowProjection {
-  const currentYear = new Date().getFullYear();
-  const age = data.personalProfile.age || 30;
+  const warnings: CashflowProjectionWarning[] = [];
 
-  // Income: monthly salary * 12 + bonus + rental + business + other
+  // Edge case: no income data — return empty projection
   const baseAnnualIncome =
     data.incomeProfile.monthlyInHandSalary * 12 +
     data.incomeProfile.annualBonus +
@@ -29,27 +50,77 @@ export function calculate5YearCashflow(
     data.incomeProfile.businessIncome * 12 +
     data.incomeProfile.otherIncome * 12;
 
-  // Growth rate from comprehensive profile or default
+  if (baseAnnualIncome <= 0) {
+    warnings.push({
+      year: new Date().getFullYear(),
+      type: 'no-income',
+      message: 'No income data provided. Cannot generate meaningful cashflow projection.',
+    });
+    return {
+      years: [],
+      assumptions: {
+        incomeGrowthRate: INCOME_GROWTH_RATES.moderate,
+        expenseInflationRate: GENERAL_INFLATION,
+        educationInflationRate: EDUCATION_INFLATION,
+        medicalInflationRate: MEDICAL_INFLATION,
+        sipStepUpRate: SIP_STEP_UP,
+        premiumInflationRate: PREMIUM_INFLATION,
+      },
+      warnings,
+    };
+  }
+
+  const currentYear = new Date().getFullYear();
+  const age = data.personalProfile.age || 30;
+
+  // Growth rate from comprehensive profile or default moderate
   const scenario = comprehensiveProfile?.incomeGrowthScenario || 'moderate';
-  const incomeGrowthRate =
-    scenario === 'conservative' ? 0.06 : scenario === 'optimistic' ? 0.12 : 0.08;
+  const incomeGrowthRate = INCOME_GROWTH_RATES[scenario];
 
-  const expenseInflationRate = 0.06; // 6% general inflation
-  const sipStepUpRate = 0.10; // 10% annual SIP step-up
-  const premiumInflation = 0.05; // 5% insurance premium increase
+  // ---------------------------------------------------------------------------
+  // Base annual expense calculation
+  // ---------------------------------------------------------------------------
+  // When comprehensive profile has detailed breakdown, use category-specific
+  // inflation for education and medical; otherwise use general inflation for all.
+  const breakdown = comprehensiveProfile?.monthlyExpenseBreakdown;
 
-  // Base annual values
-  const baseExpenses =
-    data.incomeProfile.monthlyHouseholdExpenses * 12 +
-    data.incomeProfile.annualDiscretionary +
-    data.incomeProfile.monthlyRent * 12;
+  let baseGeneralExpenses: number;
+  let baseEducationExpenses: number;
+  let baseMedicalExpenses: number;
+
+  if (breakdown && (breakdown.education > 0 || breakdown.medical > 0)) {
+    // Comprehensive mode: separate education & medical from general expenses
+    baseEducationExpenses = breakdown.education * 12;
+    baseMedicalExpenses = breakdown.medical * 12;
+    baseGeneralExpenses =
+      (breakdown.housing +
+        breakdown.groceries +
+        breakdown.utilities +
+        breakdown.transport +
+        breakdown.entertainment +
+        breakdown.clothing +
+        breakdown.other) *
+        12 +
+      data.incomeProfile.annualDiscretionary +
+      data.incomeProfile.monthlyRent * 12;
+  } else {
+    // Standard mode: all expenses at general inflation
+    baseGeneralExpenses =
+      data.incomeProfile.monthlyHouseholdExpenses * 12 +
+      data.incomeProfile.annualDiscretionary +
+      data.incomeProfile.monthlyRent * 12;
+    baseEducationExpenses = 0;
+    baseMedicalExpenses = 0;
+  }
 
   const baseSIPs = data.incomeProfile.monthlySIPsRunning * 12;
   const basePremiums =
     (data.insuranceProfile.annualLifePremium || 0) +
     (data.insuranceProfile.annualHealthPremium || 0);
 
-  // Calculate EMIs per year (they reduce as loans end)
+  // ---------------------------------------------------------------------------
+  // Loans: EMIs reduce as loans end within projection window
+  // ---------------------------------------------------------------------------
   const loans = [
     data.liabilityProfile.homeLoan,
     data.liabilityProfile.carLoan,
@@ -67,25 +138,54 @@ export function calculate5YearCashflow(
     return totalEMI;
   }
 
+  // ---------------------------------------------------------------------------
+  // Year-by-year projection
+  // ---------------------------------------------------------------------------
   const years: CashflowProjectionYear[] = [];
   let cumulativeSavings = 0;
 
   for (let i = 0; i < 5; i++) {
     const grossIncome = Math.round(baseAnnualIncome * Math.pow(1 + incomeGrowthRate, i));
-    const totalExpenses = Math.round(baseExpenses * Math.pow(1 + expenseInflationRate, i));
+
+    // Category-specific expense inflation
+    const generalExp = Math.round(baseGeneralExpenses * Math.pow(1 + GENERAL_INFLATION, i));
+    const educationExp = Math.round(baseEducationExpenses * Math.pow(1 + EDUCATION_INFLATION, i));
+    const medicalExp = Math.round(baseMedicalExpenses * Math.pow(1 + MEDICAL_INFLATION, i));
+    const totalExpenses = generalExp + educationExp + medicalExp;
+
     const totalEMIs = Math.round(getEMIsForYear(i));
-    const insurancePremiums = Math.round(basePremiums * Math.pow(1 + premiumInflation, i));
-    const sipCommitments = Math.round(baseSIPs * Math.pow(1 + sipStepUpRate, i));
+    const insurancePremiums = Math.round(basePremiums * Math.pow(1 + PREMIUM_INFLATION, i));
+    const sipCommitments = Math.round(baseSIPs * Math.pow(1 + SIP_STEP_UP, i));
     const surplus = grossIncome - totalExpenses - totalEMIs - insurancePremiums - sipCommitments;
     cumulativeSavings += surplus;
 
+    const yearValue = currentYear + i;
+
+    // Flag negative surplus
+    if (surplus < 0) {
+      warnings.push({
+        year: yearValue,
+        type: 'negative-surplus',
+        message: `Projected outflows exceed income by ${Math.abs(Math.round(surplus)).toLocaleString('en-IN')} in ${yearValue}. Review expenses or increase income targets.`,
+      });
+    }
+
+    // Flag high EMI-to-income ratio (above 50%)
+    if (grossIncome > 0 && totalEMIs / grossIncome > 0.5) {
+      warnings.push({
+        year: yearValue,
+        type: 'high-emi-ratio',
+        message: `EMI-to-income ratio is ${Math.round((totalEMIs / grossIncome) * 100)}% in ${yearValue}. Healthy threshold is below 40%.`,
+      });
+    }
+
     years.push({
-      year: currentYear + i,
+      year: yearValue,
       age: age + i,
       grossIncome,
       incomeGrowthRate,
       totalExpenses,
-      expenseInflationRate,
+      expenseInflationRate: GENERAL_INFLATION,
       totalEMIs,
       insurancePremiums,
       sipCommitments,
@@ -96,6 +196,14 @@ export function calculate5YearCashflow(
 
   return {
     years,
-    assumptions: { incomeGrowthRate, expenseInflationRate, sipStepUpRate },
+    assumptions: {
+      incomeGrowthRate,
+      expenseInflationRate: GENERAL_INFLATION,
+      educationInflationRate: EDUCATION_INFLATION,
+      medicalInflationRate: MEDICAL_INFLATION,
+      sipStepUpRate: SIP_STEP_UP,
+      premiumInflationRate: PREMIUM_INFLATION,
+    },
+    warnings,
   };
 }

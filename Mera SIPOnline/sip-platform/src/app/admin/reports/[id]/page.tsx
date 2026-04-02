@@ -8,9 +8,10 @@ import {
   Sparkles, AlertTriangle, FileText, Activity, MessageSquare,
   ChevronDown, ChevronRight, Briefcase, Wallet, PiggyBank,
   CreditCard, HeartPulse, Target, Gauge, Landmark, UserCircle,
+  ArrowUpCircle, Crown, TrendingUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
-import type { ReportQueueEntry } from '@/types/report-queue';
+import type { ReportQueueEntry, PlanTierLabel } from '@/types/report-queue';
 import type { FinancialPlanningData, LoanDetail } from '@/types/financial-planning';
 
 /* ------------------------------------------------------------------ */
@@ -60,6 +61,17 @@ const PILLAR_COLORS: Record<string, string> = {
   investments: '#2563EB',
   debt: '#EA580C',
   retirementReadiness: '#D97706',
+};
+
+const TIER_UPGRADE_MAP: Record<string, { target: PlanTierLabel; label: string; icon: 'trending' | 'crown' }> = {
+  basic: { target: 'standard', label: 'Regenerate as Standard', icon: 'trending' },
+  standard: { target: 'comprehensive', label: 'Regenerate as Comprehensive', icon: 'crown' },
+};
+
+const TIER_BADGE: Record<string, { bg: string; text: string; label: string }> = {
+  basic: { bg: 'bg-emerald-50 border-emerald-200', text: 'text-emerald-700', label: 'Basic Health Check' },
+  standard: { bg: 'bg-brand-50 border-brand-200', text: 'text-brand-700', label: 'Standard Goal-Based' },
+  comprehensive: { bg: 'bg-amber-50 border-amber-200', text: 'text-amber-700', label: 'Comprehensive Blueprint' },
 };
 
 /* ------------------------------------------------------------------ */
@@ -412,6 +424,33 @@ export default function ReportDetailPage() {
     }
   };
 
+  const handleRegenerateAsTier = async (targetTier: PlanTierLabel) => {
+    if (!report) return;
+    const confirmed = window.confirm(
+      `This will regenerate the report as "${targetTier}" tier with a new AI narrative and PDF. Continue?`
+    );
+    if (!confirmed) return;
+
+    setActionLoading('upgradeTier');
+    try {
+      const res = await fetch(`/api/admin/reports/${id}/regenerate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetTier }),
+      });
+      if (res.ok) {
+        await fetchReport();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to regenerate at higher tier');
+      }
+    } catch (err) {
+      console.error('Tier upgrade failed:', err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const handleSaveNotes = async () => {
     if (!report) return;
     setActionLoading('saveNotes');
@@ -516,7 +555,19 @@ export default function ReportDetailPage() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-xl font-extrabold text-primary-700">{report.userName}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-extrabold text-primary-700">{report.userName}</h1>
+              {report.tier && TIER_BADGE[report.tier] && (
+                <span className={cn(
+                  'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-bold',
+                  TIER_BADGE[report.tier].bg,
+                  TIER_BADGE[report.tier].text,
+                )}>
+                  {report.tier === 'comprehensive' ? <Crown className="w-3 h-3" /> : report.tier === 'standard' ? <TrendingUp className="w-3 h-3" /> : null}
+                  {TIER_BADGE[report.tier].label}
+                </span>
+              )}
+            </div>
             <p className="text-xs text-slate-400">{report.id}</p>
           </div>
         </div>
@@ -685,6 +736,26 @@ export default function ReportDetailPage() {
                     <RefreshCw className={cn('w-3 h-3', actionLoading === 'regenerate' && 'animate-spin')} />
                     Regenerate with AI
                   </button>
+                  {/* Tier upgrade button — only show if a higher tier is available */}
+                  {(() => {
+                    const upgrade = report.tier ? TIER_UPGRADE_MAP[report.tier] : null;
+                    if (!upgrade) return null;
+                    return (
+                      <button
+                        onClick={() => handleRegenerateAsTier(upgrade.target)}
+                        disabled={actionLoading === 'upgradeTier'}
+                        className={cn(
+                          'inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors disabled:opacity-50',
+                          upgrade.icon === 'crown'
+                            ? 'text-amber-700 bg-amber-50 hover:bg-amber-100'
+                            : 'text-brand-700 bg-brand-50 hover:bg-brand-100',
+                        )}
+                      >
+                        <ArrowUpCircle className={cn('w-3 h-3', actionLoading === 'upgradeTier' && 'animate-spin')} />
+                        {upgrade.label}
+                      </button>
+                    );
+                  })()}
                 </>
               ) : (
                 <>

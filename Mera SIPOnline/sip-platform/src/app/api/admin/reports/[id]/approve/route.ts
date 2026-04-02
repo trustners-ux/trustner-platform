@@ -7,7 +7,7 @@ import {
   getReportPlanningData,
   updateReportPdf,
 } from '@/lib/admin/report-queue-store';
-import { buildReportEmailHTML } from '@/lib/utils/report-email-builders';
+import { buildReportEmailHTML, buildClientReportEmailHTML, getClientReportSubject } from '@/lib/utils/report-email-builders';
 import { generateFinancialReport } from '@/lib/utils/financial-planning-pdf';
 import { generateFullReport } from '@/lib/utils/financial-planning-calc';
 import type { EditHistoryEntry } from '@/types/report-queue';
@@ -89,27 +89,52 @@ export async function POST(
       emailWarning = 'RESEND_API_KEY not configured — email was not sent';
     } else {
       try {
-        const insights = entry.topActions.slice(0, 3);
         const notesForEmail = adminNotes?.trim() || entry.adminNotes?.trim() || undefined;
+        const tier = entry.tier || 'basic';
+
+        // Use tier-aware email template if tier is available, otherwise fall back to legacy
+        const emailSubject = tier
+          ? getClientReportSubject({ userName: entry.userName, tier, totalScore: entry.totalScore })
+          : `Your Trustner Financial Health Report - Score: ${entry.totalScore}/900`;
+
+        const emailHTML = tier
+          ? buildClientReportEmailHTML({
+              userName: entry.userName,
+              tier,
+              totalScore: entry.totalScore,
+              grade: entry.grade,
+              netWorth: entry.netWorth,
+              pillarScores: entry.pillarScores,
+              topActions: entry.topActions,
+              adminNotes: notesForEmail,
+              pdfDownloadUrl: entry.pdfBlobUrl,
+            })
+          : buildReportEmailHTML(
+              entry.userName,
+              entry.totalScore,
+              entry.grade,
+              entry.topActions.slice(0, 3),
+              notesForEmail
+            );
+
+        const TIER_PDF_NAMES: Record<string, string> = {
+          basic: 'Trustner-Financial-Health-Check.pdf',
+          standard: 'Trustner-Goal-Based-Plan.pdf',
+          comprehensive: 'Trustner-Comprehensive-Blueprint.pdf',
+        };
 
         await resend.emails.send({
           from: 'Mera SIP Online <leads@merasip.com>',
           to: entry.userEmail,
-          subject: `Your Trustner Financial Health Report - Score: ${entry.totalScore}/900`,
-          html: buildReportEmailHTML(
-            entry.userName,
-            entry.totalScore,
-            entry.grade,
-            insights,
-            notesForEmail
-          ),
+          subject: emailSubject,
+          html: emailHTML,
           attachments: [{
-            filename: 'Trustner-Financial-Health-Report.pdf',
+            filename: TIER_PDF_NAMES[tier] || 'Trustner-Financial-Health-Report.pdf',
             content: pdfBuffer.toString('base64'),
           }],
         });
         emailSent = true;
-        console.log(`[Approve] Report email sent to ${entry.userEmail}`);
+        console.log(`[Approve] Report email sent to ${entry.userEmail} (tier: ${tier})`);
       } catch (emailError) {
         console.error('[Approve] Email send failed:', emailError);
         emailWarning = `Email delivery failed: ${emailError instanceof Error ? emailError.message : 'Unknown error'}. Report marked as approved.`;

@@ -347,7 +347,14 @@ export default function AssessPage() {
           'Content-Type': 'application/json',
           ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
         },
-        body: JSON.stringify({ data: planData }),
+        body: JSON.stringify({
+          data: planData,
+          tier: 'standard' as const,
+          // Pass upgradedFrom if data was pre-filled from a lower tier
+          ...((planData as unknown as Record<string, unknown>)._upgradedFrom
+            ? { upgradedFrom: (planData as unknown as Record<string, unknown>)._upgradedFrom }
+            : {}),
+        }),
       });
 
       const result = await res.json();
@@ -363,6 +370,7 @@ export default function AssessPage() {
           teaser: result.teaser,
           userName: result.userName,
           userEmail: result.userEmail,
+          tier: 'standard',
         })
       );
 

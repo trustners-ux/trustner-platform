@@ -91,7 +91,7 @@ export async function POST(request: Request) {
     // Step 3: Generate Claude narrative (with fallback to demo)
     let narrative = '';
     try {
-      narrative = await generateClaudeNarrative(baseReport, data, userName);
+      narrative = await generateClaudeNarrative(baseReport, data, userName, tier);
       console.log(`[FP Submit] Narrative generated (${narrative.length} chars)`);
     } catch (narErr) {
       console.error('[FP Submit] Narrative generation failed:', narErr);

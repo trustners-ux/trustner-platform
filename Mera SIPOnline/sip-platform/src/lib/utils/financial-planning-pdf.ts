@@ -871,18 +871,51 @@ function pCompExecSummary(
     }
   }
 
-  // Overall message
+  // Overall Financial Health Summary box with score, grade, net worth
   y += 8;
-  if (y < PH - FH - 30) {
+  if (y < PH - FH - 55) {
+    const gCol = gc(r.score.grade);
+    const nwc = r.netWorth.netWorth >= 0 ? GREEN : RED;
+
+    p.setFillColor(...TEAL_LIGHT); p.roundedRect(M, y, CW, 48, 2, 2, 'F');
+    p.setDrawColor(...TEAL); p.setLineWidth(0.3); p.roundedRect(M, y, CW, 48, 2, 2, 'S');
+    p.setFillColor(...TEAL); p.rect(M, y, 3, 48, 'F');
+
+    p.setTextColor(...TEAL); p.setFontSize(9); p.setFont('helvetica', 'bold');
+    p.text('Overall Financial Health Summary', M + 8, y + 7);
+
+    // Score + Grade + Net Worth in a row
+    const boxW = (CW - 24) / 3;
+
+    // Score box
+    p.setFillColor(...WHITE); p.roundedRect(M + 8, y + 11, boxW, 14, 2, 2, 'F');
+    p.setTextColor(...S400); p.setFontSize(6); p.setFont('helvetica', 'normal');
+    p.text('Financial Health Score', M + 10, y + 16);
+    p.setTextColor(...gCol); p.setFontSize(12); p.setFont('helvetica', 'bold');
+    p.text(`${r.score.totalScore} / 900`, M + 10, y + 23);
+
+    // Grade box
+    const gx = M + 8 + boxW + 4;
+    p.setFillColor(...WHITE); p.roundedRect(gx, y + 11, boxW, 14, 2, 2, 'F');
+    p.setTextColor(...S400); p.setFontSize(6); p.setFont('helvetica', 'normal');
+    p.text('Grade', gx + 2, y + 16);
+    p.setFillColor(...gCol); p.roundedRect(gx + 2, y + 18, 30, 6, 1.5, 1.5, 'F');
+    p.setTextColor(255, 255, 255); p.setFontSize(7); p.setFont('helvetica', 'bold');
+    p.text(r.score.grade, gx + 17, y + 22.5, { align: 'center' });
+
+    // Net Worth box
+    const nx = gx + boxW + 4;
+    p.setFillColor(...WHITE); p.roundedRect(nx, y + 11, boxW, 14, 2, 2, 'F');
+    p.setTextColor(...S400); p.setFontSize(6); p.setFont('helvetica', 'normal');
+    p.text('Net Worth', nx + 2, y + 16);
+    p.setTextColor(...nwc); p.setFontSize(10); p.setFont('helvetica', 'bold');
+    p.text(rs(formatINR(r.netWorth.netWorth)), nx + 2, y + 23);
+
+    // Overall message below
     const msg = execSummary?.overallMessage || r.claudeNarrative?.substring(0, 300) || 'Your financial health assessment is complete. Please review the detailed pages for comprehensive analysis.';
-    p.setFillColor(...TEAL_LIGHT); p.roundedRect(M, y, CW, 24, 2, 2, 'F');
-    p.setDrawColor(...TEAL); p.setLineWidth(0.3); p.roundedRect(M, y, CW, 24, 2, 2, 'S');
-    p.setFillColor(...TEAL); p.rect(M, y, 3, 24, 'F');
-    p.setTextColor(...TEAL); p.setFontSize(8); p.setFont('helvetica', 'bold');
-    p.text('Overall Assessment', M + 8, y + 6);
-    p.setTextColor(...S800); p.setFontSize(7); p.setFont('helvetica', 'normal');
+    p.setTextColor(...S800); p.setFontSize(6.5); p.setFont('helvetica', 'normal');
     const msgLines = p.splitTextToSize(msg, CW - 16);
-    p.text(msgLines.slice(0, 4), M + 8, y + 12);
+    p.text(msgLines.slice(0, 4), M + 8, y + 31);
   }
 
   ftr(p);
@@ -989,11 +1022,27 @@ function pCompCashflow(
   p.text(`SIP Step-up Rate: ${sipRate}% p.a.`, M + 5, y + 17);
   p.text('EMI reduction assumed post Year 3 | Premium escalation at 5% p.a.', M + 70, y + 17);
 
+  // Cashflow warnings from V2 data
   y += 30;
-  p.setFillColor(...S50); p.roundedRect(M, y, CW, 10, 2, 2, 'F');
-  p.setTextColor(...S400); p.setFontSize(5.5); p.setFont('helvetica', 'normal');
-  p.text('These projections are indicative. Actual cashflows may vary based on income changes, lifestyle adjustments, and market conditions.', M + 4, y + 4);
-  p.text('Consult your Trustner advisor for a personalized cashflow plan.', M + 4, y + 7.5);
+  const warnings = cashflow?.warnings || [];
+  if (warnings.length > 0 && y < PH - FH - 35) {
+    p.setFillColor(...R50); p.roundedRect(M, y, CW, 6 + warnings.length * 5, 2, 2, 'F');
+    p.setDrawColor(...RED); p.setLineWidth(0.3); p.roundedRect(M, y, CW, 6 + warnings.length * 5, 2, 2, 'S');
+    p.setTextColor(...RED); p.setFontSize(7); p.setFont('helvetica', 'bold');
+    p.text('Cashflow Warnings', M + 5, y + 5);
+    for (let i = 0; i < Math.min(warnings.length, 3); i++) {
+      p.setTextColor(...S800); p.setFontSize(6); p.setFont('helvetica', 'normal');
+      p.text(`! ${warnings[i].message}`, M + 5, y + 10 + i * 5);
+    }
+    y += 8 + warnings.length * 5;
+  }
+
+  if (y < PH - FH - 15) {
+    p.setFillColor(...S50); p.roundedRect(M, y, CW, 10, 2, 2, 'F');
+    p.setTextColor(...S400); p.setFontSize(5.5); p.setFont('helvetica', 'normal');
+    p.text('These projections are indicative. Actual cashflows may vary based on income changes, lifestyle adjustments, and market conditions.', M + 4, y + 4);
+    p.text('Consult your Trustner advisor for a personalized cashflow plan.', M + 4, y + 7.5);
+  }
 
   ftr(p);
 }
@@ -1156,49 +1205,64 @@ function pCompDebtStrategy(
   p.setTextColor(...S800); p.setFontSize(10); p.setFont('helvetica', 'bold');
   p.text('Outstanding Loans', M + 4, y + 5); y += 10;
 
+  // Priority ranking label
+  p.setTextColor(...S400); p.setFontSize(6.5); p.setFont('helvetica', 'normal');
+  p.text('Sorted by payoff priority (Avalanche method: highest interest rate first)', M + 4, y + 3); y += 7;
+
   p.setFillColor(...RED); p.rect(M, y, CW, 7, 'F');
-  p.setTextColor(255, 255, 255); p.setFontSize(6.5); p.setFont('helvetica', 'bold');
-  p.text('Loan Type', M + 3, y + 5);
-  p.text('Outstanding', M + 55, y + 5);
-  p.text('EMI/month', M + 95, y + 5);
-  p.text('Remaining', PW - M - 4, y + 5, { align: 'right' });
+  p.setTextColor(255, 255, 255); p.setFontSize(5.5); p.setFont('helvetica', 'bold');
+  p.text('#', M + 3, y + 5);
+  p.text('Loan Type', M + 10, y + 5);
+  p.text('Outstanding', M + 48, y + 5);
+  p.text('EMI/month', M + 80, y + 5);
+  p.text('Est. Rate', M + 110, y + 5);
+  p.text('Remaining', M + 138, y + 5);
+  p.text('Interest Cost', PW - M - 4, y + 5, { align: 'right' });
   y += 7;
 
-  const loans: [string, { outstanding: number; emi: number; remainingYears: number } | undefined][] = [
-    ['Home Loan', li.homeLoan], ['Car Loan', li.carLoan],
-    ['Personal Loan', li.personalLoan], ['Education Loan', li.educationLoan],
+  // Build loan list with estimated interest rates for sorting by avalanche method
+  const loanList: { name: string; outstanding: number; emi: number; remainingYears: number; rate: number; totalInterest: number }[] = [];
+
+  const loanEntries: [string, { outstanding: number; emi: number; remainingYears: number } | undefined, number][] = [
+    ['Credit Card Debt', li.creditCardDebt > 0 ? { outstanding: li.creditCardDebt, emi: Math.round(li.creditCardDebt * 0.05), remainingYears: 0 } : undefined, 36],
+    ['Personal Loan', li.personalLoan, 14],
+    ['Car Loan', li.carLoan, 9],
+    ['Education Loan', li.educationLoan, 8.5],
+    ['Home Loan', li.homeLoan, 8],
   ];
 
-  let hasDebt = false;
-  for (let i = 0; i < loans.length; i++) {
-    const [name, loan] = loans[i];
+  for (const [name, loan, estRate] of loanEntries) {
     if (!loan || loan.outstanding <= 0) continue;
-    hasDebt = true;
-    p.setFillColor(...(i % 2 === 0 ? S50 : WHITE)); p.rect(M, y, CW, 7, 'F');
-    p.setTextColor(...S800); p.setFontSize(6.5); p.setFont('helvetica', 'normal');
-    p.text(name, M + 3, y + 5);
-    p.text(rs(formatINR(loan.outstanding)), M + 55, y + 5);
-    p.text(rs(formatINR(loan.emi)), M + 95, y + 5);
-    p.text(`${loan.remainingYears} years`, PW - M - 4, y + 5, { align: 'right' });
-    y += 7;
+    const totalInterest = loan.remainingYears > 0
+      ? (loan.emi * loan.remainingYears * 12) - loan.outstanding
+      : loan.outstanding * 0.3; // CC: ~30% annual interest estimate
+    loanList.push({ name, outstanding: loan.outstanding, emi: loan.emi, remainingYears: loan.remainingYears, rate: estRate, totalInterest: Math.max(0, totalInterest) });
   }
 
-  if (li.creditCardDebt > 0) {
-    hasDebt = true;
-    p.setFillColor(...R50); p.rect(M, y, CW, 7, 'F');
-    p.setTextColor(...RED); p.setFontSize(6.5); p.setFont('helvetica', 'bold');
-    p.text('Credit Card Debt', M + 3, y + 5);
-    p.text(rs(formatINR(li.creditCardDebt)), M + 55, y + 5);
-    p.text('Revolving', PW - M - 4, y + 5, { align: 'right' });
-    y += 7;
-  }
-
+  // Add other loans
   if (li.otherLoans > 0) {
+    loanList.push({ name: 'Other Loans', outstanding: li.otherLoans, emi: 0, remainingYears: 0, rate: 12, totalInterest: 0 });
+  }
+
+  // Already sorted by rate descending (avalanche) due to insertion order above
+  let hasDebt = false;
+  for (let i = 0; i < loanList.length; i++) {
+    if (y > PH - FH - 60) break;
+    const loan = loanList[i];
     hasDebt = true;
-    p.setFillColor(...S50); p.rect(M, y, CW, 7, 'F');
-    p.setTextColor(...S800); p.setFontSize(6.5); p.setFont('helvetica', 'normal');
-    p.text('Other Loans', M + 3, y + 5);
-    p.text(rs(formatINR(li.otherLoans)), M + 55, y + 5);
+    const isCC = loan.name === 'Credit Card Debt';
+    p.setFillColor(...(isCC ? R50 : i % 2 === 0 ? S50 : WHITE)); p.rect(M, y, CW, 7, 'F');
+    p.setTextColor(...(isCC ? RED : S800)); p.setFontSize(5.5); p.setFont(isCC ? 'helvetica' : 'helvetica', isCC ? 'bold' : 'normal');
+    p.text(`${i + 1}`, M + 3, y + 5);
+    p.text(loan.name, M + 10, y + 5);
+    p.text(rs(formatINR(loan.outstanding)), M + 48, y + 5);
+    p.text(loan.emi > 0 ? rs(formatINR(loan.emi)) : 'Revolving', M + 80, y + 5);
+    p.setTextColor(...(loan.rate >= 15 ? RED : loan.rate >= 10 ? AMBER : S800));
+    p.text(`~${loan.rate}%`, M + 110, y + 5);
+    p.setTextColor(...S800); p.setFont('helvetica', 'normal');
+    p.text(loan.remainingYears > 0 ? `${loan.remainingYears} yrs` : '-', M + 138, y + 5);
+    p.setTextColor(...RED); p.setFontSize(5.5);
+    p.text(loan.totalInterest > 0 ? rs(formatINR(loan.totalInterest)) : '-', PW - M - 4, y + 5, { align: 'right' });
     y += 7;
   }
 
@@ -1338,9 +1402,9 @@ function pCompTaxOptimization(
   p.text('Current Deductions Utilization', M + 4, y + 5); y += 10;
 
   const deductions: [string, string, number, number][] = [
-    ['Section 80C', 'PPF, EPF, ELSS, LIC', tax.section80CUsed || 0, 150000],
-    ['Section 80D', 'Health Insurance Premiums', tax.section80DUsed || 0, 75000],
-    ['NPS (80CCD)', 'Additional NPS Contribution', tax.npsContribution || 0, 50000],
+    ['Section 80C', 'PPF, EPF, ELSS, LIC, Tuition', tax.section80CUsed || 0, 150000],
+    ['Section 80D', 'Health Insurance (Self + Parents)', tax.section80DUsed || 0, 75000],
+    ['NPS (80CCD 1B)', 'Additional NPS Contribution', tax.npsContribution || 0, 50000],
   ];
 
   for (const [sec, desc, used, limit] of deductions) {
@@ -1366,8 +1430,9 @@ function pCompTaxOptimization(
   const recs = taxOpt?.recommendations || [];
   const defaultRecs = recs.length > 0 ? recs : [
     tax.section80CUsed < 150000 ? `Invest ${rs(formatINR(150000 - tax.section80CUsed))} more in ELSS/PPF to maximize 80C deduction.` : '80C fully utilized - good job!',
-    tax.section80DUsed < 25000 ? 'Consider health insurance for self and family to claim 80D deduction.' : 'Health insurance premium deductions are being claimed.',
+    tax.section80DUsed < 25000 ? 'Consider health insurance for self and family to claim 80D deduction (up to Rs. 75,000 including parents).' : 'Health insurance premium deductions are being claimed.',
     tax.npsContribution < 50000 ? 'Consider additional NPS contribution for extra Rs. 50,000 deduction under 80CCD(1B).' : 'NPS additional contribution is being maximized.',
+    'If paying rent and not receiving HRA, claim deduction under Section 80GG (up to Rs. 5,000/month).',
   ];
 
   for (let i = 0; i < Math.min(defaultRecs.length, 4); i++) {
@@ -1460,17 +1525,33 @@ function pCompActionTimeline(
     color: PURPLE,
   });
 
-  // Render timeline
+  // Render timeline with vertical line and dots
+  const lineX = M + 6; // x position for vertical timeline line
+
   for (let t = 0; t < timeline.length; t++) {
     if (y > PH - FH - 30) break;
     const entry = timeline[t];
+    const blockH = 8 + entry.items.length * 6;
 
-    // Period label with colored left bar
-    p.setFillColor(...S50); p.roundedRect(M, y, CW, 6 + entry.items.length * 6, 2, 2, 'F');
-    p.setFillColor(...entry.color); p.rect(M, y, 3, 6 + entry.items.length * 6, 'F');
+    // Vertical connecting line (drawn behind)
+    if (t < timeline.length - 1) {
+      p.setDrawColor(...S200); p.setLineWidth(0.5);
+      p.line(lineX, y + 5, lineX, y + blockH + 3);
+    }
+
+    // Timeline dot
+    p.setFillColor(...entry.color); p.circle(lineX, y + 4, 2.5, 'F');
+    p.setFillColor(...WHITE); p.circle(lineX, y + 4, 1.2, 'F');
+    p.setFillColor(...entry.color); p.circle(lineX, y + 4, 0.7, 'F');
+
+    // Content card offset to the right of the timeline
+    const cardX = M + 14;
+    const cardW = CW - 14;
+    p.setFillColor(...S50); p.roundedRect(cardX, y, cardW, blockH, 2, 2, 'F');
+    p.setFillColor(...entry.color); p.rect(cardX, y, 2, blockH, 'F');
 
     p.setTextColor(...entry.color); p.setFontSize(8); p.setFont('helvetica', 'bold');
-    p.text(entry.period, M + 8, y + 5);
+    p.text(entry.period, cardX + 5, y + 5);
 
     // Impact badge
     const impactLabel = t < 2 ? 'HIGH IMPACT' : t < 4 ? 'MEDIUM IMPACT' : t < 6 ? 'CONSOLIDATE' : 'REVIEW';
@@ -1480,11 +1561,11 @@ function pCompActionTimeline(
 
     p.setTextColor(...S800); p.setFontSize(6.5); p.setFont('helvetica', 'normal');
     for (let i = 0; i < entry.items.length; i++) {
-      const itemLines = p.splitTextToSize(`- ${entry.items[i]}`, CW - 20);
-      p.text(itemLines[0], M + 8, y + 10 + i * 6);
+      const itemLines = p.splitTextToSize(`- ${entry.items[i]}`, cardW - 14);
+      p.text(itemLines[0], cardX + 5, y + 10 + i * 6);
     }
 
-    y += 8 + entry.items.length * 6 + 3;
+    y += blockH + 3;
   }
 
   ftr(p);
@@ -1515,7 +1596,9 @@ function pCompAssumptions(
     ['Gold / Sovereign Gold Bond', '8-10% CAGR', 'Moderate', '15-year gold price trend'],
     ['PPF / EPF', '7.1-8.25%', 'Very Low', 'Government declared rates'],
     ['NPS (Balanced)', '9-10% CAGR', 'Moderate', 'Historical NPS returns'],
-    ['Inflation Rate', '6% p.a.', '-', 'CPI long-term average'],
+    ['General Inflation', '6% p.a.', '-', 'CPI long-term average'],
+    ['Education Inflation', '10% p.a.', '-', 'Historical education cost trend'],
+    ['Medical Inflation', '12% p.a.', '-', 'Healthcare cost escalation'],
     ['Post-retirement Real Return', '3% p.a.', '-', 'Conservative estimate'],
   ];
 
@@ -1582,7 +1665,31 @@ function pCompAssumptions(
     y += 7;
   }
 
+  // Planning Assumptions
   y += 5;
+  if (y < PH - FH - 50) {
+    p.setTextColor(...TEAL); p.setFontSize(10); p.setFont('helvetica', 'bold');
+    p.text('Planning Assumptions', M + 4, y + 5); y += 10;
+
+    p.setFillColor(...TEAL_LIGHT); p.roundedRect(M, y, CW, 28, 2, 2, 'F');
+    p.setTextColor(...S800); p.setFontSize(6.5); p.setFont('helvetica', 'normal');
+    const planAssumptions: [string, string][] = [
+      ['Income Growth Rate', '8% p.a. (moderate scenario)'],
+      ['SIP Step-up', '10% annual increase'],
+      ['Life Expectancy', '85 years'],
+      ['Retirement Age', '60 years (or as specified by user)'],
+      ['Tax Regime', 'Based on user selection; compared both old and new'],
+    ];
+    for (let i = 0; i < planAssumptions.length; i++) {
+      const [label, value] = planAssumptions[i];
+      p.setTextColor(...S600); p.setFontSize(6.5); p.setFont('helvetica', 'bold');
+      p.text(label + ':', M + 5, y + 5 + i * 5);
+      p.setTextColor(...S800); p.setFont('helvetica', 'normal');
+      p.text(value, M + 60, y + 5 + i * 5);
+    }
+    y += 32;
+  }
+
   // Data Sources
   if (y < PH - FH - 20) {
     p.setTextColor(...S800); p.setFontSize(8); p.setFont('helvetica', 'bold');
