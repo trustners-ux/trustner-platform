@@ -296,6 +296,29 @@ export function TrustnerCategoryTable({
   const best3Y = getBestInColumn(sortedFunds, (f) => f.returns.threeYear);
   const best5Y = getBestInColumn(sortedFunds, (f) => f.returns.fiveYear);
 
+  // Get latest NAV date from any fund in this category
+  const latestNavDate = (() => {
+    if (!navMap) return null;
+    for (const fund of category.funds) {
+      if (fund.schemeCode) {
+        const nav = navMap.get(fund.schemeCode);
+        if (nav?.latestNavDate) return nav.latestNavDate;
+      }
+    }
+    return null;
+  })();
+
+  const navUpdateTime = (() => {
+    if (!navMap) return null;
+    for (const fund of category.funds) {
+      if (fund.schemeCode) {
+        const nav = navMap.get(fund.schemeCode);
+        if (nav?.updatedAt) return nav.updatedAt;
+      }
+    }
+    return null;
+  })();
+
   return (
     <div className="p-4 sm:p-5">
       {/* Sort Controls */}
@@ -362,6 +385,28 @@ export function TrustnerCategoryTable({
           </tbody>
         </table>
       </div>
+
+      {/* Returns as-on date disclosure */}
+      {latestNavDate && (
+        <div className="mt-3 pt-3 border-t border-surface-200 flex flex-wrap items-center justify-between gap-2 px-1">
+          <div className="flex items-center gap-2 text-[10px] text-slate-400">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
+            </span>
+            <span>
+              Returns as on NAV date: <strong className="text-slate-500">{latestNavDate}</strong>
+            </span>
+            {navUpdateTime && (
+              <span className="text-slate-300">
+                | Updated: {new Date(navUpdateTime).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              </span>
+            )}
+          </div>
+          <span className="text-[9px] text-slate-300 italic">
+            Source: AMFI / MFAPI &middot; 1Y &amp; below: absolute | 3Y+: CAGR
+          </span>
+        </div>
+      )}
     </div>
   );
 }
