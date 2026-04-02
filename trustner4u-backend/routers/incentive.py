@@ -14,14 +14,20 @@ router = APIRouter()
 
 def _resolve_employee_id(db, user: dict) -> str:
     """Resolve employee ID from auth_id, fallback to app_metadata.employee_id."""
-    emp_res = db.table("employees").select("id").eq("auth_id", user["sub"]).execute()
-    if emp_res.data:
-        return emp_res.data[0]["id"]
-    emp_id = (user.get("app_metadata") or {}).get("employee_id")
-    if emp_id:
-        emp_res = db.table("employees").select("id").eq("id", emp_id).execute()
+    try:
+        emp_res = db.table("employees").select("id").eq("auth_id", user["sub"]).execute()
         if emp_res.data:
             return emp_res.data[0]["id"]
+    except Exception:
+        pass  # auth_id might not be a valid UUID
+    emp_id = (user.get("app_metadata") or {}).get("employee_id")
+    if emp_id:
+        try:
+            emp_res = db.table("employees").select("id").eq("id", emp_id).execute()
+            if emp_res.data:
+                return emp_res.data[0]["id"]
+        except Exception:
+            pass
     return ""
 
 

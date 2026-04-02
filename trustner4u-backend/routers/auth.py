@@ -51,6 +51,8 @@ def _get_jwks():
 
 def _get_dev_admin_info() -> dict:
     """Look up the first employee for dev-preview token, return id and auth_id."""
+    # Known fallback: Ram Shah's actual employee UUID
+    RAM_SHAH_ID = "e0e0832a-205b-4b66-977a-defdff209451"
     try:
         sb = create_client(SUPABASE_URL, SUPABASE_KEY)
         # Try Ram Shah first (the owner), then fallback to any employee
@@ -62,7 +64,7 @@ def _get_dev_admin_info() -> dict:
             return {"id": emp["id"], "auth_id": emp.get("auth_id") or emp["id"], "name": emp.get("name", "Admin")}
     except Exception:
         pass
-    return {"id": "dev-admin", "auth_id": "dev-admin", "name": "Dev Admin"}
+    return {"id": RAM_SHAH_ID, "auth_id": RAM_SHAH_ID, "name": "Ram Shah"}
 
 
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
