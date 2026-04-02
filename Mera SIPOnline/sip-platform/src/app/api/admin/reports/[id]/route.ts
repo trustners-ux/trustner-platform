@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getReportEntry, updateReportEntry } from '@/lib/admin/report-queue-store';
+import { getReportEntry, updateReportEntry, getReportPlanningData } from '@/lib/admin/report-queue-store';
 import type { EditHistoryEntry } from '@/types/report-queue';
 
 // GET /api/admin/reports/[id] — Get single report
@@ -13,7 +13,9 @@ export async function GET(
     if (!entry) {
       return NextResponse.json({ error: 'Report not found' }, { status: 404 });
     }
-    return NextResponse.json({ report: entry });
+    // Also fetch the full questionnaire data
+    const planningData = await getReportPlanningData(id);
+    return NextResponse.json({ report: entry, planningData });
   } catch (error) {
     console.error('[Admin Reports] Get error:', error);
     return NextResponse.json({ error: 'Failed to fetch report' }, { status: 500 });

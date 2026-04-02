@@ -12,14 +12,14 @@ import { cn } from '@/lib/utils/cn';
 interface AdminUser {
   email: string;
   name: string;
-  role: 'admin' | 'editor' | 'viewer';
+  role: 'super_admin' | 'admin' | 'hr' | 'editor' | 'viewer';
   isSuperAdmin?: boolean;
 }
 
 type OTPAction = 'add' | 'delete' | 'reset';
 
 // Hardcoded to match backend — users authorized to reset passwords
-const PASSWORD_RESET_AUTHORIZED = ['ram@trustner.in', 'sangeeta@trustner.in'];
+const PASSWORD_RESET_AUTHORIZED = ['ram@trustner.com', 'sangeeta@trustner.in'];
 
 /* ─────────────────── Main Page ─────────────────── */
 export default function AdminUsersPage() {
@@ -31,7 +31,7 @@ export default function AdminUsersPage() {
 
   // Add user form
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newUser, setNewUser] = useState<{ name: string; email: string; role: 'admin' | 'editor' | 'viewer'; password: string }>({ name: '', email: '', role: 'editor', password: '' });
+  const [newUser, setNewUser] = useState<{ name: string; email: string; role: AdminUser['role']; password: string }>({ name: '', email: '', role: 'editor', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -318,7 +318,9 @@ export default function AdminUsersPage() {
 
   const stats = {
     total: users.length,
+    superAdmins: users.filter((u) => u.role === 'super_admin').length,
     admins: users.filter((u) => u.role === 'admin').length,
+    hr: users.filter((u) => u.role === 'hr').length,
     editors: users.filter((u) => u.role === 'editor').length,
     viewers: users.filter((u) => u.role === 'viewer').length,
   };
@@ -334,13 +336,22 @@ export default function AdminUsersPage() {
       );
     }
     const styles: Record<string, string> = {
+      super_admin: 'bg-purple-50 text-purple-700 border-purple-200',
       admin: 'bg-brand-50 text-brand border-brand/20',
+      hr: 'bg-emerald-50 text-emerald-700 border-emerald-200',
       editor: 'bg-amber-50 text-amber-700 border-amber-200',
       viewer: 'bg-slate-100 text-slate-500 border-slate-200',
     };
+    const labels: Record<string, string> = {
+      super_admin: 'Super Admin',
+      admin: 'Admin',
+      hr: 'HR Manager',
+      editor: 'Editor',
+      viewer: 'Viewer',
+    };
     return (
       <span className={cn('px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border', styles[role] || styles.viewer)}>
-        {role}
+        {labels[role] || role}
       </span>
     );
   }
@@ -436,12 +447,13 @@ export default function AdminUsersPage() {
               <label className="text-xs font-semibold text-slate-500 block mb-1">Role</label>
               <select
                 value={newUser.role}
-                onChange={(e) => setNewUser((p) => ({ ...p, role: e.target.value as 'admin' | 'editor' | 'viewer' }))}
+                onChange={(e) => setNewUser((p) => ({ ...p, role: e.target.value as AdminUser['role'] }))}
                 className="w-full border border-surface-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none bg-white"
               >
                 <option value="viewer">Viewer (Read-only)</option>
                 <option value="editor">Editor (Content management)</option>
-                <option value="admin">Admin (Full access)</option>
+                <option value="hr">HR Manager (Employee management)</option>
+                <option value="admin">Admin (Full access + approvals)</option>
               </select>
             </div>
             <div>
@@ -531,7 +543,9 @@ export default function AdminUsersPage() {
             className="border border-surface-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none bg-white"
           >
             <option value="all">All Roles</option>
+            <option value="super_admin">Super Admin</option>
             <option value="admin">Admin</option>
+            <option value="hr">HR Manager</option>
             <option value="editor">Editor</option>
             <option value="viewer">Viewer</option>
           </select>
@@ -665,7 +679,7 @@ export default function AdminUsersPage() {
             {otpSent && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-center">
                 <p className="text-xs text-blue-700 font-semibold">
-                  Verification code sent to <span className="font-bold">ram@trustner.in</span>
+                  Verification code sent to <span className="font-bold">ram@trustner.com</span>
                 </p>
               </div>
             )}

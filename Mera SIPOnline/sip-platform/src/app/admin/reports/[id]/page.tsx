@@ -6,9 +6,12 @@ import {
   ArrowLeft, User, Mail, Phone, MapPin, Shield, Clock,
   CheckCircle2, XCircle, RefreshCw, Edit3, Save, Download,
   Sparkles, AlertTriangle, FileText, Activity, MessageSquare,
+  ChevronDown, ChevronRight, Briefcase, Wallet, PiggyBank,
+  CreditCard, HeartPulse, Target, Gauge, Landmark, UserCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import type { ReportQueueEntry } from '@/types/report-queue';
+import type { FinancialPlanningData, LoanDetail } from '@/types/financial-planning';
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -60,6 +63,272 @@ const PILLAR_COLORS: Record<string, string> = {
 };
 
 /* ------------------------------------------------------------------ */
+/*  Collapsible Section Component                                      */
+/* ------------------------------------------------------------------ */
+
+function CollapsibleSection({
+  icon: Icon,
+  title,
+  defaultOpen = false,
+  children,
+}: {
+  icon: React.ElementType;
+  title: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border border-surface-200 rounded-xl overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center gap-2.5 px-4 py-3 bg-surface-50 hover:bg-surface-100 transition-colors text-left"
+      >
+        <Icon className="w-4 h-4 text-brand flex-shrink-0" />
+        <span className="text-sm font-bold text-slate-700 flex-1">{title}</span>
+        {open ? (
+          <ChevronDown className="w-4 h-4 text-slate-400" />
+        ) : (
+          <ChevronRight className="w-4 h-4 text-slate-400" />
+        )}
+      </button>
+      {open && <div className="px-4 py-3 border-t border-surface-200">{children}</div>}
+    </div>
+  );
+}
+
+function DataRow({ label, value }: { label: string; value: string | number | null | undefined }) {
+  const display = value === null || value === undefined || value === '' ? '\u2014' : String(value);
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wide">{label}</span>
+      <span className="text-sm text-slate-700">{display}</span>
+    </div>
+  );
+}
+
+function CurrencyRow({ label, value }: { label: string; value: number | null | undefined }) {
+  const display = value === null || value === undefined ? '\u2014' : value === 0 ? '\u2014' : formatAmount(value);
+  return <DataRow label={label} value={display} />;
+}
+
+function LoanRow({ label, loan }: { label: string; loan: LoanDetail | undefined }) {
+  if (!loan || (loan.outstanding === 0 && loan.emi === 0)) {
+    return <DataRow label={label} value="\u2014" />;
+  }
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wide">{label}</span>
+      <span className="text-sm text-slate-700">
+        {formatAmount(loan.outstanding)} outstanding, {formatAmount(loan.emi)}/mo, {loan.remainingYears}y left
+      </span>
+    </div>
+  );
+}
+
+const LABEL_MAP: Record<string, string> = {
+  male: 'Male', female: 'Female', other: 'Other',
+  single: 'Single', married: 'Married', divorced: 'Divorced', widowed: 'Widowed',
+  own: 'Own House', rent: 'Rented', family: 'Living with Family',
+  salaried: 'Salaried', 'self-employed': 'Self-employed', business: 'Business Owner', retired: 'Retired', homemaker: 'Homemaker',
+  'very-stable': 'Very Stable', stable: 'Stable', variable: 'Variable', 'highly-variable': 'Highly Variable',
+  conservative: 'Conservative', moderate: 'Moderate', aggressive: 'Aggressive',
+  'sell-immediately': 'Sell immediately', 'wait-patiently': 'Wait patiently', 'invest-more': 'Invest more',
+  'less-than-3': 'Less than 3 years', '3-to-5': '3-5 years', '5-to-10': '5-10 years', '10-plus': '10+ years',
+  'capital-protection': 'Capital Protection', 'balanced-growth': 'Balanced Growth', 'aggressive-growth': 'Aggressive Growth',
+  none: 'None', limited: 'Limited', extensive: 'Extensive',
+  old: 'Old Regime', new: 'New Regime',
+  heavily: 'Heavily', somewhat: 'Somewhat', rarely: 'Rarely', never: 'Never',
+  'very-disciplined': 'Very Disciplined', 'mostly-disciplined': 'Mostly Disciplined', sometimes: 'Sometimes',
+  'critical': 'Critical', 'important': 'Important', 'nice-to-have': 'Nice to Have',
+  metro: 'Metro', tier1: 'Tier 1', tier2: 'Tier 2', tier3: 'Tier 3',
+};
+
+function humanize(val: string | undefined | null): string {
+  if (!val) return '\u2014';
+  return LABEL_MAP[val] || val.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+/* ------------------------------------------------------------------ */
+/*  Questionnaire Data Panel                                           */
+/* ------------------------------------------------------------------ */
+
+function QuestionnaireDataPanel({ data }: { data: FinancialPlanningData }) {
+  const p = data.personalProfile;
+  const c = data.careerProfile;
+  const inc = data.incomeProfile;
+  const a = data.assetProfile;
+  const l = data.liabilityProfile;
+  const ins = data.insuranceProfile;
+  const r = data.riskProfile;
+  const b = data.behavioralProfile;
+  const e = data.emergencyProfile;
+  const t = data.taxProfile;
+
+  return (
+    <div className="card-base p-5">
+      <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+        <FileText className="w-4 h-4 text-brand" />
+        Client Questionnaire Data
+      </h3>
+      <div className="space-y-2">
+        {/* Personal Profile */}
+        <CollapsibleSection icon={UserCircle} title="Personal Profile" defaultOpen>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-3">
+            <DataRow label="Full Name" value={p?.fullName} />
+            <DataRow label="Date of Birth" value={p?.dateOfBirth} />
+            <DataRow label="Age" value={p?.age} />
+            <DataRow label="Gender" value={humanize(p?.gender)} />
+            <DataRow label="Marital Status" value={humanize(p?.maritalStatus)} />
+            <DataRow label="Dependents" value={p?.dependents} />
+            <DataRow label="Spouse Age" value={p?.spouseAge ?? '\u2014'} />
+            <DataRow label="Children Ages" value={p?.childrenAges?.length ? p.childrenAges.join(', ') : '\u2014'} />
+            <DataRow label="State" value={p?.state} />
+            <DataRow label="City" value={p?.city} />
+            <DataRow label="City Tier" value={humanize(p?.cityTier)} />
+            <DataRow label="Pincode" value={p?.pincode} />
+            <DataRow label="Residential Status" value={humanize(p?.residentialStatus)} />
+            <DataRow label="Email" value={p?.email} />
+            <DataRow label="Phone" value={p?.phone} />
+          </div>
+        </CollapsibleSection>
+
+        {/* Income & Expenses */}
+        <CollapsibleSection icon={Briefcase} title="Income & Expenses">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-3">
+            <DataRow label="Employment Type" value={humanize(c?.employmentType)} />
+            <DataRow label="Industry" value={c?.industry} />
+            <DataRow label="Years in Current Job" value={c?.yearsInCurrentJob} />
+            <DataRow label="Income Stability" value={humanize(c?.incomeStability)} />
+            <DataRow label="Expected Retirement Age" value={c?.expectedRetirementAge} />
+            <DataRow label="Spouse Works" value={c?.spouseWorks ? 'Yes' : 'No'} />
+            <DataRow label="Expected Annual Growth" value={c?.expectedAnnualGrowth ? `${c.expectedAnnualGrowth}%` : '\u2014'} />
+            <div className="col-span-full border-t border-surface-100 my-1" />
+            <CurrencyRow label="Monthly In-hand Salary" value={inc?.monthlyInHandSalary} />
+            <CurrencyRow label="Annual Bonus" value={inc?.annualBonus} />
+            <CurrencyRow label="Rental Income" value={inc?.rentalIncome} />
+            <CurrencyRow label="Business Income" value={inc?.businessIncome} />
+            <CurrencyRow label="Other Income" value={inc?.otherIncome} />
+            <div className="col-span-full border-t border-surface-100 my-1" />
+            <CurrencyRow label="Household Expenses" value={inc?.monthlyHouseholdExpenses} />
+            <CurrencyRow label="Monthly EMIs" value={inc?.monthlyEMIs} />
+            <CurrencyRow label="Monthly Rent" value={inc?.monthlyRent} />
+            <CurrencyRow label="Running SIPs" value={inc?.monthlySIPsRunning} />
+            <CurrencyRow label="Insurance Premiums" value={inc?.monthlyInsurancePremiums} />
+            <CurrencyRow label="Annual Discretionary" value={inc?.annualDiscretionary} />
+          </div>
+        </CollapsibleSection>
+
+        {/* Assets & Investments */}
+        <CollapsibleSection icon={PiggyBank} title="Assets & Investments">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-3">
+            <CurrencyRow label="Bank Savings" value={a?.bankSavings} />
+            <CurrencyRow label="Fixed Deposits" value={a?.fixedDeposits} />
+            <CurrencyRow label="Mutual Funds" value={a?.mutualFunds} />
+            <CurrencyRow label="Stocks" value={a?.stocks} />
+            <CurrencyRow label="PPF / EPF" value={a?.ppfEpf} />
+            <CurrencyRow label="NPS" value={a?.nps} />
+            <CurrencyRow label="Gold" value={a?.gold} />
+            <CurrencyRow label="Real Estate (Investment)" value={a?.realEstateInvestment} />
+            <CurrencyRow label="Primary Residence" value={a?.primaryResidenceValue} />
+            <CurrencyRow label="Other Assets" value={a?.otherAssets} />
+          </div>
+        </CollapsibleSection>
+
+        {/* Liabilities */}
+        <CollapsibleSection icon={CreditCard} title="Liabilities">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
+            <LoanRow label="Home Loan" loan={l?.homeLoan} />
+            <LoanRow label="Car Loan" loan={l?.carLoan} />
+            <LoanRow label="Personal Loan" loan={l?.personalLoan} />
+            <LoanRow label="Education Loan" loan={l?.educationLoan} />
+            <CurrencyRow label="Credit Card Debt" value={l?.creditCardDebt} />
+            <CurrencyRow label="Other Loans" value={l?.otherLoans} />
+          </div>
+        </CollapsibleSection>
+
+        {/* Insurance */}
+        <CollapsibleSection icon={HeartPulse} title="Insurance">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-3">
+            <CurrencyRow label="Term Insurance Cover" value={ins?.termInsuranceCover} />
+            <CurrencyRow label="Life Insurance Cover" value={ins?.lifeInsuranceCover} />
+            <CurrencyRow label="Health Insurance Cover" value={ins?.healthInsuranceCover} />
+            <DataRow label="Critical Illness Cover" value={ins?.hasCriticalIllnessCover ? 'Yes' : 'No'} />
+            <DataRow label="Accidental Cover" value={ins?.hasAccidentalCover ? 'Yes' : 'No'} />
+            <CurrencyRow label="Annual Life Premium" value={ins?.annualLifePremium} />
+            <CurrencyRow label="Annual Health Premium" value={ins?.annualHealthPremium} />
+          </div>
+        </CollapsibleSection>
+
+        {/* Goals */}
+        <CollapsibleSection icon={Target} title={`Goals (${data.goals?.length || 0})`}>
+          {data.goals?.length ? (
+            <div className="space-y-3">
+              {data.goals.map((g, i) => (
+                <div key={g.id || i} className="bg-surface-50 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold text-slate-700">{g.name}</span>
+                    <span className={cn(
+                      'text-[11px] font-semibold px-2 py-0.5 rounded-full',
+                      g.priority === 'critical' ? 'bg-red-50 text-red-600' :
+                      g.priority === 'important' ? 'bg-amber-50 text-amber-600' :
+                      'bg-green-50 text-green-600'
+                    )}>
+                      {humanize(g.priority)}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2">
+                    <DataRow label="Type" value={humanize(g.type)} />
+                    <CurrencyRow label="Target Amount" value={g.targetAmount} />
+                    <CurrencyRow label="Current Savings" value={g.currentSavingsForGoal} />
+                    <DataRow label="Target Year" value={g.targetYear} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-400 italic">No goals added</p>
+          )}
+        </CollapsibleSection>
+
+        {/* Risk Profile */}
+        <CollapsibleSection icon={Gauge} title="Risk Profile">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-3">
+            <DataRow label="Risk Category" value={humanize(r?.riskCategory)} />
+            <DataRow label="Risk Score" value={r?.riskScore} />
+            <DataRow label="Market Drop Reaction" value={humanize(r?.marketDropReaction)} />
+            <DataRow label="Investment Horizon" value={humanize(r?.investmentHorizon)} />
+            <DataRow label="Primary Objective" value={humanize(r?.primaryObjective)} />
+            <DataRow label="Past Experience" value={humanize(r?.pastExperience)} />
+            <div className="col-span-full border-t border-surface-100 my-1" />
+            <DataRow label="Tracks Expenses Monthly" value={b?.tracksExpensesMonthly ? 'Yes' : 'No'} />
+            <DataRow label="Market News Influence" value={humanize(b?.marketNewsInfluence)} />
+            <DataRow label="Investment Discipline" value={humanize(b?.investmentDiscipline)} />
+            <DataRow label="Behavioral Score" value={b?.behavioralScore} />
+          </div>
+        </CollapsibleSection>
+
+        {/* Emergency & Tax */}
+        <CollapsibleSection icon={Landmark} title="Emergency & Tax">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-3">
+            <DataRow label="Has Emergency Fund" value={e?.hasEmergencyFund ? 'Yes' : 'No'} />
+            <CurrencyRow label="Emergency Fund Amount" value={e?.emergencyFundAmount} />
+            <DataRow label="Months of Expenses Covered" value={e?.monthsOfExpensesCovered} />
+            <div className="col-span-full border-t border-surface-100 my-1" />
+            <DataRow label="Tax Regime" value={humanize(t?.taxRegime)} />
+            <CurrencyRow label="Annual Taxable Income" value={t?.annualTaxableIncome} />
+            <CurrencyRow label="Section 80C Used" value={t?.section80CUsed} />
+            <CurrencyRow label="Section 80D Used" value={t?.section80DUsed} />
+            <DataRow label="Has HRA" value={t?.hasHRA ? 'Yes' : 'No'} />
+            <CurrencyRow label="NPS Contribution" value={t?.npsContribution} />
+          </div>
+        </CollapsibleSection>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Page Component                                                     */
 /* ------------------------------------------------------------------ */
 
@@ -69,6 +338,7 @@ export default function ReportDetailPage() {
   const id = params.id as string;
 
   const [report, setReport] = useState<ReportQueueEntry | null>(null);
+  const [planningData, setPlanningData] = useState<FinancialPlanningData | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
@@ -93,6 +363,7 @@ export default function ReportDetailPage() {
         setReport(data.report);
         setNarrativeText(data.report.editedNarrative || data.report.claudeNarrative);
         setAdminNotes(data.report.adminNotes || '');
+        setPlanningData(data.planningData || null);
       }
     } catch (err) {
       console.error('Failed to fetch report:', err);
@@ -284,6 +555,9 @@ export default function ReportDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* Client Questionnaire Data */}
+          {planningData && <QuestionnaireDataPanel data={planningData} />}
 
           {/* Score + Pillars */}
           <div className="card-base p-5">

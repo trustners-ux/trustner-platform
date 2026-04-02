@@ -2,14 +2,18 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { verifyToken, COOKIE_NAME } from '@/lib/auth/jwt';
 
-type AdminRole = 'admin' | 'editor' | 'viewer';
+type AdminRole = 'super_admin' | 'admin' | 'hr' | 'editor' | 'viewer';
 
-const ROLE_HIERARCHY: Record<AdminRole, number> = { admin: 3, editor: 2, viewer: 1 };
+const ROLE_HIERARCHY: Record<AdminRole, number> = {
+  super_admin: 5, admin: 4, hr: 3, editor: 2, viewer: 1,
+};
 
 // Routes requiring specific minimum roles
 const ROUTE_ROLES: { pattern: string; role: AdminRole }[] = [
   { pattern: '/admin/settings', role: 'admin' },
-  { pattern: '/admin/mis', role: 'admin' },
+  { pattern: '/admin/mis', role: 'hr' },
+  { pattern: '/admin/approvals', role: 'admin' },
+  { pattern: '/admin/audit', role: 'admin' },
   { pattern: '/admin/funds', role: 'editor' },
   { pattern: '/admin/blog', role: 'editor' },
   { pattern: '/admin/market', role: 'editor' },
@@ -19,6 +23,9 @@ const ROUTE_ROLES: { pattern: string; role: AdminRole }[] = [
   { pattern: '/api/admin/leads', role: 'editor' },
   { pattern: '/admin/reports', role: 'editor' },
   { pattern: '/api/admin/reports', role: 'editor' },
+  { pattern: '/api/admin/approvals', role: 'admin' },
+  { pattern: '/api/admin/audit', role: 'admin' },
+  { pattern: '/api/admin/mis', role: 'hr' },
   { pattern: '/admin/users', role: 'admin' },
   { pattern: '/api/admin/users', role: 'admin' },
   { pattern: '/api/admin/otp', role: 'admin' },

@@ -6,12 +6,14 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, TrendingUp, FileText, BarChart3, BarChart2, Users, Settings,
   ChevronLeft, ChevronRight, X, Image as ImageIcon, FileCheck, UserCog,
+  ClipboardCheck, ScrollText, FileSpreadsheet,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { canAccess, ADMIN_NAV, type AdminRole } from '@/lib/auth/config';
 
 const ICON_MAP: Record<string, React.ElementType> = {
-  LayoutDashboard, TrendingUp, FileText, BarChart3, BarChart2, Users, Settings, Image: ImageIcon, FileCheck, UserCog,
+  LayoutDashboard, TrendingUp, FileText, BarChart3, BarChart2, Users, Settings,
+  Image: ImageIcon, FileCheck, UserCog, ClipboardCheck, ScrollText, FileSpreadsheet,
 };
 
 export function AdminSidebar({

@@ -2,19 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { Menu, LogOut, User } from 'lucide-react';
-import type { AdminRole } from '@/lib/auth/config';
-
-const ROLE_LABEL: Record<AdminRole, string> = {
-  admin: 'Administrator',
-  editor: 'Editor',
-  viewer: 'Viewer',
-};
-
-const ROLE_COLOR: Record<AdminRole, string> = {
-  admin: 'bg-brand/10 text-brand',
-  editor: 'bg-amber-100 text-amber-700',
-  viewer: 'bg-slate-100 text-slate-600',
-};
+import { type AdminRole, ROLE_LABELS, ROLE_COLORS } from '@/lib/auth/config';
 
 export function AdminHeader({
   userName,
@@ -45,8 +33,8 @@ export function AdminHeader({
       <div className="hidden lg:block" />
 
       <div className="flex items-center gap-3">
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${ROLE_COLOR[userRole]}`}>
-          {ROLE_LABEL[userRole]}
+        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${ROLE_COLORS[userRole] || 'bg-slate-100 text-slate-600'}`}>
+          {ROLE_LABELS[userRole] || userRole}
         </span>
         <div className="flex items-center gap-2 text-sm">
           <div className="w-7 h-7 rounded-full bg-brand/10 flex items-center justify-center">
