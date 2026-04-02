@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
     await put(NAV_BLOB_KEY, JSON.stringify(result, null, 2), {
       access: 'public',
       addRandomSuffix: false,
+      allowOverwrite: true,
       contentType: 'application/json',
     });
 
