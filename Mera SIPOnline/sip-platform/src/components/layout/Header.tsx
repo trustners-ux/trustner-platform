@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Menu, X, ChevronDown, Calculator, BookOpen, Search, GraduationCap, FlaskConical, ArrowRight, Layers, FileText, Activity, LogIn, UserPlus, Camera, ChevronRight, ChevronsDown, Brain, MoreHorizontal, Users, Briefcase, Handshake, ExternalLink } from 'lucide-react';
+import { Menu, X, ChevronDown, Calculator, BookOpen, Search, GraduationCap, FlaskConical, ArrowRight, Layers, FileText, Activity, LogIn, UserPlus, Camera, ChevronRight, ChevronsDown, Brain, Users, Briefcase, Handshake, ExternalLink } from 'lucide-react';
 import { NAVIGATION, NavItem } from '@/lib/constants/navigation';
 import { cn } from '@/lib/utils/cn';
 import { StockTicker } from './StockTicker';
@@ -153,10 +153,8 @@ export function Header() {
     Glossary: GraduationCap,
   };
 
-  // Split nav: primary items shown directly, overflow grouped under "More"
-  const MORE_LABELS = new Set(['Blog', 'Market Pulse', 'Gallery', 'Glossary']);
-  const primaryNav = NAVIGATION.filter((item) => !MORE_LABELS.has(item.label));
-  const moreNav = NAVIGATION.filter((item) => MORE_LABELS.has(item.label));
+  // All nav items shown directly — no overflow "More" grouping
+  const primaryNav = NAVIGATION;
 
   return (
     <>
@@ -289,64 +287,21 @@ export function Header() {
               );
             })}
 
-            {/* "More" dropdown for overflow items */}
-            <div
-              className="relative"
-              data-nav-dropdown
-              onMouseEnter={() => handleMouseEnter('__more__')}
-              onMouseLeave={handleMouseLeave}
-            >
-              <button
-                type="button"
-                onClick={(e) => {
-                  if (!isTouchDevice.current) return;
-                  if (activeDropdown === '__more__') {
-                    setActiveDropdown(null);
-                    return;
-                  }
-                  e.preventDefault();
-                  setActiveDropdown('__more__');
-                }}
-                className={cn(
-                  'flex items-center gap-1 px-2 xl:px-3 py-1.5 xl:py-2 text-[12.5px] xl:text-[13.5px] font-medium rounded-md transition-all duration-200 relative z-10 whitespace-nowrap',
-                  moreNav.some((m) => isNavActive(pathname, m.href, false))
-                    ? 'text-brand bg-brand-50/80 shadow-sm'
-                    : 'text-slate-600 hover:text-primary-700 hover:bg-surface-200'
-                )}
-              >
-                More
-                <ChevronDown className="w-3 h-3" />
-              </button>
-
-              {activeDropdown === '__more__' && (
-                <div className="absolute top-full right-0 pt-1 animate-fade-in">
-                  <div className="bg-white rounded-lg shadow-dropdown border border-surface-300/50 min-w-[200px] card-accent-border p-2">
-                    {moreNav.map((item) => {
-                      const Icon = iconMap[item.label];
-                      return (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          className={cn(
-                            'flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-md transition-colors',
-                            isNavActive(pathname, item.href, false)
-                              ? 'text-brand bg-brand-50 font-medium'
-                              : 'text-slate-600 hover:text-primary-700 hover:bg-surface-100'
-                          )}
-                        >
-                          {Icon && <Icon className="w-4 h-4 text-slate-400" />}
-                          {item.label}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
           </nav>
 
           {/* Right Actions */}
           <div className="flex items-center gap-2 shrink-0">
+            {/* Sign Up — always visible on sm+ */}
+            <a
+              href="https://trustner.investwell.app/app/#/kycOnBoarding/mobileSignUp"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:inline-flex items-center gap-1.5 text-[13px] font-bold px-4 py-2 rounded-full bg-[#4A7CB5] text-white hover:bg-[#3D6A9E] transition-all duration-300 shadow-sm hover:shadow-md whitespace-nowrap"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              Sign Up
+            </a>
+
             {/* Sign In Dropdown */}
             <div
               className="relative hidden lg:block"
@@ -425,32 +380,10 @@ export function Header() {
                       </div>
                       <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-amber-400" />
                     </Link>
-
-                    <div className="border-t border-surface-200 mt-2 pt-2 px-3 pb-1">
-                      <a
-                        href="https://trustner.investwell.app/app/#/kycOnBoarding/mobileSignUp"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2 w-full py-2 rounded-lg text-[12px] font-bold bg-[#4A7CB5] text-white hover:bg-[#3D6A9E] transition-all duration-300"
-                      >
-                        <UserPlus className="w-3.5 h-3.5" />
-                        New Client? Sign Up Free
-                      </a>
-                    </div>
                   </div>
                 </div>
               )}
             </div>
-
-            <a
-              href="https://trustner.investwell.app/app/#/kycOnBoarding/mobileSignUp"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden sm:inline-flex lg:hidden items-center gap-1.5 text-[13px] font-bold px-4 py-2 rounded-full bg-[#4A7CB5] text-white hover:bg-[#3D6A9E] transition-all duration-300 shadow-sm hover:shadow-md whitespace-nowrap"
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              Sign Up
-            </a>
 
             <button
               className="lg:hidden p-2 rounded-md text-slate-600 hover:bg-surface-200"

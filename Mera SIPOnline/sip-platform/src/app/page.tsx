@@ -143,7 +143,11 @@ export default function HomePage() {
                 <IndianRupee className="w-4 h-4" />
                 Start SIP
               </a>
-              <a href="#sip-calculator" className="inline-flex items-center gap-2 bg-white text-primary-700 px-8 py-3.5 rounded-lg font-bold text-sm hover:bg-slate-50 transition-colors shadow-lg">
+              <a href="https://trustner.investwell.app/app/#/kycOnBoarding/mobileSignUp" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-white text-primary-700 px-8 py-3.5 rounded-lg font-bold text-sm hover:bg-slate-50 transition-colors shadow-lg">
+                <UserCheck className="w-4 h-4" />
+                Sign Up Free
+              </a>
+              <a href="#sip-calculator" className="inline-flex items-center gap-2 bg-white/15 text-white border border-white/30 px-8 py-3.5 rounded-lg font-bold text-sm hover:bg-white/25 transition-colors backdrop-blur-sm">
                 <Calculator className="w-4 h-4" />
                 Calculate SIP
               </a>
