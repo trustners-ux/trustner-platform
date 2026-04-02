@@ -5,7 +5,7 @@ import { isLocal, getCurrentMonth } from '@/lib/db/config';
 import { getSupabaseAdmin } from '@/lib/db/supabase';
 import { MonthlyBusinessEntry } from '@/lib/mis/types';
 import { SEED_BUSINESS_ENTRIES } from '@/lib/mis/seed-business-entries';
-import { PRODUCTS, getTierMultiplier } from '@/lib/mis/employee-data';
+import { PRODUCTS, EMPLOYEES, getTierMultiplier } from '@/lib/mis/employee-data';
 import { calculateWeightedBusiness } from '@/lib/mis/incentive-engine';
 import { writeAuditLog } from './audit';
 
@@ -25,13 +25,140 @@ export interface BusinessEntryInput {
   clientName?: string;
   clientPan?: string;
   insurer?: string;
+  transactionDate?: string;
+  isCrossSale?: boolean;
+  isBusinessLoss?: boolean;
+  lossReason?: string;
 }
 
 export interface BusinessEntryFilters {
   employeeId?: number;
   month?: string;
   productId?: number;
-  status?: string;
+  // NEW filters:
+  startDate?: string;       // YYYY-MM-DD — filter by transactionDate
+  endDate?: string;          // YYYY-MM-DD — filter by transactionDate (max 60 days from startDate)
+  status?: string;           // 'draft' | 'submitted' | 'approved' | 'rejected' | 'error' | 'all'
+  minAmount?: number;        // Premium range min
+  maxAmount?: number;        // Premium range max
+  productCategory?: string;  // 'Life' | 'Health' | 'GI Motor' | 'GI Non-Motor' | 'MF'
+  isCrossSale?: boolean;
+  isBusinessLoss?: boolean;
+  entityFilter?: string;     // 'TAS' | 'TIB' — filter by employee entity
+}
+
+export interface BusinessAnalytics {
+  totalRawBusiness: number;
+  totalWeightedBusiness: number;
+  entryCount: number;
+  statusBreakdown: Record<string, number>;
+  categoryBreakdown: Record<string, { raw: number; weighted: number; count: number }>;
+  crossSaleCount: number;
+  crossSaleValue: number;
+  businessLossCount: number;
+  businessLossValue: number;
+  pendingCount: number;
+  rejectedCount: number;
+  errorCount: number;
+  premiumRangeBreakdown: {
+    range: string;
+    count: number;
+    rawTotal: number;
+  }[];
+  topEmployees: { employeeId: number; name: string; weightedBusiness: number }[];
+  topProducts: { productId: number; productName: string; weightedBusiness: number; count: number }[];
+  dailyTrend: { date: string; rawBusiness: number; entryCount: number }[];
+}
+
+// ─── Helper: get product category for a productId ───
+function getProductCategory(productId: number): string | undefined {
+  return PRODUCTS.find(p => p.id === productId)?.productCategory;
+}
+
+// ─── Helper: get employee entity for an employeeId ───
+function getEmployeeEntity(employeeId: number): string | undefined {
+  return EMPLOYEES.find(e => e.id === employeeId)?.entity;
+}
+
+// ─── Helper: get employee name for an employeeId ───
+function getEmployeeName(employeeId: number): string {
+  return EMPLOYEES.find(e => e.id === employeeId)?.name || `Employee ${employeeId}`;
+}
+
+// ─── Helper: get product name for a productId ───
+function getProductName(productId: number): string {
+  return PRODUCTS.find(p => p.id === productId)?.productName || `Product ${productId}`;
+}
+
+// ─── Helper: classify premium into range bucket ───
+function getPremiumRange(amount: number): string {
+  if (amount <= 10000) return '0-10K';
+  if (amount <= 50000) return '10K-50K';
+  if (amount <= 100000) return '50K-1L';
+  if (amount <= 500000) return '1L-5L';
+  return '5L+';
+}
+
+// ─── Helper: apply filters to a list of entries (used by local mode) ───
+function applyLocalFilters(
+  entries: MonthlyBusinessEntry[],
+  filters?: BusinessEntryFilters
+): MonthlyBusinessEntry[] {
+  if (!filters) return entries;
+  let result = [...entries];
+
+  if (filters.employeeId) result = result.filter(e => e.employeeId === filters.employeeId);
+  if (filters.month) result = result.filter(e => e.month === filters.month);
+  if (filters.productId) result = result.filter(e => e.productId === filters.productId);
+
+  // Status filter
+  if (filters.status && filters.status !== 'all') {
+    result = result.filter(e => (e.status || 'draft') === filters.status);
+  }
+
+  // Date range filter (by transactionDate)
+  if (filters.startDate) {
+    result = result.filter(e => {
+      const txDate = e.transactionDate;
+      return txDate ? txDate >= filters.startDate! : false;
+    });
+  }
+  if (filters.endDate) {
+    result = result.filter(e => {
+      const txDate = e.transactionDate;
+      return txDate ? txDate <= filters.endDate! : false;
+    });
+  }
+
+  // Premium range filter
+  if (filters.minAmount !== undefined) {
+    result = result.filter(e => e.rawAmount >= filters.minAmount!);
+  }
+  if (filters.maxAmount !== undefined) {
+    result = result.filter(e => e.rawAmount <= filters.maxAmount!);
+  }
+
+  // Product category filter
+  if (filters.productCategory) {
+    result = result.filter(e => getProductCategory(e.productId) === filters.productCategory);
+  }
+
+  // Cross-sale filter
+  if (filters.isCrossSale !== undefined) {
+    result = result.filter(e => !!e.isCrossSale === filters.isCrossSale);
+  }
+
+  // Business loss filter
+  if (filters.isBusinessLoss !== undefined) {
+    result = result.filter(e => !!e.isBusinessLoss === filters.isBusinessLoss);
+  }
+
+  // Entity filter (employee entity)
+  if (filters.entityFilter) {
+    result = result.filter(e => getEmployeeEntity(e.employeeId) === filters.entityFilter);
+  }
+
+  return result;
 }
 
 // ─── Map Supabase row to MonthlyBusinessEntry ───
@@ -53,6 +180,13 @@ function mapRow(row: Record<string, unknown>): MonthlyBusinessEntry {
     policyNumber: row.policy_number as string | undefined,
     clientName: row.client_name as string | undefined,
     insurer: row.insurer as string | undefined,
+    status: (row.status as MonthlyBusinessEntry['status']) || 'draft',
+    rejectionReason: row.rejection_reason as string | undefined,
+    isCrossSale: row.is_cross_sale as boolean | undefined,
+    isBusinessLoss: row.is_business_loss as boolean | undefined,
+    lossReason: row.loss_reason as string | undefined,
+    transactionDate: row.transaction_date as string | undefined,
+    errorMessage: row.error_message as string | undefined,
   };
 }
 
@@ -63,11 +197,7 @@ export async function getBusinessEntries(
   filters?: BusinessEntryFilters
 ): Promise<MonthlyBusinessEntry[]> {
   if (isLocal) {
-    let result = [...localEntries];
-    if (filters?.employeeId) result = result.filter(e => e.employeeId === filters.employeeId);
-    if (filters?.month) result = result.filter(e => e.month === filters.month);
-    if (filters?.productId) result = result.filter(e => e.productId === filters.productId);
-    return result;
+    return applyLocalFilters(localEntries, filters);
   }
 
   // ─── Supabase Path ───
@@ -78,11 +208,31 @@ export async function getBusinessEntries(
   if (filters?.employeeId) query = query.eq('employee_id', filters.employeeId);
   if (filters?.month) query = query.eq('month', filters.month);
   if (filters?.productId) query = query.eq('product_id', filters.productId);
-  if (filters?.status) query = query.eq('status', filters.status);
+  if (filters?.status && filters.status !== 'all') query = query.eq('status', filters.status);
+  if (filters?.startDate) query = query.gte('transaction_date', filters.startDate);
+  if (filters?.endDate) query = query.lte('transaction_date', filters.endDate);
+  if (filters?.minAmount !== undefined) query = query.gte('raw_amount', filters.minAmount);
+  if (filters?.maxAmount !== undefined) query = query.lte('raw_amount', filters.maxAmount);
+  if (filters?.isCrossSale !== undefined) query = query.eq('is_cross_sale', filters.isCrossSale);
+  if (filters?.isBusinessLoss !== undefined) query = query.eq('is_business_loss', filters.isBusinessLoss);
 
+  // productCategory and entityFilter require joins or post-filter — we post-filter for simplicity
   const { data, error } = await query.order('created_at', { ascending: false });
   if (error) throw new Error(`Business entries query failed: ${error.message}`);
-  return (data || []).map(mapRow);
+
+  let entries = (data || []).map(mapRow);
+
+  // Post-filter for product category (needs product lookup)
+  if (filters?.productCategory) {
+    entries = entries.filter(e => getProductCategory(e.productId) === filters.productCategory);
+  }
+
+  // Post-filter for entity (needs employee lookup)
+  if (filters?.entityFilter) {
+    entries = entries.filter(e => getEmployeeEntity(e.employeeId) === filters.entityFilter);
+  }
+
+  return entries;
 }
 
 /**
@@ -96,6 +246,139 @@ export async function getMyMonthEntries(
     employeeId,
     month: month || getCurrentMonth(),
   });
+}
+
+/**
+ * Compute analytics summary from entries matching filters
+ */
+export async function getBusinessAnalytics(
+  filters?: BusinessEntryFilters
+): Promise<BusinessAnalytics> {
+  const entries = await getBusinessEntries(filters);
+
+  let totalRaw = 0;
+  let totalWeighted = 0;
+  let crossSaleCount = 0;
+  let crossSaleValue = 0;
+  let businessLossCount = 0;
+  let businessLossValue = 0;
+  let pendingCount = 0;
+  let rejectedCount = 0;
+  let errorCount = 0;
+
+  const statusBreakdown: Record<string, number> = {};
+  const categoryBreakdown: Record<string, { raw: number; weighted: number; count: number }> = {};
+  const premiumBuckets: Record<string, { count: number; rawTotal: number }> = {};
+  const employeeAgg: Record<number, number> = {};
+  const productAgg: Record<number, { weighted: number; count: number }> = {};
+  const dailyAgg: Record<string, { raw: number; count: number }> = {};
+
+  for (const e of entries) {
+    totalRaw += e.rawAmount;
+    totalWeighted += e.weightedAmount;
+
+    // Status breakdown
+    const status = e.status || 'draft';
+    statusBreakdown[status] = (statusBreakdown[status] || 0) + 1;
+
+    if (status === 'submitted' || status === 'draft') pendingCount++;
+    if (status === 'rejected') rejectedCount++;
+    if (status === 'error') errorCount++;
+
+    // Category breakdown
+    const cat = getProductCategory(e.productId) || 'Unknown';
+    if (!categoryBreakdown[cat]) categoryBreakdown[cat] = { raw: 0, weighted: 0, count: 0 };
+    categoryBreakdown[cat].raw += e.rawAmount;
+    categoryBreakdown[cat].weighted += e.weightedAmount;
+    categoryBreakdown[cat].count += 1;
+
+    // Cross-sale
+    if (e.isCrossSale) {
+      crossSaleCount++;
+      crossSaleValue += e.rawAmount;
+    }
+
+    // Business loss
+    if (e.isBusinessLoss) {
+      businessLossCount++;
+      businessLossValue += e.rawAmount;
+    }
+
+    // Premium range
+    const range = getPremiumRange(e.rawAmount);
+    if (!premiumBuckets[range]) premiumBuckets[range] = { count: 0, rawTotal: 0 };
+    premiumBuckets[range].count += 1;
+    premiumBuckets[range].rawTotal += e.rawAmount;
+
+    // Top employees
+    employeeAgg[e.employeeId] = (employeeAgg[e.employeeId] || 0) + e.weightedAmount;
+
+    // Top products
+    if (!productAgg[e.productId]) productAgg[e.productId] = { weighted: 0, count: 0 };
+    productAgg[e.productId].weighted += e.weightedAmount;
+    productAgg[e.productId].count += 1;
+
+    // Daily trend
+    const date = e.transactionDate || e.month + '-01';
+    if (!dailyAgg[date]) dailyAgg[date] = { raw: 0, count: 0 };
+    dailyAgg[date].raw += e.rawAmount;
+    dailyAgg[date].count += 1;
+  }
+
+  // Build premium range array in order
+  const rangeOrder = ['0-10K', '10K-50K', '50K-1L', '1L-5L', '5L+'];
+  const premiumRangeBreakdown = rangeOrder
+    .filter(r => premiumBuckets[r])
+    .map(r => ({ range: r, count: premiumBuckets[r].count, rawTotal: premiumBuckets[r].rawTotal }));
+
+  // Top employees (sorted desc, top 10)
+  const topEmployees = Object.entries(employeeAgg)
+    .map(([id, weighted]) => ({
+      employeeId: Number(id),
+      name: getEmployeeName(Number(id)),
+      weightedBusiness: Math.round(weighted * 100) / 100,
+    }))
+    .sort((a, b) => b.weightedBusiness - a.weightedBusiness)
+    .slice(0, 10);
+
+  // Top products (sorted desc, top 10)
+  const topProducts = Object.entries(productAgg)
+    .map(([id, data]) => ({
+      productId: Number(id),
+      productName: getProductName(Number(id)),
+      weightedBusiness: Math.round(data.weighted * 100) / 100,
+      count: data.count,
+    }))
+    .sort((a, b) => b.weightedBusiness - a.weightedBusiness)
+    .slice(0, 10);
+
+  // Daily trend (sorted by date)
+  const dailyTrend = Object.entries(dailyAgg)
+    .map(([date, data]) => ({
+      date,
+      rawBusiness: Math.round(data.raw),
+      entryCount: data.count,
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  return {
+    totalRawBusiness: Math.round(totalRaw),
+    totalWeightedBusiness: Math.round(totalWeighted * 100) / 100,
+    entryCount: entries.length,
+    statusBreakdown,
+    categoryBreakdown,
+    crossSaleCount,
+    crossSaleValue: Math.round(crossSaleValue),
+    businessLossCount,
+    businessLossValue: Math.round(businessLossValue),
+    pendingCount,
+    rejectedCount,
+    errorCount,
+    premiumRangeBreakdown,
+    topEmployees,
+    topProducts,
+    dailyTrend,
+  };
 }
 
 /**
@@ -122,6 +405,9 @@ export async function createBusinessEntry(
     isFpRoute: input.isFpRoute || false,
   });
 
+  // Default transactionDate to today if not provided
+  const transactionDate = input.transactionDate || new Date().toISOString().split('T')[0];
+
   if (isLocal) {
     const entry: MonthlyBusinessEntry = {
       id: localNextId++,
@@ -140,6 +426,11 @@ export async function createBusinessEntry(
       policyNumber: input.policyNumber,
       clientName: input.clientName,
       insurer: input.insurer,
+      status: 'draft',
+      transactionDate,
+      isCrossSale: input.isCrossSale,
+      isBusinessLoss: input.isBusinessLoss,
+      lossReason: input.lossReason,
     };
     localEntries.push(entry);
 
@@ -177,6 +468,10 @@ export async function createBusinessEntry(
       client_pan: input.clientPan || null,
       insurer: input.insurer || null,
       status: 'draft',
+      transaction_date: transactionDate,
+      is_cross_sale: input.isCrossSale || false,
+      is_business_loss: input.isBusinessLoss || false,
+      loss_reason: input.lossReason || null,
       created_by: input.employeeId,
     })
     .select()
@@ -300,6 +595,10 @@ export async function updateBusinessEntry(
   if (updates.clientName !== undefined) dbUpdates.client_name = updates.clientName;
   if (updates.policyNumber !== undefined) dbUpdates.policy_number = updates.policyNumber;
   if (updates.insurer !== undefined) dbUpdates.insurer = updates.insurer;
+  if (updates.transactionDate !== undefined) dbUpdates.transaction_date = updates.transactionDate;
+  if (updates.isCrossSale !== undefined) dbUpdates.is_cross_sale = updates.isCrossSale;
+  if (updates.isBusinessLoss !== undefined) dbUpdates.is_business_loss = updates.isBusinessLoss;
+  if (updates.lossReason !== undefined) dbUpdates.loss_reason = updates.lossReason;
 
   const { data, error } = await sb
     .from('business_entries')

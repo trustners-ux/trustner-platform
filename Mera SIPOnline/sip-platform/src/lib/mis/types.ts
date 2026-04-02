@@ -87,6 +87,13 @@ export interface MonthlyBusinessEntry {
   policyNumber?: string;
   clientName?: string;
   insurer?: string;
+  status: 'draft' | 'submitted' | 'approved' | 'rejected' | 'error';
+  rejectionReason?: string;
+  isCrossSale?: boolean;       // True if product sold is from a different category than RM's primary
+  isBusinessLoss?: boolean;    // True if entry is a cancellation/lapse/surrender
+  lossReason?: string;         // Cancellation reason
+  transactionDate?: string;    // Actual policy/transaction date (YYYY-MM-DD)
+  errorMessage?: string;       // For entries flagged with data issues
 }
 
 export interface MonthlyIncentiveCalc {
