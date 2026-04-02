@@ -299,17 +299,26 @@ async def fix_schema(user: dict = Depends(_require_admin)):
     """
 
     results = []
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        for label, sql in [("alter_table", alter_sql), ("seed_data", seed_sql)]:
-            try:
-                resp = await client.post(
-                    f"https://{ref}.supabase.co/pg/query",
-                    headers=headers,
-                    json={"query": sql},
-                )
-                results.append({"step": label, "status": resp.status_code, "response": resp.text[:500]})
-            except Exception as e:
-                results.append({"step": label, "error": str(e)})
+    DATABASE_URL = os.getenv("DATABASE_URL", "")
+
+    if DATABASE_URL:
+        import psycopg2
+        try:
+            conn = psycopg2.connect(DATABASE_URL)
+            conn.autocommit = True
+            cur = conn.cursor()
+            for label, sql in [("alter_table", alter_sql), ("seed_data", seed_sql)]:
+                try:
+                    cur.execute(sql)
+                    results.append({"step": label, "status": "success", "rowcount": cur.rowcount})
+                except Exception as e:
+                    results.append({"step": label, "error": str(e)})
+            cur.close()
+            conn.close()
+        except Exception as e:
+            results.append({"step": "connect", "error": str(e)})
+    else:
+        results.append({"error": "DATABASE_URL not set"})
 
     return {"results": results}
 
