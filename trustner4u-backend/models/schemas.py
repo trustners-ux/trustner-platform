@@ -216,3 +216,83 @@ class EmployeeUpdate(BaseModel):
     department: Optional[str] = None
     role: Optional[str] = None
     status: Optional[str] = None
+
+
+# =============================================================================
+# INCENTIVE & COMPENSATION SCHEMAS
+# =============================================================================
+
+class BusinessEntryCreate(BaseModel):
+    employee_id: str
+    month: str  # YYYY-MM-DD (first of month)
+    product_id: str
+    channel_id: Optional[str] = None
+    raw_amount: float
+    is_fp_route: bool = False
+    policy_number: Optional[str] = None
+    client_name: Optional[str] = None
+    client_pan: Optional[str] = None
+    insurer: Optional[str] = None
+    entry_source: str = "manual"
+
+
+class BusinessEntryUpdate(BaseModel):
+    raw_amount: Optional[float] = None
+    channel_id: Optional[str] = None
+    is_fp_route: Optional[bool] = None
+    policy_number: Optional[str] = None
+    client_name: Optional[str] = None
+    client_pan: Optional[str] = None
+    insurer: Optional[str] = None
+
+
+class SIPTrackerCreate(BaseModel):
+    employee_id: str
+    client_name: str
+    client_pan: Optional[str] = None
+    sip_amount: float
+    sip_start_date: Optional[str] = None
+    fund_name: Optional[str] = None
+    folio_number: Optional[str] = None
+
+
+class SIPStatusUpdate(BaseModel):
+    sip_status: str  # 'Active', 'Stopped', 'Redeemed'
+    stopped_date: Optional[str] = None
+
+
+class IncentiveCalcRequest(BaseModel):
+    month: str  # YYYY-MM format
+    employee_ids: Optional[list[str]] = None  # None = all employees
+
+
+class IncentiveOverride(BaseModel):
+    employee_id: str
+    month: str
+    field: str  # which field to override
+    new_value: float
+    reason: str
+
+
+class AdminControlUpdate(BaseModel):
+    control_value: str
+    reason: Optional[str] = None
+
+
+class MonthAction(BaseModel):
+    month: str  # YYYY-MM format
+
+
+class BulkUploadEntry(BaseModel):
+    employee_code: str
+    product_name: str
+    channel_name: Optional[str] = None
+    raw_amount: float
+    policy_number: Optional[str] = None
+    client_name: Optional[str] = None
+    insurer: Optional[str] = None
+
+
+class BulkUploadRequest(BaseModel):
+    month: str
+    entries: list[BulkUploadEntry]

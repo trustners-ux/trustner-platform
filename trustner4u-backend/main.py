@@ -9,6 +9,10 @@ load_dotenv()
 
 from routers import cas, reports, portfolio, auth, nav, review, mis_data  # noqa: E402
 from routers.employees import router as employees_router  # noqa: E402
+from routers.business import router as business_router  # noqa: E402
+from routers.incentive import router as incentive_router  # noqa: E402
+from routers.admin_controls import router as admin_controls_router  # noqa: E402
+from routers.migrate import router as migrate_router  # noqa: E402
 
 app = FastAPI(
     title="Trustner4u MIS API",
@@ -42,6 +46,10 @@ app.include_router(nav.router, prefix="/api", tags=["NAV"])
 app.include_router(review.router, prefix="/api/review", tags=["Review Workflow"])
 app.include_router(employees_router, prefix="/api/employees", tags=["employees"])
 app.include_router(mis_data.router)  # prefix /api/mis defined in router
+app.include_router(business_router, prefix="/api/business", tags=["Business Entries"])
+app.include_router(incentive_router, prefix="/api/incentive", tags=["Incentive Calculation"])
+app.include_router(admin_controls_router, prefix="/api/admin", tags=["Admin Controls"])
+app.include_router(migrate_router, prefix="/api/migrate", tags=["Migration (Temp)"])
 
 
 @app.get("/health")
