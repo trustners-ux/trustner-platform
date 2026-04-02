@@ -245,15 +245,27 @@ async def fix_schema(user: dict = Depends(_require_admin)):
 
     SUPABASE_URL = os.getenv("SUPABASE_URL", "")
     SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
-    ref = SUPABASE_URL.replace("https://", "").replace(".supabase.co", "")
 
     headers = {
         "apikey": SUPABASE_KEY,
         "Authorization": f"Bearer {SUPABASE_KEY}",
         "Content-Type": "application/json",
+        "Prefer": "return=minimal",
     }
 
-    # Step 1: ALTER TABLE to add missing columns
+    results = []
+    db = get_supabase()
+
+    # Step 0: Check current columns on employees table
+    try:
+        emp_check = db.table("employees").select("*").limit(1).execute()
+        existing_cols = list(emp_check.data[0].keys()) if emp_check.data else []
+        results.append({"step": "check_columns", "existing_columns": existing_cols})
+    except Exception as e:
+        results.append({"step": "check_columns", "error": str(e)})
+        existing_cols = []
+
+    # Step 1: Try ALTER TABLE via Supabase pg-meta REST endpoint
     alter_sql = """
     ALTER TABLE public.employees
       ADD COLUMN IF NOT EXISTS employee_code VARCHAR(20),
@@ -274,51 +286,112 @@ async def fix_schema(user: dict = Depends(_require_admin)):
       ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
     """
 
-    # Step 2: Seed Ram Shah + Sangeeta Shah + some key employees
-    seed_sql = """
-    UPDATE public.employees SET
-      employee_code = 'TAS001', segment = 'Direct Sales', level_code = 'L1',
-      gross_salary = 150000, monthly_target = 500000, annual_target = 6000000,
-      entity = 'TAS', job_responsibility = 'Direct Sales', target_multiplier = 1.0,
-      tenure_years = 5, is_active = true
-    WHERE LOWER(name) LIKE '%ram%shah%';
+    seed_sql_statements = [
+        # Ram Shah
+        """UPDATE public.employees SET
+          employee_code = 'TAS001', segment = 'Direct Sales', level_code = 'L1',
+          gross_salary = 150000, monthly_target = 500000, annual_target = 6000000,
+          entity = 'TAS', job_responsibility = 'Direct Sales', target_multiplier = 1.0,
+          tenure_years = 5, is_active = true
+        WHERE LOWER(name) LIKE '%ram%shah%'""",
+        # Sangeeta Shah
+        """UPDATE public.employees SET
+          employee_code = 'TAS002', segment = 'Direct Sales', level_code = 'L1',
+          gross_salary = 150000, monthly_target = 500000, annual_target = 6000000,
+          entity = 'TAS', job_responsibility = 'Direct Sales', target_multiplier = 1.0,
+          tenure_years = 5, is_active = true
+        WHERE LOWER(name) LIKE '%sangeeta%shah%'""",
+        # Default for remaining employees
+        """UPDATE public.employees SET
+          segment = 'Direct Sales', level_code = 'L3', entity = 'TAS',
+          gross_salary = 35000, monthly_target = 200000, annual_target = 2400000,
+          job_responsibility = 'Direct Sales', target_multiplier = 0.8,
+          tenure_years = 1, is_active = true
+        WHERE segment IS NULL AND is_active IS NOT false""",
+    ]
 
-    UPDATE public.employees SET
-      employee_code = 'TAS002', segment = 'Direct Sales', level_code = 'L1',
-      gross_salary = 150000, monthly_target = 500000, annual_target = 6000000,
-      entity = 'TAS', job_responsibility = 'Direct Sales', target_multiplier = 1.0,
-      tenure_years = 5, is_active = true
-    WHERE LOWER(name) LIKE '%sangeeta%shah%';
+    # Try multiple Supabase SQL execution endpoints
+    sql_endpoints = [
+        f"{SUPABASE_URL}/pg/query",
+        f"{SUPABASE_URL}/pg-meta/default/query",
+        f"{SUPABASE_URL}/rest/v1/rpc/exec_sql",
+    ]
 
-    UPDATE public.employees SET
-      segment = 'Direct Sales', level_code = 'L3', entity = 'TAS',
-      gross_salary = 35000, monthly_target = 200000, annual_target = 2400000,
-      job_responsibility = 'Direct Sales', target_multiplier = 0.8,
-      tenure_years = 1, is_active = true
-    WHERE segment IS NULL AND is_active IS NOT false;
-    """
+    alter_done = False
+    async with httpx.AsyncClient(timeout=30) as client:
+        # Try each endpoint for ALTER TABLE
+        for endpoint in sql_endpoints:
+            if alter_done:
+                break
+            try:
+                resp = await client.post(endpoint, headers=headers, json={"query": alter_sql})
+                if resp.status_code < 300:
+                    results.append({"step": "alter_table", "status": "success", "endpoint": endpoint})
+                    alter_done = True
+                else:
+                    results.append({"step": f"alter_try_{endpoint.split('/')[-1]}", "status": resp.status_code, "body": resp.text[:200]})
+            except Exception as e:
+                results.append({"step": f"alter_try_{endpoint.split('/')[-1]}", "error": str(e)})
 
-    results = []
-    DATABASE_URL = os.getenv("DATABASE_URL", "")
+    # Step 2: If ALTER TABLE didn't work via API, try Supabase client update approach
+    # (columns might already exist — just set the values via REST API)
+    if not alter_done:
+        results.append({"step": "alter_fallback", "message": "ALTER TABLE endpoints failed. Trying direct update via Supabase client..."})
 
-    if DATABASE_URL:
-        import psycopg2
+    # Step 3: Seed data via Supabase client (works regardless of ALTER TABLE method)
+    try:
+        # Check if columns exist by trying a select
+        test = db.table("employees").select("id, name, segment, gross_salary, monthly_target").limit(1).execute()
+        has_incentive_cols = True
+        results.append({"step": "column_check", "status": "columns_exist", "sample": test.data[0] if test.data else None})
+    except Exception as e:
+        has_incentive_cols = False
+        results.append({"step": "column_check", "status": "columns_missing", "error": str(e)})
+
+    if has_incentive_cols:
+        # Seed via Supabase client REST API
         try:
-            conn = psycopg2.connect(DATABASE_URL)
-            conn.autocommit = True
-            cur = conn.cursor()
-            for label, sql in [("alter_table", alter_sql), ("seed_data", seed_sql)]:
-                try:
-                    cur.execute(sql)
-                    results.append({"step": label, "status": "success", "rowcount": cur.rowcount})
-                except Exception as e:
-                    results.append({"step": label, "error": str(e)})
-            cur.close()
-            conn.close()
+            # Update Ram Shah
+            r1 = db.table("employees").update({
+                "employee_code": "TAS001", "segment": "Direct Sales", "level_code": "L1",
+                "gross_salary": 150000, "monthly_target": 500000, "annual_target": 6000000,
+                "entity": "TAS", "job_responsibility": "Direct Sales", "target_multiplier": 1.0,
+                "tenure_years": 5, "is_active": True,
+            }).ilike("name", "%ram%shah%").execute()
+            results.append({"step": "seed_ram_shah", "status": "success", "matched": len(r1.data or [])})
         except Exception as e:
-            results.append({"step": "connect", "error": str(e)})
-    else:
-        results.append({"error": "DATABASE_URL not set"})
+            results.append({"step": "seed_ram_shah", "error": str(e)})
+
+        try:
+            # Update Sangeeta Shah
+            r2 = db.table("employees").update({
+                "employee_code": "TAS002", "segment": "Direct Sales", "level_code": "L1",
+                "gross_salary": 150000, "monthly_target": 500000, "annual_target": 6000000,
+                "entity": "TAS", "job_responsibility": "Direct Sales", "target_multiplier": 1.0,
+                "tenure_years": 5, "is_active": True,
+            }).ilike("name", "%sangeeta%shah%").execute()
+            results.append({"step": "seed_sangeeta_shah", "status": "success", "matched": len(r2.data or [])})
+        except Exception as e:
+            results.append({"step": "seed_sangeeta_shah", "error": str(e)})
+
+        try:
+            # Update remaining employees that have no segment
+            r3 = db.table("employees").update({
+                "segment": "Direct Sales", "level_code": "L3", "entity": "TAS",
+                "gross_salary": 35000, "monthly_target": 200000, "annual_target": 2400000,
+                "job_responsibility": "Direct Sales", "target_multiplier": 0.8,
+                "tenure_years": 1, "is_active": True,
+            }).is_("segment", "null").execute()
+            results.append({"step": "seed_defaults", "status": "success", "matched": len(r3.data or [])})
+        except Exception as e:
+            results.append({"step": "seed_defaults", "error": str(e)})
+
+    # Step 4: Verify final state
+    try:
+        verify = db.table("employees").select("id, name, segment, gross_salary, monthly_target, is_active").execute()
+        results.append({"step": "verify", "employees": verify.data or []})
+    except Exception as e:
+        results.append({"step": "verify", "error": str(e)})
 
     return {"results": results}
 
