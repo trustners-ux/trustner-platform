@@ -256,6 +256,7 @@ async function savePermissionOverrides(overrides: EmployeePermissions[]): Promis
   await put(PERMS_BLOB, JSON.stringify(overrides, null, 2), {
     access: 'public',
     addRandomSuffix: false,
+    allowOverwrite: true,
     contentType: 'application/json',
   });
 }

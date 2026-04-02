@@ -61,6 +61,7 @@ async function writeBlob<T>(path: string, data: T[]): Promise<void> {
   await put(path, JSON.stringify(data, null, 2), {
     access: 'public',
     addRandomSuffix: false,
+    allowOverwrite: true,
     contentType: 'application/json',
   });
 }

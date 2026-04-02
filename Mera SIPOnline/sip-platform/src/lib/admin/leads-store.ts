@@ -56,6 +56,7 @@ async function saveLeads(leads: StoredLead[]): Promise<void> {
     await put(BLOB_KEY, JSON.stringify(leads, null, 2), {
       access: 'public',
       addRandomSuffix: false,
+      allowOverwrite: true,
     });
   } else {
     // Save to local file in development

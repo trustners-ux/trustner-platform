@@ -79,6 +79,7 @@ async function saveUsers(users: AdminUser[]): Promise<void> {
   await put(BLOB_PATH, JSON.stringify(users, null, 2), {
     access: 'public',
     addRandomSuffix: false,
+    allowOverwrite: true,
     contentType: 'application/json',
   });
 }
