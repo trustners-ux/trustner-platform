@@ -26,7 +26,7 @@ const ALL_TIERS: (PlanTierLabel | 'all')[] = ['all', 'basic', 'standard', 'compr
 
 const TIER_BADGE_CONFIG: Record<PlanTierLabel, { bg: string; text: string }> = {
   basic: { bg: 'bg-emerald-100', text: 'text-emerald-700' },
-  standard: { bg: 'bg-teal-100', text: 'text-teal-700' },
+  standard: { bg: 'bg-blue-100', text: 'text-blue-700' },
   comprehensive: { bg: 'bg-amber-100', text: 'text-amber-700' },
 };
 
@@ -263,13 +263,17 @@ export function ReportQueueTable({
                       <td className="px-4 py-3">
                         <div className="font-semibold text-primary-700 whitespace-nowrap">
                           {report.userName}
-                          {report.tier && (
+                          {report.tier ? (
                             <span className={cn(
                               'ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase',
                               TIER_BADGE_CONFIG[report.tier].bg,
                               TIER_BADGE_CONFIG[report.tier].text
                             )}>
                               {report.tier}
+                            </span>
+                          ) : (
+                            <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-600">
+                              Legacy
                             </span>
                           )}
                         </div>

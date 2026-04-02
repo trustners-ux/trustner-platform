@@ -1107,7 +1107,8 @@ export function generateFullReport(
 
 export function generateTeaserData(
   data: FinancialPlanningData,
-  report: FinancialHealthReport
+  report: FinancialHealthReport,
+  tier: 'basic' | 'standard' | 'comprehensive' = 'standard'
 ): TeaserData {
   const pillars = report.score.pillars;
 
@@ -1182,7 +1183,7 @@ export function generateTeaserData(
     ? Math.round((report.retirementGap.gap / report.retirementGap.requiredCorpus) * 100)
     : 0;
 
-  return {
+  const result: TeaserData = {
     score: report.score,
     topStrengths,
     topWeaknesses,
@@ -1190,4 +1191,16 @@ export function generateTeaserData(
     netWorth: report.netWorth.netWorth,
     retirementGapPercent,
   };
+
+  // Include extra data for standard and comprehensive tiers
+  if (tier === 'standard' || tier === 'comprehensive') {
+    result.goalGaps = report.goalGaps;
+    result.actionPlan = report.actionPlan.slice(0, 5);
+    result.netWorthBreakdown = {
+      totalAssets: report.netWorth.totalAssets,
+      totalLiabilities: report.netWorth.totalLiabilities,
+    };
+  }
+
+  return result;
 }

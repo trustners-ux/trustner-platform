@@ -1,16 +1,25 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { TrendingUp, TrendingDown, Shield, Wallet, PiggyBank, CreditCard, Clock, ArrowRight, Phone } from 'lucide-react';
+import { TrendingUp, TrendingDown, Shield, Wallet, PiggyBank, CreditCard, Clock, ArrowRight, Phone, Target, CheckCircle2, AlertTriangle, XCircle, Zap } from 'lucide-react';
 import Link from 'next/link';
 import ScoreGauge from './ScoreGauge';
 import type { TeaserData } from '@/types/financial-planning';
+import type { PlanTier } from '@/types/financial-planning-v2';
 
 interface TeaserDashboardProps {
   data: TeaserData;
   userName: string;
   userEmail: string;
+  tier?: PlanTier;
 }
+
+const FEASIBILITY_CONFIG: Record<string, { icon: typeof CheckCircle2; color: string; bg: string; label: string }> = {
+  'on-track': { icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50', label: 'On Track' },
+  'possible': { icon: Target, color: 'text-blue-600', bg: 'bg-blue-50', label: 'Possible' },
+  'stretch': { icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50', label: 'Stretch' },
+  'unrealistic': { icon: XCircle, color: 'text-red-600', bg: 'bg-red-50', label: 'Needs Review' },
+};
 
 const PILLAR_CONFIG = [
   { key: 'cashflow' as const, label: 'Cashflow Health', icon: Wallet, color: '#0F766E' },
@@ -27,7 +36,9 @@ function formatAmount(n: number): string {
   return `₹${n.toLocaleString('en-IN')}`;
 }
 
-export default function TeaserDashboard({ data, userName, userEmail }: TeaserDashboardProps) {
+export default function TeaserDashboard({ data, userName, userEmail, tier = 'standard' }: TeaserDashboardProps) {
+  const isEnhanced = tier === 'standard' || tier === 'comprehensive';
+  const maxActions = isEnhanced ? 5 : 3;
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -108,6 +119,12 @@ export default function TeaserDashboard({ data, userName, userEmail }: TeaserDas
         <div className="bg-gradient-to-br from-brand-50 to-teal-50 rounded-xl p-4 border border-brand-100">
           <div className="text-[10px] text-brand-600 font-medium uppercase tracking-wider">Net Worth</div>
           <div className="text-xl font-extrabold text-brand-800 mt-1">{formatAmount(data.netWorth)}</div>
+          {isEnhanced && data.netWorthBreakdown && (
+            <div className="mt-1.5 space-y-0.5">
+              <div className="text-[10px] text-brand-600">Assets: {formatAmount(data.netWorthBreakdown.totalAssets)}</div>
+              <div className="text-[10px] text-brand-600">Liabilities: {formatAmount(data.netWorthBreakdown.totalLiabilities)}</div>
+            </div>
+          )}
         </div>
         <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-100">
           <div className="text-[10px] text-amber-700 font-medium uppercase tracking-wider">Retirement Ready</div>
@@ -115,6 +132,69 @@ export default function TeaserDashboard({ data, userName, userEmail }: TeaserDas
           <div className="text-[10px] text-amber-600">of required corpus</div>
         </div>
       </div>
+
+      {/* Goals Summary — Standard/Comprehensive only */}
+      {isEnhanced && data.goalGaps && data.goalGaps.length > 0 && (
+        <div className="bg-white rounded-xl border border-slate-100 p-5 mb-6 shadow-sm">
+          <h3 className="text-sm font-bold text-primary mb-3 flex items-center gap-2">
+            <Target className="w-4 h-4 text-brand" />
+            Your Goals
+          </h3>
+          <div className="space-y-2.5">
+            {data.goalGaps.map((goal, i) => {
+              const config = FEASIBILITY_CONFIG[goal.feasibility] || FEASIBILITY_CONFIG['possible'];
+              const FeasIcon = config.icon;
+              return (
+                <div key={i} className="flex items-center justify-between gap-3 py-2 border-b border-slate-50 last:border-0">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-slate-700 truncate">{goal.goalName}</div>
+                    <div className="text-[11px] text-slate-400">
+                      Target: {formatAmount(goal.futureCost)} &middot; SIP needed: {formatAmount(goal.monthlyRequired)}/mo
+                    </div>
+                  </div>
+                  <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${config.bg}`}>
+                    <FeasIcon className={`w-3.5 h-3.5 ${config.color}`} />
+                    <span className={`text-[11px] font-semibold ${config.color}`}>{config.label}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Action Plan — top N items */}
+      {data.actionPlan && data.actionPlan.length > 0 && (
+        <div className="bg-white rounded-xl border border-slate-100 p-5 mb-6 shadow-sm">
+          <h3 className="text-sm font-bold text-primary mb-3 flex items-center gap-2">
+            <Zap className="w-4 h-4 text-amber-500" />
+            Top {maxActions} Actions for You
+          </h3>
+          <div className="space-y-2">
+            {data.actionPlan.slice(0, maxActions).map((item, i) => (
+              <div key={i} className="flex items-start gap-2.5">
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-bold ${
+                  item.impact === 'high' ? 'bg-red-50 text-red-600' :
+                  item.impact === 'medium' ? 'bg-amber-50 text-amber-600' :
+                  'bg-slate-50 text-slate-500'
+                }`}>
+                  {i + 1}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-slate-600">{item.action}</p>
+                  <span className={`text-[10px] font-medium ${
+                    item.impact === 'high' ? 'text-red-500' :
+                    item.impact === 'medium' ? 'text-amber-500' :
+                    'text-slate-400'
+                  }`}>
+                    {item.impact.charAt(0).toUpperCase() + item.impact.slice(1)} impact &middot; {item.category}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Report Coming Banner */}
       <div className="bg-gradient-to-r from-brand-700 to-brand-800 rounded-xl p-6 text-white mb-6">

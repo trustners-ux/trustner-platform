@@ -102,15 +102,35 @@ function kvRow(p: jsPDF, y: number, l: string, v: string, lc: RGB = S600, vc: RG
 }
 
 // ─── Page 1: Cover ───
-function p1(p: jsPDF, r: FinancialHealthReport, nm: string, dt: string, totalPages: number) {
+function p1(p: jsPDF, r: FinancialHealthReport, nm: string, dt: string, totalPages: number, tier: PlanTier = 'standard') {
   hdr(p, 1, dt, totalPages); wm(p);
   let y = 50;
   try { p.addImage(LOGO_BASE64, 'PNG', PW / 2 - 30, y, 60, 30); y += 38; } catch { y += 10; }
 
+  // Tier badge near the top
+  const tierLabels: Record<PlanTier, { label: string; color: RGB }> = {
+    basic: { label: 'BASIC', color: S400 },
+    standard: { label: 'STANDARD', color: TEAL },
+    comprehensive: { label: 'COMPREHENSIVE', color: PURPLE },
+  };
+  const badge = tierLabels[tier];
+  const badgeW = p.getStringUnitWidth(badge.label) * 7 / p.internal.scaleFactor + 14;
+  p.setFillColor(...badge.color); p.roundedRect(PW / 2 - badgeW / 2, y - 2, badgeW, 8, 2, 2, 'F');
+  p.setTextColor(255, 255, 255); p.setFontSize(7); p.setFont('helvetica', 'bold');
+  p.text(badge.label, PW / 2, y + 3.5, { align: 'center' }); y += 12;
+
+  // Tier-aware title and subtitle
+  const tierTitles: Record<PlanTier, { title: string; subtitle: string }> = {
+    basic: { title: 'Financial Health Check', subtitle: 'Quick Scan Report' },
+    standard: { title: 'Goal-Based Financial Plan', subtitle: 'Personalized Financial Strategy' },
+    comprehensive: { title: 'Comprehensive Financial Blueprint', subtitle: 'CFP-Grade Financial Analysis' },
+  };
+  const titles = tierTitles[tier];
+
   p.setTextColor(...TEAL); p.setFontSize(22); p.setFont('helvetica', 'bold');
-  p.text('Financial Health Report', PW / 2, y, { align: 'center' }); y += 10;
+  p.text(titles.title, PW / 2, y, { align: 'center' }); y += 10;
   p.setTextColor(...S600); p.setFontSize(12); p.setFont('helvetica', 'normal');
-  p.text('Trustner Financial Wellness Assessment', PW / 2, y, { align: 'center' }); y += 15;
+  p.text(titles.subtitle, PW / 2, y, { align: 'center' }); y += 15;
 
   p.setFillColor(...TEAL_LIGHT); p.roundedRect(M + 20, y, CW - 40, 14, 3, 3, 'F');
   p.setDrawColor(...TEAL); p.setLineWidth(0.3); p.roundedRect(M + 20, y, CW - 40, 14, 3, 3, 'S');
@@ -327,40 +347,88 @@ function p5(p: jsPDF, r: FinancialHealthReport, dt: string, pg: number, totalPag
     ftr(p); return;
   }
 
+  // Recommended Monthly SIP summary box at top
+  const tm = goals.reduce((s, g) => s + g.monthlyRequired, 0);
+  p.setFillColor(...TEAL_LIGHT); p.roundedRect(M, y, CW, 16, 2, 2, 'F');
+  p.setDrawColor(...TEAL); p.setLineWidth(0.4); p.roundedRect(M, y, CW, 16, 2, 2, 'S');
+  p.setTextColor(...TEAL); p.setFontSize(9); p.setFont('helvetica', 'bold');
+  p.text('Recommended Monthly SIP (All Goals Combined)', M + 5, y + 6);
+  p.setFontSize(14); p.text(rs(formatINR(tm)) + ' / month', M + 5, y + 13);
+  p.setFontSize(7); p.setFont('helvetica', 'normal'); p.setTextColor(...S600);
+  p.text(`Across ${goals.length} goal(s)`, PW - M - 5, y + 10, { align: 'right' });
+  y += 20;
+
+  // Helper: suggest vehicle based on time horizon (years)
+  const suggestVehicle = (yearsToGoal: number): string => {
+    if (yearsToGoal <= 1) return 'Liquid Fund';
+    if (yearsToGoal <= 3) return 'Short Duration Debt';
+    if (yearsToGoal <= 5) return 'Balanced Advantage';
+    if (yearsToGoal <= 10) return 'Flexi Cap / Large Cap';
+    return 'Small/Mid Cap + Flexi Cap';
+  };
+
   p.setFillColor(...TEAL); p.rect(M, y, CW, 7, 'F');
-  p.setTextColor(255, 255, 255); p.setFontSize(6); p.setFont('helvetica', 'bold');
-  p.text('Goal', M + 3, y + 5); p.text('Future Cost', M + 58, y + 5);
-  p.text('Progress', M + 90, y + 5); p.text('Monthly SIP', M + 118, y + 5);
+  p.setTextColor(255, 255, 255); p.setFontSize(5.5); p.setFont('helvetica', 'bold');
+  p.text('Goal', M + 3, y + 5); p.text('Future Cost', M + 42, y + 5);
+  p.text('Progress', M + 68, y + 5); p.text('Monthly SIP', M + 92, y + 5);
+  p.text('Suggested Vehicle', M + 118, y + 5);
   p.text('Status', PW - M - 4, y + 5, { align: 'right' }); y += 7;
 
   const fc: Record<string, RGB> = { 'on-track': GREEN, 'possible': TEAL, 'stretch': AMBER, 'unrealistic': RED };
 
   for (let i = 0; i < goals.length; i++) {
     const gl = goals[i];
+    // Estimate years to goal from future cost vs current progress (rough)
+    const yearsToGoal = gl.futureCost > 0 && gl.currentProgress > 0
+      ? Math.max(1, Math.ceil(Math.log(gl.futureCost / Math.max(gl.currentProgress, 1)) / Math.log(1.1)))
+      : 5;
+    const vehicle = suggestVehicle(yearsToGoal);
+
     p.setFillColor(...(i % 2 === 0 ? S50 : WHITE)); p.rect(M, y, CW, 8, 'F');
-    p.setTextColor(...S800); p.setFontSize(6.5); p.setFont('helvetica', 'bold');
-    p.text(gl.goalName.substring(0, 22), M + 3, y + 5.5);
+    p.setTextColor(...S800); p.setFontSize(6); p.setFont('helvetica', 'bold');
+    p.text(gl.goalName.substring(0, 18), M + 3, y + 5.5);
     p.setFont('helvetica', 'normal'); p.setTextColor(...S600);
-    p.text(rs(formatINR(gl.futureCost)), M + 58, y + 5.5);
-    p.text(rs(formatINR(gl.currentProgress)), M + 90, y + 5.5);
-    p.text(gl.monthlyRequired > 0 ? rs(formatINR(gl.monthlyRequired)) : '-', M + 118, y + 5.5);
+    p.text(rs(formatINR(gl.futureCost)), M + 42, y + 5.5);
+    p.text(rs(formatINR(gl.currentProgress)), M + 68, y + 5.5);
+    p.text(gl.monthlyRequired > 0 ? rs(formatINR(gl.monthlyRequired)) : '-', M + 92, y + 5.5);
+    p.setTextColor(...BLUE); p.setFontSize(5.5);
+    p.text(vehicle, M + 118, y + 5.5);
 
     const fCol = fc[gl.feasibility] || S600;
     const fLbl = gl.feasibility.replace('-', ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-    p.setFillColor(...fCol); p.roundedRect(PW - M - 22, y + 1.5, 20, 5, 1, 1, 'F');
-    p.setTextColor(255, 255, 255); p.setFontSize(5); p.setFont('helvetica', 'bold');
-    p.text(fLbl, PW - M - 12, y + 5, { align: 'center' });
+    p.setFillColor(...fCol); p.roundedRect(PW - M - 20, y + 1.5, 18, 5, 1, 1, 'F');
+    p.setTextColor(255, 255, 255); p.setFontSize(4.5); p.setFont('helvetica', 'bold');
+    p.text(fLbl, PW - M - 11, y + 5, { align: 'center' });
     y += 8;
   }
 
-  y += 8;
+  // Step-up SIP row
+  y += 4;
+  p.setFillColor(...A50); p.roundedRect(M, y, CW, 14, 2, 2, 'F');
+  p.setDrawColor(...AMBER); p.setLineWidth(0.3); p.roundedRect(M, y, CW, 14, 2, 2, 'S');
+  p.setTextColor(...AMBER); p.setFontSize(8); p.setFont('helvetica', 'bold');
+  p.text('With 10% Annual Step-up SIP', M + 5, y + 6);
+  // Approximate: stepped SIP ~ flat SIP * 0.72 for 10-year goals
+  const steppedSIP = Math.round(tm * 0.72);
+  p.setFontSize(10); p.text(rs(formatINR(steppedSIP)) + ' / month (starting)', M + 5, y + 12);
+  p.setTextColor(...S600); p.setFontSize(6); p.setFont('helvetica', 'normal');
+  p.text('Increases 10% each year, reduces initial burden', PW - M - 5, y + 10, { align: 'right' });
+  y += 18;
+
+  // Summary box
   const tfc = goals.reduce((s, g) => s + g.futureCost, 0);
-  const tm = goals.reduce((s, g) => s + g.monthlyRequired, 0);
   p.setFillColor(...B50); p.roundedRect(M, y, CW, 14, 2, 2, 'F');
   p.setTextColor(...BLUE); p.setFontSize(8); p.setFont('helvetica', 'bold');
   p.text(`Total Goals: ${goals.length}`, M + 5, y + 6);
   p.text(`Combined Future Cost: ${rs(formatINR(tfc))}`, M + 5, y + 11);
   p.text(`Total Monthly SIP: ${rs(formatINR(tm))}`, PW - M - 5, y + 9, { align: 'right' });
+  y += 18;
+
+  // MFD note
+  p.setFillColor(...S50); p.roundedRect(M, y, CW, 10, 2, 2, 'F');
+  p.setTextColor(...S600); p.setFontSize(5.5); p.setFont('helvetica', 'normal');
+  const mfdNote = p.splitTextToSize('All recommendations are for Regular plans through your MFD (ARN-286886). No direct plan recommendations. Vehicle suggestions are indicative and based on time horizon.', CW - 10);
+  p.text(mfdNote, M + 5, y + 4);
   ftr(p);
 }
 
@@ -396,9 +464,32 @@ function p6(p: jsPDF, r: FinancialHealthReport, dt: string, pg: number, totalPag
   p.setTextColor(...(adC[ins.healthAdequacy] || AMBER)); p.setFontSize(8); p.setFont('helvetica', 'bold');
   p.text(`Health Cover Adequacy: ${ins.healthAdequacy.toUpperCase()}`, M + 5, y + 7); y += 18;
 
+  // Recommended Action summary box
+  const hasLifeGap = ins.lifeInsuranceGap > 0;
+  const hasHealthGap = ins.healthInsuranceGap > 0;
+  if (hasLifeGap || hasHealthGap) {
+    p.setFillColor(...A50); p.roundedRect(M, y, CW, (hasLifeGap && hasHealthGap ? 22 : 14), 2, 2, 'F');
+    p.setDrawColor(...AMBER); p.setLineWidth(0.3); p.roundedRect(M, y, CW, (hasLifeGap && hasHealthGap ? 22 : 14), 2, 2, 'S');
+    p.setTextColor(...AMBER); p.setFontSize(8); p.setFont('helvetica', 'bold');
+    p.text('Recommended Actions', M + 5, y + 6);
+    let ay = y + 12;
+    if (hasLifeGap) {
+      p.setTextColor(...S800); p.setFontSize(6.5); p.setFont('helvetica', 'normal');
+      p.text(`> Increase term cover by ${rs(formatINR(ins.lifeInsuranceGap))} via pure term plan`, M + 5, ay);
+      ay += 5;
+    }
+    if (hasHealthGap) {
+      p.setTextColor(...S800); p.setFontSize(6.5); p.setFont('helvetica', 'normal');
+      p.text(`> Enhance health cover to ${rs(formatINR(ins.healthInsuranceNeed))} (consider super top-up)`, M + 5, ay);
+      ay += 5;
+    }
+    y += (hasLifeGap && hasHealthGap ? 26 : 18);
+  }
+
+  // IRDAI note
   p.setFillColor(...S50); p.roundedRect(M, y, CW, 14, 2, 2, 'F');
   p.setTextColor(...S600); p.setFontSize(6.5); p.setFont('helvetica', 'normal');
-  const note = p.splitTextToSize('Insurance gap analysis is indicative. For personalized insurance recommendations, please consult a licensed insurance advisor. Trustner Insurance Brokers (IRDAI License #1067) can help you find the right policy.', CW - 10);
+  const note = p.splitTextToSize('Insurance gap analysis is indicative. For personalized insurance recommendations, please consult a licensed insurance advisor. Insurance recommendations via Trustner Insurance Brokers (IRDAI CA License #1067).', CW - 10);
   p.text(note, M + 5, y + 5);
   ftr(p);
 }
@@ -1536,7 +1627,7 @@ export function generateFinancialReport(
   if (effectiveTier === 'basic') {
     // ─── BASIC: 4 pages ───
     const totalPages = 4;
-    p1(pdf, report, userName, date, totalPages);                       // Page 1: Cover
+    p1(pdf, report, userName, date, totalPages, 'basic');              // Page 1: Cover
     p2(pdf, report, date, 2, totalPages);                              // Page 2: Dashboard
     pBasicInsights(pdf, report, date, 3, totalPages);                  // Page 3: Quick Insights + Top Actions
     pBasicDisclaimers(pdf, report, date, 4, totalPages);               // Page 4: Disclaimers + Upgrade CTA
@@ -1553,7 +1644,7 @@ export function generateFinancialReport(
     const taxOpt = reportV2.taxOptimization;
 
     let pg = 1;
-    p1(pdf, report, userName, date, totalPages);                                        // 1: Cover
+    p1(pdf, report, userName, date, totalPages, 'comprehensive');                       // 1: Cover
     pCompExecSummary(pdf, report, userName, date, execSummary, ++pg, totalPages);        // 2: Executive Summary
     p2(pdf, report, date, ++pg, totalPages);                                            // 3: Dashboard
     p3(pdf, report, data, date, ++pg, totalPages);                                      // 4: Net Worth
@@ -1574,7 +1665,7 @@ export function generateFinancialReport(
   } else {
     // ─── STANDARD: 10 pages (existing flow) ───
     const totalPages = 10;
-    p1(pdf, report, userName, date, totalPages);
+    p1(pdf, report, userName, date, totalPages, 'standard');
     p2(pdf, report, date, 2, totalPages);
     p3(pdf, report, data, date, 3, totalPages);
     p4(pdf, report, date, 4, totalPages);

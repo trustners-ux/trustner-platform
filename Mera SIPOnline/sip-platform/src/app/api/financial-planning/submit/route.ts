@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     const netWorth = calculateNetWorth(data);
     const retirementGap = calculateRetirementGap(data);
     const baseReport = generateFullReport(data);
-    const teaser = generateTeaserData(data, { ...baseReport, claudeNarrative: '' });
+    const teaser = generateTeaserData(data, { ...baseReport, claudeNarrative: '' }, tier);
 
     console.log(`[FP Submit] Score: ${score.totalScore}/900 (${score.grade})`);
 

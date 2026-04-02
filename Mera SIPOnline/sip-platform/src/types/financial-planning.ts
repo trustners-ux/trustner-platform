@@ -250,4 +250,10 @@ export interface TeaserData {
   quickInsights: string[];
   netWorth: number;
   retirementGapPercent: number;
+  /** Available for standard/comprehensive tiers */
+  goalGaps?: GoalGapResult[];
+  /** Available for standard/comprehensive tiers — top 5 actions */
+  actionPlan?: ActionItem[];
+  /** Net worth breakdown for standard/comprehensive */
+  netWorthBreakdown?: { totalAssets: number; totalLiabilities: number };
 }

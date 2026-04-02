@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { FileCheck, Clock, XCircle, Send, RefreshCw, Download } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { ReportQueueTable } from '@/components/admin/ReportQueueTable';
-import type { ReportQueueEntry } from '@/types/report-queue';
+import type { ReportQueueEntry, PlanTierLabel } from '@/types/report-queue';
 
 interface StatsCard {
   label: string;
@@ -89,6 +89,19 @@ function exportToCSV(reports: ReportQueueEntry[]) {
 export default function ReportsPage() {
   const [reports, setReports] = useState<ReportQueueEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tierFilter, setTierFilter] = useState<PlanTierLabel | 'all'>('all');
+
+  const tierCounts = useMemo(() => ({
+    basic: reports.filter((r) => r.tier === 'basic').length,
+    standard: reports.filter((r) => r.tier === 'standard').length,
+    comprehensive: reports.filter((r) => r.tier === 'comprehensive').length,
+    legacy: reports.filter((r) => !r.tier).length,
+  }), [reports]);
+
+  const filteredReports = useMemo(() => {
+    if (tierFilter === 'all') return reports;
+    return reports.filter((r) => r.tier === tierFilter);
+  }, [reports, tierFilter]);
 
   const fetchReports = useCallback(async () => {
     try {
@@ -110,25 +123,25 @@ export default function ReportsPage() {
   const stats: StatsCard[] = [
     {
       label: 'Total Reports',
-      value: reports.length,
+      value: filteredReports.length,
       icon: FileCheck,
       color: 'text-purple-600 bg-purple-50',
     },
     {
       label: 'Pending Review',
-      value: reports.filter((r) => r.status === 'pending_review').length,
+      value: filteredReports.filter((r) => r.status === 'pending_review').length,
       icon: Clock,
       color: 'text-amber-600 bg-amber-50',
     },
     {
       label: 'Sent',
-      value: reports.filter((r) => r.status === 'sent').length,
+      value: filteredReports.filter((r) => r.status === 'sent').length,
       icon: Send,
       color: 'text-green-600 bg-green-50',
     },
     {
       label: 'Rejected',
-      value: reports.filter((r) => r.status === 'rejected').length,
+      value: filteredReports.filter((r) => r.status === 'rejected').length,
       icon: XCircle,
       color: 'text-red-600 bg-red-50',
     },
@@ -143,9 +156,19 @@ export default function ReportsPage() {
           <p className="text-sm text-slate-500">Review, approve, and manage financial health reports</p>
         </div>
         <div className="flex items-center gap-2">
-          {reports.length > 0 && (
+          <select
+            value={tierFilter}
+            onChange={(e) => setTierFilter(e.target.value as PlanTierLabel | 'all')}
+            className="px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-surface-200 rounded-xl focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none transition-all"
+          >
+            <option value="all">All Tiers</option>
+            <option value="basic">Basic</option>
+            <option value="standard">Standard</option>
+            <option value="comprehensive">Comprehensive</option>
+          </select>
+          {filteredReports.length > 0 && (
             <button
-              onClick={() => exportToCSV(reports)}
+              onClick={() => exportToCSV(filteredReports)}
               className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-green-700 bg-green-50 border border-green-200 rounded-xl hover:bg-green-100 transition-colors"
             >
               <Download className="w-3.5 h-3.5" />
@@ -172,6 +195,21 @@ export default function ReportsPage() {
             </div>
             <div className="text-2xl font-extrabold text-primary-700">{stat.value}</div>
             <div className="text-xs text-slate-500">{stat.label}</div>
+            {stat.label === 'Total Reports' && tierFilter === 'all' && reports.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-[10px] font-semibold">
+                <span className="text-emerald-700">Basic: {tierCounts.basic}</span>
+                <span className="text-slate-300">|</span>
+                <span className="text-blue-700">Standard: {tierCounts.standard}</span>
+                <span className="text-slate-300">|</span>
+                <span className="text-amber-700">Comprehensive: {tierCounts.comprehensive}</span>
+                {tierCounts.legacy > 0 && (
+                  <>
+                    <span className="text-slate-300">|</span>
+                    <span className="text-slate-500">Legacy: {tierCounts.legacy}</span>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -182,7 +220,7 @@ export default function ReportsPage() {
           <div className="animate-pulse text-sm text-slate-400">Loading reports...</div>
         </div>
       ) : (
-        <ReportQueueTable reports={reports} onRefresh={fetchReports} />
+        <ReportQueueTable reports={filteredReports} onRefresh={fetchReports} />
       )}
     </div>
   );
