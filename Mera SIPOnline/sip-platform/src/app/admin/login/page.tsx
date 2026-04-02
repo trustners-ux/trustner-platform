@@ -45,17 +45,17 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md">
         {/* Logo / Branding */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 mb-4">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white backdrop-blur-sm border border-white/20 mb-4">
             <Image
               src="/Trustner Logo-blue.png"
               alt="Trustner"
               width={48}
               height={48}
-              className="object-contain brightness-0 invert"
+              className="object-contain"
             />
           </div>
-          <h1 className="text-2xl font-extrabold text-white mb-1">Trustner Admin</h1>
-          <p className="text-sm text-slate-400">Mera SIP Online Management Console</p>
+          <h1 className="text-2xl font-extrabold text-white mb-1">Trustner Employee Login</h1>
+          <p className="text-sm text-slate-400">Mera SIP Online — Team Portal</p>
         </div>
 
         {/* Login Card */}
@@ -77,7 +77,7 @@ export default function AdminLoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@trustner.com"
+                  placeholder="you@trustner.in"
                   required
                   className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-surface-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all"
                 />
@@ -125,7 +125,7 @@ export default function AdminLoginPage() {
           </div>
 
           <p className="mt-3 text-xs text-center text-slate-400">
-            Protected admin area. Unauthorized access is prohibited.
+            Authorized Trustner team members only.
           </p>
         </form>
       </div>
