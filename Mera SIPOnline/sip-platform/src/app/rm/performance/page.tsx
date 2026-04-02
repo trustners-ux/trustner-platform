@@ -22,7 +22,7 @@ export default function PerformancePage() {
     async function load() {
       try {
         const authRes = await fetch('/api/rm/auth');
-        if (!authRes.ok) { router.push('/rm/login'); return; }
+        if (!authRes.ok) { router.push('/admin/login'); return; }
         const authData = await authRes.json();
         setUser({ name: authData.user.name, designation: authData.user.designation, entity: authData.user.entity });
 
@@ -31,7 +31,7 @@ export default function PerformancePage() {
           setDashboard(await dashRes.json());
         }
       } catch {
-        router.push('/rm/login');
+        router.push('/admin/login');
       } finally {
         setLoading(false);
       }
@@ -41,7 +41,7 @@ export default function PerformancePage() {
 
   const handleLogout = async () => {
     await fetch('/api/rm/auth', { method: 'DELETE' });
-    router.push('/rm/login');
+    router.push('/admin/login');
   };
 
   if (loading || !dashboard) {

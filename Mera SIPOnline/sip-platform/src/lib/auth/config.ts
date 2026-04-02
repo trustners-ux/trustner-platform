@@ -81,6 +81,7 @@ export const ADMIN_NAV = [
   { label: 'Payouts', href: '/admin/mis/payouts', icon: 'Percent', role: 'admin' as AdminRole },
   { label: 'Users', href: '/admin/users', icon: 'UserCog', role: 'admin' as AdminRole },
   { label: 'Audit Log', href: '/admin/audit', icon: 'ScrollText', role: 'admin' as AdminRole },
+  { label: 'Team', href: '/admin/team', icon: 'UsersRound', role: 'viewer' as AdminRole },
   { label: 'MF Gyan', href: '/admin/learn', icon: 'GraduationCap', role: 'viewer' as AdminRole },
   { label: 'Settings', href: '/admin/settings', icon: 'Settings', role: 'admin' as AdminRole },
 ];

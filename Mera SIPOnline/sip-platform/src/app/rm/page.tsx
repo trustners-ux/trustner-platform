@@ -36,7 +36,7 @@ export default function RMDashboard() {
         // Check auth
         const authRes = await fetch('/api/rm/auth');
         if (!authRes.ok) {
-          router.push('/rm/login');
+          router.push('/admin/login');
           return;
         }
         const authData = await authRes.json();
@@ -49,7 +49,7 @@ export default function RMDashboard() {
           setDashboard(dashData);
         }
       } catch {
-        router.push('/rm/login');
+        router.push('/admin/login');
       } finally {
         setLoading(false);
       }
@@ -59,7 +59,7 @@ export default function RMDashboard() {
 
   const handleLogout = async () => {
     await fetch('/api/rm/auth', { method: 'DELETE' });
-    router.push('/rm/login');
+    router.push('/admin/login');
   };
 
   if (loading) {

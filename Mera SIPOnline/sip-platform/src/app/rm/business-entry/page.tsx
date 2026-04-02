@@ -44,7 +44,7 @@ export default function BusinessEntryPage() {
     async function load() {
       try {
         const authRes = await fetch('/api/rm/auth');
-        if (!authRes.ok) { router.push('/rm/login'); return; }
+        if (!authRes.ok) { router.push('/admin/login'); return; }
         const { user: u } = await authRes.json();
         setUser(u);
 
@@ -54,7 +54,7 @@ export default function BusinessEntryPage() {
           setEntries(e);
         }
       } catch {
-        router.push('/rm/login');
+        router.push('/admin/login');
       } finally {
         setLoading(false);
       }
@@ -129,7 +129,7 @@ export default function BusinessEntryPage() {
 
   const handleLogout = async () => {
     await fetch('/api/rm/auth', { method: 'DELETE' });
-    router.push('/rm/login');
+    router.push('/admin/login');
   };
 
   if (loading) {

@@ -34,12 +34,12 @@ export default function TopicPage() {
     async function checkAuth() {
       try {
         const res = await fetch('/api/rm/auth');
-        if (!res.ok) { router.push('/rm/login'); return; }
+        if (!res.ok) { router.push('/admin/login'); return; }
         const data = await res.json();
         setEmployeeCode(data.user.employeeCode);
         setUser({ name: data.user.name, designation: data.user.designation, entity: data.user.entity });
       } catch {
-        router.push('/rm/login');
+        router.push('/admin/login');
       } finally {
         setLoading(false);
       }
@@ -49,7 +49,7 @@ export default function TopicPage() {
 
   const handleLogout = async () => {
     await fetch('/api/rm/auth', { method: 'DELETE' });
-    router.push('/rm/login');
+    router.push('/admin/login');
   };
 
   // Mark as visited when topic loads

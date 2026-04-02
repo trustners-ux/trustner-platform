@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { signRMToken, getRMRole, RM_COOKIE_NAME, verifyRMToken } from '@/lib/auth/rm-jwt';
+import { verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 import { getEmployeeByCode, getEmployeeByPhone } from '@/lib/dal/employees';
 import { writeAuditLog } from '@/lib/dal/audit';
 
@@ -96,30 +97,57 @@ export async function POST(request: NextRequest) {
 
 /**
  * GET /api/rm/auth — Get current RM session
+ * Checks rm-session first, then falls back to employee-session cookie.
  */
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get(RM_COOKIE_NAME)?.value;
-    if (!token) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    // Try RM token first
+    const rmToken = request.cookies.get(RM_COOKIE_NAME)?.value;
+    if (rmToken) {
+      const payload = await verifyRMToken(rmToken);
+      if (payload) {
+        return NextResponse.json({ user: payload });
+      }
     }
 
-    const payload = await verifyRMToken(token);
-    if (!payload) {
-      return NextResponse.json({ error: 'Session expired' }, { status: 401 });
+    // Fallback: check employee-session cookie
+    const empToken = request.cookies.get(EMPLOYEE_COOKIE)?.value;
+    if (empToken) {
+      const empPayload = await verifyEmployeeToken(empToken);
+      if (empPayload) {
+        // Map employee payload to RM-compatible shape
+        return NextResponse.json({
+          user: {
+            employeeId: empPayload.employeeId,
+            employeeCode: `EMP-${empPayload.employeeId}`,
+            name: empPayload.name,
+            designation: empPayload.designation,
+            entity: empPayload.companyGroup,
+            segment: empPayload.department,
+            role: empPayload.role,
+          },
+        });
+      }
     }
 
-    return NextResponse.json({ user: payload });
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   } catch {
     return NextResponse.json({ error: 'Auth check failed' }, { status: 500 });
   }
 }
 
 /**
- * DELETE /api/rm/auth — RM Logout
+ * DELETE /api/rm/auth — RM Logout (clears both RM and employee session)
  */
 export async function DELETE() {
   const response = NextResponse.json({ success: true });
   response.cookies.delete(RM_COOKIE_NAME);
+  response.cookies.set(EMPLOYEE_COOKIE, '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 0,
+    path: '/',
+  });
   return response;
 }
