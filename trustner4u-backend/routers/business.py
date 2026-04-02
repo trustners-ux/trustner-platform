@@ -23,17 +23,30 @@ def _require_admin(user: dict = Depends(verify_token)) -> dict:
     return user
 
 
+def _resolve_employee_id(db, user: dict) -> str:
+    """Resolve employee ID from auth_id, fallback to app_metadata.employee_id, then to id lookup."""
+    # 1. Try by auth_id (normal Supabase login)
+    emp_res = db.table("employees").select("id").eq("auth_id", user["sub"]).execute()
+    if emp_res.data:
+        return emp_res.data[0]["id"]
+    # 2. Fallback: check app_metadata.employee_id (dev-preview or admin)
+    emp_id = (user.get("app_metadata") or {}).get("employee_id")
+    if emp_id:
+        emp_res = db.table("employees").select("id").eq("id", emp_id).execute()
+        if emp_res.data:
+            return emp_res.data[0]["id"]
+    return ""
+
+
 # ─── Business Entries ─────────────────────────────────────────────────────
 
 @router.get("/my-month")
 async def get_my_business(month: str, user: dict = Depends(_require_auth)):
     """Get current user's business entries for a month. Month format: YYYY-MM-DD."""
     db = get_supabase()
-    # Find employee by auth user id
-    emp_res = db.table("employees").select("id").eq("auth_id", user["sub"]).execute()
-    if not emp_res.data:
+    emp_id = _resolve_employee_id(db, user)
+    if not emp_id:
         raise HTTPException(404, "Employee profile not found")
-    emp_id = emp_res.data[0]["id"]
 
     res = (
         db.table("monthly_business")
@@ -50,10 +63,9 @@ async def get_my_business(month: str, user: dict = Depends(_require_auth)):
 async def get_team_business(month: str, user: dict = Depends(_require_admin)):
     """Get team business entries (manager sees direct reports)."""
     db = get_supabase()
-    emp_res = db.table("employees").select("id").eq("auth_id", user["sub"]).execute()
-    if not emp_res.data:
+    mgr_id = _resolve_employee_id(db, user)
+    if not mgr_id:
         raise HTTPException(404, "Employee profile not found")
-    mgr_id = emp_res.data[0]["id"]
 
     # Get direct reports
     team_res = db.table("employees").select("id, name").eq("reporting_manager_id", mgr_id).execute()

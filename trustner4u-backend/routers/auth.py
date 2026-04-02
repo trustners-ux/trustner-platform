@@ -49,9 +49,37 @@ def _get_jwks():
         return _jwks_cache.get("keys") or []
 
 
+def _get_dev_admin_info() -> dict:
+    """Look up the first employee for dev-preview token, return id and auth_id."""
+    try:
+        sb = create_client(SUPABASE_URL, SUPABASE_KEY)
+        # Try Ram Shah first (the owner), then fallback to any employee
+        res = sb.table("employees").select("id,auth_id,name,email").ilike("name", "%ram%shah%").limit(1).execute()
+        if not res.data:
+            res = sb.table("employees").select("id,auth_id,name,email").limit(1).execute()
+        if res.data:
+            emp = res.data[0]
+            return {"id": emp["id"], "auth_id": emp.get("auth_id") or emp["id"], "name": emp.get("name", "Admin")}
+    except Exception:
+        pass
+    return {"id": "dev-admin", "auth_id": "dev-admin", "name": "Dev Admin"}
+
+
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     """Verify Supabase JWT (ES256 or HS256) and return user payload."""
     token = credentials.credentials
+
+    # Dev-preview bypass: allows the Demo Advisor frontend to work
+    if token == "dev-preview":
+        info = _get_dev_admin_info()
+        return {
+            "sub": info["auth_id"],  # auth_id is what routers use for employee lookup
+            "email": "admin@trustner4u.com",
+            "role": "service_role",
+            "app_metadata": {"role": "admin", "employee_id": info["id"]},
+            "user_metadata": {"name": info["name"]},
+        }
+
     try:
         # Try HS256 first (legacy Supabase)
         payload = jwt.decode(

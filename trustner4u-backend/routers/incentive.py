@@ -12,6 +12,19 @@ from engines.incentive_engine import calculate_employee_incentive, calculate_all
 router = APIRouter()
 
 
+def _resolve_employee_id(db, user: dict) -> str:
+    """Resolve employee ID from auth_id, fallback to app_metadata.employee_id."""
+    emp_res = db.table("employees").select("id").eq("auth_id", user["sub"]).execute()
+    if emp_res.data:
+        return emp_res.data[0]["id"]
+    emp_id = (user.get("app_metadata") or {}).get("employee_id")
+    if emp_id:
+        emp_res = db.table("employees").select("id").eq("id", emp_id).execute()
+        if emp_res.data:
+            return emp_res.data[0]["id"]
+    return ""
+
+
 def _require_auth(user: dict = Depends(verify_token)) -> dict:
     return user
 
@@ -65,10 +78,9 @@ async def get_my_current_incentive(user: dict = Depends(_require_auth)):
     db = get_supabase()
 
     # Find employee
-    emp_res = db.table("employees").select("id").eq("auth_id", user["sub"]).execute()
-    if not emp_res.data:
+    emp_id = _resolve_employee_id(db, user)
+    if not emp_id:
         raise HTTPException(404, "Employee profile not found")
-    emp_id = emp_res.data[0]["id"]
 
     # Get current month
     cm_res = db.table("admin_controls").select("control_value").eq("control_key", "current_month").execute()
@@ -86,10 +98,9 @@ async def get_my_incentive_history(user: dict = Depends(_require_auth)):
     """Get logged-in user's incentive history (all months)."""
     db = get_supabase()
 
-    emp_res = db.table("employees").select("id").eq("auth_id", user["sub"]).execute()
-    if not emp_res.data:
+    emp_id = _resolve_employee_id(db, user)
+    if not emp_id:
         raise HTTPException(404, "Employee profile not found")
-    emp_id = emp_res.data[0]["id"]
 
     res = (
         db.table("monthly_incentive_calc")
@@ -108,10 +119,9 @@ async def get_team_incentive(month: str, user: dict = Depends(_require_manager))
     """Get team incentive summary (manager sees aggregate + individual performance)."""
     db = get_supabase()
 
-    emp_res = db.table("employees").select("id").eq("auth_id", user["sub"]).execute()
-    if not emp_res.data:
+    mgr_id = _resolve_employee_id(db, user)
+    if not mgr_id:
         raise HTTPException(404, "Employee profile not found")
-    mgr_id = emp_res.data[0]["id"]
 
     # Get direct reports
     team_res = db.table("employees").select("id, name, designation, segment").eq("reporting_manager_id", mgr_id).execute()
@@ -311,11 +321,11 @@ async def employee_dashboard(user: dict = Depends(_require_auth)):
     db = get_supabase()
 
     # Find employee
-    emp_res = db.table("employees").select("*").eq("auth_id", user["sub"]).execute()
-    if not emp_res.data:
+    emp_id = _resolve_employee_id(db, user)
+    if not emp_id:
         raise HTTPException(404, "Employee profile not found")
+    emp_res = db.table("employees").select("*").eq("id", emp_id).execute()
     emp = emp_res.data[0]
-    emp_id = emp["id"]
 
     # Current month
     cm_res = db.table("admin_controls").select("control_value").eq("control_key", "current_month").execute()
