@@ -8,6 +8,7 @@ import {
   Target, TrendingUp, IndianRupee, Award, ArrowUpRight, BarChart3,
   FileText, LogOut, Plus, Loader2, AlertCircle, CheckCircle,
   ChevronRight, Zap, Calendar, Briefcase, Star, Users, Menu, X,
+  GraduationCap,
 } from 'lucide-react';
 import { formatINR } from '@/lib/mis/incentive-engine';
 import type { DashboardData } from '@/lib/mis/types';
@@ -323,7 +324,7 @@ export default function RMDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="mt-6 grid grid-cols-2 sm:grid-cols-5 gap-3">
           <Link
             href="/rm/business-entry"
             className="flex items-center gap-2 p-3 bg-white rounded-xl border border-slate-200 hover:border-emerald-300 hover:shadow-sm transition-all"
@@ -337,6 +338,13 @@ export default function RMDashboard() {
           >
             <BarChart3 className="w-5 h-5 text-blue-500" />
             <span className="text-sm font-medium text-slate-700">Performance</span>
+          </Link>
+          <Link
+            href="/rm/learn"
+            className="flex items-center gap-2 p-3 bg-white rounded-xl border border-slate-200 hover:border-orange-300 hover:shadow-sm transition-all"
+          >
+            <GraduationCap className="w-5 h-5 text-orange-500" />
+            <span className="text-sm font-medium text-slate-700">MF Gyan</span>
           </Link>
           <Link
             href="/rm/business-entry"
