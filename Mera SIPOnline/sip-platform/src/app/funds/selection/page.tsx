@@ -15,6 +15,7 @@ import { RankBadge } from '@/components/funds/RankBadge';
 import { COMPANY, DISCLAIMER } from '@/lib/constants/company';
 import { formatAUMShort } from '@/lib/utils/formatters';
 import type { FundCategory, TrustnerCuratedFund } from '@/types/funds';
+import { useLiveNavData } from '@/hooks/useLiveNavData';
 
 const CATEGORY_ORDER = CURRENT_TRUSTNER_LIST.categories.map((c) => c.name);
 
@@ -110,6 +111,9 @@ export default function FundSelectionPage() {
   const tableRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
+  // Live NAV data — auto-fetched, merged with static data
+  const { navMap, updatedAt: navUpdatedAt, hasData: hasLiveNav, isLoading: navLoading } = useLiveNavData();
+
   const totalFunds = getTotalFundCount();
   const totalCategories = getCategoryCount();
   const activeCategoryData = CURRENT_TRUSTNER_LIST.categories.find((c) => c.name === activeCategory);
@@ -203,11 +207,32 @@ export default function FundSelectionPage() {
             </div>
 
             {/* Data as on date */}
-            <div className="mt-5 inline-flex items-center gap-2 bg-white/5 print:bg-amber-50 rounded-lg px-4 py-2 border border-white/10 print:border-amber-200">
-              <Calendar className="w-3.5 h-3.5 text-amber-400 print:text-amber-600" />
-              <span className="text-xs text-slate-300 print:text-slate-600">
-                Return data as on <strong className="text-white print:text-primary-700">{CURRENT_TRUSTNER_LIST.dataAsOn}</strong> &middot; Updated monthly
-              </span>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <div className="inline-flex items-center gap-2 bg-white/5 print:bg-amber-50 rounded-lg px-4 py-2 border border-white/10 print:border-amber-200">
+                <Calendar className="w-3.5 h-3.5 text-amber-400 print:text-amber-600" />
+                <span className="text-xs text-slate-300 print:text-slate-600">
+                  Base data: <strong className="text-white print:text-primary-700">{CURRENT_TRUSTNER_LIST.dataAsOn}</strong>
+                </span>
+              </div>
+              {hasLiveNav && navUpdatedAt && (
+                <div className="inline-flex items-center gap-2 bg-emerald-500/15 print:bg-emerald-50 rounded-lg px-4 py-2 border border-emerald-400/20 print:border-emerald-200 animate-in">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 print:hidden" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+                  </span>
+                  <span className="text-xs text-emerald-200 print:text-emerald-700">
+                    Live NAV: <strong className="text-white print:text-emerald-800">
+                      {new Date(navUpdatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </strong>
+                  </span>
+                </div>
+              )}
+              {navLoading && (
+                <div className="inline-flex items-center gap-2 bg-white/5 rounded-lg px-4 py-2 border border-white/10">
+                  <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span className="text-xs text-slate-400">Loading live data...</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -348,6 +373,7 @@ export default function FundSelectionPage() {
                 setCompareMode(false);
                 setSelectedFundIds([]);
               }}
+              navMap={navMap}
             />
           </div>
         </section>
@@ -451,7 +477,7 @@ export default function FundSelectionPage() {
             <div>
               <h2 className="text-display-sm text-primary-700 mb-1">Detailed Fund View</h2>
               <p className="text-sm text-slate-500">
-                Data as on {CURRENT_TRUSTNER_LIST.dataAsOn} | Tap any card for full details
+                {hasLiveNav ? 'Returns updated daily via live NAV' : `Data as on ${CURRENT_TRUSTNER_LIST.dataAsOn}`} | Tap any row for full details
               </p>
             </div>
             <button
@@ -514,6 +540,7 @@ export default function FundSelectionPage() {
                       compareMode={compareMode}
                       selectedFunds={selectedFundIds}
                       onToggleCompare={handleToggleCompare}
+                      navMap={navMap}
                     />
                   </div>
                 </div>
@@ -540,6 +567,7 @@ export default function FundSelectionPage() {
                   compareMode={compareMode}
                   selectedFunds={selectedFundIds}
                   onToggleCompare={handleToggleCompare}
+                  navMap={navMap}
                 />
               </div>
             )

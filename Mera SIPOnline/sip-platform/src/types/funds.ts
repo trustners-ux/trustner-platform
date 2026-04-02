@@ -60,6 +60,11 @@ export interface TrustnerCuratedFund {
     twoYear: number;
     threeYear: number;
     fiveYear: number;
+    // Extended return periods (populated by NAV auto-fetch)
+    oneMonth?: number;
+    threeMonth?: number;
+    sixMonth?: number;
+    tenYear?: number;
   };
   numberOfHoldings: number;
   skinInTheGame?: {
@@ -68,6 +73,38 @@ export interface TrustnerCuratedFund {
   };
   rank: number;
   schemeCode?: number;
+  // NAV data metadata
+  latestNav?: number;
+  latestNavDate?: string;
+  navUpdatedAt?: string;
+}
+
+// NAV update result stored in Vercel Blob
+export interface FundNavData {
+  schemeCode: number;
+  fundName: string;
+  latestNav: number;
+  latestNavDate: string;
+  returns: {
+    oneMonth: number | null;
+    threeMonth: number | null;
+    sixMonth: number | null;
+    ytd: number | null;
+    oneYear: number | null;
+    threeYear: number | null;
+    fiveYear: number | null;
+    tenYear: number | null;
+  };
+  updatedAt: string;
+}
+
+export interface NavUpdateResult {
+  updatedAt: string;
+  totalFunds: number;
+  successCount: number;
+  failedCount: number;
+  funds: FundNavData[];
+  errors: { schemeCode: number; fundName: string; error: string }[];
 }
 
 export interface TrustnerFundCategory {

@@ -4,14 +4,15 @@ import { useState, useCallback, useMemo } from 'react';
 import {
   TrendingUp, Download, Plus, ChevronDown, ChevronRight, Edit3,
   Trash2, Upload, FileText, Database, BarChart3, Award, Users,
-  ClipboardList, Eye, Hash,
+  ClipboardList, Eye, Hash, RefreshCw, Clock, CheckCircle2, AlertTriangle,
+  Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { CURRENT_TRUSTNER_LIST } from '@/data/funds/trustner';
 import { generateCategoryFile, generateIndexFile } from '@/lib/admin/fund-export';
 import { FundBulkImport } from '@/components/admin/FundBulkImport';
 import { FundEditor } from '@/components/admin/FundEditor';
-import type { TrustnerCuratedFund, TrustnerFundCategory, FundCategory, TrustnerFundList } from '@/types/funds';
+import type { TrustnerCuratedFund, TrustnerFundCategory, FundCategory, TrustnerFundList, NavUpdateResult, FundNavData } from '@/types/funds';
 
 // ─── Tab type ───
 
@@ -38,6 +39,12 @@ export default function FundDataManagerPage() {
   const [addingToCategory, setAddingToCategory] = useState<FundCategory | null>(null);
   const [importSuccess, setImportSuccess] = useState<string | null>(null);
 
+  // NAV update state
+  const [navData, setNavData] = useState<NavUpdateResult | null>(null);
+  const [navLoading, setNavLoading] = useState(false);
+  const [navError, setNavError] = useState<string | null>(null);
+  const [navFetched, setNavFetched] = useState(false);
+
   // ── Derived data ──
 
   const totalFunds = useMemo(
@@ -46,6 +53,60 @@ export default function FundDataManagerPage() {
   );
 
   const monthYear = `${workingList.month} ${workingList.year}`;
+
+  // ── Fetch existing NAV data on mount ──
+
+  const fetchNavData = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/funds/update-nav');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.updatedAt) {
+          setNavData(data);
+        }
+      }
+    } catch {
+      // Silently fail — NAV data is optional
+    } finally {
+      setNavFetched(true);
+    }
+  }, []);
+
+  // Fetch on mount
+  useState(() => { fetchNavData(); });
+
+  // ── Trigger NAV update ──
+
+  const handleNavUpdate = useCallback(async () => {
+    setNavLoading(true);
+    setNavError(null);
+    try {
+      const res = await fetch('/api/admin/funds/update-nav', {
+        method: 'POST',
+        headers: { 'x-admin-email': 'admin@trustner.in' },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setNavError(data.error || 'NAV update failed');
+        return;
+      }
+      // Refetch stored data
+      await fetchNavData();
+      setImportSuccess(`NAV updated for ${data.successCount}/${data.totalFunds} funds${data.failedCount > 0 ? ` (${data.failedCount} failed)` : ''}`);
+      setTimeout(() => setImportSuccess(null), 8000);
+    } catch (err) {
+      setNavError(err instanceof Error ? err.message : 'Network error');
+    } finally {
+      setNavLoading(false);
+    }
+  }, [fetchNavData]);
+
+  // ── Get NAV data for a specific fund ──
+
+  const getNavForFund = useCallback((schemeCode?: number): FundNavData | undefined => {
+    if (!navData?.funds || !schemeCode) return undefined;
+    return navData.funds.find(f => f.schemeCode === schemeCode);
+  }, [navData]);
 
   // ── Category expand/collapse ──
 
@@ -286,6 +347,60 @@ export default function FundDataManagerPage() {
         </div>
       </div>
 
+      {/* ── NAV Auto-Update Section ── */}
+      <div className="card-base p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+              <Activity className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-primary-700">Live NAV Performance Data</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Auto-fetch latest NAV from MFAPI and calculate 1M, 3M, 6M, 1Y, 3Y, 5Y, 10Y, YTD returns for all {totalFunds} funds.
+              </p>
+              {navData?.updatedAt && (
+                <div className="flex items-center gap-1.5 mt-1.5 text-xs text-slate-400">
+                  <Clock className="w-3 h-3" />
+                  Last updated: {new Date(navData.updatedAt).toLocaleString('en-IN', {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                  })}
+                  {navData.successCount > 0 && (
+                    <span className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 font-semibold">
+                      <CheckCircle2 className="w-3 h-3" />
+                      {navData.successCount}/{navData.totalFunds}
+                    </span>
+                  )}
+                  {navData.failedCount > 0 && (
+                    <span className="ml-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 font-semibold">
+                      <AlertTriangle className="w-3 h-3" />
+                      {navData.failedCount} failed
+                    </span>
+                  )}
+                </div>
+              )}
+              {navError && (
+                <p className="text-xs text-negative mt-1.5">{navError}</p>
+              )}
+            </div>
+          </div>
+          <button
+            onClick={handleNavUpdate}
+            disabled={navLoading}
+            className={cn(
+              'flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all flex-shrink-0',
+              navLoading
+                ? 'bg-surface-200 text-slate-400 cursor-not-allowed'
+                : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm'
+            )}
+          >
+            <RefreshCw className={cn('w-4 h-4', navLoading && 'animate-spin')} />
+            {navLoading ? 'Updating NAVs...' : 'Update NAV Data'}
+          </button>
+        </div>
+      </div>
+
       {/* ── Import Success Banner ── */}
       {importSuccess && (
         <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-positive-50 border border-positive/20 text-positive text-sm font-medium animate-fade-in">
@@ -422,6 +537,15 @@ export default function FundDataManagerPage() {
                               <th className="text-right py-2.5 px-4 text-slate-500 font-medium">3Y</th>
                               <th className="text-right py-2.5 px-4 text-slate-500 font-medium">5Y</th>
                               <th className="text-right py-2.5 px-4 text-slate-500 font-medium">Sharpe</th>
+                              {navData?.funds && navData.funds.length > 0 && (
+                                <>
+                                  <th className="text-right py-2.5 px-4 text-emerald-600 font-medium bg-emerald-50/50">NAV</th>
+                                  <th className="text-right py-2.5 px-4 text-emerald-600 font-medium bg-emerald-50/50">1M</th>
+                                  <th className="text-right py-2.5 px-4 text-emerald-600 font-medium bg-emerald-50/50">3M</th>
+                                  <th className="text-right py-2.5 px-4 text-emerald-600 font-medium bg-emerald-50/50">6M</th>
+                                  <th className="text-right py-2.5 px-4 text-emerald-600 font-medium bg-emerald-50/50">10Y</th>
+                                </>
+                              )}
                               <th className="text-center py-2.5 px-4 text-slate-500 font-medium">Actions</th>
                             </tr>
                           </thead>
@@ -486,6 +610,37 @@ export default function FundDataManagerPage() {
                                 <td className="py-2.5 px-4 text-right text-slate-600">
                                   {fund.sharpeRatio.toFixed(2)}
                                 </td>
+                                {navData?.funds && navData.funds.length > 0 && (() => {
+                                  const nav = getNavForFund(fund.schemeCode);
+                                  const fmtRet = (v: number | null | undefined) => {
+                                    if (v === null || v === undefined) return '—';
+                                    const pct = v * 100;
+                                    return (
+                                      <span className={pct >= 0 ? 'text-positive' : 'text-negative'}>
+                                        {pct >= 0 ? '+' : ''}{pct.toFixed(2)}%
+                                      </span>
+                                    );
+                                  };
+                                  return (
+                                    <>
+                                      <td className="py-2.5 px-4 text-right text-slate-600 bg-emerald-50/30 font-mono text-[11px]">
+                                        {nav ? `₹${nav.latestNav.toFixed(2)}` : '—'}
+                                      </td>
+                                      <td className="py-2.5 px-4 text-right bg-emerald-50/30 font-medium">
+                                        {fmtRet(nav?.returns.oneMonth)}
+                                      </td>
+                                      <td className="py-2.5 px-4 text-right bg-emerald-50/30 font-medium">
+                                        {fmtRet(nav?.returns.threeMonth)}
+                                      </td>
+                                      <td className="py-2.5 px-4 text-right bg-emerald-50/30 font-medium">
+                                        {fmtRet(nav?.returns.sixMonth)}
+                                      </td>
+                                      <td className="py-2.5 px-4 text-right bg-emerald-50/30 font-medium">
+                                        {fmtRet(nav?.returns.tenYear)}
+                                      </td>
+                                    </>
+                                  );
+                                })()}
                                 <td className="py-2.5 px-4">
                                   <div className="flex items-center justify-center gap-1">
                                     <button

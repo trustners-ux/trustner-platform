@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import {
   Upload, ClipboardPaste, Eye, AlertTriangle, CheckCircle2, X,
-  ArrowRight, Table2, FileSpreadsheet,
+  ArrowRight, Table2, FileSpreadsheet, FileUp, File,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import type { TrustnerCuratedFund, FundCategory } from '@/types/funds';
+import * as XLSX from 'xlsx';
 
 // ─── Column mapping definitions ───
 
@@ -131,6 +132,9 @@ export function FundBulkImport({ onImport, defaultCategory }: FundBulkImportProp
   const [errors, setErrors] = useState<ValidationError[]>([]);
   const [step, setStep] = useState<'paste' | 'map' | 'preview'>('paste');
   const [selectedCategory, setSelectedCategory] = useState<FundCategory>(defaultCategory || 'Large Cap');
+  const [inputMode, setInputMode] = useState<'paste' | 'file'>('paste');
+  const [fileName, setFileName] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const ALL_CATEGORIES: FundCategory[] = [
     'Large Cap', 'Large & Mid Cap', 'Mid Cap', 'Small Cap', 'Flexi Cap',
@@ -138,6 +142,86 @@ export function FundBulkImport({ onImport, defaultCategory }: FundBulkImportProp
     'Aggressive Hybrid', 'Equity Savings', 'Conservative Hybrid',
     'Gold & Silver', 'Fund of Fund',
   ];
+
+  // ── Handle file upload (CSV / Excel) ──
+
+  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setFileName(file.name);
+    const reader = new FileReader();
+
+    reader.onload = (evt) => {
+      try {
+        const data = evt.target?.result;
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+
+        // Convert to array of arrays (each row is an array of cell values)
+        const rows: string[][] = XLSX.utils.sheet_to_json(firstSheet, {
+          header: 1,
+          defval: '',
+          raw: false,
+        }) as string[][];
+
+        if (rows.length < 2) {
+          setErrors([{ row: 0, field: '', message: 'File must have at least a header row and one data row' }]);
+          return;
+        }
+
+        // Convert to tab-separated text for the existing parse pipeline
+        const tsvText = rows
+          .filter(row => row.some(cell => cell && String(cell).trim() !== ''))
+          .map(row => row.map(cell => String(cell).trim()).join('\t'))
+          .join('\n');
+
+        setRawText(tsvText);
+
+        // Auto-parse
+        const lines = tsvText.split('\n').map((line) => line.split('\t'));
+        const headerRow = lines[0].map((h) => h.trim());
+        setHeaders(headerRow);
+
+        // Auto-detect column mapping
+        const autoMap: Record<number, keyof MappableFields | ''> = {};
+        headerRow.forEach((header, colIdx) => {
+          for (const [field, pattern] of Object.entries(HEADER_PATTERNS)) {
+            if (pattern.test(header.trim())) {
+              autoMap[colIdx] = field as keyof MappableFields;
+              break;
+            }
+          }
+          if (!autoMap[colIdx]) autoMap[colIdx] = '';
+        });
+        setColumnMap(autoMap);
+
+        // Parse data rows
+        const parsed: ParsedRow[] = [];
+        for (let i = 1; i < lines.length; i++) {
+          const cells = lines[i];
+          if (cells.length === 1 && cells[0].trim() === '') continue;
+          const rowData = {} as Record<keyof MappableFields, string>;
+          for (const col of EXPECTED_COLUMNS) rowData[col.field] = '';
+          cells.forEach((cell, colIdx) => {
+            const mappedField = autoMap[colIdx];
+            if (mappedField) rowData[mappedField] = cell.trim();
+          });
+          parsed.push({ data: rowData, rowIndex: i });
+        }
+
+        setParsedRows(parsed);
+        setErrors([]);
+        setStep('map');
+      } catch (err) {
+        setErrors([{ row: 0, field: '', message: `Failed to parse file: ${err instanceof Error ? err.message : 'Unknown error'}` }]);
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+    // Reset input so same file can be re-selected
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, []);
 
   // ── Parse pasted text ──
 
@@ -347,51 +431,139 @@ export function FundBulkImport({ onImport, defaultCategory }: FundBulkImportProp
               <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-[10px] font-bold">
                 {idx + 1}
               </span>
-              {s === 'paste' ? 'Paste Data' : s === 'map' ? 'Map Columns' : 'Preview & Import'}
+              {s === 'paste' ? 'Import Data' : s === 'map' ? 'Map Columns' : 'Preview & Import'}
             </button>
           </div>
         ))}
       </div>
 
-      {/* ── Step 1: Paste ── */}
+      {/* ── Step 1: Input (Paste or File Upload) ── */}
       {step === 'paste' && (
         <div className="space-y-4">
-          <div className="card-base p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <ClipboardPaste className="w-4 h-4 text-brand" />
-              <h3 className="text-sm font-bold text-primary-700">Paste Excel Data</h3>
-            </div>
-            <p className="text-xs text-slate-500 mb-4">
-              Copy your fund data from Excel (including the header row) and paste it below.
-              The data should be tab-separated. Percentage values like &quot;14.8%&quot; will be auto-converted to decimals (0.148).
-            </p>
-            <textarea
-              value={rawText}
-              onChange={(e) => setRawText(e.target.value)}
-              placeholder={'NAME\tFUND MANAGER\tAGE OF FUND\tAUM (in Cr.)\tTER\tSD (Std Dev)\tSHARPE RATIO\tMTD\tYTD\t1 YEAR\t2 YEAR\t3 YEAR\t5 YEAR\tNO. OF HOLDINGS\nWhiteOak Capital Large Cap Fund\tRAMESH MANTRI\t3.25\t1142\t2.14%\t12.06%\t0.53\t-1.35%\t-3.16%\t13.49%\t9.87%\t17.84%\t0%\t71'}
-              className="w-full h-48 px-4 py-3 border border-surface-300 rounded-lg text-xs font-mono bg-surface-50 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all resize-y"
-            />
-            <div className="flex items-center justify-between mt-4">
-              <span className="text-xs text-slate-400">
-                {rawText.trim()
-                  ? `${rawText.trim().split('\n').length - 1} data rows detected`
-                  : 'Waiting for data...'}
-              </span>
-              <button
-                onClick={handleParse}
-                disabled={!rawText.trim()}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all',
-                  rawText.trim()
-                    ? 'bg-brand text-white hover:bg-brand-700 shadow-sm'
-                    : 'bg-surface-200 text-slate-400 cursor-not-allowed'
-                )}
-              >
-                <FileSpreadsheet className="w-4 h-4" />
-                Parse Data
-              </button>
-            </div>
+          {/* Input mode toggle */}
+          <div className="flex gap-1 p-1 bg-surface-100 rounded-lg w-fit">
+            <button
+              onClick={() => setInputMode('paste')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all',
+                inputMode === 'paste'
+                  ? 'bg-white text-primary-700 shadow-sm'
+                  : 'text-slate-500 hover:text-primary-700'
+              )}
+            >
+              <ClipboardPaste className="w-3.5 h-3.5" />
+              Paste Data
+            </button>
+            <button
+              onClick={() => setInputMode('file')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all',
+                inputMode === 'file'
+                  ? 'bg-white text-primary-700 shadow-sm'
+                  : 'text-slate-500 hover:text-primary-700'
+              )}
+            >
+              <FileUp className="w-3.5 h-3.5" />
+              Upload File
+            </button>
           </div>
+
+          {/* Paste mode */}
+          {inputMode === 'paste' && (
+            <div className="card-base p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <ClipboardPaste className="w-4 h-4 text-brand" />
+                <h3 className="text-sm font-bold text-primary-700">Paste Excel Data</h3>
+              </div>
+              <p className="text-xs text-slate-500 mb-4">
+                Copy your fund data from Excel (including the header row) and paste it below.
+                The data should be tab-separated. Percentage values like &quot;14.8%&quot; will be auto-converted to decimals (0.148).
+              </p>
+              <textarea
+                value={rawText}
+                onChange={(e) => setRawText(e.target.value)}
+                placeholder={'NAME\tFUND MANAGER\tAGE OF FUND\tAUM (in Cr.)\tTER\tSD (Std Dev)\tSHARPE RATIO\tMTD\tYTD\t1 YEAR\t2 YEAR\t3 YEAR\t5 YEAR\tNO. OF HOLDINGS\nWhiteOak Capital Large Cap Fund\tRAMESH MANTRI\t3.25\t1142\t2.14%\t12.06%\t0.53\t-1.35%\t-3.16%\t13.49%\t9.87%\t17.84%\t0%\t71'}
+                className="w-full h-48 px-4 py-3 border border-surface-300 rounded-lg text-xs font-mono bg-surface-50 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all resize-y"
+              />
+              <div className="flex items-center justify-between mt-4">
+                <span className="text-xs text-slate-400">
+                  {rawText.trim()
+                    ? `${rawText.trim().split('\n').length - 1} data rows detected`
+                    : 'Waiting for data...'}
+                </span>
+                <button
+                  onClick={handleParse}
+                  disabled={!rawText.trim()}
+                  className={cn(
+                    'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all',
+                    rawText.trim()
+                      ? 'bg-brand text-white hover:bg-brand-700 shadow-sm'
+                      : 'bg-surface-200 text-slate-400 cursor-not-allowed'
+                  )}
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  Parse Data
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* File upload mode */}
+          {inputMode === 'file' && (
+            <div className="card-base p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <FileUp className="w-4 h-4 text-brand" />
+                <h3 className="text-sm font-bold text-primary-700">Upload CSV or Excel File</h3>
+              </div>
+              <p className="text-xs text-slate-500 mb-4">
+                Upload a <strong>.csv</strong>, <strong>.xlsx</strong>, or <strong>.xls</strong> file with fund data.
+                The first row should contain headers. Column names will be auto-detected.
+              </p>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv,.xlsx,.xls"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="relative cursor-pointer border-2 border-dashed border-surface-300 rounded-xl p-8 text-center hover:border-brand/40 hover:bg-brand-50/30 transition-all group"
+              >
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-surface-100 group-hover:bg-brand-50 flex items-center justify-center transition-colors">
+                    <Upload className="w-6 h-6 text-slate-400 group-hover:text-brand transition-colors" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-primary-700">
+                      Click to upload or drag & drop
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      CSV, XLSX, or XLS files supported
+                    </p>
+                  </div>
+                </div>
+
+                {fileName && (
+                  <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-50 text-brand text-xs font-semibold">
+                    <File className="w-3.5 h-3.5" />
+                    {fileName}
+                  </div>
+                )}
+              </div>
+
+              {/* Errors from file parsing */}
+              {errors.length > 0 && (
+                <div className="mt-4 p-3 rounded-lg bg-negative-50/50 border border-negative/20">
+                  {errors.map((err, i) => (
+                    <p key={i} className="text-xs text-negative">{err.message}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

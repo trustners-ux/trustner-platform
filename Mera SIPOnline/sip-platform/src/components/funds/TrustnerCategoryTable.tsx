@@ -16,14 +16,16 @@ import {
   User,
   ArrowUpDown,
 } from 'lucide-react';
-import type { TrustnerFundCategory, TrustnerCuratedFund } from '@/types/funds';
+import type { TrustnerFundCategory, TrustnerCuratedFund, FundNavData } from '@/types/funds';
 
-type SortKey = 'rank' | 'ter' | 'sharpe' | 'sd' | '1y' | '3y' | '5y' | 'aum';
+type SortKey = 'rank' | 'ter' | 'sharpe' | 'sd' | '3m' | '6m' | '1y' | '3y' | '5y' | 'aum';
 
 const SORT_OPTIONS: { key: SortKey; label: string; shortLabel: string }[] = [
   { key: 'rank', label: 'Rank', shortLabel: 'Rank' },
   { key: 'ter', label: 'Lowest TER', shortLabel: 'TER' },
   { key: 'sharpe', label: 'Best Sharpe', shortLabel: 'Sharpe' },
+  { key: '3m', label: '3M Return', shortLabel: '3M' },
+  { key: '6m', label: '6M Return', shortLabel: '6M' },
   { key: '1y', label: '1Y Return', shortLabel: '1Y' },
   { key: '3y', label: '3Y Return', shortLabel: '3Y' },
   { key: '5y', label: '5Y Return', shortLabel: '5Y' },
@@ -37,6 +39,8 @@ function getSortedFunds(funds: TrustnerCuratedFund[], key: SortKey): TrustnerCur
     case 'ter': return sorted.sort((a, b) => (a.ter || 999) - (b.ter || 999));
     case 'sharpe': return sorted.sort((a, b) => b.sharpeRatio - a.sharpeRatio);
     case 'sd': return sorted.sort((a, b) => (a.standardDeviation || 999) - (b.standardDeviation || 999));
+    case '3m': return sorted.sort((a, b) => (b.returns.threeMonth || 0) - (a.returns.threeMonth || 0));
+    case '6m': return sorted.sort((a, b) => (b.returns.sixMonth || 0) - (a.returns.sixMonth || 0));
     case '1y': return sorted.sort((a, b) => b.returns.oneYear - a.returns.oneYear);
     case '3y': return sorted.sort((a, b) => b.returns.threeYear - a.returns.threeYear);
     case '5y': return sorted.sort((a, b) => b.returns.fiveYear - a.returns.fiveYear);
@@ -80,6 +84,7 @@ function FundRow({
   compareMode,
   isSelected,
   onToggleCompare,
+  navData,
 }: {
   fund: TrustnerCuratedFund;
   category: TrustnerFundCategory;
@@ -92,6 +97,7 @@ function FundRow({
   compareMode: boolean;
   isSelected: boolean;
   onToggleCompare: (fund: TrustnerCuratedFund) => void;
+  navData?: FundNavData;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -143,31 +149,54 @@ function FundRow({
           </div>
         </td>
 
-        {/* Returns — MTD through 5Y */}
-        <td className="py-3 px-2 text-center text-xs hidden sm:table-cell">
-          <ReturnCell value={fund.returns.mtd} />
-        </td>
-        <td className="py-3 px-2 text-center text-xs hidden sm:table-cell">
-          <ReturnCell value={fund.returns.ytd} />
-        </td>
-        <td className="py-3 px-2 text-center text-xs">
-          <span className={cn(fund.returns.oneYear === best1Y && best1Y > 0 && 'bg-positive-50 px-1.5 py-0.5 rounded')}>
-            <ReturnCell value={fund.returns.oneYear} />
-          </span>
-        </td>
-        <td className="py-3 px-2 text-center text-xs hidden md:table-cell">
-          <ReturnCell value={fund.returns.twoYear} />
-        </td>
-        <td className="py-3 px-2 text-center text-xs">
-          <span className={cn(fund.returns.threeYear === best3Y && best3Y > 0 && 'bg-positive-50 px-1.5 py-0.5 rounded')}>
-            <ReturnCell value={fund.returns.threeYear} />
-          </span>
-        </td>
-        <td className="py-3 px-2 text-center text-xs">
-          <span className={cn(fund.returns.fiveYear === best5Y && best5Y > 0 && 'bg-positive-50 px-1.5 py-0.5 rounded')}>
-            <ReturnCell value={fund.returns.fiveYear} />
-          </span>
-        </td>
+        {/* Returns — MTD through 5Y (with live NAV overlay) */}
+        {(() => {
+          // Use live NAV returns if available, otherwise fall back to static
+          const r = {
+            mtd: navData?.returns.oneMonth ?? fund.returns.mtd,
+            ytd: navData?.returns.ytd ?? fund.returns.ytd,
+            threeMonth: navData?.returns.threeMonth ?? fund.returns.threeMonth ?? 0,
+            sixMonth: navData?.returns.sixMonth ?? fund.returns.sixMonth ?? 0,
+            oneYear: navData?.returns.oneYear ?? fund.returns.oneYear,
+            twoYear: fund.returns.twoYear,
+            threeYear: navData?.returns.threeYear ?? fund.returns.threeYear,
+            fiveYear: navData?.returns.fiveYear ?? fund.returns.fiveYear,
+          };
+          return (
+            <>
+              <td className="py-3 px-2 text-center text-xs hidden sm:table-cell">
+                <ReturnCell value={r.mtd} />
+              </td>
+              <td className="py-3 px-2 text-center text-xs hidden sm:table-cell">
+                <ReturnCell value={r.ytd} />
+              </td>
+              <td className="py-3 px-2 text-center text-xs hidden md:table-cell">
+                <ReturnCell value={r.threeMonth} />
+              </td>
+              <td className="py-3 px-2 text-center text-xs hidden md:table-cell">
+                <ReturnCell value={r.sixMonth} />
+              </td>
+              <td className="py-3 px-2 text-center text-xs">
+                <span className={cn(r.oneYear === best1Y && best1Y > 0 && 'bg-positive-50 px-1.5 py-0.5 rounded')}>
+                  <ReturnCell value={r.oneYear} />
+                </span>
+              </td>
+              <td className="py-3 px-2 text-center text-xs hidden md:table-cell">
+                <ReturnCell value={r.twoYear} />
+              </td>
+              <td className="py-3 px-2 text-center text-xs">
+                <span className={cn(r.threeYear === best3Y && best3Y > 0 && 'bg-positive-50 px-1.5 py-0.5 rounded')}>
+                  <ReturnCell value={r.threeYear} />
+                </span>
+              </td>
+              <td className="py-3 px-2 text-center text-xs">
+                <span className={cn(r.fiveYear === best5Y && best5Y > 0 && 'bg-positive-50 px-1.5 py-0.5 rounded')}>
+                  <ReturnCell value={r.fiveYear} />
+                </span>
+              </td>
+            </>
+          );
+        })()}
 
         {/* AUM */}
         <td className="py-3 px-2 text-right text-xs text-slate-600 hidden lg:table-cell whitespace-nowrap">
@@ -229,8 +258,10 @@ function FundRow({
               )}
               {/* Show all returns on mobile in expanded view */}
               <div className="w-full flex flex-wrap gap-x-5 gap-y-1 sm:hidden mt-1 pt-2 border-t border-surface-200">
-                <div><span className="text-slate-400">MTD:</span> <ReturnCell value={fund.returns.mtd} /></div>
-                <div><span className="text-slate-400">YTD:</span> <ReturnCell value={fund.returns.ytd} /></div>
+                <div><span className="text-slate-400">MTD:</span> <ReturnCell value={navData?.returns.oneMonth ?? fund.returns.mtd} /></div>
+                <div><span className="text-slate-400">YTD:</span> <ReturnCell value={navData?.returns.ytd ?? fund.returns.ytd} /></div>
+                <div><span className="text-slate-400">3M:</span> <ReturnCell value={navData?.returns.threeMonth ?? fund.returns.threeMonth ?? 0} /></div>
+                <div><span className="text-slate-400">6M:</span> <ReturnCell value={navData?.returns.sixMonth ?? fund.returns.sixMonth ?? 0} /></div>
                 <div><span className="text-slate-400">2Y:</span> <ReturnCell value={fund.returns.twoYear} /></div>
               </div>
             </div>
@@ -247,11 +278,13 @@ export function TrustnerCategoryTable({
   compareMode = false,
   selectedFunds = [],
   onToggleCompare,
+  navMap,
 }: {
   category: TrustnerFundCategory;
   compareMode?: boolean;
   selectedFunds?: string[];
   onToggleCompare?: (fund: TrustnerCuratedFund) => void;
+  navMap?: Map<number, FundNavData>;
 }) {
   const [sortKey, setSortKey] = useState<SortKey>('rank');
   const sortedFunds = getSortedFunds(category.funds, sortKey);
@@ -295,6 +328,8 @@ export function TrustnerCategoryTable({
               <th className="py-2 pr-3">Fund Name</th>
               <th className="py-2 px-2 text-center hidden sm:table-cell">MTD</th>
               <th className="py-2 px-2 text-center hidden sm:table-cell">YTD</th>
+              <th className="py-2 px-2 text-center hidden md:table-cell">3M</th>
+              <th className="py-2 px-2 text-center hidden md:table-cell">6M</th>
               <th className="py-2 px-2 text-center">1Y</th>
               <th className="py-2 px-2 text-center hidden md:table-cell">2Y</th>
               <th className="py-2 px-2 text-center">3Y</th>
@@ -321,6 +356,7 @@ export function TrustnerCategoryTable({
                 compareMode={compareMode}
                 isSelected={selectedFunds.includes(fund.id)}
                 onToggleCompare={onToggleCompare || (() => {})}
+                navData={fund.schemeCode ? navMap?.get(fund.schemeCode) : undefined}
               />
             ))}
           </tbody>

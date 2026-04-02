@@ -27,6 +27,7 @@
     "recharts": "^2.14.1",
     "resend": "^6.9.2",
     "tailwind-merge": "^2.6.0",
+    "xlsx": "^0.18.5",
     "yahoo-finance2": "^3.13.1",
     "zustand": "^5.0.2"
   },

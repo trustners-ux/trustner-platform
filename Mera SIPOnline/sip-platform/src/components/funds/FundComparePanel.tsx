@@ -9,12 +9,19 @@ import {
   formatSharpe,
   formatAUMShort,
 } from '@/lib/utils/formatters';
-import type { TrustnerCuratedFund } from '@/types/funds';
+import type { TrustnerCuratedFund, FundNavData } from '@/types/funds';
+
+type FundWithNav = TrustnerCuratedFund & { _navData?: FundNavData };
+
+const fmtRet = (v: number | null | undefined) => {
+  if (v === null || v === undefined || v === 0) return '—';
+  return `${(v * 100).toFixed(1)}%`;
+};
 
 const COMPARE_METRICS: {
   label: string;
-  getValue: (f: TrustnerCuratedFund) => string;
-  getBest: (funds: TrustnerCuratedFund[]) => string;
+  getValue: (f: FundWithNav) => string;
+  getBest: (funds: FundWithNav[]) => string;
 }[] = [
   {
     label: 'AUM',
@@ -38,19 +45,53 @@ const COMPARE_METRICS: {
       formatStdDev(Math.min(...funds.filter((f) => f.standardDeviation > 0).map((f) => f.standardDeviation))),
   },
   {
+    label: '3M Return',
+    getValue: (f) => fmtRet(f._navData?.returns.threeMonth ?? f.returns.threeMonth),
+    getBest: (funds) => {
+      const vals = funds.map((f) => f._navData?.returns.threeMonth ?? f.returns.threeMonth ?? 0);
+      return fmtRet(Math.max(...vals));
+    },
+  },
+  {
+    label: '6M Return',
+    getValue: (f) => fmtRet(f._navData?.returns.sixMonth ?? f.returns.sixMonth),
+    getBest: (funds) => {
+      const vals = funds.map((f) => f._navData?.returns.sixMonth ?? f.returns.sixMonth ?? 0);
+      return fmtRet(Math.max(...vals));
+    },
+  },
+  {
     label: '1Y Return',
-    getValue: (f) => f.returns.oneYear ? `${(f.returns.oneYear * 100).toFixed(1)}%` : '—',
-    getBest: (funds) => `${(Math.max(...funds.map((f) => f.returns.oneYear)) * 100).toFixed(1)}%`,
+    getValue: (f) => {
+      const v = f._navData?.returns.oneYear ?? f.returns.oneYear;
+      return v ? `${(v * 100).toFixed(1)}%` : '—';
+    },
+    getBest: (funds) => {
+      const vals = funds.map((f) => f._navData?.returns.oneYear ?? f.returns.oneYear);
+      return `${(Math.max(...vals) * 100).toFixed(1)}%`;
+    },
   },
   {
     label: '3Y Return',
-    getValue: (f) => f.returns.threeYear ? `${(f.returns.threeYear * 100).toFixed(1)}%` : '—',
-    getBest: (funds) => `${(Math.max(...funds.map((f) => f.returns.threeYear)) * 100).toFixed(1)}%`,
+    getValue: (f) => {
+      const v = f._navData?.returns.threeYear ?? f.returns.threeYear;
+      return v ? `${(v * 100).toFixed(1)}%` : '—';
+    },
+    getBest: (funds) => {
+      const vals = funds.map((f) => f._navData?.returns.threeYear ?? f.returns.threeYear);
+      return `${(Math.max(...vals) * 100).toFixed(1)}%`;
+    },
   },
   {
     label: '5Y Return',
-    getValue: (f) => f.returns.fiveYear ? `${(f.returns.fiveYear * 100).toFixed(1)}%` : '—',
-    getBest: (funds) => `${(Math.max(...funds.map((f) => f.returns.fiveYear)) * 100).toFixed(1)}%`,
+    getValue: (f) => {
+      const v = f._navData?.returns.fiveYear ?? f.returns.fiveYear;
+      return v ? `${(v * 100).toFixed(1)}%` : '—';
+    },
+    getBest: (funds) => {
+      const vals = funds.map((f) => f._navData?.returns.fiveYear ?? f.returns.fiveYear);
+      return `${(Math.max(...vals) * 100).toFixed(1)}%`;
+    },
   },
   {
     label: 'Fund Age',
@@ -68,12 +109,20 @@ export function FundComparePanel({
   funds,
   onRemove,
   onClose,
+  navMap,
 }: {
   funds: TrustnerCuratedFund[];
   onRemove: (id: string) => void;
   onClose: () => void;
+  navMap?: Map<number, FundNavData>;
 }) {
   if (funds.length < 2) return null;
+
+  // Enrich funds with NAV data for the metrics
+  const enrichedFunds: FundWithNav[] = funds.map((f) => ({
+    ...f,
+    _navData: f.schemeCode ? navMap?.get(f.schemeCode) : undefined,
+  }));
 
   return (
     <div className="card-base overflow-hidden print:break-inside-avoid">
@@ -97,7 +146,7 @@ export function FundComparePanel({
               <th className="text-left p-3 font-semibold text-slate-500 min-w-[120px] sticky left-0 bg-surface-50 z-10">
                 Metric
               </th>
-              {funds.map((fund) => (
+              {enrichedFunds.map((fund) => (
                 <th key={fund.id} className="p-3 text-left min-w-[160px]">
                   <div className="flex items-start gap-2">
                     <RankBadge rank={fund.rank} />
@@ -120,13 +169,13 @@ export function FundComparePanel({
           </thead>
           <tbody>
             {COMPARE_METRICS.map((metric) => {
-              const bestValue = metric.getBest(funds);
+              const bestValue = metric.getBest(enrichedFunds);
               return (
                 <tr key={metric.label} className="border-t border-surface-200 hover:bg-surface-50/50">
                   <td className="p-3 font-medium text-slate-600 sticky left-0 bg-white z-10">
                     {metric.label}
                   </td>
-                  {funds.map((fund) => {
+                  {enrichedFunds.map((fund) => {
                     const value = metric.getValue(fund);
                     const isBest = bestValue && value === bestValue;
                     return (
