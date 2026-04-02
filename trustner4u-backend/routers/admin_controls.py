@@ -255,7 +255,7 @@ async def fix_schema(user: dict = Depends(_require_admin)):
 
     # Step 1: ALTER TABLE to add missing columns
     alter_sql = """
-    ALTER TABLE employees
+    ALTER TABLE public.employees
       ADD COLUMN IF NOT EXISTS employee_code VARCHAR(20),
       ADD COLUMN IF NOT EXISTS phone VARCHAR(15),
       ADD COLUMN IF NOT EXISTS doj DATE,
@@ -276,21 +276,21 @@ async def fix_schema(user: dict = Depends(_require_admin)):
 
     # Step 2: Seed Ram Shah + Sangeeta Shah + some key employees
     seed_sql = """
-    UPDATE employees SET
+    UPDATE public.employees SET
       employee_code = 'TAS001', segment = 'Direct Sales', level_code = 'L1',
       gross_salary = 150000, monthly_target = 500000, annual_target = 6000000,
       entity = 'TAS', job_responsibility = 'Direct Sales', target_multiplier = 1.0,
       tenure_years = 5, is_active = true
     WHERE LOWER(name) LIKE '%ram%shah%';
 
-    UPDATE employees SET
+    UPDATE public.employees SET
       employee_code = 'TAS002', segment = 'Direct Sales', level_code = 'L1',
       gross_salary = 150000, monthly_target = 500000, annual_target = 6000000,
       entity = 'TAS', job_responsibility = 'Direct Sales', target_multiplier = 1.0,
       tenure_years = 5, is_active = true
     WHERE LOWER(name) LIKE '%sangeeta%shah%';
 
-    UPDATE employees SET
+    UPDATE public.employees SET
       segment = 'Direct Sales', level_code = 'L3', entity = 'TAS',
       gross_salary = 35000, monthly_target = 200000, annual_target = 2400000,
       job_responsibility = 'Direct Sales', target_multiplier = 0.8,
