@@ -27,7 +27,11 @@ export function useLiveNavData() {
 
     async function fetchNav() {
       try {
-        const res = await fetch('/api/nav-data');
+        // Try primary path, fall back to alternate
+        let res = await fetch('/api/funds/nav-data');
+        if (!res.ok) {
+          res = await fetch('/api/nav-data');
+        }
         if (!res.ok) throw new Error('Failed to fetch NAV data');
 
         const data: NavUpdateResult = await res.json();
