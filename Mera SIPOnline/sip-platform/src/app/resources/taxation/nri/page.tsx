@@ -581,10 +581,10 @@ export default function NRITaxationGuidePage() {
                     <strong> 50% inclusion rate</strong> — meaning only half the capital gain is added to your taxable income.
                   </p>
                   <p>
-                    <strong>Note (2024 Budget):</strong> The 2024 Canadian Federal Budget proposed increasing the
-                    capital gains inclusion rate to 66.67% for gains exceeding CAD 250,000 annually (for individuals).
-                    As of early 2026, this proposal has faced legislative uncertainty. Verify the current inclusion
-                    rate with your Canadian tax advisor.
+                    <strong>Note:</strong> The 2024 Canadian Federal Budget had proposed increasing the
+                    capital gains inclusion rate to 66.67% for gains exceeding CAD 250,000 annually. However,
+                    this proposal was <strong>not enacted into law</strong> and was effectively withdrawn in
+                    early 2025. As of FY 2026-27, the inclusion rate remains at <strong>50%</strong>.
                   </p>
                 </div>
               </div>
@@ -660,8 +660,8 @@ export default function NRITaxationGuidePage() {
                     depends on whether gains fall within the basic rate or higher rate band:
                   </p>
                   <ul className="list-disc list-inside space-y-1 ml-2">
-                    <li><strong>Basic rate taxpayer:</strong> 10% on gains (18% for residential property)</li>
-                    <li><strong>Higher/additional rate taxpayer:</strong> 20% on gains (24% for property)</li>
+                    <li><strong>Basic rate taxpayer:</strong> 18% on gains (from 30 Oct 2024; was 10% earlier)</li>
+                    <li><strong>Higher/additional rate taxpayer:</strong> 24% on gains (from 30 Oct 2024; was 20% earlier)</li>
                     <li><strong>Annual Exempt Amount:</strong> {'\u00A3'}3,000 per tax year (2024-25 onward, reduced from {'\u00A3'}6,000)</li>
                   </ul>
                   <p>
@@ -979,7 +979,7 @@ export default function NRITaxationGuidePage() {
                       {
                         country: 'Singapore',
                         dtaa: 'Yes',
-                        capGains: 'May be taxed only in country of residence (Article 13)',
+                        capGains: 'Taxed in India (post-2005 protocol amendment); credit available in Singapore',
                         dividends: '15% treaty rate',
                       },
                       {
@@ -1153,14 +1153,14 @@ export default function NRITaxationGuidePage() {
               {[
                 {
                   year: 'FY 2025-26',
-                  title: 'Updated TDS Rates Post-Budget 2024',
-                  desc: 'Union Budget 2024 revised capital gains tax structure: Equity LTCG rate changed to 12.5% (from 10%), STCG to 20% (from 15%). LTCG exemption increased to Rs 1.25 lakh (from Rs 1 lakh). These changes apply to NRI TDS rates as well. Holding period for equity LTCG remains 12 months.',
+                  title: 'Updated Tax Rates & Indexation Removal — Budget 2024',
+                  desc: 'Union Budget 2024 revised capital gains tax structure: Equity LTCG rate changed to 12.5% (from 10%), STCG to 20% (from 15%). LTCG exemption increased to Rs 1.25 lakh. Indexation benefit removed for ALL asset classes (except immovable property with transitional relief). Holding period for debt/other assets reduced from 36 to 24 months. Gold & Silver ETFs excluded from "specified mutual funds" — now qualify for LTCG at 12.5% after 12 months. NRI TDS rates updated accordingly.',
                   color: 'bg-green-500',
                 },
                 {
                   year: 'FY 2023-24',
-                  title: 'Debt Fund Indexation Benefit Removed',
-                  desc: 'From April 2023, gains from debt mutual funds (with less than 65% equity) are taxed at the investor\'s slab rate regardless of holding period. The long-standing indexation benefit for long-term debt fund gains was eliminated. For NRIs, this means TDS at 30% (or applicable slab rate) on all debt fund gains.',
+                  title: 'Debt Fund Reclassified as "Specified Mutual Funds"',
+                  desc: 'From April 2023, gains from "specified mutual funds" (debt funds with less than 65% equity) purchased on or after 1 April 2023 are taxed at slab rate regardless of holding period (Section 50AA). For pre-April 2023 units (grandfathered), Budget 2024 subsequently removed indexation and reduced the holding period from 36 to 24 months — LTCG at 12.5% without indexation. For NRIs, TDS on debt fund gains is at 30% (or applicable slab rate).',
                   color: 'bg-red-500',
                 },
                 {

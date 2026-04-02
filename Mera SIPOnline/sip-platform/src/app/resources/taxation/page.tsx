@@ -270,15 +270,15 @@ export default function TaxationGuidePage() {
                   <td className="p-3 font-medium text-slate-700" rowSpan={2}>
                     Before 1 Apr 2023 (grandfathered)
                   </td>
-                  <td className="p-3 text-slate-600">&le; 36 months</td>
+                  <td className="p-3 text-slate-600">&le; 24 months</td>
                   <td className="p-3 text-slate-800 font-semibold">Slab rate</td>
                   <td className="p-3 text-red-600 font-medium">Not available</td>
                 </tr>
                 <tr>
-                  <td className="p-3 text-slate-600">&gt; 36 months</td>
+                  <td className="p-3 text-slate-600">&gt; 24 months</td>
                   <td className="p-3 text-slate-800 font-semibold">12.5% (w/o indexation)</td>
-                  <td className="p-3 text-emerald-600 font-medium">
-                    Available (but investor can choose 12.5% without indexation)
+                  <td className="p-3 text-red-600 font-medium">
+                    Not available (removed by Budget 2024)
                   </td>
                 </tr>
               </tbody>
@@ -293,7 +293,11 @@ export default function TaxationGuidePage() {
                 <p className="text-sm text-amber-700 leading-relaxed">
                   This rule applies to &quot;specified mutual funds&quot; — funds where equity exposure
                   is less than 65% of total assets. This includes debt funds, liquid funds, money
-                  market funds, gold funds, fund of funds (domestic), and conservative hybrid funds.
+                  market funds, gold fund of funds, international fund of funds, and conservative
+                  hybrid funds. <strong>Note:</strong> From FY 2025-26 onwards, Gold ETFs and Silver
+                  ETFs listed on stock exchanges are <strong>excluded</strong> from &quot;specified
+                  mutual funds&quot; — they now qualify for LTCG at 12.5% after 12 months holding
+                  (like equity funds).
                 </p>
               </div>
             </div>
@@ -915,22 +919,27 @@ export default function TaxationGuidePage() {
                   <td className="p-3 font-medium text-slate-700">July 2024</td>
                   <td className="p-3 text-slate-600">
                     Budget 2024: Equity LTCG rate 10% &rarr; 12.5%, exemption Rs 1L &rarr; Rs 1.25L,
-                    STCG 15% &rarr; 20%
+                    STCG 15% &rarr; 20%. <strong>Indexation benefit removed</strong> for all asset
+                    classes (except immovable property with transitional relief). Holding period
+                    for debt/other assets simplified from 36 to 24 months. Gold &amp; Silver ETFs
+                    excluded from &quot;specified mutual funds&quot; from FY 2025-26.
                   </td>
                   <td className="p-3 text-slate-600">
-                    Higher tax on both short and long-term equity gains, partially offset by higher
-                    exemption limit
+                    Higher equity tax rates offset by higher exemption. Debt fund grandfathered
+                    units (pre-Apr 2023) now get 12.5% LTCG after 24 months but without indexation.
+                    Gold/Silver ETF investors benefit from LTCG treatment at 12.5%.
                   </td>
                 </tr>
                 <tr>
                   <td className="p-3 font-medium text-slate-700">April 2023</td>
                   <td className="p-3 text-slate-600">
-                    Debt MF indexation removed. All gains taxed at slab rate for units purchased
-                    after 1 April 2023
+                    &quot;Specified mutual funds&quot; (debt, liquid, gold FoFs, etc.) purchased from
+                    1 Apr 2023 — all gains at slab rate regardless of holding period (Section 50AA).
+                    Pre-April 2023 units grandfathered under old regime (later modified by Budget 2024)
                   </td>
                   <td className="p-3 text-slate-600">
                     Massive negative for high-income debt fund investors. Debt MFs lost tax edge
-                    over FDs
+                    over FDs for new purchases. Gold/Silver ETFs later excluded from FY 2025-26.
                   </td>
                 </tr>
                 <tr className="bg-rose-50/50">
@@ -1166,10 +1175,11 @@ export default function TaxationGuidePage() {
                 </p>
                 <p className="text-xs text-slate-500 leading-relaxed mb-2">
                   Tax laws are subject to change. The information on this page is based on the
-                  Income Tax Act, 1961 as amended by the Finance Act 2024 and applicable for FY
-                  2026-27 (AY 2027-28). Rates mentioned are exclusive of surcharge and 4% health &
-                  education cess unless stated otherwise. Please consult your Chartered Accountant
-                  or tax professional for advice specific to your situation.
+                  Income Tax Act, 1961 as amended by the Finance (No. 2) Act, 2024 and applicable
+                  for FY 2026-27 (AY 2027-28). All rates are post-Budget 2024 (effective 23 July
+                  2024). Rates mentioned are exclusive of surcharge and 4% health &amp; education
+                  cess unless stated otherwise. Please consult your Chartered Accountant or tax
+                  professional for advice specific to your situation.
                 </p>
                 <p className="text-xs text-slate-500 leading-relaxed">
                   {DISCLAIMER.mutual_fund} | {DISCLAIMER.amfi}
