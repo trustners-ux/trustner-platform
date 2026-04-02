@@ -153,7 +153,7 @@ function FundRow({
         {(() => {
           // Use live NAV returns if available, otherwise fall back to static
           const r = {
-            mtd: navData?.returns.oneMonth ?? fund.returns.mtd,
+            mtd: navData?.returns.mtd ?? fund.returns.mtd,
             ytd: navData?.returns.ytd ?? fund.returns.ytd,
             threeMonth: navData?.returns.threeMonth ?? fund.returns.threeMonth ?? 0,
             sixMonth: navData?.returns.sixMonth ?? fund.returns.sixMonth ?? 0,
@@ -258,7 +258,7 @@ function FundRow({
               )}
               {/* Show all returns on mobile in expanded view */}
               <div className="w-full flex flex-wrap gap-x-5 gap-y-1 sm:hidden mt-1 pt-2 border-t border-surface-200">
-                <div><span className="text-slate-400">MTD:</span> <ReturnCell value={navData?.returns.oneMonth ?? fund.returns.mtd} /></div>
+                <div><span className="text-slate-400">MTD:</span> <ReturnCell value={navData?.returns.mtd ?? fund.returns.mtd} /></div>
                 <div><span className="text-slate-400">YTD:</span> <ReturnCell value={navData?.returns.ytd ?? fund.returns.ytd} /></div>
                 <div><span className="text-slate-400">3M:</span> <ReturnCell value={navData?.returns.threeMonth ?? fund.returns.threeMonth ?? 0} /></div>
                 <div><span className="text-slate-400">6M:</span> <ReturnCell value={navData?.returns.sixMonth ?? fund.returns.sixMonth ?? 0} /></div>

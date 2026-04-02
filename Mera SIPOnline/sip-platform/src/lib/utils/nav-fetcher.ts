@@ -57,6 +57,11 @@ function startOfYear(d: Date): Date {
   return new Date(d.getFullYear(), 0, 1);
 }
 
+function lastDayOfPreviousMonth(d: Date): Date {
+  // Last calendar day of the month before d's month
+  return new Date(d.getFullYear(), d.getMonth(), 0);
+}
+
 /**
  * Find the NAV closest to (but not after) a target date.
  * NAV data is sorted newest-first from the API.
@@ -129,7 +134,7 @@ export async function fetchNavForScheme(schemeCode: number): Promise<MfApiRespon
 export function calculateReturns(navData: MfApiNavEntry[]): FundNavData['returns'] {
   if (!navData || navData.length < 2) {
     return {
-      oneMonth: null, threeMonth: null, sixMonth: null, ytd: null,
+      mtd: null, oneMonth: null, threeMonth: null, sixMonth: null, ytd: null,
       oneYear: null, threeYear: null, fiveYear: null, tenYear: null,
     };
   }
@@ -143,6 +148,8 @@ export function calculateReturns(navData: MfApiNavEntry[]): FundNavData['returns
     targetDate: Date;
     years: number;
   }[] = [
+    // MTD: from last business day of previous month (absolute return)
+    { key: 'mtd', targetDate: lastDayOfPreviousMonth(latestDate), years: 0 },
     { key: 'oneMonth', targetDate: subtractMonths(latestDate, 1), years: 1 / 12 },
     { key: 'threeMonth', targetDate: subtractMonths(latestDate, 3), years: 0.25 },
     { key: 'sixMonth', targetDate: subtractMonths(latestDate, 6), years: 0.5 },
@@ -154,17 +161,19 @@ export function calculateReturns(navData: MfApiNavEntry[]): FundNavData['returns
   ];
 
   const returns: FundNavData['returns'] = {
-    oneMonth: null, threeMonth: null, sixMonth: null, ytd: null,
+    mtd: null, oneMonth: null, threeMonth: null, sixMonth: null, ytd: null,
     oneYear: null, threeYear: null, fiveYear: null, tenYear: null,
   };
 
   for (const period of periods) {
     const pastEntry = findNavNearDate(navData, period.targetDate);
     if (pastEntry) {
-      if (period.key === 'ytd') {
-        // YTD is always absolute return regardless of duration
-        const daysSinceYearStart = (latestDate.getTime() - period.targetDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
-        returns.ytd = calculateReturn(latestNav, pastEntry.nav, daysSinceYearStart <= 1 ? daysSinceYearStart : 1);
+      if (period.key === 'mtd') {
+        // MTD: absolute return from last day of previous month
+        returns.mtd = (latestNav - pastEntry.nav) / pastEntry.nav;
+      } else if (period.key === 'ytd') {
+        // YTD: absolute return from Jan 1
+        returns.ytd = (latestNav - pastEntry.nav) / pastEntry.nav;
       } else {
         returns[period.key] = calculateReturn(latestNav, pastEntry.nav, period.years);
       }

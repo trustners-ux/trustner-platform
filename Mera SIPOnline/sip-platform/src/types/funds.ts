@@ -86,7 +86,8 @@ export interface FundNavData {
   latestNav: number;
   latestNavDate: string;
   returns: {
-    oneMonth: number | null;
+    mtd: number | null;       // Month-to-date (from last day of previous month)
+    oneMonth: number | null;  // Trailing 1 month
     threeMonth: number | null;
     sixMonth: number | null;
     ytd: number | null;
