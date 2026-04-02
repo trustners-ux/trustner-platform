@@ -78,6 +78,7 @@ export const ADMIN_NAV = [
   { label: 'Approvals', href: '/admin/approvals', icon: 'ClipboardCheck', role: 'admin' as AdminRole },
   { label: 'MIS Dashboard', href: '/admin/mis', icon: 'BarChart3', role: 'admin' as AdminRole },
   { label: 'Business Entry', href: '/admin/mis/business', icon: 'FileSpreadsheet', role: 'hr' as AdminRole },
+  { label: 'Payouts', href: '/admin/mis/payouts', icon: 'Percent', role: 'admin' as AdminRole },
   { label: 'Users', href: '/admin/users', icon: 'UserCog', role: 'admin' as AdminRole },
   { label: 'Audit Log', href: '/admin/audit', icon: 'ScrollText', role: 'admin' as AdminRole },
   { label: 'Settings', href: '/admin/settings', icon: 'Settings', role: 'admin' as AdminRole },

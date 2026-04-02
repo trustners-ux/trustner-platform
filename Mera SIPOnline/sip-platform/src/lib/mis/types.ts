@@ -224,3 +224,136 @@ export const CLV_TIERS: { tier: CLVTier; min: number; max: number; bonus: number
   { tier: 'Platinum', min: 3000001, max: 5000000, bonus: 60000 },
   { tier: 'Diamond', min: 5000001, max: Infinity, bonus: 100000 },
 ];
+
+// ─── POSP Payout Category System (A through F3) ───
+
+export type POSPCategory = 'A' | 'B' | 'C' | 'D' | 'D+' | 'E' | 'E+' | 'F1' | 'F2' | 'F3';
+
+export interface POSPPayoutGrid {
+  id: number;
+  category: POSPCategory;
+  productLine: string;         // e.g., "TW Comprehensive Metro", "TW SATP", "PC OD Private"
+  vehicleType: string;         // "Two Wheeler" | "Private Car" | "Commercial Vehicle"
+  region: string;              // "Metro" | "Non-Metro" | "All India"
+  insurer: string;             // "ICICI Lombard" | "Bajaj Allianz" | "HDFC ERGO" | etc.
+  commissionPct: number;       // The payout % for this category
+  effectiveFrom: string;       // FY start date
+  effectiveTo?: string;        // FY end date
+  isActive: boolean;
+  notes?: string;
+}
+
+export interface POSPCategoryConfig {
+  category: POSPCategory;
+  label: string;               // "Category A" etc.
+  description: string;         // "Entry level POSP"
+  minMonthlyBusiness: number;  // Minimum monthly business threshold
+  maxMonthlyBusiness?: number;
+  qualificationCriteria: string;
+  color: string;               // For badge display
+}
+
+// Channel types for the payout system
+export type POSPChannelType = 'POSP' | 'BQP' | 'Referral' | 'Employee' | 'Sub-Broker' | 'Franchise';
+
+export interface ChannelPayoutRule {
+  id: number;
+  channelType: POSPChannelType;
+  payoutPct: number;           // What we pay the channel
+  companyMarginPct: number;    // What company retains (100 - payoutPct)
+  rmCreditPct: number;         // What RM gets credit for
+  isActive: boolean;
+  effectiveFrom: string;
+  notes?: string;
+}
+
+// ─── POSP Category Configs (A through F3) ───
+export const POSP_CATEGORIES: POSPCategoryConfig[] = [
+  { category: 'A', label: 'Category A', description: 'Entry Level POSP', minMonthlyBusiness: 0, maxMonthlyBusiness: 20000, qualificationCriteria: 'New POSP, less than \u20B920K monthly', color: 'slate' },
+  { category: 'B', label: 'Category B', description: 'Active POSP', minMonthlyBusiness: 20001, maxMonthlyBusiness: 50000, qualificationCriteria: '\u20B920K-50K monthly business', color: 'blue' },
+  { category: 'C', label: 'Category C', description: 'Growing POSP', minMonthlyBusiness: 50001, maxMonthlyBusiness: 100000, qualificationCriteria: '\u20B950K-1L monthly business', color: 'teal' },
+  { category: 'D', label: 'Category D', description: 'Established POSP', minMonthlyBusiness: 100001, maxMonthlyBusiness: 200000, qualificationCriteria: '\u20B91L-2L monthly business', color: 'emerald' },
+  { category: 'D+', label: 'Category D+', description: 'High Performer POSP', minMonthlyBusiness: 200001, maxMonthlyBusiness: 300000, qualificationCriteria: '\u20B92L-3L monthly', color: 'green' },
+  { category: 'E', label: 'Category E', description: 'Premium POSP', minMonthlyBusiness: 300001, maxMonthlyBusiness: 500000, qualificationCriteria: '\u20B93L-5L monthly', color: 'amber' },
+  { category: 'E+', label: 'Category E+', description: 'Elite POSP', minMonthlyBusiness: 500001, maxMonthlyBusiness: 750000, qualificationCriteria: '\u20B95L-7.5L monthly', color: 'orange' },
+  { category: 'F1', label: 'Category F1', description: 'Star POSP', minMonthlyBusiness: 750001, maxMonthlyBusiness: 1000000, qualificationCriteria: '\u20B97.5L-10L monthly', color: 'rose' },
+  { category: 'F2', label: 'Category F2', description: 'Champion POSP', minMonthlyBusiness: 1000001, maxMonthlyBusiness: 1500000, qualificationCriteria: '\u20B910L-15L monthly', color: 'purple' },
+  { category: 'F3', label: 'Category F3', description: 'Diamond POSP', minMonthlyBusiness: 1500001, qualificationCriteria: 'Above \u20B915L monthly', color: 'violet' },
+];
+
+export const DEFAULT_CHANNEL_RULES: ChannelPayoutRule[] = [
+  { id: 1, channelType: 'POSP', payoutPct: 70, companyMarginPct: 30, rmCreditPct: 30, isActive: true, effectiveFrom: '2025-04-01', notes: 'Standard POSP payout' },
+  { id: 2, channelType: 'BQP', payoutPct: 65, companyMarginPct: 35, rmCreditPct: 35, isActive: true, effectiveFrom: '2025-04-01', notes: 'BQP with higher company margin' },
+  { id: 3, channelType: 'Referral', payoutPct: 50, companyMarginPct: 50, rmCreditPct: 50, isActive: true, effectiveFrom: '2025-04-01', notes: 'Referral partner payout' },
+  { id: 4, channelType: 'Employee', payoutPct: 0, companyMarginPct: 100, rmCreditPct: 100, isActive: true, effectiveFrom: '2025-04-01', notes: 'Direct employee \u2014 full credit' },
+  { id: 5, channelType: 'Sub-Broker', payoutPct: 60, companyMarginPct: 40, rmCreditPct: 40, isActive: true, effectiveFrom: '2025-04-01', notes: 'Sub-broker standard payout' },
+  { id: 6, channelType: 'Franchise', payoutPct: 85, companyMarginPct: 15, rmCreditPct: 15, isActive: true, effectiveFrom: '2025-04-01', notes: 'Franchise \u2014 lowest margin' },
+];
+
+// ─── POSP Category Approval Hierarchy ───
+// CDM can approve up to D, Regional Manager up to E, CDO up to F1, F2/F3 = Super Admin/Admin only
+export const POSP_CATEGORY_ORDER: POSPCategory[] = ['A', 'B', 'C', 'D', 'D+', 'E', 'E+', 'F1', 'F2', 'F3'];
+
+export interface CategoryApprovalLimit {
+  designation: string;
+  maxCategory: POSPCategory;
+  label: string;
+}
+
+export const CATEGORY_APPROVAL_LIMITS: CategoryApprovalLimit[] = [
+  { designation: 'CDM', maxCategory: 'D', label: 'CDM (up to Category D)' },
+  { designation: 'RM CDM', maxCategory: 'D', label: 'RM CDM (up to Category D)' },
+  { designation: 'Regional Manager', maxCategory: 'E', label: 'Regional Manager (up to Category E)' },
+  { designation: 'CDO', maxCategory: 'F1', label: 'CDO (up to Category F1)' },
+];
+
+// ─── Default POSP Payout Grid Seed Data ───
+export const DEFAULT_POSP_GRID: POSPPayoutGrid[] = [
+  // TW Comprehensive Metro - ICICI Lombard
+  { id: 1, category: 'A', productLine: 'TW Comp Metro', vehicleType: 'Two Wheeler', region: 'Metro', insurer: 'ICICI Lombard', commissionPct: 13.75, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 2, category: 'B', productLine: 'TW Comp Metro', vehicleType: 'Two Wheeler', region: 'Metro', insurer: 'ICICI Lombard', commissionPct: 15, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 3, category: 'C', productLine: 'TW Comp Metro', vehicleType: 'Two Wheeler', region: 'Metro', insurer: 'ICICI Lombard', commissionPct: 16.25, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 4, category: 'D', productLine: 'TW Comp Metro', vehicleType: 'Two Wheeler', region: 'Metro', insurer: 'ICICI Lombard', commissionPct: 17.5, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 5, category: 'D+', productLine: 'TW Comp Metro', vehicleType: 'Two Wheeler', region: 'Metro', insurer: 'ICICI Lombard', commissionPct: 18, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 6, category: 'E', productLine: 'TW Comp Metro', vehicleType: 'Two Wheeler', region: 'Metro', insurer: 'ICICI Lombard', commissionPct: 18, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 7, category: 'E+', productLine: 'TW Comp Metro', vehicleType: 'Two Wheeler', region: 'Metro', insurer: 'ICICI Lombard', commissionPct: 18.75, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 8, category: 'F1', productLine: 'TW Comp Metro', vehicleType: 'Two Wheeler', region: 'Metro', insurer: 'ICICI Lombard', commissionPct: 18.75, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 9, category: 'F2', productLine: 'TW Comp Metro', vehicleType: 'Two Wheeler', region: 'Metro', insurer: 'ICICI Lombard', commissionPct: 19.5, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 10, category: 'F3', productLine: 'TW Comp Metro', vehicleType: 'Two Wheeler', region: 'Metro', insurer: 'ICICI Lombard', commissionPct: 20, effectiveFrom: '2025-04-01', isActive: true },
+  // TW Comprehensive Metro - Bajaj Allianz
+  { id: 11, category: 'A', productLine: 'TW Comp Metro', vehicleType: 'Two Wheeler', region: 'Metro', insurer: 'Bajaj Allianz', commissionPct: 14, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 12, category: 'B', productLine: 'TW Comp Metro', vehicleType: 'Two Wheeler', region: 'Metro', insurer: 'Bajaj Allianz', commissionPct: 15.25, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 13, category: 'C', productLine: 'TW Comp Metro', vehicleType: 'Two Wheeler', region: 'Metro', insurer: 'Bajaj Allianz', commissionPct: 16.5, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 14, category: 'D', productLine: 'TW Comp Metro', vehicleType: 'Two Wheeler', region: 'Metro', insurer: 'Bajaj Allianz', commissionPct: 17.75, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 15, category: 'D+', productLine: 'TW Comp Metro', vehicleType: 'Two Wheeler', region: 'Metro', insurer: 'Bajaj Allianz', commissionPct: 18.25, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 16, category: 'E', productLine: 'TW Comp Metro', vehicleType: 'Two Wheeler', region: 'Metro', insurer: 'Bajaj Allianz', commissionPct: 18.5, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 17, category: 'E+', productLine: 'TW Comp Metro', vehicleType: 'Two Wheeler', region: 'Metro', insurer: 'Bajaj Allianz', commissionPct: 19, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 18, category: 'F1', productLine: 'TW Comp Metro', vehicleType: 'Two Wheeler', region: 'Metro', insurer: 'Bajaj Allianz', commissionPct: 19, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 19, category: 'F2', productLine: 'TW Comp Metro', vehicleType: 'Two Wheeler', region: 'Metro', insurer: 'Bajaj Allianz', commissionPct: 19.75, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 20, category: 'F3', productLine: 'TW Comp Metro', vehicleType: 'Two Wheeler', region: 'Metro', insurer: 'Bajaj Allianz', commissionPct: 20.25, effectiveFrom: '2025-04-01', isActive: true },
+  // TW SATP - ICICI Lombard
+  { id: 21, category: 'A', productLine: 'TW SATP', vehicleType: 'Two Wheeler', region: 'All India', insurer: 'ICICI Lombard', commissionPct: 8, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 22, category: 'B', productLine: 'TW SATP', vehicleType: 'Two Wheeler', region: 'All India', insurer: 'ICICI Lombard', commissionPct: 9, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 23, category: 'C', productLine: 'TW SATP', vehicleType: 'Two Wheeler', region: 'All India', insurer: 'ICICI Lombard', commissionPct: 10, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 24, category: 'D', productLine: 'TW SATP', vehicleType: 'Two Wheeler', region: 'All India', insurer: 'ICICI Lombard', commissionPct: 11, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 25, category: 'D+', productLine: 'TW SATP', vehicleType: 'Two Wheeler', region: 'All India', insurer: 'ICICI Lombard', commissionPct: 11.5, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 26, category: 'E', productLine: 'TW SATP', vehicleType: 'Two Wheeler', region: 'All India', insurer: 'ICICI Lombard', commissionPct: 12, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 27, category: 'E+', productLine: 'TW SATP', vehicleType: 'Two Wheeler', region: 'All India', insurer: 'ICICI Lombard', commissionPct: 12.5, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 28, category: 'F1', productLine: 'TW SATP', vehicleType: 'Two Wheeler', region: 'All India', insurer: 'ICICI Lombard', commissionPct: 12.5, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 29, category: 'F2', productLine: 'TW SATP', vehicleType: 'Two Wheeler', region: 'All India', insurer: 'ICICI Lombard', commissionPct: 13, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 30, category: 'F3', productLine: 'TW SATP', vehicleType: 'Two Wheeler', region: 'All India', insurer: 'ICICI Lombard', commissionPct: 13.5, effectiveFrom: '2025-04-01', isActive: true },
+  // PC OD Private - ICICI Lombard
+  { id: 31, category: 'A', productLine: 'PC OD Private', vehicleType: 'Private Car', region: 'All India', insurer: 'ICICI Lombard', commissionPct: 15, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 32, category: 'B', productLine: 'PC OD Private', vehicleType: 'Private Car', region: 'All India', insurer: 'ICICI Lombard', commissionPct: 16.5, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 33, category: 'C', productLine: 'PC OD Private', vehicleType: 'Private Car', region: 'All India', insurer: 'ICICI Lombard', commissionPct: 18, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 34, category: 'D', productLine: 'PC OD Private', vehicleType: 'Private Car', region: 'All India', insurer: 'ICICI Lombard', commissionPct: 19.5, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 35, category: 'D+', productLine: 'PC OD Private', vehicleType: 'Private Car', region: 'All India', insurer: 'ICICI Lombard', commissionPct: 20, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 36, category: 'E', productLine: 'PC OD Private', vehicleType: 'Private Car', region: 'All India', insurer: 'ICICI Lombard', commissionPct: 20.5, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 37, category: 'E+', productLine: 'PC OD Private', vehicleType: 'Private Car', region: 'All India', insurer: 'ICICI Lombard', commissionPct: 21, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 38, category: 'F1', productLine: 'PC OD Private', vehicleType: 'Private Car', region: 'All India', insurer: 'ICICI Lombard', commissionPct: 21.5, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 39, category: 'F2', productLine: 'PC OD Private', vehicleType: 'Private Car', region: 'All India', insurer: 'ICICI Lombard', commissionPct: 22, effectiveFrom: '2025-04-01', isActive: true },
+  { id: 40, category: 'F3', productLine: 'PC OD Private', vehicleType: 'Private Car', region: 'All India', insurer: 'ICICI Lombard', commissionPct: 22.5, effectiveFrom: '2025-04-01', isActive: true },
+];
+
+// All POSP categories list for iteration
+export const ALL_POSP_CATEGORIES: POSPCategory[] = ['A', 'B', 'C', 'D', 'D+', 'E', 'E+', 'F1', 'F2', 'F3'];

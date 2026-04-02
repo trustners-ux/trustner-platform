@@ -5,7 +5,8 @@ export type ChangeRequestType =
   | 'product_rule'
   | 'employee_add'
   | 'employee_edit'
-  | 'employee_delete';
+  | 'employee_delete'
+  | 'payout_rule';
 
 export type ChangeRequestStatus = 'pending' | 'approved' | 'rejected';
 

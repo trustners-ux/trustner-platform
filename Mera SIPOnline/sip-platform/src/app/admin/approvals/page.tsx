@@ -35,6 +35,7 @@ const TYPE_BADGE: Record<ChangeRequestType, { label: string; bg: string; text: s
   employee_add: { label: 'Employee Add', bg: 'bg-emerald-50', text: 'text-emerald-700' },
   employee_edit: { label: 'Employee Edit', bg: 'bg-emerald-50', text: 'text-emerald-700' },
   employee_delete: { label: 'Employee Delete', bg: 'bg-emerald-50', text: 'text-emerald-700' },
+  payout_rule: { label: 'Payout Rule', bg: 'bg-amber-50', text: 'text-amber-700' },
 };
 
 const TYPE_FILTERS: { key: ChangeRequestType | 'all'; label: string }[] = [
