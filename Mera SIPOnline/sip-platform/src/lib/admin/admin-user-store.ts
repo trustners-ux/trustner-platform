@@ -11,12 +11,12 @@ import type { AdminUser, AdminRole } from '@/lib/auth/config';
 const BLOB_PATH = 'admin/users.json';
 
 // ─── Super Admin — cannot be deleted, requires dual OTP ───
-export const SUPER_ADMIN_EMAIL = 'ram@trustner.com';
+export const SUPER_ADMIN_EMAIL = 'ram@trustner.in';
 export const SUPER_ADMIN_PHONE = '9864051214';
 
 // Users who can reset passwords (super admin + authorized admins)
 export const PASSWORD_RESET_AUTHORIZED = [
-  'ram@trustner.com',
+  'ram@trustner.in',
   'sangeeta@trustner.in',
 ];
 

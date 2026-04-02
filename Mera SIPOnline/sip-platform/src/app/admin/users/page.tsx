@@ -19,7 +19,7 @@ interface AdminUser {
 type OTPAction = 'add' | 'delete' | 'reset';
 
 // Hardcoded to match backend — users authorized to reset passwords
-const PASSWORD_RESET_AUTHORIZED = ['ram@trustner.com', 'sangeeta@trustner.in'];
+const PASSWORD_RESET_AUTHORIZED = ['ram@trustner.in', 'sangeeta@trustner.in'];
 
 /* ─────────────────── Main Page ─────────────────── */
 export default function AdminUsersPage() {
@@ -679,7 +679,7 @@ export default function AdminUsersPage() {
             {otpSent && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-center">
                 <p className="text-xs text-blue-700 font-semibold">
-                  Verification code sent to <span className="font-bold">ram@trustner.com</span>
+                  Verification code sent to <span className="font-bold">ram@trustner.in</span>
                 </p>
               </div>
             )}

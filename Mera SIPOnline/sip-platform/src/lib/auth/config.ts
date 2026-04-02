@@ -33,8 +33,8 @@ export const ROLE_COLORS: Record<AdminRole, string> = {
 };
 
 // Emails with special authority
-export const SUPER_ADMIN_EMAIL = 'ram@trustner.com';
-export const APPROVER_EMAILS = ['ram@trustner.com', 'sangeeta@trustner.in'];
+export const SUPER_ADMIN_EMAIL = 'ram@trustner.in';
+export const APPROVER_EMAILS = ['ram@trustner.in', 'sangeeta@trustner.in'];
 
 export function getAdminUsers(): AdminUser[] {
   const raw = process.env.ADMIN_USERS;

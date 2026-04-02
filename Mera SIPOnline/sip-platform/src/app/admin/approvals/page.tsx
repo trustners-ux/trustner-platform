@@ -13,8 +13,8 @@ import type { ChangeRequest, ChangeRequestType, ChangeRequestStatus } from '@/ty
 /*  Constants                                                          */
 /* ------------------------------------------------------------------ */
 
-const APPROVER_EMAILS = ['ram@trustner.com', 'sangeeta@trustner.in'];
-const SUPER_ADMIN_EMAIL = 'ram@trustner.com';
+const APPROVER_EMAILS = ['ram@trustner.in', 'sangeeta@trustner.in'];
+const SUPER_ADMIN_EMAIL = 'ram@trustner.in';
 
 interface StatsCard {
   label: string;
