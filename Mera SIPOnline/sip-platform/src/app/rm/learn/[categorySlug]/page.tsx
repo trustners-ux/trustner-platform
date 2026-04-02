@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { getCategoryBySlug } from '@/data/mf-gyan';
 import { useGyanProgress } from '@/lib/hooks/useGyanProgress';
+import { RMNav } from '@/components/rm/RMNav';
 
 const ICON_MAP: Record<string, React.ElementType> = {
   TrendingUp, Landmark, Layers, BarChart3, Calculator, Globe, Building2,
@@ -19,6 +20,7 @@ export default function CategoryPage() {
   const params = useParams();
   const categorySlug = params.categorySlug as string;
   const [employeeCode, setEmployeeCode] = useState('');
+  const [user, setUser] = useState<{ name: string; designation: string; entity: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const { isComplete, getCategoryProgress } = useGyanProgress(employeeCode);
 
@@ -31,6 +33,7 @@ export default function CategoryPage() {
         if (!res.ok) { router.push('/rm/login'); return; }
         const data = await res.json();
         setEmployeeCode(data.user.employeeCode);
+        setUser({ name: data.user.name, designation: data.user.designation, entity: data.user.entity });
       } catch {
         router.push('/rm/login');
       } finally {
@@ -39,6 +42,11 @@ export default function CategoryPage() {
     }
     checkAuth();
   }, [router]);
+
+  const handleLogout = async () => {
+    await fetch('/api/rm/auth', { method: 'DELETE' });
+    router.push('/rm/login');
+  };
 
   if (loading) {
     return (
@@ -64,12 +72,20 @@ export default function CategoryPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
+      {/* Shared Tab Navigation */}
+      <RMNav
+        userName={user?.name}
+        designation={user?.designation}
+        entity={user?.entity}
+        onLogout={handleLogout}
+      />
+
+      {/* Category Header */}
       <div className={`bg-gradient-to-r ${category.gradientFrom} ${category.gradientTo} text-white`}>
-        <div className="max-w-3xl mx-auto px-4 py-6 sm:py-8">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-5 sm:py-6">
           <Link
             href="/rm/learn"
-            className="inline-flex items-center gap-1.5 text-white/70 hover:text-white text-sm mb-4 transition"
+            className="inline-flex items-center gap-1.5 text-white/70 hover:text-white text-sm mb-3 transition"
           >
             <ArrowLeft className="w-4 h-4" /> All Categories
           </Link>
@@ -97,7 +113,7 @@ export default function CategoryPage() {
       </div>
 
       {/* Topic List */}
-      <div className="max-w-3xl mx-auto px-4 py-6">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
         <div className="space-y-2">
           {category.topics.map((topic, idx) => {
             const completed = isComplete(category.id, topic.id);

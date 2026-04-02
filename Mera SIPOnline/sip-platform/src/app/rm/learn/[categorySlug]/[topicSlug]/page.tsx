@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { getTopicBySlug, getTopicNavigation } from '@/data/mf-gyan';
 import { useGyanProgress } from '@/lib/hooks/useGyanProgress';
+import { RMNav } from '@/components/rm/RMNav';
 
 /* Slide accent colors — cycles per paragraph */
 const SLIDE_ACCENTS = [
@@ -25,6 +26,7 @@ export default function TopicPage() {
   const categorySlug = params.categorySlug as string;
   const topicSlug = params.topicSlug as string;
   const [employeeCode, setEmployeeCode] = useState('');
+  const [user, setUser] = useState<{ name: string; designation: string; entity: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const { isComplete, markComplete, markVisited } = useGyanProgress(employeeCode);
 
@@ -35,6 +37,7 @@ export default function TopicPage() {
         if (!res.ok) { router.push('/rm/login'); return; }
         const data = await res.json();
         setEmployeeCode(data.user.employeeCode);
+        setUser({ name: data.user.name, designation: data.user.designation, entity: data.user.entity });
       } catch {
         router.push('/rm/login');
       } finally {
@@ -43,6 +46,11 @@ export default function TopicPage() {
     }
     checkAuth();
   }, [router]);
+
+  const handleLogout = async () => {
+    await fetch('/api/rm/auth', { method: 'DELETE' });
+    router.push('/rm/login');
+  };
 
   // Mark as visited when topic loads
   useEffect(() => {
@@ -77,26 +85,13 @@ export default function TopicPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Sticky Header */}
-      <div className={`sticky top-0 z-10 bg-gradient-to-r ${category.gradientFrom} ${category.gradientTo} text-white shadow-sm`}>
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Link
-            href={`/rm/learn/${categorySlug}`}
-            className="text-white/70 hover:text-white transition"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs text-white/60">{category.title}</p>
-            <h1 className="text-sm font-semibold truncate">{topic.title}</h1>
-          </div>
-          {completed && (
-            <div className="bg-white/20 rounded-full p-1">
-              <CheckCircle className="w-4 h-4" />
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Shared Tab Navigation */}
+      <RMNav
+        userName={user?.name}
+        designation={user?.designation}
+        entity={user?.entity}
+        onLogout={handleLogout}
+      />
 
       {/* Presentation Content */}
       <div className="max-w-2xl mx-auto px-4 py-6 sm:py-10">

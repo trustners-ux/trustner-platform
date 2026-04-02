@@ -7,12 +7,12 @@ import Image from 'next/image';
 import {
   Target, TrendingUp, IndianRupee, Award, ArrowUpRight, BarChart3,
   FileText, LogOut, Plus, Loader2, AlertCircle, CheckCircle,
-  ChevronRight, Zap, Calendar, Briefcase, Star, Users, Menu, X,
-  GraduationCap,
+  ChevronRight, Zap, Calendar, Briefcase, Star, Users,
 } from 'lucide-react';
 import { formatINR } from '@/lib/mis/incentive-engine';
 import type { DashboardData } from '@/lib/mis/types';
 import { PRODUCTS } from '@/lib/mis/employee-data';
+import { RMNav } from '@/components/rm/RMNav';
 
 interface UserInfo {
   employeeId: number;
@@ -29,7 +29,6 @@ export default function RMDashboard() {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -104,35 +103,13 @@ export default function RMDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Top Bar */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="lg:hidden p-1.5 rounded-md text-slate-500 hover:bg-slate-100"
-            >
-              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-            <Image src="/Trustner Logo-blue.png" alt="Trustner" width={100} height={40} className="h-7 w-auto" />
-            <span className="hidden sm:inline text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">MIS</span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-semibold text-slate-700">{user.name}</p>
-              <p className="text-[10px] text-slate-400">{user.designation} | {user.entity}</p>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-              title="Logout"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </header>
+      {/* Shared Tab Navigation */}
+      <RMNav
+        userName={user.name}
+        designation={user.designation}
+        entity={user.entity}
+        onLogout={handleLogout}
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {/* Welcome + Month */}
@@ -323,44 +300,6 @@ export default function RMDashboard() {
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="mt-6 grid grid-cols-2 sm:grid-cols-5 gap-3">
-          <Link
-            href="/rm/business-entry"
-            className="flex items-center gap-2 p-3 bg-white rounded-xl border border-slate-200 hover:border-emerald-300 hover:shadow-sm transition-all"
-          >
-            <Plus className="w-5 h-5 text-emerald-500" />
-            <span className="text-sm font-medium text-slate-700">Log Business</span>
-          </Link>
-          <Link
-            href="/rm/performance"
-            className="flex items-center gap-2 p-3 bg-white rounded-xl border border-slate-200 hover:border-blue-300 hover:shadow-sm transition-all"
-          >
-            <BarChart3 className="w-5 h-5 text-blue-500" />
-            <span className="text-sm font-medium text-slate-700">Performance</span>
-          </Link>
-          <Link
-            href="/rm/learn"
-            className="flex items-center gap-2 p-3 bg-white rounded-xl border border-slate-200 hover:border-orange-300 hover:shadow-sm transition-all"
-          >
-            <GraduationCap className="w-5 h-5 text-orange-500" />
-            <span className="text-sm font-medium text-slate-700">MF Gyan</span>
-          </Link>
-          <Link
-            href="/rm/business-entry"
-            className="flex items-center gap-2 p-3 bg-white rounded-xl border border-slate-200 hover:border-purple-300 hover:shadow-sm transition-all"
-          >
-            <Award className="w-5 h-5 text-purple-500" />
-            <span className="text-sm font-medium text-slate-700">Incentive Detail</span>
-          </Link>
-          <Link
-            href="/rm/login"
-            className="flex items-center gap-2 p-3 bg-white rounded-xl border border-slate-200 hover:border-amber-300 hover:shadow-sm transition-all"
-          >
-            <Users className="w-5 h-5 text-amber-500" />
-            <span className="text-sm font-medium text-slate-700">My Profile</span>
-          </Link>
-        </div>
       </div>
     </div>
   );

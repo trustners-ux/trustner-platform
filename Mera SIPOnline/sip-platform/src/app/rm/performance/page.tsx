@@ -10,10 +10,12 @@ import {
 import { formatINR } from '@/lib/mis/incentive-engine';
 import type { DashboardData } from '@/lib/mis/types';
 import { PRODUCTS } from '@/lib/mis/employee-data';
+import { RMNav } from '@/components/rm/RMNav';
 
 export default function PerformancePage() {
   const router = useRouter();
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+  const [user, setUser] = useState<{ name: string; designation: string; entity: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,6 +23,8 @@ export default function PerformancePage() {
       try {
         const authRes = await fetch('/api/rm/auth');
         if (!authRes.ok) { router.push('/rm/login'); return; }
+        const authData = await authRes.json();
+        setUser({ name: authData.user.name, designation: authData.user.designation, entity: authData.user.entity });
 
         const dashRes = await fetch('/api/mis/dashboard');
         if (dashRes.ok) {
@@ -71,20 +75,13 @@ export default function PerformancePage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Top Bar */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
-          <div className="flex items-center gap-3">
-            <Link href="/rm" className="p-1.5 rounded-md text-slate-500 hover:bg-slate-100">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <h1 className="text-sm font-bold text-slate-700">My Performance</h1>
-          </div>
-          <button onClick={handleLogout} className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50">
-            <LogOut className="w-4 h-4" />
-          </button>
-        </div>
-      </header>
+      {/* Shared Tab Navigation */}
+      <RMNav
+        userName={user?.name}
+        designation={user?.designation}
+        entity={user?.entity}
+        onLogout={handleLogout}
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {/* Employee Info Card */}
