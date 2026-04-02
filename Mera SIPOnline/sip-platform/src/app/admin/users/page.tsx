@@ -1,369 +1,286 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
-  UserCog, Plus, Trash2, KeyRound, Shield, ShieldCheck,
-  X, Check, Eye, EyeOff, Copy, RefreshCw, Search,
-  CheckCircle2, AlertCircle, Loader2, Lock,
+  UserCog, Search, Shield, ShieldCheck, ChevronDown, ChevronRight,
+  Loader2, CheckCircle2, AlertCircle, X, MapPin, Building2,
+  ToggleLeft, ToggleRight, Filter, Users, Briefcase,
+  Save, RotateCcw, Eye, EyeOff, Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
-/* ─────────────────── Types ─────────────────── */
-interface AdminUser {
-  email: string;
-  name: string;
-  role: 'super_admin' | 'admin' | 'hr' | 'editor' | 'viewer';
-  isSuperAdmin?: boolean;
+/* ─────────────── Types ─────────────── */
+interface PermissionModule {
+  key: string;
+  label: string;
+  description: string;
+  category: string;
 }
 
-type OTPAction = 'add' | 'delete' | 'reset';
+interface EmployeeWithPerms {
+  id: number;
+  name: string;
+  email: string;
+  designation: string;
+  department: string;
+  companyGroup: string;
+  jobLocation: string;
+  role: string;
+  doj: string;
+  canApproveResets: boolean;
+  reportingHead: string;
+  directReports: number;
+  permissions: Record<string, boolean>;
+  isEnabled: boolean;
+  hasOverrides: boolean;
+  lastModifiedBy: string | null;
+  lastModifiedAt: string | null;
+}
 
-// Hardcoded to match backend — users authorized to reset passwords
-const PASSWORD_RESET_AUTHORIZED = ['ram@trustner.in', 'sangeeta@trustner.in'];
+const ROLE_LABELS: Record<string, string> = {
+  bod: 'Board of Directors',
+  cdo: 'CDO',
+  regional_manager: 'Regional Manager',
+  branch_head: 'Branch Head',
+  cdm: 'CDM',
+  manager: 'Manager',
+  mentor: 'Mentor',
+  sr_rm: 'Sr. RM',
+  rm: 'RM',
+  back_office: 'Back Office',
+  support: 'Support',
+};
 
-/* ─────────────────── Main Page ─────────────────── */
+const ROLE_COLORS: Record<string, string> = {
+  bod: 'bg-purple-100 text-purple-700 border-purple-200',
+  cdo: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+  regional_manager: 'bg-blue-100 text-blue-700 border-blue-200',
+  branch_head: 'bg-teal-100 text-teal-700 border-teal-200',
+  cdm: 'bg-cyan-100 text-cyan-700 border-cyan-200',
+  manager: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+  mentor: 'bg-amber-100 text-amber-700 border-amber-200',
+  sr_rm: 'bg-orange-100 text-orange-700 border-orange-200',
+  rm: 'bg-slate-100 text-slate-600 border-slate-200',
+  back_office: 'bg-gray-100 text-gray-600 border-gray-200',
+  support: 'bg-stone-100 text-stone-600 border-stone-200',
+};
+
+const PERMISSION_CATEGORIES = ['Content', 'Operations', 'People', 'Learning', 'Admin'];
+
+const PERMISSION_MODULES: PermissionModule[] = [
+  { key: 'blog_view', label: 'View Blog', description: 'Read blog posts', category: 'Content' },
+  { key: 'blog_manage', label: 'Manage Blog', description: 'Create/edit/delete posts', category: 'Content' },
+  { key: 'market_view', label: 'View Market Pulse', description: 'Read commentaries', category: 'Content' },
+  { key: 'market_manage', label: 'Manage Market Pulse', description: 'Create/edit reports', category: 'Content' },
+  { key: 'gallery_manage', label: 'Manage Gallery', description: 'Upload/delete media', category: 'Content' },
+  { key: 'fund_view', label: 'View Fund Data', description: 'See fund lists', category: 'Content' },
+  { key: 'fund_manage', label: 'Manage Funds', description: 'Upload/edit fund data', category: 'Content' },
+  { key: 'dashboard_view', label: 'Dashboard', description: 'Admin overview', category: 'Operations' },
+  { key: 'mis_view', label: 'View MIS', description: 'See MIS reports', category: 'Operations' },
+  { key: 'mis_manage', label: 'Manage MIS', description: 'Edit entries/slabs', category: 'Operations' },
+  { key: 'business_entry', label: 'Log Business', description: 'Create entries', category: 'Operations' },
+  { key: 'payouts_view', label: 'View Payouts', description: 'See incentive data', category: 'Operations' },
+  { key: 'payouts_manage', label: 'Manage Payouts', description: 'Approve payouts', category: 'Operations' },
+  { key: 'reports_view', label: 'View Reports', description: 'See FP reports', category: 'Operations' },
+  { key: 'reports_manage', label: 'Manage Reports', description: 'Approve/send reports', category: 'Operations' },
+  { key: 'leads_view', label: 'View Leads', description: 'See lead data', category: 'People' },
+  { key: 'leads_manage', label: 'Manage Leads', description: 'Assign/export leads', category: 'People' },
+  { key: 'team_view', label: 'Team Directory', description: 'See employees', category: 'People' },
+  { key: 'team_manage', label: 'Manage Team', description: 'Password resets', category: 'People' },
+  { key: 'approvals', label: 'Approvals', description: 'Approve actions', category: 'People' },
+  { key: 'mf_gyan_view', label: 'MF Gyan', description: 'Learning modules', category: 'Learning' },
+  { key: 'mf_gyan_manage', label: 'Manage MF Gyan', description: 'Edit content', category: 'Learning' },
+  { key: 'analytics', label: 'Analytics', description: 'Site analytics', category: 'Admin' },
+  { key: 'user_management', label: 'User Management', description: 'This page', category: 'Admin' },
+  { key: 'audit_log', label: 'Audit Log', description: 'System audit', category: 'Admin' },
+  { key: 'settings', label: 'Settings', description: 'System config', category: 'Admin' },
+];
+
+const CATEGORY_ICONS: Record<string, string> = {
+  Content: 'text-blue-600',
+  Operations: 'text-emerald-600',
+  People: 'text-purple-600',
+  Learning: 'text-amber-600',
+  Admin: 'text-red-600',
+};
+
+const CATEGORY_BG: Record<string, string> = {
+  Content: 'bg-blue-50 border-blue-200',
+  Operations: 'bg-emerald-50 border-emerald-200',
+  People: 'bg-purple-50 border-purple-200',
+  Learning: 'bg-amber-50 border-amber-200',
+  Admin: 'bg-red-50 border-red-200',
+};
+
+/* ─────────────── Main Page ─────────────── */
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [employees, setEmployees] = useState<EmployeeWithPerms[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [roleFilter, setRoleFilter] = useState<string>('all');
-  const [currentUserEmail, setCurrentUserEmail] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [deptFilter, setDeptFilter] = useState('all');
+  const [locationFilter, setLocationFilter] = useState('all');
 
-  // Add user form
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newUser, setNewUser] = useState<{ name: string; email: string; role: AdminUser['role']; password: string }>({ name: '', email: '', role: 'editor', password: '' });
-  const [showPassword, setShowPassword] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  // OTP modal
-  const [otpModal, setOtpModal] = useState<{
-    show: boolean;
-    action: OTPAction;
-    targetEmail?: string;
-    targetName?: string;
-    pendingData?: Record<string, string>;
-  }>({ show: false, action: 'add' });
-  const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
-  const [otpSending, setOtpSending] = useState(false);
-  const [otpVerifying, setOtpVerifying] = useState(false);
-  const [otpError, setOtpError] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(0);
-  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
-
-  // Action states
-  const [deleteConfirmEmail, setDeleteConfirmEmail] = useState<string | null>(null);
-  const [actionLoading, setActionLoading] = useState(false);
+  // Selected employee for permission editing
+  const [selectedEmpId, setSelectedEmpId] = useState<number | null>(null);
+  const [editedPerms, setEditedPerms] = useState<Record<string, boolean>>({});
+  const [editedEnabled, setEditedEnabled] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  // Password reset result modal
-  const [resetResult, setResetResult] = useState<{ email: string; name: string; password: string } | null>(null);
-  const [resetPasswordCopied, setResetPasswordCopied] = useState(false);
+  // Expand categories in permission editor
+  const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set(PERMISSION_CATEGORIES));
 
-  // ─── Check if current user can reset passwords ───
-  const canReset = PASSWORD_RESET_AUTHORIZED.some(
-    (e) => e.toLowerCase() === currentUserEmail.toLowerCase()
-  );
-
-  // ─── Fetch current user ───
-  useEffect(() => {
-    fetch('/api/admin/auth/me')
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.user?.email) setCurrentUserEmail(d.user.email);
-      })
-      .catch(() => {});
-  }, []);
-
-  // ─── Fetch Users ───
-  const fetchUsers = useCallback(async () => {
+  const fetchEmployees = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/users');
+      const res = await fetch('/api/admin/users/permissions');
       if (res.ok) {
         const data = await res.json();
-        setUsers(data.users);
+        setEmployees(data.employees);
       }
     } catch (err) {
-      console.error('Failed to fetch users:', err);
+      console.error('Failed to fetch:', err);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+  useEffect(() => { fetchEmployees(); }, [fetchEmployees]);
 
-  // ─── Auto-dismiss toast ───
   useEffect(() => {
     if (toast) {
-      const t = setTimeout(() => setToast(null), 4000);
+      const t = setTimeout(() => setToast(null), 3000);
       return () => clearTimeout(t);
     }
   }, [toast]);
 
-  // ─── Resend cooldown timer ───
-  useEffect(() => {
-    if (resendCooldown <= 0) return;
-    const t = setInterval(() => setResendCooldown((p) => p - 1), 1000);
-    return () => clearInterval(t);
-  }, [resendCooldown]);
-
-  // ─── Generate password ───
-  function generatePassword() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-    const specials = '!@#$%&*';
-    let pwd = '';
-    for (let i = 0; i < 10; i++) pwd += chars[Math.floor(Math.random() * chars.length)];
-    for (let i = 0; i < 2; i++) {
-      const pos = Math.floor(Math.random() * pwd.length);
-      pwd = pwd.slice(0, pos) + specials[Math.floor(Math.random() * specials.length)] + pwd.slice(pos);
-    }
-    setNewUser((p) => ({ ...p, password: pwd }));
-  }
-
-  function copyPassword() {
-    navigator.clipboard.writeText(newUser.password);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  // ─── OTP Flow ───
-  async function sendOTP(action: OTPAction, targetEmail?: string) {
-    setOtpSending(true);
-    setOtpError('');
-    try {
-      const res = await fetch('/api/admin/otp/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, targetEmail }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setOtpError(data.error || 'Failed to send OTP');
-        return false;
-      }
-      setOtpSent(true);
-      setResendCooldown(30);
-      return true;
-    } catch {
-      setOtpError('Network error. Please try again.');
-      return false;
-    } finally {
-      setOtpSending(false);
-    }
-  }
-
-  async function verifyOTPAndExecute() {
-    const otp = otpDigits.join('');
-    if (otp.length !== 6) {
-      setOtpError('Please enter all 6 digits');
+  // Select employee for editing
+  const selectEmployee = (emp: EmployeeWithPerms) => {
+    if (selectedEmpId === emp.id) {
+      setSelectedEmpId(null);
       return;
     }
-
-    setOtpVerifying(true);
-    setOtpError('');
-
-    try {
-      // Step 1: Verify OTP and get action token
-      const verifyRes = await fetch('/api/admin/otp/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          otp,
-          action: otpModal.action,
-          targetEmail: otpModal.targetEmail,
-        }),
-      });
-      const verifyData = await verifyRes.json();
-
-      if (!verifyRes.ok) {
-        setOtpError(verifyData.error || 'OTP verification failed');
-        setOtpVerifying(false);
-        return;
-      }
-
-      const actionToken = verifyData.actionToken;
-
-      // Step 2: Execute the action
-      setActionLoading(true);
-      let actionRes: Response;
-
-      if (otpModal.action === 'add') {
-        actionRes = await fetch('/api/admin/users', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ...newUser,
-            actionToken,
-          }),
-        });
-      } else if (otpModal.action === 'delete') {
-        actionRes = await fetch('/api/admin/users', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: otpModal.targetEmail,
-            actionToken,
-          }),
-        });
-      } else {
-        // reset
-        actionRes = await fetch('/api/admin/users/reset-password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: otpModal.targetEmail,
-            actionToken,
-          }),
-        });
-      }
-
-      const actionData = await actionRes.json();
-
-      if (!actionRes.ok) {
-        setOtpError(actionData.error || 'Action failed');
-        setOtpVerifying(false);
-        setActionLoading(false);
-        return;
-      }
-
-      // Success!
-      if (otpModal.action === 'reset' && actionData.newPassword) {
-        // Show the new password to the admin
-        const targetUser = users.find((u) => u.email === otpModal.targetEmail);
-        setResetResult({
-          email: otpModal.targetEmail || '',
-          name: targetUser?.name || otpModal.targetName || '',
-          password: actionData.newPassword,
-        });
-      }
-
-      setToast({
-        message: actionData.message,
-        type: 'success',
-      });
-      closeOTPModal();
-      setShowAddForm(false);
-      setDeleteConfirmEmail(null);
-      setNewUser({ name: '', email: '', role: 'editor', password: '' });
-      fetchUsers();
-    } catch {
-      setOtpError('Something went wrong. Please try again.');
-    } finally {
-      setOtpVerifying(false);
-      setActionLoading(false);
-    }
-  }
-
-  function openOTPModal(action: OTPAction, targetEmail?: string, targetName?: string) {
-    setOtpModal({ show: true, action, targetEmail, targetName });
-    setOtpDigits(['', '', '', '', '', '']);
-    setOtpError('');
-    setOtpSent(false);
-    // Auto-send OTP
-    sendOTP(action, targetEmail);
-  }
-
-  function closeOTPModal() {
-    setOtpModal({ show: false, action: 'add' });
-    setOtpDigits(['', '', '', '', '', '']);
-    setOtpError('');
-    setOtpSent(false);
-  }
-
-  // ─── OTP Input Handlers ───
-  function handleOTPChange(index: number, value: string) {
-    if (!/^\d*$/.test(value)) return;
-    const newDigits = [...otpDigits];
-    newDigits[index] = value.slice(-1);
-    setOtpDigits(newDigits);
-
-    // Auto-focus next
-    if (value && index < 5) {
-      otpRefs.current[index + 1]?.focus();
-    }
-
-    // Auto-submit when all 6 filled
-    if (value && index === 5 && newDigits.every((d) => d)) {
-      setTimeout(() => verifyOTPAndExecute(), 100);
-    }
-  }
-
-  function handleOTPKeyDown(index: number, e: React.KeyboardEvent) {
-    if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
-      otpRefs.current[index - 1]?.focus();
-    }
-  }
-
-  function handleOTPPaste(e: React.ClipboardEvent) {
-    e.preventDefault();
-    const text = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-    if (text.length === 6) {
-      setOtpDigits(text.split(''));
-      otpRefs.current[5]?.focus();
-      setTimeout(() => verifyOTPAndExecute(), 100);
-    }
-  }
-
-  // ─── Filtered Users ───
-  const filtered = users.filter((u) => {
-    const matchSearch =
-      !search ||
-      u.name.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase());
-    const matchRole = roleFilter === 'all' || u.role === roleFilter;
-    return matchSearch && matchRole;
-  });
-
-  const stats = {
-    total: users.length,
-    superAdmins: users.filter((u) => u.role === 'super_admin').length,
-    admins: users.filter((u) => u.role === 'admin').length,
-    hr: users.filter((u) => u.role === 'hr').length,
-    editors: users.filter((u) => u.role === 'editor').length,
-    viewers: users.filter((u) => u.role === 'viewer').length,
+    setSelectedEmpId(emp.id);
+    setEditedPerms({ ...emp.permissions });
+    setEditedEnabled(emp.isEnabled);
+    setDirty(false);
   };
 
-  // ─── Role badge helper ───
-  function roleBadge(role: string, superAdmin?: boolean) {
-    if (superAdmin) {
-      return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-gradient-to-r from-brand-50 to-amber-50 text-brand border border-brand/30">
-          <ShieldCheck className="w-3 h-3" />
-          Super Admin
-        </span>
-      );
+  const togglePerm = (key: string) => {
+    setEditedPerms(prev => ({ ...prev, [key]: !prev[key] }));
+    setDirty(true);
+  };
+
+  const toggleEnabled = () => {
+    setEditedEnabled(prev => !prev);
+    setDirty(true);
+  };
+
+  const toggleCategory = (cat: string) => {
+    setExpandedCats(prev => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat); else next.add(cat);
+      return next;
+    });
+  };
+
+  // Enable/disable all in a category
+  const setCategoryAll = (cat: string, value: boolean) => {
+    const catPerms = PERMISSION_MODULES.filter(m => m.category === cat);
+    setEditedPerms(prev => {
+      const next = { ...prev };
+      for (const p of catPerms) next[p.key] = value;
+      return next;
+    });
+    setDirty(true);
+  };
+
+  // Reset to role defaults
+  const resetToDefaults = () => {
+    const emp = employees.find(e => e.id === selectedEmpId);
+    if (!emp) return;
+    // Refetch defaults by requesting fresh data
+    setDirty(false);
+    fetchEmployees().then(() => {
+      const updated = employees.find(e => e.id === selectedEmpId);
+      if (updated) {
+        // Just close and reopen
+        setSelectedEmpId(null);
+        setTimeout(() => {
+          setSelectedEmpId(emp.id);
+        }, 100);
+      }
+    });
+  };
+
+  const savePermissions = async () => {
+    if (!selectedEmpId) return;
+    setSaving(true);
+    try {
+      const res = await fetch('/api/admin/users/permissions', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employeeId: selectedEmpId,
+          permissions: editedPerms,
+          isEnabled: editedEnabled,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setToast({ message: data.message, type: 'success' });
+        setDirty(false);
+        await fetchEmployees();
+      } else {
+        setToast({ message: data.error || 'Save failed', type: 'error' });
+      }
+    } catch {
+      setToast({ message: 'Network error', type: 'error' });
+    } finally {
+      setSaving(false);
     }
-    const styles: Record<string, string> = {
-      super_admin: 'bg-purple-50 text-purple-700 border-purple-200',
-      admin: 'bg-brand-50 text-brand border-brand/20',
-      hr: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      editor: 'bg-amber-50 text-amber-700 border-amber-200',
-      viewer: 'bg-slate-100 text-slate-500 border-slate-200',
-    };
-    const labels: Record<string, string> = {
-      super_admin: 'Super Admin',
-      admin: 'Admin',
-      hr: 'HR Manager',
-      editor: 'Editor',
-      viewer: 'Viewer',
-    };
+  };
+
+  // Filter employees
+  const filtered = employees.filter(emp => {
+    if (search) {
+      const q = search.toLowerCase();
+      if (!emp.name.toLowerCase().includes(q) &&
+          !emp.email.toLowerCase().includes(q) &&
+          !emp.designation.toLowerCase().includes(q)) return false;
+    }
+    if (roleFilter !== 'all' && emp.role !== roleFilter) return false;
+    if (deptFilter !== 'all' && emp.department !== deptFilter) return false;
+    if (locationFilter !== 'all' && emp.jobLocation !== locationFilter) return false;
+    return true;
+  });
+
+  // Unique values for filters
+  const departments = [...new Set(employees.map(e => e.department))].sort();
+  const locations = [...new Set(employees.map(e => e.jobLocation))].sort();
+  const roles = [...new Set(employees.map(e => e.role))];
+
+  const selectedEmp = employees.find(e => e.id === selectedEmpId);
+
+  // Stats
+  const totalEnabled = employees.filter(e => e.isEnabled).length;
+  const totalWithOverrides = employees.filter(e => e.hasOverrides).length;
+
+  const enabledCount = (perms: Record<string, boolean>) =>
+    Object.values(perms).filter(Boolean).length;
+
+  if (loading) {
     return (
-      <span className={cn('px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border', styles[role] || styles.viewer)}>
-        {labels[role] || role}
-      </span>
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-brand" />
+      </div>
     );
   }
 
-  const actionLabel =
-    otpModal.action === 'add' ? 'Add New User' :
-    otpModal.action === 'delete' ? `Delete ${otpModal.targetName || otpModal.targetEmail}` :
-    `Reset Password for ${otpModal.targetName || otpModal.targetEmail}`;
-
   return (
-    <div className="space-y-6">
-      {/* Toast notification */}
+    <div className="space-y-5">
+      {/* Toast */}
       {toast && (
         <div className={cn(
           'fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg shadow-elevated text-sm font-semibold animate-fade-in',
@@ -371,444 +288,297 @@ export default function AdminUsersPage() {
         )}>
           {toast.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
           {toast.message}
-          <button onClick={() => setToast(null)} className="ml-2 text-slate-400 hover:text-slate-600">
-            <X className="w-3.5 h-3.5" />
-          </button>
+          <button onClick={() => setToast(null)} className="ml-2 text-slate-400 hover:text-slate-600"><X className="w-3.5 h-3.5" /></button>
         </div>
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl font-extrabold text-primary-700">User Management</h1>
-          <p className="text-sm text-slate-500">Manage admin panel access and roles</p>
-        </div>
-        <button
-          onClick={() => {
-            setShowAddForm(!showAddForm);
-            if (!showAddForm) generatePassword();
-          }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold bg-brand text-white hover:bg-brand-700 transition-colors"
-        >
-          {showAddForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-          {showAddForm ? 'Cancel' : 'Add User'}
-        </button>
+      <div>
+        <h1 className="text-xl font-extrabold text-primary-700">User & Access Management</h1>
+        <p className="text-sm text-slate-500">Manage employee access, permissions, and module controls</p>
       </div>
 
-      {/* Stats */}
+      {/* Stats Row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {[
-          { label: 'Total Users', value: stats.total, color: 'bg-blue-50 text-blue-700' },
-          { label: 'Admins', value: stats.admins, color: 'bg-brand-50 text-brand' },
-          { label: 'Editors', value: stats.editors, color: 'bg-amber-50 text-amber-700' },
-          { label: 'Viewers', value: stats.viewers, color: 'bg-slate-100 text-slate-600' },
-        ].map((s) => (
-          <div key={s.label} className="card-base p-4 text-center">
-            <div className={cn('text-2xl font-extrabold', s.color.split(' ')[1])}>{s.value}</div>
-            <div className="text-[10px] text-slate-500 font-semibold uppercase mt-1">{s.label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Add User Form */}
-      {showAddForm && (
-        <div className="card-base p-5 space-y-4 border-l-4 border-brand animate-fade-in">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-primary-700">Add New User</h3>
-            <button onClick={() => setShowAddForm(false)} className="text-slate-400 hover:text-slate-600">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-semibold text-slate-500 block mb-1">Full Name</label>
-              <input
-                value={newUser.name}
-                onChange={(e) => setNewUser((p) => ({ ...p, name: e.target.value }))}
-                className="w-full border border-surface-200 rounded-lg px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
-                placeholder="e.g., Vatsal Sharma"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-slate-500 block mb-1">Email</label>
-              <input
-                type="email"
-                value={newUser.email}
-                onChange={(e) => setNewUser((p) => ({ ...p, email: e.target.value }))}
-                className="w-full border border-surface-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
-                placeholder="user@trustner.in"
-              />
-            </div>
-          </div>
-
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-semibold text-slate-500 block mb-1">Role</label>
-              <select
-                value={newUser.role}
-                onChange={(e) => setNewUser((p) => ({ ...p, role: e.target.value as AdminUser['role'] }))}
-                className="w-full border border-surface-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none bg-white"
-              >
-                <option value="viewer">Viewer (Read-only)</option>
-                <option value="editor">Editor (Content management)</option>
-                <option value="hr">HR Manager (Employee management)</option>
-                <option value="admin">Admin (Full access + approvals)</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-slate-500 block mb-1">Password</label>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={newUser.password}
-                    onChange={(e) => setNewUser((p) => ({ ...p, password: e.target.value }))}
-                    className="w-full border border-surface-200 rounded-lg px-3 py-2 pr-20 text-sm font-mono focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
-                    placeholder="Min 8 characters"
-                  />
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="p-1 text-slate-400 hover:text-slate-600"
-                    >
-                      {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={copyPassword}
-                      className="p-1 text-slate-400 hover:text-brand"
-                      title="Copy password"
-                    >
-                      {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
-                    </button>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={generatePassword}
-                  className="px-3 py-2 rounded-lg border border-surface-200 text-slate-500 hover:bg-surface-100 text-xs font-semibold whitespace-nowrap"
-                  title="Generate new password"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 pt-1">
-            <button
-              onClick={() => {
-                if (!newUser.name || !newUser.email || !newUser.password) {
-                  setToast({ message: 'Please fill in all fields', type: 'error' });
-                  return;
-                }
-                if (newUser.password.length < 8) {
-                  setToast({ message: 'Password must be at least 8 characters', type: 'error' });
-                  return;
-                }
-                openOTPModal('add');
-              }}
-              className="flex items-center gap-1 px-4 py-2 rounded-lg text-xs font-bold bg-brand text-white hover:bg-brand-700 transition-colors"
-            >
-              <Shield className="w-3.5 h-3.5" />
-              Add User (Verify OTP)
-            </button>
-            <button
-              onClick={() => setShowAddForm(false)}
-              className="px-4 py-2 rounded-lg text-xs font-semibold border border-surface-200 text-slate-600 hover:bg-surface-100"
-            >
-              Cancel
-            </button>
-          </div>
+        <div className="card-base p-3 text-center">
+          <div className="text-2xl font-extrabold text-blue-700">{employees.length}</div>
+          <div className="text-[10px] text-slate-500 font-bold uppercase">Total Employees</div>
         </div>
-      )}
+        <div className="card-base p-3 text-center">
+          <div className="text-2xl font-extrabold text-emerald-700">{totalEnabled}</div>
+          <div className="text-[10px] text-slate-500 font-bold uppercase">Active Access</div>
+        </div>
+        <div className="card-base p-3 text-center">
+          <div className="text-2xl font-extrabold text-amber-700">{totalWithOverrides}</div>
+          <div className="text-[10px] text-slate-500 font-bold uppercase">Custom Overrides</div>
+        </div>
+        <div className="card-base p-3 text-center">
+          <div className="text-2xl font-extrabold text-purple-700">{employees.length - totalEnabled}</div>
+          <div className="text-[10px] text-slate-500 font-bold uppercase">Disabled</div>
+        </div>
+      </div>
 
       {/* Filters */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search users..."
-              className="border border-surface-200 rounded-lg pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none w-56"
-            />
-          </div>
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="border border-surface-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none bg-white"
-          >
-            <option value="all">All Roles</option>
-            <option value="super_admin">Super Admin</option>
-            <option value="admin">Admin</option>
-            <option value="hr">HR Manager</option>
-            <option value="editor">Editor</option>
-            <option value="viewer">Viewer</option>
-          </select>
-          <span className="text-xs text-slate-400">{filtered.length} users</span>
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search name, email, designation..."
+            className="w-full border border-surface-200 rounded-lg pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-brand/20 focus:border-brand outline-none"
+          />
         </div>
-        <button
-          onClick={fetchUsers}
-          className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold border border-surface-200 text-slate-600 hover:bg-surface-100"
-        >
-          <RefreshCw className="w-3.5 h-3.5" /> Refresh
-        </button>
+        <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)}
+          className="border border-surface-200 rounded-lg px-2 py-2 text-xs focus:ring-2 focus:ring-brand/20 outline-none bg-white">
+          <option value="all">All Roles</option>
+          {roles.map(r => <option key={r} value={r}>{ROLE_LABELS[r] || r}</option>)}
+        </select>
+        <select value={deptFilter} onChange={e => setDeptFilter(e.target.value)}
+          className="border border-surface-200 rounded-lg px-2 py-2 text-xs focus:ring-2 focus:ring-brand/20 outline-none bg-white">
+          <option value="all">All Departments</option>
+          {departments.map(d => <option key={d} value={d}>{d}</option>)}
+        </select>
+        <select value={locationFilter} onChange={e => setLocationFilter(e.target.value)}
+          className="border border-surface-200 rounded-lg px-2 py-2 text-xs focus:ring-2 focus:ring-brand/20 outline-none bg-white">
+          <option value="all">All Locations</option>
+          {locations.map(l => <option key={l} value={l}>{l}</option>)}
+        </select>
+        <span className="text-xs text-slate-400 font-medium">{filtered.length} employees</span>
       </div>
 
-      {/* User List */}
-      {loading ? (
-        <div className="text-center py-12">
-          <Loader2 className="w-6 h-6 text-brand animate-spin mx-auto" />
-          <p className="text-sm text-slate-400 mt-2">Loading users...</p>
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="card-base p-12 text-center">
-          <UserCog className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-          <p className="text-sm text-slate-500 font-medium">No users found</p>
-          <p className="text-xs text-slate-400 mt-1">
-            {search || roleFilter !== 'all' ? 'Try changing your filters' : 'Add your first user above'}
-          </p>
-        </div>
-      ) : (
-        <div className="grid gap-2">
-          {filtered.map((user) => (
-            <div
-              key={user.email}
-              className={cn(
-                'card-base p-4 hover:shadow-elevated transition-shadow',
-                user.isSuperAdmin && 'ring-1 ring-brand/20 bg-brand-50/30'
-              )}
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
+      {/* Two-panel layout: Employee List + Permission Editor */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        {/* ─── LEFT: Employee List ─── */}
+        <div className="lg:col-span-2 space-y-1.5 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
+          {filtered.map((emp) => {
+            const isSelected = selectedEmpId === emp.id;
+            const permCount = enabledCount(emp.permissions);
+            const totalPerms = Object.keys(emp.permissions).length;
+
+            return (
+              <button
+                key={emp.id}
+                onClick={() => selectEmployee(emp)}
+                className={cn(
+                  'w-full text-left card-base p-3 transition-all hover:shadow-sm',
+                  isSelected && 'ring-2 ring-brand bg-brand-50/30',
+                  !emp.isEnabled && 'opacity-60'
+                )}
+              >
+                <div className="flex items-center gap-3">
                   <div className={cn(
-                    'w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold flex-shrink-0',
-                    user.isSuperAdmin ? 'bg-gradient-to-br from-brand to-brand-700 text-white' :
-                    user.role === 'admin' ? 'bg-brand-50 text-brand' :
-                    user.role === 'editor' ? 'bg-amber-50 text-amber-700' :
-                    'bg-slate-100 text-slate-500'
+                    'w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold shrink-0',
+                    emp.role === 'bod' ? 'bg-gradient-to-br from-purple-500 to-purple-700 text-white' :
+                    emp.role === 'cdo' ? 'bg-gradient-to-br from-indigo-500 to-indigo-700 text-white' :
+                    'bg-slate-100 text-slate-600'
                   )}>
-                    {user.isSuperAdmin ? <ShieldCheck className="w-5 h-5" /> : user.name.charAt(0).toUpperCase()}
+                    {emp.role === 'bod' ? <ShieldCheck className="w-4 h-4" /> :
+                     emp.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                   </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="text-sm font-bold text-primary-700 truncate">{user.name}</h4>
-                      {roleBadge(user.role, user.isSuperAdmin)}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <h4 className="text-sm font-bold text-slate-800 truncate">{emp.name}</h4>
+                      {!emp.isEnabled && <Lock className="w-3 h-3 text-red-400 shrink-0" />}
                     </div>
-                    <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                    <p className="text-[10px] text-slate-500 truncate">{emp.designation}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className={cn('text-[9px] px-1.5 py-0.5 rounded-full font-bold border', ROLE_COLORS[emp.role] || ROLE_COLORS.rm)}>
+                        {ROLE_LABELS[emp.role] || emp.role}
+                      </span>
+                      <span className="text-[9px] text-slate-400">{emp.department}</span>
+                      {emp.hasOverrides && (
+                        <span className="text-[9px] text-amber-600 font-bold">CUSTOM</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-[10px] font-mono font-bold text-slate-600">{permCount}/{totalPerms}</div>
+                    <div className="w-12 h-1.5 bg-slate-100 rounded-full mt-0.5">
+                      <div
+                        className={cn('h-full rounded-full', permCount === totalPerms ? 'bg-emerald-500' : permCount > totalPerms / 2 ? 'bg-blue-500' : 'bg-amber-500')}
+                        style={{ width: `${(permCount / totalPerms) * 100}%` }}
+                      />
+                    </div>
                   </div>
                 </div>
+              </button>
+            );
+          })}
 
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  {/* Reset Password — only for Ram & Sangeeta */}
-                  {canReset && (
-                    <button
-                      onClick={() => openOTPModal('reset', user.email, user.name)}
-                      className="p-2 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
-                      title="Reset password"
-                    >
-                      <KeyRound className="w-4 h-4" />
-                    </button>
-                  )}
+          {filtered.length === 0 && (
+            <div className="text-center py-10">
+              <UserCog className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+              <p className="text-sm text-slate-500">No employees match filters</p>
+            </div>
+          )}
+        </div>
 
-                  {/* Delete — not shown for super admin */}
-                  {user.isSuperAdmin ? (
-                    <div className="p-2 text-slate-200" title="Super Admin cannot be deleted">
-                      <Lock className="w-4 h-4" />
+        {/* ─── RIGHT: Permission Editor ─── */}
+        <div className="lg:col-span-3">
+          {selectedEmp ? (
+            <div className="card-base overflow-hidden sticky top-20">
+              {/* Employee Header */}
+              <div className="p-4 border-b border-slate-200 bg-slate-50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      'w-11 h-11 rounded-xl flex items-center justify-center text-sm font-bold',
+                      selectedEmp.role === 'bod' ? 'bg-gradient-to-br from-purple-500 to-purple-700 text-white' :
+                      'bg-gradient-to-br from-emerald-500 to-teal-600 text-white'
+                    )}>
+                      {selectedEmp.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                     </div>
-                  ) : deleteConfirmEmail === user.email ? (
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => openOTPModal('delete', user.email, user.name)}
-                        className="p-2 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
-                        title="Confirm delete"
-                      >
-                        <Check className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteConfirmEmail(null)}
-                        className="p-2 rounded-lg text-slate-400 hover:bg-surface-100 transition-colors"
-                        title="Cancel"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                    <div>
+                      <h3 className="text-base font-bold text-slate-800">{selectedEmp.name}</h3>
+                      <p className="text-xs text-slate-500">{selectedEmp.designation} | {selectedEmp.department}</p>
+                      <p className="text-[10px] text-slate-400">{selectedEmp.email} | {selectedEmp.jobLocation}</p>
                     </div>
-                  ) : (
-                    <button
-                      onClick={() => setDeleteConfirmEmail(user.email)}
-                      className="p-2 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors"
-                      title="Delete user"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                  </div>
+                  <button onClick={() => setSelectedEmpId(null)} className="text-slate-400 hover:text-slate-600">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Info badges */}
+                <div className="flex flex-wrap items-center gap-2 mt-3">
+                  <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-bold border', ROLE_COLORS[selectedEmp.role])}>
+                    {ROLE_LABELS[selectedEmp.role]}
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                    {selectedEmp.companyGroup}
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-slate-100 text-slate-500 border border-slate-200 flex items-center gap-0.5">
+                    <MapPin className="w-2.5 h-2.5" /> {selectedEmp.jobLocation}
+                  </span>
+                  <span className="text-[10px] text-slate-400">Reports to: {selectedEmp.reportingHead}</span>
+                  {selectedEmp.directReports > 0 && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-blue-50 text-blue-600 border border-blue-200">
+                      {selectedEmp.directReports} direct reports
+                    </span>
                   )}
                 </div>
+
+                {/* Master Toggle + Actions */}
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-200">
+                  <button onClick={toggleEnabled} className="flex items-center gap-2">
+                    {editedEnabled ? (
+                      <ToggleRight className="w-7 h-7 text-emerald-600" />
+                    ) : (
+                      <ToggleLeft className="w-7 h-7 text-red-400" />
+                    )}
+                    <span className={cn('text-xs font-bold', editedEnabled ? 'text-emerald-700' : 'text-red-600')}>
+                      {editedEnabled ? 'Account Active' : 'Account Disabled'}
+                    </span>
+                  </button>
+                  <div className="flex items-center gap-2">
+                    {dirty && (
+                      <button
+                        onClick={savePermissions}
+                        disabled={saving}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-brand text-white hover:bg-brand-700 transition-colors disabled:opacity-50"
+                      >
+                        {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                        Save Changes
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
 
-      {/* ─── OTP Verification Modal ─── */}
-      {otpModal.show && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={closeOTPModal} />
-          <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md animate-fade-in">
-            {/* Close */}
-            <button
-              onClick={closeOTPModal}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
-            >
-              <X className="w-5 h-5" />
-            </button>
+              {/* Permission Categories */}
+              <div className="max-h-[calc(100vh-500px)] overflow-y-auto">
+                {PERMISSION_CATEGORIES.map((cat) => {
+                  const catPerms = PERMISSION_MODULES.filter(m => m.category === cat);
+                  const expanded = expandedCats.has(cat);
+                  const enabledInCat = catPerms.filter(p => editedPerms[p.key]).length;
 
-            {/* Header */}
-            <div className="text-center mb-6">
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand-50 mb-3">
-                <Shield className="w-7 h-7 text-brand" />
+                  return (
+                    <div key={cat} className="border-b border-slate-100 last:border-0">
+                      <button
+                        onClick={() => toggleCategory(cat)}
+                        className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-slate-50 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          {expanded ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />}
+                          <span className={cn('text-xs font-bold', CATEGORY_ICONS[cat])}>{cat}</span>
+                          <span className="text-[10px] text-slate-400">{enabledInCat}/{catPerms.length}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setCategoryAll(cat, true); }}
+                            className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 font-bold hover:bg-emerald-100"
+                          >
+                            All ON
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setCategoryAll(cat, false); }}
+                            className="text-[9px] px-1.5 py-0.5 rounded bg-red-50 text-red-500 font-bold hover:bg-red-100"
+                          >
+                            All OFF
+                          </button>
+                        </div>
+                      </button>
+
+                      {expanded && (
+                        <div className="px-4 pb-3 space-y-1">
+                          {catPerms.map((perm) => {
+                            const isOn = editedPerms[perm.key];
+                            return (
+                              <div
+                                key={perm.key}
+                                className={cn(
+                                  'flex items-center justify-between p-2 rounded-lg transition-colors cursor-pointer',
+                                  isOn ? 'bg-emerald-50/50 hover:bg-emerald-50' : 'bg-slate-50/50 hover:bg-slate-50'
+                                )}
+                                onClick={() => togglePerm(perm.key)}
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <p className={cn('text-xs font-semibold', isOn ? 'text-slate-800' : 'text-slate-400')}>{perm.label}</p>
+                                  <p className="text-[10px] text-slate-400">{perm.description}</p>
+                                </div>
+                                <div className="shrink-0 ml-3">
+                                  {isOn ? (
+                                    <div className="w-8 h-4.5 bg-emerald-500 rounded-full flex items-center justify-end px-0.5">
+                                      <div className="w-3.5 h-3.5 bg-white rounded-full shadow-sm" />
+                                    </div>
+                                  ) : (
+                                    <div className="w-8 h-4.5 bg-slate-200 rounded-full flex items-center justify-start px-0.5">
+                                      <div className="w-3.5 h-3.5 bg-white rounded-full shadow-sm" />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-              <h3 className="text-lg font-bold text-primary-700">OTP Verification</h3>
-              <p className="text-sm text-slate-500 mt-1">{actionLabel}</p>
-            </div>
 
-            {/* OTP Status */}
-            {otpSent && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 text-center">
-                <p className="text-xs text-blue-700 font-semibold">
-                  Verification code sent to <span className="font-bold">ram@trustner.in</span>
-                </p>
-              </div>
-            )}
-
-            {/* Error */}
-            {otpError && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-center">
-                <p className="text-xs text-red-700 font-semibold">{otpError}</p>
-              </div>
-            )}
-
-            {/* OTP Input */}
-            <div className="flex justify-center gap-2 mb-4">
-              {otpDigits.map((digit, i) => (
-                <input
-                  key={i}
-                  ref={(el) => { otpRefs.current[i] = el; }}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={1}
-                  value={digit}
-                  onChange={(e) => handleOTPChange(i, e.target.value)}
-                  onKeyDown={(e) => handleOTPKeyDown(i, e)}
-                  onPaste={i === 0 ? handleOTPPaste : undefined}
-                  className={cn(
-                    'w-11 h-12 text-center text-lg font-bold rounded-lg border-2 transition-all outline-none',
-                    digit ? 'border-brand bg-brand-50 text-primary-700' : 'border-surface-300 focus:border-brand'
-                  )}
-                  autoComplete={i === 0 ? 'one-time-code' : 'off'}
-                />
-              ))}
-            </div>
-
-            {/* Verify Button */}
-            <button
-              onClick={verifyOTPAndExecute}
-              disabled={otpVerifying || actionLoading || otpDigits.some((d) => !d)}
-              className={cn(
-                'w-full py-3 rounded-lg text-sm font-bold transition-all',
-                otpVerifying || actionLoading || otpDigits.some((d) => !d)
-                  ? 'bg-surface-200 text-slate-400 cursor-not-allowed'
-                  : 'bg-brand text-white hover:bg-brand-700'
+              {/* Footer */}
+              {selectedEmp.lastModifiedBy && (
+                <div className="px-4 py-2 border-t border-slate-100 bg-slate-50/50">
+                  <p className="text-[10px] text-slate-400">
+                    Last modified by {selectedEmp.lastModifiedBy} on{' '}
+                    {new Date(selectedEmp.lastModifiedAt!).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                  </p>
+                </div>
               )}
-            >
-              {otpVerifying || actionLoading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  {otpVerifying ? 'Verifying...' : 'Processing...'}
-                </span>
-              ) : (
-                'Verify & Proceed'
-              )}
-            </button>
-
-            {/* Resend */}
-            <div className="mt-3 text-center">
-              {resendCooldown > 0 ? (
-                <p className="text-xs text-slate-400">
-                  Resend OTP in <span className="font-bold text-brand">{resendCooldown}s</span>
-                </p>
-              ) : (
-                <button
-                  onClick={() => sendOTP(otpModal.action, otpModal.targetEmail)}
-                  disabled={otpSending}
-                  className="text-xs font-semibold text-brand hover:text-brand-700"
-                >
-                  {otpSending ? 'Sending...' : 'Resend OTP'}
-                </button>
-              )}
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── Password Reset Result Modal (admin sees the new password) ─── */}
-      {resetResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setResetResult(null)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md animate-fade-in">
-            <button
-              onClick={() => setResetResult(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="text-center mb-5">
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-green-50 mb-3">
-                <CheckCircle2 className="w-7 h-7 text-green-500" />
-              </div>
-              <h3 className="text-lg font-bold text-primary-700">Password Reset Successful</h3>
-              <p className="text-sm text-slate-500 mt-1">{resetResult.name} ({resetResult.email})</p>
-            </div>
-
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
-              <p className="text-xs font-semibold text-amber-700 mb-2">New Password</p>
-              <div className="flex items-center gap-2 bg-white rounded-lg border border-amber-200 px-4 py-3">
-                <code className="flex-1 text-base font-bold text-primary-700 tracking-wider font-mono">
-                  {resetResult.password}
-                </code>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(resetResult.password);
-                    setResetPasswordCopied(true);
-                    setTimeout(() => setResetPasswordCopied(false), 2000);
-                  }}
-                  className="p-1.5 rounded-md text-amber-600 hover:bg-amber-100 transition-colors"
-                  title="Copy password"
-                >
-                  {resetPasswordCopied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-              <p className="text-xs text-red-700 font-semibold text-center">
-                Share this password with the user securely. It will not be emailed to them.
+          ) : (
+            <div className="card-base p-12 text-center sticky top-20">
+              <Shield className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+              <h3 className="text-sm font-bold text-slate-600 mb-1">Select an Employee</h3>
+              <p className="text-xs text-slate-400 max-w-xs mx-auto">
+                Click any employee from the list to view and manage their module permissions, access controls, and account status.
               </p>
             </div>
-
-            <button
-              onClick={() => setResetResult(null)}
-              className="w-full py-2.5 rounded-lg text-sm font-bold bg-brand text-white hover:bg-brand-700 transition-colors"
-            >
-              Done
-            </button>
-          </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
