@@ -557,7 +557,7 @@ export default function TaxationGuidePage() {
                 <tr>
                   <td className="p-3 font-medium text-slate-700">TDS</td>
                   <td className="p-3 text-slate-600">
-                    10% TDS if total dividend from one fund house exceeds Rs 5,000/year
+                    10% TDS if total dividend from one fund house exceeds Rs 10,000/year (threshold raised from Rs 5,000 w.e.f. FY 2025-26)
                   </td>
                   <td className="p-3 text-slate-600">No TDS (DDT was at source)</td>
                 </tr>
@@ -592,11 +592,11 @@ export default function TaxationGuidePage() {
               <div>
                 <p className="font-semibold text-blue-800 mb-1">Example</p>
                 <p className="text-sm text-blue-700 leading-relaxed">
-                  You hold units in an equity fund that declares a dividend of Rs 8,000 in FY
-                  2025-26. Since this exceeds Rs 5,000, the fund house deducts TDS of 10% (Rs 800)
-                  and pays you Rs 7,200. The full Rs 8,000 is added to your total income. If your
-                  slab rate is 30%, actual tax = Rs 2,400. You claim Rs 800 TDS credit, so
-                  additional tax payable = Rs 1,600 (plus cess).
+                  You hold units in an equity fund that declares a dividend of Rs 12,000 in FY
+                  2026-27. Since this exceeds Rs 10,000, the fund house deducts TDS of 10% (Rs 1,200)
+                  and pays you Rs 10,800. The full Rs 12,000 is added to your total income. If your
+                  slab rate is 30%, actual tax = Rs 3,600. You claim Rs 1,200 TDS credit, so
+                  additional tax payable = Rs 2,400 (plus cess).
                 </p>
               </div>
             </div>
@@ -737,7 +737,7 @@ export default function TaxationGuidePage() {
                   <td className="p-3 font-medium text-slate-700">Dividend (IDCW)</td>
                   <td className="p-3 text-slate-600">Yes</td>
                   <td className="p-3 text-slate-800 font-semibold">10%</td>
-                  <td className="p-3 text-slate-600">If dividend &gt; Rs 5,000 from one fund house in a FY</td>
+                  <td className="p-3 text-slate-600">If dividend &gt; Rs 10,000 from one fund house in a FY</td>
                 </tr>
                 <tr>
                   <td className="p-3 font-medium text-slate-700">Capital Gains (Redemption)</td>
@@ -915,6 +915,21 @@ export default function TaxationGuidePage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
+                <tr className="bg-emerald-50/50">
+                  <td className="p-3 font-medium text-slate-700">February 2026</td>
+                  <td className="p-3 text-slate-600">
+                    Budget 2026: <strong>New Income Tax Act 2025</strong> replaces IT Act 1961
+                    (effective 1 Apr 2026). Revised ITR deadline extended to 31 March of AY
+                    (from 31 Dec). STT on F&amp;O increased — futures 0.02% &rarr; 0.05%,
+                    options 0.1% &rarr; 0.15%. Dividend TDS threshold raised to Rs 10,000
+                    (from Rs 5,000). Minor tax defaults decriminalised.
+                  </td>
+                  <td className="p-3 text-slate-600">
+                    Simpler tax law framework. More time to file revised returns. Higher F&amp;O
+                    trading costs discourage speculative trading. MF investors benefit from
+                    higher dividend TDS threshold.
+                  </td>
+                </tr>
                 <tr className="bg-rose-50/50">
                   <td className="p-3 font-medium text-slate-700">July 2024</td>
                   <td className="p-3 text-slate-600">
@@ -1094,6 +1109,14 @@ export default function TaxationGuidePage() {
                   </td>
                 </tr>
                 <tr>
+                  <td className="p-3 font-medium text-slate-700">31 August 2026</td>
+                  <td className="p-3 text-slate-600">ITR filing due date (non-audit business/trust)</td>
+                  <td className="p-3 text-slate-600">
+                    Extended from 31 July to 31 August by Budget 2026 for non-audit
+                    business/trust filers
+                  </td>
+                </tr>
+                <tr>
                   <td className="p-3 font-medium text-slate-700">31 October 2026</td>
                   <td className="p-3 text-slate-600">ITR filing due date (if audit required)</td>
                   <td className="p-3 text-slate-600">
@@ -1101,11 +1124,11 @@ export default function TaxationGuidePage() {
                   </td>
                 </tr>
                 <tr>
-                  <td className="p-3 font-medium text-slate-700">31 December 2026</td>
+                  <td className="p-3 font-medium text-slate-700">31 March 2027</td>
                   <td className="p-3 text-slate-600">Belated/revised ITR filing deadline</td>
                   <td className="p-3 text-slate-600">
-                    Last chance to file belated return. Losses cannot be carried forward in belated
-                    returns
+                    Extended from 31 December to 31 March by Budget 2026. Last chance to file
+                    belated or revised return. Losses cannot be carried forward in belated returns
                   </td>
                 </tr>
               </tbody>
@@ -1175,11 +1198,11 @@ export default function TaxationGuidePage() {
                 </p>
                 <p className="text-xs text-slate-500 leading-relaxed mb-2">
                   Tax laws are subject to change. The information on this page is based on the
-                  Income Tax Act, 1961 as amended by the Finance (No. 2) Act, 2024 and applicable
-                  for FY 2026-27 (AY 2027-28). All rates are post-Budget 2024 (effective 23 July
-                  2024). Rates mentioned are exclusive of surcharge and 4% health &amp; education
-                  cess unless stated otherwise. Please consult your Chartered Accountant or tax
-                  professional for advice specific to your situation.
+                  New Income Tax Act, 2025 (effective 1 April 2026, replacing the Income Tax Act,
+                  1961) and incorporates changes from both Budget 2024 and Budget 2026. Applicable
+                  for FY 2026-27 (AY 2027-28). Rates mentioned are exclusive of surcharge and 4%
+                  health &amp; education cess unless stated otherwise. Please consult your
+                  Chartered Accountant or tax professional for advice specific to your situation.
                 </p>
                 <p className="text-xs text-slate-500 leading-relaxed">
                   {DISCLAIMER.mutual_fund} | {DISCLAIMER.amfi}

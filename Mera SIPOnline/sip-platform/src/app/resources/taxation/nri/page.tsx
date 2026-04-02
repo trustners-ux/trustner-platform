@@ -1152,6 +1152,12 @@ export default function NRITaxationGuidePage() {
             <div className="relative border-l-2 border-primary-200 ml-5 space-y-8">
               {[
                 {
+                  year: 'FY 2026-27',
+                  title: 'New Income Tax Act 2025 & Budget 2026 Changes',
+                  desc: 'The New Income Tax Act, 2025 replaces the Income Tax Act, 1961 from 1 April 2026 — a simpler, modernised tax law. Revised ITR deadline extended from 31 December to 31 March of AY. Dividend TDS threshold for residents raised to Rs 10,000 (from Rs 5,000). STT on F&O increased. Minor tax defaults decriminalised. For NRIs, the core TDS rates on MF gains remain unchanged, but the new law provides a clearer framework for cross-border taxation.',
+                  color: 'bg-emerald-500',
+                },
+                {
                   year: 'FY 2025-26',
                   title: 'Updated Tax Rates & Indexation Removal — Budget 2024',
                   desc: 'Union Budget 2024 revised capital gains tax structure: Equity LTCG rate changed to 12.5% (from 10%), STCG to 20% (from 15%). LTCG exemption increased to Rs 1.25 lakh. Indexation benefit removed for ALL asset classes (except immovable property with transitional relief). Holding period for debt/other assets reduced from 36 to 24 months. Gold & Silver ETFs excluded from "specified mutual funds" — now qualify for LTCG at 12.5% after 12 months. NRI TDS rates updated accordingly.',
@@ -1254,7 +1260,8 @@ export default function NRITaxationGuidePage() {
                   <strong>NRI investors must consult qualified professionals</strong> — an Indian Chartered Accountant
                   for Indian tax matters, and a CPA (US), CA (Canada), tax advisor (UK/EU), or equivalent professional
                   in their country of residence for local tax implications. The information in this guide is based
-                  on tax laws and regulations as understood as of FY 2026-27 and may not reflect subsequent changes.
+                  on the New Income Tax Act, 2025 (effective 1 April 2026) and incorporates changes from Budget
+                  2024 and Budget 2026 as applicable for FY 2026-27. Laws may change subsequently.
                 </p>
                 <p>
                   Mutual fund investments are subject to market risks. Read all scheme-related documents carefully before
