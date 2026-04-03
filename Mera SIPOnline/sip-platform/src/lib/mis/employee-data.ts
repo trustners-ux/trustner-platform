@@ -43,6 +43,7 @@ export const EMPLOYEES: Employee[] = [
   { id: 21, employeeCode: 'TIB017', name: 'Sunita Roy', doj: '2023-02-01', designation: 'HR Executive', department: 'HR', grossSalary: 22000, entity: 'TIB', annualCTC: 264000, tenureYears: 3.1, levelCode: 'L7', segment: 'Support', targetMultiplier: 0, monthlyTarget: 0, annualTarget: 0, costRecoveryMin: 35200, isActive: true },
   { id: 22, employeeCode: 'TIB018', name: 'Kamal Hazarika', doj: '2023-09-01', designation: 'Training Manager', department: 'Training', grossSalary: 30000, entity: 'TIB', annualCTC: 360000, tenureYears: 2.5, levelCode: 'L6', segment: 'Support', targetMultiplier: 0, monthlyTarget: 0, annualTarget: 0, costRecoveryMin: 48000, isActive: true },
   { id: 23, employeeCode: 'TAS005', name: 'Divya Bharali', doj: '2024-04-01', designation: 'Digital Marketing Executive', department: 'Digital & IT', grossSalary: 25000, entity: 'TAS', annualCTC: 300000, tenureYears: 2, levelCode: 'L7', segment: 'Support', targetMultiplier: 0, monthlyTarget: 0, annualTarget: 0, costRecoveryMin: 40000, isActive: true },
+  { id: 34, employeeCode: 'TAS006', name: 'Anjali Shah', email: 'anjalixhah1701@gmail.com', doj: '2025-07-01', designation: 'Relationship Manager', department: 'F.P.', jobResponsibility: 'SALES', grossSalary: 25000, entity: 'TAS', annualCTC: 300000, tenureYears: 0.8, levelCode: 'L6', segment: 'Direct Sales', reportingManagerId: 7, location: 'Guwahati', targetMultiplier: 6, monthlyTarget: 150000, annualTarget: 1800000, costRecoveryMin: 40000, isActive: true },
 ];
 
 export const PRODUCTS: Product[] = [
