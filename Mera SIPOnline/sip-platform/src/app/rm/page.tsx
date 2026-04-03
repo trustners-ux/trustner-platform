@@ -73,15 +73,55 @@ export default function RMDashboard() {
     );
   }
 
-  if (!user || !dashboard) {
+  if (!user) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <AlertCircle className="w-8 h-8 text-red-500 mx-auto mb-3" />
-          <p className="text-sm text-slate-600">Could not load dashboard data</p>
-          <Link href="/rm/login" className="text-emerald-600 text-sm font-medium mt-2 block">
+          <p className="text-sm text-slate-600">Could not load your session</p>
+          <Link href="/admin/login" className="text-emerald-600 text-sm font-medium mt-2 block">
             Try logging in again
           </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!dashboard) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <RMNav
+          userName={user.name}
+          designation={user.designation}
+          entity={user.entity}
+          onLogout={handleLogout}
+        />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+          <div className="bg-white rounded-xl border border-slate-200 p-8 text-center max-w-lg mx-auto">
+            <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
+              <Briefcase className="w-7 h-7 text-emerald-600" />
+            </div>
+            <h2 className="text-lg font-bold text-slate-800 mb-2">
+              Welcome, {user.name.split(' ')[0]}!
+            </h2>
+            <p className="text-sm text-slate-500 mb-4">
+              Your MIS dashboard is being set up. Once your targets and profile are configured by the admin, your performance dashboard will appear here.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link
+                href="/rm/learn"
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+              >
+                <Star className="w-4 h-4" /> Start Learning
+              </Link>
+              <Link
+                href="/rm/business-entry"
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                <Plus className="w-4 h-4" /> Log Business Entry
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     );
