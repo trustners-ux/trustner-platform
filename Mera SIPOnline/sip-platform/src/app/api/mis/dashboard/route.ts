@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyRMToken, RM_COOKIE_NAME } from '@/lib/auth/rm-jwt';
+import { verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 import { getDashboardData } from '@/lib/dal/incentives';
 
 /**
@@ -8,19 +9,30 @@ import { getDashboardData } from '@/lib/dal/incentives';
  */
 export async function GET(request: NextRequest) {
   try {
-    // Check RM auth
-    const token = request.cookies.get(RM_COOKIE_NAME)?.value;
-    if (!token) {
+    let employeeId: number | null = null;
+
+    // Check RM session first
+    const rmToken = request.cookies.get(RM_COOKIE_NAME)?.value;
+    if (rmToken) {
+      const rmUser = await verifyRMToken(rmToken);
+      if (rmUser) employeeId = rmUser.employeeId;
+    }
+
+    // Fallback: check employee session
+    if (!employeeId) {
+      const empToken = request.cookies.get(EMPLOYEE_COOKIE)?.value;
+      if (empToken) {
+        const empUser = await verifyEmployeeToken(empToken);
+        if (empUser) employeeId = empUser.employeeId;
+      }
+    }
+
+    if (!employeeId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const user = await verifyRMToken(token);
-    if (!user) {
-      return NextResponse.json({ error: 'Session expired' }, { status: 401 });
-    }
-
     const month = request.nextUrl.searchParams.get('month') || undefined;
-    const data = await getDashboardData(user.employeeId, month);
+    const data = await getDashboardData(employeeId, month);
 
     if (!data) {
       return NextResponse.json({ error: 'Dashboard data not available' }, { status: 404 });

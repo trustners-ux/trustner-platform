@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyRMToken, RM_COOKIE_NAME } from '@/lib/auth/rm-jwt';
 import { verifyToken, COOKIE_NAME } from '@/lib/auth/jwt';
+import { verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 import { calculateLiveIncentive, getCompanyLeaderboard } from '@/lib/dal/incentives';
 
 /**
@@ -16,6 +17,7 @@ export async function GET(request: NextRequest) {
 
     const rmToken = request.cookies.get(RM_COOKIE_NAME)?.value;
     const adminToken = request.cookies.get(COOKIE_NAME)?.value;
+    const empToken = request.cookies.get(EMPLOYEE_COOKIE)?.value;
 
     if (rmToken) {
       const user = await verifyRMToken(rmToken);
@@ -25,6 +27,10 @@ export async function GET(request: NextRequest) {
       const user = await verifyToken(adminToken);
       if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       isAdmin = user.role === 'admin';
+    } else if (empToken) {
+      const user = await verifyEmployeeToken(empToken);
+      if (!user) return NextResponse.json({ error: 'Session expired' }, { status: 401 });
+      employeeId = user.employeeId;
     } else {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
