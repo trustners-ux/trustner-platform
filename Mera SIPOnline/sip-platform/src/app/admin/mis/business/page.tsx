@@ -1383,7 +1383,7 @@ export default function AdminBusinessPage() {
     { key: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
     { key: 'entries', label: 'Entries', icon: <Table className="w-4 h-4" /> },
     { key: 'manual', label: 'Manual Entry', icon: <PenLine className="w-4 h-4" /> },
-    { key: 'upload', label: 'CSV Upload', icon: <UploadCloud className="w-4 h-4" /> },
+    { key: 'upload', label: 'CSV / Excel Upload', icon: <UploadCloud className="w-4 h-4" /> },
   ];
 
   function renderTabs() {
@@ -2310,7 +2310,7 @@ export default function AdminBusinessPage() {
       <div className="bg-white rounded-xl border border-slate-200 p-6">
         <h2 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
           <FileSpreadsheet className="w-4 h-4 text-blue-500" />
-          Bulk CSV Upload
+          Bulk Upload (CSV / Excel)
         </h2>
 
         {uploadStep === 'idle' && (
@@ -2337,7 +2337,7 @@ export default function AdminBusinessPage() {
                   onChange={(e) => setUploadEmployeeId(Number(e.target.value))}
                   className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 >
-                  <option value={0}>Auto-detect from CSV</option>
+                  <option value={0}>Auto-detect from file</option>
                   {employees.map(emp => (
                     <option key={emp.id} value={emp.id}>
                       {emp.name} ({emp.employeeCode})
@@ -2365,7 +2365,7 @@ export default function AdminBusinessPage() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".csv"
+                accept=".csv,.xlsx,.xls"
                 onChange={handleFileInput}
                 className="hidden"
               />
@@ -2378,10 +2378,10 @@ export default function AdminBusinessPage() {
                 <div className="flex flex-col items-center gap-2">
                   <Upload className="w-8 h-8 text-slate-400" />
                   <p className="text-sm text-slate-600 font-medium">
-                    Drop a CSV file here, or click to browse
+                    Drop a CSV or Excel file here, or click to browse
                   </p>
                   <p className="text-xs text-slate-400">
-                    Supports MF statements, Insurance MIS, or generic business data
+                    Supports .csv, .xlsx, .xls — MF statements, Insurance MIS, or generic business data
                   </p>
                 </div>
               )}

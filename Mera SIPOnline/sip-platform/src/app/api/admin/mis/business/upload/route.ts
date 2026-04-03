@@ -5,6 +5,7 @@ import { PRODUCTS } from '@/lib/mis/employee-data';
 import { getCurrentMonth } from '@/lib/db/config';
 import {
   parseCSV,
+  parseExcel,
   detectFormat,
   autoMapColumns,
   fuzzyMatchProduct,
@@ -48,23 +49,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Only accept CSV
+    // Accept CSV and Excel files
     const fileName = file.name.toLowerCase();
-    if (!fileName.endsWith('.csv')) {
+    const isExcel = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
+    const isCsv = fileName.endsWith('.csv');
+
+    if (!isCsv && !isExcel) {
       return NextResponse.json(
-        { error: 'Only .csv files are supported. Please export your spreadsheet as CSV.' },
+        { error: 'Only .csv, .xlsx, and .xls files are supported.' },
         { status: 400 }
       );
     }
 
-    const text = await file.text();
-    if (!text.trim()) {
-      return NextResponse.json({ error: 'File is empty' }, { status: 400 });
+    let headers: string[];
+    let rows: string[][];
+
+    if (isExcel) {
+      const buffer = await file.arrayBuffer();
+      if (buffer.byteLength === 0) {
+        return NextResponse.json({ error: 'File is empty' }, { status: 400 });
+      }
+      const parsed = await parseExcel(buffer);
+      headers = parsed.headers;
+      rows = parsed.rows;
+    } else {
+      const text = await file.text();
+      if (!text.trim()) {
+        return NextResponse.json({ error: 'File is empty' }, { status: 400 });
+      }
+      const parsed = parseCSV(text);
+      headers = parsed.headers;
+      rows = parsed.rows;
     }
 
-    const { headers, rows } = parseCSV(text);
     if (headers.length === 0 || rows.length === 0) {
-      return NextResponse.json({ error: 'No data rows found in CSV' }, { status: 400 });
+      return NextResponse.json({ error: 'No data rows found in file' }, { status: 400 });
     }
 
     // Detect format and auto-map columns

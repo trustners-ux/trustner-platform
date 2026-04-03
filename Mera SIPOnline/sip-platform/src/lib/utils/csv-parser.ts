@@ -75,6 +75,33 @@ export function parseCSV(text: string): ParsedCSV {
   return { headers, rows: rows.slice(1) };
 }
 
+/**
+ * Parse an Excel file (.xlsx / .xls) buffer into headers + rows.
+ * Uses the first sheet by default.
+ */
+export async function parseExcel(buffer: ArrayBuffer): Promise<ParsedCSV> {
+  const XLSX = await import('xlsx');
+  const workbook = XLSX.read(buffer, { type: 'array' });
+  const sheetName = workbook.SheetNames[0];
+  if (!sheetName) return { headers: [], rows: [] };
+
+  const sheet = workbook.Sheets[sheetName];
+  const data: string[][] = XLSX.utils.sheet_to_json(sheet, {
+    header: 1,
+    defval: '',
+    raw: false,
+  });
+
+  if (data.length === 0) return { headers: [], rows: [] };
+
+  const headers = data[0].map((h: unknown) => String(h ?? '').trim());
+  const rows = data.slice(1).filter((row: string[]) =>
+    row.some((cell: string) => String(cell ?? '').trim() !== '')
+  ).map((row: string[]) => row.map((cell: string) => String(cell ?? '').trim()));
+
+  return { headers, rows };
+}
+
 // ─── Column Detection & Mapping ───
 
 export type SystemField =
