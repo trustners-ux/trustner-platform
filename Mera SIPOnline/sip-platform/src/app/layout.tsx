@@ -1,15 +1,9 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
 import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
 import { PageTracker } from '@/components/analytics/PageTracker';
-import { WhatsAppButton } from '@/components/sections/WhatsAppButton';
-import { ChatWidget } from '@/components/sections/ChatWidget';
-import { LeadCaptureModal } from '@/components/sections/LeadCaptureModal';
-import { FloatingInvestCTA } from '@/components/sections/FloatingInvestCTA';
-import { ContentProtection } from '@/components/security/ContentProtection';
+import { ConditionalShell } from '@/components/layout/ConditionalShell';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -142,16 +136,9 @@ export default function RootLayout({
       <body className="font-sans antialiased bg-surface-100 text-primary-700">
         <GoogleAnalytics />
         <PageTracker />
-        <ContentProtection />
-        <Header />
-        <main className="min-h-screen pt-24 lg:pt-[104px]">
+        <ConditionalShell>
           {children}
-        </main>
-        <Footer />
-        <WhatsAppButton />
-        <ChatWidget />
-        <LeadCaptureModal />
-        <FloatingInvestCTA />
+        </ConditionalShell>
       </body>
     </html>
   );
