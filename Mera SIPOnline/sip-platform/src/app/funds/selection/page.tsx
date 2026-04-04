@@ -208,12 +208,6 @@ export default function FundSelectionPage() {
 
             {/* Data as on date */}
             <div className="mt-5 flex flex-wrap gap-3">
-              <div className="inline-flex items-center gap-2 bg-white/5 print:bg-amber-50 rounded-lg px-4 py-2 border border-white/10 print:border-amber-200">
-                <Calendar className="w-3.5 h-3.5 text-amber-400 print:text-amber-600" />
-                <span className="text-xs text-slate-300 print:text-slate-600">
-                  Base data: <strong className="text-white print:text-primary-700">{CURRENT_TRUSTNER_LIST.dataAsOn}</strong>
-                </span>
-              </div>
               {hasLiveNav && navUpdatedAt && (
                 <div className="inline-flex items-center gap-2 bg-emerald-500/15 print:bg-emerald-50 rounded-lg px-4 py-2 border border-emerald-400/20 print:border-emerald-200 animate-in">
                   <span className="relative flex h-2 w-2">

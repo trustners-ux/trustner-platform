@@ -18,33 +18,42 @@ import {
 } from 'lucide-react';
 import type { TrustnerFundCategory, TrustnerCuratedFund, FundNavData } from '@/types/funds';
 
-type SortKey = 'rank' | 'ter' | 'sharpe' | 'sd' | '3m' | '6m' | '1y' | '3y' | '5y' | 'aum';
+type SortKey = 'rank' | 'ter' | 'sharpe' | 'sd' | 'mtd' | 'ytd' | '3m' | '6m' | '1y' | '2y' | '3y' | '5y' | 'aum';
+type SortDir = 'desc' | 'asc';
 
 const SORT_OPTIONS: { key: SortKey; label: string; shortLabel: string }[] = [
   { key: 'rank', label: 'Rank', shortLabel: 'Rank' },
   { key: 'ter', label: 'Lowest TER', shortLabel: 'TER' },
   { key: 'sharpe', label: 'Best Sharpe', shortLabel: 'Sharpe' },
+  { key: 'mtd', label: 'MTD Return', shortLabel: 'MTD' },
+  { key: 'ytd', label: 'YTD Return', shortLabel: 'YTD' },
   { key: '3m', label: '3M Return', shortLabel: '3M' },
   { key: '6m', label: '6M Return', shortLabel: '6M' },
   { key: '1y', label: '1Y Return', shortLabel: '1Y' },
+  { key: '2y', label: '2Y Return', shortLabel: '2Y' },
   { key: '3y', label: '3Y Return', shortLabel: '3Y' },
   { key: '5y', label: '5Y Return', shortLabel: '5Y' },
   { key: 'aum', label: 'Largest AUM', shortLabel: 'AUM' },
 ];
 
-function getSortedFunds(funds: TrustnerCuratedFund[], key: SortKey): TrustnerCuratedFund[] {
+function getSortedFunds(funds: TrustnerCuratedFund[], key: SortKey, dir: SortDir = 'desc'): TrustnerCuratedFund[] {
   const sorted = [...funds];
+  const m = dir === 'asc' ? -1 : 1; // multiplier for direction
+
   switch (key) {
-    case 'rank': return sorted.sort((a, b) => a.rank - b.rank);
-    case 'ter': return sorted.sort((a, b) => (a.ter || 999) - (b.ter || 999));
-    case 'sharpe': return sorted.sort((a, b) => b.sharpeRatio - a.sharpeRatio);
-    case 'sd': return sorted.sort((a, b) => (a.standardDeviation || 999) - (b.standardDeviation || 999));
-    case '3m': return sorted.sort((a, b) => (b.returns.threeMonth || 0) - (a.returns.threeMonth || 0));
-    case '6m': return sorted.sort((a, b) => (b.returns.sixMonth || 0) - (a.returns.sixMonth || 0));
-    case '1y': return sorted.sort((a, b) => b.returns.oneYear - a.returns.oneYear);
-    case '3y': return sorted.sort((a, b) => b.returns.threeYear - a.returns.threeYear);
-    case '5y': return sorted.sort((a, b) => b.returns.fiveYear - a.returns.fiveYear);
-    case 'aum': return sorted.sort((a, b) => b.aumCr - a.aumCr);
+    case 'rank': return sorted.sort((a, b) => (a.rank - b.rank) * m);
+    case 'ter': return sorted.sort((a, b) => ((a.ter || 999) - (b.ter || 999)) * m);
+    case 'sharpe': return sorted.sort((a, b) => (b.sharpeRatio - a.sharpeRatio) * m);
+    case 'sd': return sorted.sort((a, b) => ((a.standardDeviation || 999) - (b.standardDeviation || 999)) * m);
+    case 'mtd': return sorted.sort((a, b) => ((b.returns.mtd || 0) - (a.returns.mtd || 0)) * m);
+    case 'ytd': return sorted.sort((a, b) => ((b.returns.ytd || 0) - (a.returns.ytd || 0)) * m);
+    case '3m': return sorted.sort((a, b) => ((b.returns.threeMonth || 0) - (a.returns.threeMonth || 0)) * m);
+    case '6m': return sorted.sort((a, b) => ((b.returns.sixMonth || 0) - (a.returns.sixMonth || 0)) * m);
+    case '1y': return sorted.sort((a, b) => (b.returns.oneYear - a.returns.oneYear) * m);
+    case '2y': return sorted.sort((a, b) => ((b.returns.twoYear || 0) - (a.returns.twoYear || 0)) * m);
+    case '3y': return sorted.sort((a, b) => (b.returns.threeYear - a.returns.threeYear) * m);
+    case '5y': return sorted.sort((a, b) => (b.returns.fiveYear - a.returns.fiveYear) * m);
+    case 'aum': return sorted.sort((a, b) => (b.aumCr - a.aumCr) * m);
     default: return sorted;
   }
 }
@@ -287,7 +296,19 @@ export function TrustnerCategoryTable({
   navMap?: Map<number, FundNavData>;
 }) {
   const [sortKey, setSortKey] = useState<SortKey>('rank');
-  const sortedFunds = getSortedFunds(category.funds, sortKey);
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir(d => d === 'desc' ? 'asc' : 'desc');
+    } else {
+      setSortKey(key);
+      // Default direction: ascending for rank/ter/sd, descending for everything else
+      setSortDir(key === 'rank' || key === 'ter' || key === 'sd' ? 'asc' : 'desc');
+    }
+  };
+
+  const sortedFunds = getSortedFunds(category.funds, sortKey, sortDir);
 
   const bestSharpe = getBestInColumn(sortedFunds, (f) => f.sharpeRatio);
   const lowestTER = getLowestInColumn(sortedFunds, (f) => f.ter);
@@ -328,15 +349,18 @@ export function TrustnerCategoryTable({
         {SORT_OPTIONS.map((opt) => (
           <button
             key={opt.key}
-            onClick={() => setSortKey(opt.key)}
+            onClick={() => handleSort(opt.key)}
             className={cn(
-              'flex-shrink-0 px-2.5 py-1 rounded-md text-[10px] font-semibold transition-all',
+              'flex-shrink-0 px-2.5 py-1 rounded-md text-[10px] font-semibold transition-all inline-flex items-center gap-0.5',
               sortKey === opt.key
                 ? 'bg-brand text-white'
                 : 'bg-surface-100 text-slate-500 hover:bg-surface-200'
             )}
           >
             {opt.shortLabel}
+            {sortKey === opt.key && (
+              sortDir === 'desc' ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />
+            )}
           </button>
         ))}
       </div>
@@ -347,20 +371,20 @@ export function TrustnerCategoryTable({
           <thead>
             <tr className="border-b-2 border-surface-300 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
               {compareMode && <th className="pl-3 pr-1 py-2 w-8"></th>}
-              <th className={cn('py-2 w-14 text-center', !compareMode && 'pl-3')}>#</th>
+              <th className={cn('py-2 w-14 text-center cursor-pointer hover:text-slate-600', !compareMode && 'pl-3')} onClick={() => handleSort('rank')}>#</th>
               <th className="py-2 pr-3">Fund Name</th>
-              <th className="py-2 px-2 text-center hidden sm:table-cell">MTD</th>
-              <th className="py-2 px-2 text-center hidden sm:table-cell">YTD</th>
-              <th className="py-2 px-2 text-center hidden md:table-cell">3M</th>
-              <th className="py-2 px-2 text-center hidden md:table-cell">6M</th>
-              <th className="py-2 px-2 text-center">1Y</th>
-              <th className="py-2 px-2 text-center hidden md:table-cell">2Y</th>
-              <th className="py-2 px-2 text-center">3Y</th>
-              <th className="py-2 px-2 text-center">5Y</th>
-              <th className="py-2 px-2 text-right hidden lg:table-cell">AUM</th>
-              <th className="py-2 px-2 text-right hidden lg:table-cell">TER</th>
-              <th className="py-2 px-2 text-right hidden xl:table-cell">Sharpe</th>
-              <th className="py-2 px-2 text-right hidden xl:table-cell">Std Dev</th>
+              <th className="py-2 px-2 text-center hidden sm:table-cell cursor-pointer hover:text-slate-600" onClick={() => handleSort('mtd')}>MTD {sortKey === 'mtd' && (sortDir === 'desc' ? '↓' : '↑')}</th>
+              <th className="py-2 px-2 text-center hidden sm:table-cell cursor-pointer hover:text-slate-600" onClick={() => handleSort('ytd')}>YTD {sortKey === 'ytd' && (sortDir === 'desc' ? '↓' : '↑')}</th>
+              <th className="py-2 px-2 text-center hidden md:table-cell cursor-pointer hover:text-slate-600" onClick={() => handleSort('3m')}>3M {sortKey === '3m' && (sortDir === 'desc' ? '↓' : '↑')}</th>
+              <th className="py-2 px-2 text-center hidden md:table-cell cursor-pointer hover:text-slate-600" onClick={() => handleSort('6m')}>6M {sortKey === '6m' && (sortDir === 'desc' ? '↓' : '↑')}</th>
+              <th className="py-2 px-2 text-center cursor-pointer hover:text-slate-600" onClick={() => handleSort('1y')}>1Y {sortKey === '1y' && (sortDir === 'desc' ? '↓' : '↑')}</th>
+              <th className="py-2 px-2 text-center hidden md:table-cell cursor-pointer hover:text-slate-600" onClick={() => handleSort('2y')}>2Y {sortKey === '2y' && (sortDir === 'desc' ? '↓' : '↑')}</th>
+              <th className="py-2 px-2 text-center cursor-pointer hover:text-slate-600" onClick={() => handleSort('3y')}>3Y {sortKey === '3y' && (sortDir === 'desc' ? '↓' : '↑')}</th>
+              <th className="py-2 px-2 text-center cursor-pointer hover:text-slate-600" onClick={() => handleSort('5y')}>5Y {sortKey === '5y' && (sortDir === 'desc' ? '↓' : '↑')}</th>
+              <th className="py-2 px-2 text-right hidden lg:table-cell cursor-pointer hover:text-slate-600" onClick={() => handleSort('aum')}>AUM {sortKey === 'aum' && (sortDir === 'desc' ? '↓' : '↑')}</th>
+              <th className="py-2 px-2 text-right hidden lg:table-cell cursor-pointer hover:text-slate-600" onClick={() => handleSort('ter')}>TER {sortKey === 'ter' && (sortDir === 'desc' ? '↓' : '↑')}</th>
+              <th className="py-2 px-2 text-right hidden xl:table-cell cursor-pointer hover:text-slate-600" onClick={() => handleSort('sharpe')}>Sharpe {sortKey === 'sharpe' && (sortDir === 'desc' ? '↓' : '↑')}</th>
+              <th className="py-2 px-2 text-right hidden xl:table-cell cursor-pointer hover:text-slate-600" onClick={() => handleSort('sd')}>Std Dev {sortKey === 'sd' && (sortDir === 'desc' ? '↓' : '↑')}</th>
               <th className="py-2 pr-3 w-8"></th>
             </tr>
           </thead>
