@@ -1,4 +1,17 @@
-"""Auth router — OTP-based advisor login + password-based employee login via Supabase Auth."""
+"""Auth router — OTP-based advisor login + password-based employee login via Supabase Auth.
+
+audit_log table (see migrations/2026_rbac_and_notices.sql):
+  CREATE TABLE IF NOT EXISTS audit_log (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid,
+    action text NOT NULL,
+    entity text,
+    ip text,
+    user_agent text,
+    metadata jsonb,
+    created_at timestamptz DEFAULT now()
+  );
+"""
 
 import os
 import json
@@ -6,7 +19,7 @@ import time
 import urllib.request
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError, jwk
 from supabase import create_client, Client
@@ -212,7 +225,7 @@ async def verify_otp(req: VerifyOTPRequest):
 # ---------------------------------------------------------------------------
 
 @router.post("/login")
-async def password_login(req: PasswordLoginRequest):
+async def password_login(req: PasswordLoginRequest, request: Request = None):
     """Authenticate employee with email + password and return JWT + profile."""
     try:
         sb = get_supabase()
@@ -264,6 +277,27 @@ async def password_login(req: PasswordLoginRequest):
                 }).execute()
             except Exception:
                 pass  # Non-critical — don't fail login over logging
+
+        # Audit log (non-critical) — record every successful login
+        try:
+            req_ip = None
+            req_ua = None
+            if request is not None:
+                req_ip = request.client.host if request.client else None
+                req_ua = request.headers.get("user-agent")
+            db.table("audit_log").insert({
+                "user_id": str(user.id) if user and user.id else None,
+                "action": "LOGIN",
+                "entity": "auth",
+                "ip": req_ip,
+                "user_agent": req_ua,
+                "metadata": {
+                    "email": req.email,
+                    "employee_id": employee["id"] if employee else None,
+                },
+            }).execute()
+        except Exception:
+            pass  # Non-critical — audit must never break login
 
         return {
             "access_token": session.access_token,

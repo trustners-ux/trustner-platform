@@ -7,6 +7,7 @@ from supabase import create_client, Client
 
 from models.schemas import AdminControlUpdate
 from routers.auth import verify_token, get_supabase
+from utils.audit import log_audit
 
 router = APIRouter()
 
@@ -52,6 +53,8 @@ async def update_control(key: str, data: AdminControlUpdate, user: dict = Depend
         "reason": data.reason,
     }).execute()
 
+    log_audit(user.get("sub"), "UPDATE", "admin_controls",
+              {"key": key, "old": old_value, "new": data.control_value, "reason": data.reason})
     return {"updated": True, "key": key, "old_value": old_value, "new_value": data.control_value}
 
 
@@ -76,6 +79,7 @@ async def create_slab(slab: dict, user: dict = Depends(_require_admin)):
         "table_name": "incentive_slabs",
         "new_value": slab,
     }).execute()
+    log_audit(user.get("sub"), "CREATE", "incentive_slabs", {"new": slab})
 
     return {"slab": res.data[0] if res.data else slab}
 
@@ -98,6 +102,8 @@ async def update_slab(slab_id: str, slab: dict, user: dict = Depends(_require_ad
         "old_value": existing.data[0],
         "new_value": slab,
     }).execute()
+    log_audit(user.get("sub"), "UPDATE", "incentive_slabs",
+              {"id": slab_id, "old": existing.data[0], "new": slab})
 
     return {"slab": res.data[0] if res.data else slab}
 
@@ -117,6 +123,7 @@ async def create_product(product: dict, user: dict = Depends(_require_admin)):
     """Create a new product."""
     db = get_supabase()
     res = db.table("products").insert(product).execute()
+    log_audit(user.get("sub"), "CREATE", "products", {"new": product})
     return {"product": res.data[0] if res.data else product}
 
 
@@ -125,6 +132,7 @@ async def update_product(product_id: str, product: dict, user: dict = Depends(_r
     """Update a product."""
     db = get_supabase()
     res = db.table("products").update(product).eq("id", product_id).execute()
+    log_audit(user.get("sub"), "UPDATE", "products", {"id": product_id, "new": product})
     return {"product": res.data[0] if res.data else product}
 
 
@@ -174,6 +182,8 @@ async def update_target(target_id: str, target: dict, user: dict = Depends(_requ
         "old_value": existing.data[0],
         "new_value": target,
     }).execute()
+    log_audit(user.get("sub"), "UPDATE", "target_config",
+              {"id": target_id, "old": existing.data[0], "new": target})
 
     return {"target": res.data[0] if res.data else target}
 

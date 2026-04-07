@@ -13,6 +13,8 @@ from routers.business import router as business_router  # noqa: E402
 from routers.incentive import router as incentive_router  # noqa: E402
 from routers.admin_controls import router as admin_controls_router  # noqa: E402
 from routers.migrate import router as migrate_router  # noqa: E402
+from routers.rbac import router as rbac_router  # noqa: E402
+from routers.notices import router as notices_router  # noqa: E402
 
 app = FastAPI(
     title="Trustner4u MIS API",
@@ -50,6 +52,9 @@ app.include_router(business_router, prefix="/api/business", tags=["Business Entr
 app.include_router(incentive_router, prefix="/api/incentive", tags=["Incentive Calculation"])
 app.include_router(admin_controls_router, prefix="/api/admin", tags=["Admin Controls"])
 app.include_router(migrate_router, prefix="/api/migrate", tags=["Migration (Temp)"])
+# rbac router already includes /admin/... and /auth/me/role paths internally
+app.include_router(rbac_router, prefix="/api", tags=["RBAC"])
+app.include_router(notices_router, prefix="/api", tags=["Notices"])
 
 
 @app.get("/health")

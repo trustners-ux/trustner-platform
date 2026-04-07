@@ -174,8 +174,39 @@ async def calculate_employee_incentive(
             monthly_target = gross_salary * multiplier
 
     if monthly_target <= 0:
-        logger.warning(f"Employee {employee_id} has no target. Skipping.")
-        return {"error": "no_target", "employee_id": employee_id}
+        logger.warning(f"Employee {employee_id} has no target. Writing zero row.")
+        zero_record = {
+            "employee_id": employee_id,
+            "month": month_str,
+            "monthly_target": 0,
+            "total_raw_business": 0,
+            "total_weighted_business": 0,
+            "sip_clawback_debit": 0,
+            "net_weighted_business": 0,
+            "achievement_pct": 0,
+            "applicable_slab": get_applicable_slab_table(segment),
+            "slab_label": "No Incentive",
+            "incentive_rate": 0,
+            "slab_multiplier": 0,
+            "gross_incentive": 0,
+            "compliance_factor": 1.0,
+            "net_incentive": 0,
+            "trail_income": 0,
+            "recruitment_bonus": 0,
+            "activation_bonus": 0,
+            "motor_incentive": 0,
+            "referral_credit_amount": 0,
+            "total_payout": 0,
+            "cost_justified": True,
+            "performance_status": "No Incentive",
+            "calculation_timestamp": datetime.utcnow().isoformat(),
+            "approval_status": "system_calculated",
+            "calculation_details": json.dumps({"entries": [], "reason": "no_target"}),
+        }
+        db.table("monthly_incentive_calc").upsert(
+            zero_record, on_conflict="employee_id,month"
+        ).execute()
+        return {"error": "no_target", "employee_id": employee_id, **zero_record}
 
     # Fetch all business entries for this employee/month
     biz_res = (
@@ -396,11 +427,46 @@ async def calculate_all_incentives(
         if emp.get("segment") == "Support":
             continue
         try:
+            # Always run for every active employee — even if they have zero
+            # business entries for the month. calculate_employee_incentive
+            # will upsert a zero row (achievement=0, slab='No Incentive',
+            # performance_status='No Incentive') so stale rows are wiped out.
             r = await calculate_employee_incentive(db, emp["id"], month_str)
             results.append(r)
         except Exception as e:
             logger.error(f"Error calculating for {emp['id']}: {e}")
             errors.append({"employee_id": emp["id"], "name": emp.get("name"), "error": str(e)})
+            # Best-effort: write a zero row so we never leave stale data.
+            try:
+                db.table("monthly_incentive_calc").upsert({
+                    "employee_id": emp["id"],
+                    "month": month_str,
+                    "monthly_target": 0,
+                    "total_raw_business": 0,
+                    "total_weighted_business": 0,
+                    "sip_clawback_debit": 0,
+                    "net_weighted_business": 0,
+                    "achievement_pct": 0,
+                    "slab_label": "No Incentive",
+                    "incentive_rate": 0,
+                    "slab_multiplier": 0,
+                    "gross_incentive": 0,
+                    "compliance_factor": 1.0,
+                    "net_incentive": 0,
+                    "trail_income": 0,
+                    "recruitment_bonus": 0,
+                    "activation_bonus": 0,
+                    "motor_incentive": 0,
+                    "referral_credit_amount": 0,
+                    "total_payout": 0,
+                    "cost_justified": True,
+                    "performance_status": "No Incentive",
+                    "calculation_timestamp": datetime.utcnow().isoformat(),
+                    "approval_status": "system_calculated",
+                    "calculation_details": json.dumps({"error": str(e)}),
+                }, on_conflict="employee_id,month").execute()
+            except Exception:
+                pass
 
     total_payout = sum(r.get("total_payout", 0) for r in results if "error" not in r)
 
