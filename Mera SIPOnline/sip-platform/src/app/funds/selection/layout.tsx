@@ -8,7 +8,7 @@ export const metadata: Metadata = generateSEOMetadata({
   path: '/funds/selection',
   keywords: [
     'trustner fund selection',
-    'best mutual funds March 2026',
+    'best mutual funds 2026',
     'curated mutual fund list',
     'top mutual funds India',
     'mutual fund ranking',

@@ -175,7 +175,7 @@ export default function FundSelectionPage() {
           <div className="max-w-3xl animate-in">
             <div className="inline-flex items-center gap-2 bg-white/10 print:bg-brand-50 rounded-full px-4 py-1.5 text-xs font-medium mb-6 backdrop-blur-sm">
               <Calendar className="w-3.5 h-3.5 text-accent print:text-brand" />
-              {CURRENT_TRUSTNER_LIST.month} {CURRENT_TRUSTNER_LIST.year} Edition
+              Research-Backed Monthly Curation
             </div>
             <h1 className="text-4xl lg:text-display font-extrabold mb-4 print:text-3xl">
               Trustner{' '}
@@ -206,16 +206,13 @@ export default function FundSelectionPage() {
               </div>
             </div>
 
-            {/* Data as on date */}
+            {/* NAV date — MF NAVs are published post-market (~11pm) by AMFI, not live like ETFs */}
             <div className="mt-5 flex flex-wrap gap-3">
               {hasLiveNav && navUpdatedAt && (
                 <div className="inline-flex items-center gap-2 bg-emerald-500/15 print:bg-emerald-50 rounded-lg px-4 py-2 border border-emerald-400/20 print:border-emerald-200 animate-in">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 print:hidden" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
-                  </span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
                   <span className="text-xs text-emerald-200 print:text-emerald-700">
-                    Live NAV: <strong className="text-white print:text-emerald-800">
+                    NAV as on: <strong className="text-white print:text-emerald-800">
                       {new Date(navUpdatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </strong>
                   </span>
@@ -224,7 +221,7 @@ export default function FundSelectionPage() {
               {navLoading && (
                 <div className="inline-flex items-center gap-2 bg-white/5 rounded-lg px-4 py-2 border border-white/10">
                   <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span className="text-xs text-slate-400">Loading live data...</span>
+                  <span className="text-xs text-slate-400">Fetching latest NAV...</span>
                 </div>
               )}
             </div>
@@ -471,7 +468,7 @@ export default function FundSelectionPage() {
             <div>
               <h2 className="text-display-sm text-primary-700 mb-1">Detailed Fund View</h2>
               <p className="text-sm text-slate-500">
-                {hasLiveNav ? 'Returns updated daily via live NAV' : `Data as on ${CURRENT_TRUSTNER_LIST.dataAsOn}`} | Tap any row for full details
+                {hasLiveNav ? 'Returns updated daily post-market' : `Data as on ${CURRENT_TRUSTNER_LIST.dataAsOn}`} | Tap any row for full details
               </p>
             </div>
             <button

@@ -355,7 +355,7 @@ export default function FundDataManagerPage() {
               <Activity className="w-5 h-5 text-emerald-600" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-primary-700">Live NAV Performance Data</h3>
+              <h3 className="text-sm font-bold text-primary-700">NAV Performance Data</h3>
               <p className="text-xs text-slate-500 mt-0.5">
                 Auto-fetch latest NAV from MFAPI and calculate 1M, 3M, 6M, 1Y, 3Y, 5Y, 10Y, YTD returns for all {totalFunds} funds.
               </p>
