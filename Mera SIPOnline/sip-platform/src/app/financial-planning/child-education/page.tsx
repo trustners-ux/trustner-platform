@@ -33,11 +33,13 @@ export default function ChildEducationPlanningPage() {
   const router = useRouter();
 
   const handleStart = () => {
-    localStorage.setItem(
-      'fp-preselected-goal',
-      JSON.stringify({ goalType: 'child-education' }),
-    );
-    router.push('/financial-planning/assess');
+    try {
+      localStorage.setItem(
+        'fp-preselected-goal',
+        JSON.stringify({ goalType: 'child-education' }),
+      );
+    } catch { /* storage full or unavailable */ }
+    router.push('/financial-planning/standard');
   };
 
   return (

@@ -91,7 +91,7 @@ function UpgradePageInner() {
 
       // Navigate to the target wizard
       if (targetTier === 'standard') {
-        router.push('/financial-planning/assess');
+        router.push('/financial-planning/standard');
       } else if (targetTier === 'comprehensive') {
         router.push('/financial-planning/comprehensive');
       }

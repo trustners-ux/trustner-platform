@@ -111,7 +111,7 @@ export default function FinancialPlanningPage() {
     // Redirect to the selected tier's wizard
     const tierRoutes: Record<string, string> = {
       basic: '/financial-planning/basic',
-      standard: '/financial-planning/assess',
+      standard: '/financial-planning/standard',
       comprehensive: '/financial-planning/comprehensive',
     };
     router.push(`${tierRoutes[selectedTier]}?verified=1`);

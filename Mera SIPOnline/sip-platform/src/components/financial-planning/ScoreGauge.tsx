@@ -24,12 +24,23 @@ const SIZE_CONFIG = {
 };
 
 export default function ScoreGauge({ score, grade, size = 'md', animate = true }: ScoreGaugeProps) {
-  const [displayScore, setDisplayScore] = useState(animate ? 0 : score);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const shouldAnimate = animate && !prefersReducedMotion;
+  const [displayScore, setDisplayScore] = useState(shouldAnimate ? 0 : score);
   const config = SIZE_CONFIG[size];
   const colors = GRADE_COLORS[grade] || GRADE_COLORS['Fair'];
 
+  // Detect reduced motion preference
   useEffect(() => {
-    if (!animate) {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (mq.matches) {
+      setPrefersReducedMotion(true);
+      setDisplayScore(score);
+    }
+  }, [score]);
+
+  useEffect(() => {
+    if (!shouldAnimate) {
       setDisplayScore(score);
       return;
     }
@@ -49,7 +60,7 @@ export default function ScoreGauge({ score, grade, size = 'md', animate = true }
     };
 
     requestAnimationFrame(tick);
-  }, [score, animate]);
+  }, [score, shouldAnimate]);
 
   // Arc calculation — semicircle (180 degrees)
   const centerX = config.width / 2;
@@ -96,7 +107,7 @@ export default function ScoreGauge({ score, grade, size = 'md', animate = true }
 
   return (
     <div className="flex flex-col items-center">
-      <svg width={config.width} height={config.height} viewBox={`0 0 ${config.width} ${config.height}`}>
+      <svg width={config.width} height={config.height} viewBox={`0 0 ${config.width} ${config.height}`} role="img" aria-label={`Financial wellness score: ${score} out of 900. Grade: ${grade}`}>
         {/* Background arc — multi-color band showing the full scale */}
         <path
           d={bgArcPath}

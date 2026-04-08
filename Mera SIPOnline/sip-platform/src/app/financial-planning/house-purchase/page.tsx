@@ -33,11 +33,13 @@ export default function HousePurchasePlanningPage() {
   const router = useRouter();
 
   const handleStart = () => {
-    localStorage.setItem(
-      'fp-preselected-goal',
-      JSON.stringify({ goalType: 'house-purchase' }),
-    );
-    router.push('/financial-planning/assess');
+    try {
+      localStorage.setItem(
+        'fp-preselected-goal',
+        JSON.stringify({ goalType: 'house-purchase' }),
+      );
+    } catch { /* storage full or unavailable */ }
+    router.push('/financial-planning/standard');
   };
 
   return (

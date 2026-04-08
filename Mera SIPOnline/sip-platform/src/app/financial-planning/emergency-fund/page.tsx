@@ -33,11 +33,13 @@ export default function EmergencyFundPlanningPage() {
   const router = useRouter();
 
   const handleStart = () => {
-    localStorage.setItem(
-      'fp-preselected-goal',
-      JSON.stringify({ goalType: 'emergency-fund' }),
-    );
-    router.push('/financial-planning/assess');
+    try {
+      localStorage.setItem(
+        'fp-preselected-goal',
+        JSON.stringify({ goalType: 'emergency-fund' }),
+      );
+    } catch { /* storage full or unavailable */ }
+    router.push('/financial-planning/standard');
   };
 
   return (

@@ -33,11 +33,13 @@ export default function TaxSavingPlanningPage() {
   const router = useRouter();
 
   const handleStart = () => {
-    localStorage.setItem(
-      'fp-preselected-goal',
-      JSON.stringify({ goalType: 'custom', focusArea: 'tax-saving' }),
-    );
-    router.push('/financial-planning/assess');
+    try {
+      localStorage.setItem(
+        'fp-preselected-goal',
+        JSON.stringify({ goalType: 'tax-saving' }),
+      );
+    } catch { /* storage full or unavailable */ }
+    router.push('/financial-planning/standard');
   };
 
   return (

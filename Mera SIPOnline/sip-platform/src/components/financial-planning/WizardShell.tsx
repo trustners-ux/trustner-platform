@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -31,6 +31,7 @@ export default function WizardShell({ steps, onComplete, storageKey = 'wizardDat
   const [wizardData, setWizardData] = useState<Record<string, unknown>>({});
   const [direction, setDirection] = useState<'forward' | 'backward'>('forward');
   const [validationError, setValidationError] = useState<string | null>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
 
   const totalSteps = steps.length;
   const isFirstStep = currentStep === 0;
@@ -55,6 +56,13 @@ export default function WizardShell({ steps, onComplete, storageKey = 'wizardDat
       // Ignore parse errors from corrupted/old data
     }
   }, [storageKey, totalSteps]);
+
+  // Scroll validation error into view on mobile
+  useEffect(() => {
+    if (validationError && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [validationError]);
 
   // Persist on every change
   const persist = useCallback(
@@ -199,58 +207,64 @@ export default function WizardShell({ steps, onComplete, storageKey = 'wizardDat
 
         {/* ---- Validation Error ---- */}
         {validationError && (
-          <div className="mx-4 sm:mx-6 mb-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-start gap-2">
+          <div ref={errorRef} className="mx-4 sm:mx-6 mb-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-start gap-2">
             <span className="text-red-500 mt-0.5 shrink-0">!</span>
             <span>{validationError}</span>
           </div>
         )}
 
-        {/* ---- Step Content ---- */}
-        <div className="px-4 sm:px-6 pb-2">
-          <div
-            key={currentStep}
-            className={direction === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}
-          >
-            {steps[currentStep]?.component}
+        {/* ---- Step Content + Navigation (form for Enter key support) ---- */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            goNext();
+          }}
+        >
+          <div className="px-4 sm:px-6 pb-2">
+            <div
+              key={currentStep}
+              className={direction === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}
+            >
+              {steps[currentStep]?.component}
+            </div>
           </div>
-        </div>
 
-        {/* ---- Navigation Bar ---- */}
-        <div className="px-4 sm:px-6 pb-6 pt-4">
-          <div className="flex gap-3">
-            {/* Back button */}
-            {!isFirstStep && (
+          {/* ---- Navigation Bar ---- */}
+          <div className="px-4 sm:px-6 pb-6 pt-4">
+            <div className="flex gap-3">
+              {/* Back button (invisible placeholder on first step to keep layout stable) */}
               <button
                 type="button"
                 onClick={goBack}
-                className="btn-secondary flex-1 gap-1"
+                className={`btn-secondary flex-1 gap-1 ${isFirstStep ? 'invisible' : ''}`}
+                tabIndex={isFirstStep ? -1 : 0}
+                aria-hidden={isFirstStep}
               >
                 <ChevronLeft className="w-4 h-4" />
                 Back
               </button>
-            )}
 
-            {/* Next / Complete button */}
-            <button
-              type="button"
-              onClick={goNext}
-              className={`gap-1 ${isFirstStep ? 'w-full' : 'flex-[2]'} inline-flex items-center justify-center py-3 px-6 rounded-md text-sm font-semibold text-white transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98] ${
-                isLastStep
-                  ? 'bg-gradient-to-br from-secondary-500 to-secondary-600 hover:from-secondary-600 hover:to-secondary-600'
-                  : 'bg-brand hover:bg-brand-800'
-              }`}
-            >
-              {isLastStep ? (
-                'Get My Score'
-              ) : (
-                <>
-                  Next
-                  <ChevronRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
+              {/* Next / Complete button */}
+              <button
+                type="submit"
+                className={`gap-1 flex-[2] inline-flex items-center justify-center py-3 px-6 rounded-md text-sm font-semibold text-white transition-all duration-200 shadow-sm hover:shadow-md active:scale-[0.98] ${
+                  isLastStep
+                    ? 'bg-gradient-to-br from-secondary-500 to-secondary-600 hover:from-secondary-600 hover:to-secondary-600'
+                    : 'bg-brand hover:bg-brand-800'
+                }`}
+              >
+                {isLastStep ? (
+                  'Get My Score'
+                ) : (
+                  <>
+                    Next
+                    <ChevronRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </div>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );

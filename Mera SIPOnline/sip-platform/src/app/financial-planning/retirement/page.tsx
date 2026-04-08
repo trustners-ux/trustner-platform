@@ -58,11 +58,13 @@ export default function RetirementPlanningPage() {
   const router = useRouter();
 
   const handleStart = () => {
-    localStorage.setItem(
-      'fp-preselected-goal',
-      JSON.stringify({ goalType: 'retirement' }),
-    );
-    router.push('/financial-planning/assess');
+    try {
+      localStorage.setItem(
+        'fp-preselected-goal',
+        JSON.stringify({ goalType: 'retirement' }),
+      );
+    } catch { /* storage full or unavailable */ }
+    router.push('/financial-planning/standard');
   };
 
   return (

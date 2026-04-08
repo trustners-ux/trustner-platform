@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { TrendingUp, TrendingDown, Shield, Wallet, PiggyBank, CreditCard, Clock, ArrowRight, Phone, Target, CheckCircle2, AlertTriangle, XCircle, Zap } from 'lucide-react';
+import { TrendingUp, TrendingDown, Shield, Wallet, PiggyBank, CreditCard, Clock, ArrowRight, Phone, Target, CheckCircle2, AlertTriangle, XCircle, Zap, HelpCircle, Lock } from 'lucide-react';
 import Link from 'next/link';
 import ScoreGauge from './ScoreGauge';
 import type { TeaserData } from '@/types/financial-planning';
@@ -61,8 +61,14 @@ export default function TeaserDashboard({ data, userName, userEmail, tier = 'sta
       </div>
 
       {/* Score Gauge */}
-      <div className="flex justify-center mb-8">
+      <div className="flex flex-col items-center mb-8">
         <ScoreGauge score={data.score.totalScore} grade={data.score.grade} size="lg" animate={true} />
+        <div className="flex items-center gap-1.5 mt-3 text-slate-400">
+          <HelpCircle className="w-3.5 h-3.5 flex-shrink-0" />
+          <p className="text-[11px]">
+            Score based on 5 financial wellness pillars (0-900). 750+ is Excellent.
+          </p>
+        </div>
       </div>
 
       {/* 5 Pillar Breakdown */}
@@ -119,10 +125,15 @@ export default function TeaserDashboard({ data, userName, userEmail, tier = 'sta
         <div className="bg-gradient-to-br from-brand-50 to-teal-50 rounded-xl p-4 border border-brand-100">
           <div className="text-[10px] text-brand-600 font-medium uppercase tracking-wider">Net Worth</div>
           <div className="text-xl font-extrabold text-brand-800 mt-1">{formatAmount(data.netWorth)}</div>
-          {isEnhanced && data.netWorthBreakdown && (
+          {isEnhanced && data.netWorthBreakdown ? (
             <div className="mt-1.5 space-y-0.5">
               <div className="text-[10px] text-brand-600">Assets: {formatAmount(data.netWorthBreakdown.totalAssets)}</div>
               <div className="text-[10px] text-brand-600">Liabilities: {formatAmount(data.netWorthBreakdown.totalLiabilities)}</div>
+            </div>
+          ) : !isEnhanced && (
+            <div className="flex items-center gap-1 mt-2">
+              <Lock className="w-3 h-3 text-brand-400" />
+              <span className="text-[10px] text-brand-500 italic">Upgrade to see detailed net worth breakdown</span>
             </div>
           )}
         </div>
@@ -168,31 +179,48 @@ export default function TeaserDashboard({ data, userName, userEmail, tier = 'sta
         <div className="bg-white rounded-xl border border-slate-100 p-5 mb-6 shadow-sm">
           <h3 className="text-sm font-bold text-primary mb-3 flex items-center gap-2">
             <Zap className="w-4 h-4 text-amber-500" />
-            Top {maxActions} Actions for You
+            Top {Math.min(maxActions, data.actionPlan.length)} Actions for You
           </h3>
           <div className="space-y-2">
-            {data.actionPlan.slice(0, maxActions).map((item, i) => (
-              <div key={i} className="flex items-start gap-2.5">
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-bold ${
-                  item.impact === 'high' ? 'bg-red-50 text-red-600' :
-                  item.impact === 'medium' ? 'bg-amber-50 text-amber-600' :
-                  'bg-slate-50 text-slate-500'
-                }`}>
-                  {i + 1}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-slate-600">{item.action}</p>
-                  <span className={`text-[10px] font-medium ${
-                    item.impact === 'high' ? 'text-red-500' :
-                    item.impact === 'medium' ? 'text-amber-500' :
-                    'text-slate-400'
+            {data.actionPlan.slice(0, maxActions).map((item, i) => {
+              const impactLabel = item.impact === 'high' ? 'High' : item.impact === 'medium' ? 'Medium' : 'Low';
+              return (
+                <div key={i} className="flex items-start gap-2.5">
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-bold ${
+                    item.impact === 'high' ? 'bg-red-50 text-red-600' :
+                    item.impact === 'medium' ? 'bg-amber-50 text-amber-600' :
+                    'bg-slate-50 text-slate-500'
                   }`}>
-                    {item.impact.charAt(0).toUpperCase() + item.impact.slice(1)} impact &middot; {item.category}
-                  </span>
+                    {i + 1}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-slate-600">{item.action}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+                        item.impact === 'high' ? 'bg-red-50 text-red-600' :
+                        item.impact === 'medium' ? 'bg-amber-50 text-amber-600' :
+                        'bg-slate-50 text-slate-500'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          item.impact === 'high' ? 'bg-red-500' :
+                          item.impact === 'medium' ? 'bg-amber-500' :
+                          'bg-slate-400'
+                        }`} />
+                        {impactLabel} Impact
+                      </span>
+                      <span className="text-[10px] text-slate-400">&middot;</span>
+                      <span className="text-[10px] text-slate-400">{item.category}</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
+          {data.actionPlan.length > maxActions && (
+            <p className="text-xs text-brand-600 mt-3 text-center font-medium">
+              and {data.actionPlan.length - maxActions} more action{data.actionPlan.length - maxActions > 1 ? 's' : ''} in your full report
+            </p>
+          )}
         </div>
       )}
 

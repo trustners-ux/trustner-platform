@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect, type KeyboardEvent, type ClipboardEvent } from 'react';
-import { Shield, ArrowLeft, Loader2, Mail, Phone, RefreshCw } from 'lucide-react';
+import { Shield, ArrowLeft, Loader2, Mail, Phone, RefreshCw, CheckCircle2 } from 'lucide-react';
 
 interface OTPGateProps {
   onVerified: (token: string, phone: string, email: string) => void;
@@ -20,6 +20,19 @@ export function OTPGate({ onVerified }: OTPGateProps) {
   const [verifying, setVerifying] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
   const [otpChannel, setOtpChannel] = useState<'email' | 'sms+email'>('email');
+  const [otpSentSuccess, setOtpSentSuccess] = useState(false);
+
+  // ── Mask email for display (e.g. r***@t***.in) ──
+  const maskEmail = (addr: string): string => {
+    const [local, domain] = addr.split('@');
+    if (!local || !domain) return addr;
+    const dotIdx = domain.lastIndexOf('.');
+    const domainName = dotIdx > 0 ? domain.slice(0, dotIdx) : domain;
+    const tld = dotIdx > 0 ? domain.slice(dotIdx) : '';
+    const maskedLocal = local[0] + '***';
+    const maskedDomain = domainName[0] + '***' + tld;
+    return `${maskedLocal}@${maskedDomain}`;
+  };
 
   // ── Refs ──
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -90,6 +103,10 @@ export function OTPGate({ onVerified }: OTPGateProps) {
 
       // Track delivery channel (SMS or email-only)
       if (data.channel === 'sms+email') setOtpChannel('sms+email');
+
+      // Show brief success indicator before transitioning
+      setOtpSentSuccess(true);
+      setTimeout(() => setOtpSentSuccess(false), 2500);
 
       setStep('verify');
       setOtp(['', '', '', '', '', '']);
@@ -354,6 +371,14 @@ export function OTPGate({ onVerified }: OTPGateProps) {
           ) : (
             /* ── Step 2: OTP Verification ── */
             <div className="space-y-5">
+              {/* OTP sent success indicator */}
+              {otpSentSuccess && (
+                <div className="flex items-center justify-center gap-2 p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-sm animate-pulse">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  OTP sent successfully!
+                </div>
+              )}
+
               {/* Info */}
               <div className="text-center">
                 <p className="text-sm text-slate-600">
@@ -363,12 +388,12 @@ export function OTPGate({ onVerified }: OTPGateProps) {
                 </p>
                 <p className="font-semibold text-slate-800 mt-1">
                   {otpChannel === 'sms+email'
-                    ? `+91 ${phone.slice(0, 5)} ${phone.slice(5)} & ${email}`
-                    : email}
+                    ? `+91 ${phone.slice(0, 2)}****${phone.slice(8)} & ${maskEmail(email)}`
+                    : maskEmail(email)}
                 </p>
                 {otpChannel !== 'sms+email' && (
                   <p className="text-xs text-slate-400 mt-0.5">
-                    +91 {phone.slice(0, 5)} {phone.slice(5)}
+                    +91 {phone.slice(0, 2)}****{phone.slice(8)}
                   </p>
                 )}
               </div>
@@ -388,7 +413,7 @@ export function OTPGate({ onVerified }: OTPGateProps) {
                     onKeyDown={(e) => handleOtpKeyDown(index, e)}
                     onPaste={index === 0 ? handleOtpPaste : undefined}
                     onFocus={(e) => e.target.select()}
-                    className={`w-10 h-12 sm:w-11 sm:h-13 text-center text-xl font-bold border-2 rounded-lg
+                    className={`w-11 h-12 sm:w-12 sm:h-13 text-center text-xl font-bold border-2 rounded-lg
                       focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500
                       transition-all
                       ${digit
