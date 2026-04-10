@@ -21,10 +21,8 @@ function entry(
     productCreditPct: opts.productCreditPct || 100,
     channelPayoutPct: opts.channelPayoutPct || 0,
     companyMarginPct: opts.companyMarginPct || 100,
-    marginCreditFactor: opts.marginCreditFactor || 1,
     tierMultiplier: opts.tierMultiplier || 100,
     weightedAmount,
-    isFpRoute: opts.isFpRoute || false,
     policyNumber: opts.policyNumber,
     clientName: opts.clientName,
     insurer: opts.insurer,
@@ -55,7 +53,7 @@ export const SEED_BUSINESS_ENTRIES: MonthlyBusinessEntry[] = [
   entry(6, 13, 50000, 25000, { clientName: 'HNI SIPs', productCreditPct: 100, tierMultiplier: 50, status: 'approved', transactionDate: '2026-04-01' }),
   entry(6, 14, 500000, 25000, { clientName: 'Dr. Sharma', productCreditPct: 10, tierMultiplier: 50, status: 'approved', transactionDate: '2026-04-02' }),
   entry(6, 2, 75000, 75000, { clientName: 'Amit Agarwal Family', insurer: 'Niva Bupa', policyNumber: 'NB-2026-099', status: 'submitted', transactionDate: '2026-04-06', isCrossSale: true }),
-  entry(6, 1, 100000, 125000, { clientName: 'S. Bhattacharya', insurer: 'HDFC Life', policyNumber: 'HDFC-L-2026-44', productCreditPct: 125, tierMultiplier: 100, isFpRoute: true, status: 'approved', transactionDate: '2026-04-03', isCrossSale: true }),
+  entry(6, 1, 100000, 125000, { clientName: 'S. Bhattacharya', insurer: 'HDFC Life', policyNumber: 'HDFC-L-2026-44', productCreditPct: 125, tierMultiplier: 100, status: 'approved', transactionDate: '2026-04-03', isCrossSale: true }),
 
   // ─── Raju Chakraborty (CDM, POSP RM, Target: ₹10L) ───
   entry(7, 2, 200000, 60000, { clientName: 'POSP Business', channelPayoutPct: 70, companyMarginPct: 30, tierMultiplier: 100, status: 'approved', transactionDate: '2026-04-02' }),

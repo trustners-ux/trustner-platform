@@ -23,7 +23,13 @@ export async function calculateLiveIncentive(
   const employee = await getEmployeeById(employeeId);
   if (!employee || employee.monthlyTarget === 0) return null;
 
-  const entries = await getBusinessEntries({ employeeId, month: m });
+  const allEntries = await getBusinessEntries({ employeeId, month: m });
+
+  // Only count approved and submitted entries for incentive calculation
+  // Draft, rejected, and error entries must NOT count toward achievement
+  const entries = allEntries.filter(
+    e => e.status === 'approved' || e.status === 'submitted'
+  );
 
   if (entries.length === 0) {
     // Return zero calculation
@@ -40,7 +46,6 @@ export async function calculateLiveIncentive(
       applicableSlab: getSlabTable(employee),
       slabLabel: 'No Incentive',
       incentiveRate: 0,
-      slabMultiplier: 0,
       grossIncentive: 0,
       complianceFactor: 1,
       netIncentive: 0,
@@ -153,10 +158,10 @@ function generatePerformanceHistory(
     const base = 70 + ((seed + i * 13) % 60); // 70-130 range
     const pct = Math.round(base * 10) / 10;
     const status: PerformanceStatus =
-      pct >= 151 ? 'Champion' :
-      pct >= 131 ? 'Star' :
-      pct >= 80 ? 'Achiever' :
-      pct >= 1 ? 'Below Target' : 'No Incentive';
+      pct > 150 ? 'Champion' :
+      pct > 125 ? 'Star' :
+      pct > 80 ? 'Achiever' :
+      pct > 0 ? 'Below Target' : 'No Incentive';
 
     return {
       month,

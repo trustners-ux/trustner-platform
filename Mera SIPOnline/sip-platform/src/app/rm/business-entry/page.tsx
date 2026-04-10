@@ -7,7 +7,7 @@ import Image from 'next/image';
 import {
   Plus, ArrowLeft, Loader2, CheckCircle, Trash2, IndianRupee,
   Target, TrendingUp, FileText, AlertCircle, LogOut, Menu, X,
-  Calendar, Package, Building2, User, Hash, ToggleLeft, ToggleRight,
+  Calendar, Package, Building2, User, Hash,
 } from 'lucide-react';
 import { PRODUCTS } from '@/lib/mis/employee-data';
 import { formatINR } from '@/lib/mis/incentive-engine';
@@ -38,7 +38,6 @@ export default function BusinessEntryPage() {
   const [policyNumber, setPolicyNumber] = useState('');
   const [insurer, setInsurer] = useState('');
   const [channelPayoutPct, setChannelPayoutPct] = useState(0);
-  const [isFpRoute, setIsFpRoute] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -97,7 +96,6 @@ export default function BusinessEntryPage() {
           policyNumber: policyNumber || undefined,
           insurer: insurer || undefined,
           channelPayoutPct: isChannelRM ? channelPayoutPct : 0,
-          isFpRoute,
         }),
       });
 
@@ -117,7 +115,6 @@ export default function BusinessEntryPage() {
       setPolicyNumber('');
       setInsurer('');
       setChannelPayoutPct(0);
-      setIsFpRoute(false);
 
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
@@ -216,7 +213,7 @@ export default function BusinessEntryPage() {
                   </select>
                   {selectedProduct && (
                     <p className="text-[10px] text-slate-400 mt-1">
-                      Tier {selectedProduct.tier} | Credit: {selectedProduct.creditPct}% | Multiplier: {selectedProduct.tier === 1 ? '100%' : selectedProduct.tier === 2 ? '75%' : '50%'}
+                      Tier {selectedProduct.tier} | Credit: {selectedProduct.creditPct}% | Multiplier: {selectedProduct.tier === 1 ? '100%' : selectedProduct.tier === 2 ? '75%' : selectedProduct.tier === 3 ? '50%' : '25%'}
                     </p>
                   )}
                 </div>
@@ -304,21 +301,6 @@ export default function BusinessEntryPage() {
                   </div>
                 )}
 
-                {/* FP Route Toggle */}
-                <div className="flex items-center justify-between p-3 bg-purple-50/50 rounded-lg border border-purple-100">
-                  <div>
-                    <p className="text-xs font-medium text-purple-700">FP Route (125% bonus)</p>
-                    <p className="text-[10px] text-purple-500">Complete Financial Plan done?</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsFpRoute(!isFpRoute)}
-                    className="text-purple-600"
-                  >
-                    {isFpRoute ? <ToggleRight className="w-7 h-7" /> : <ToggleLeft className="w-7 h-7 text-slate-300" />}
-                  </button>
-                </div>
-
                 <button
                   type="submit"
                   disabled={saving || !productId || !rawAmount}
@@ -373,7 +355,7 @@ export default function BusinessEntryPage() {
                             <td className="px-3 py-2.5">
                               <p className="text-xs font-medium text-slate-700">{product?.productName || '—'}</p>
                               <p className="text-[10px] text-slate-400">
-                                Tier {product?.tier} | {entry.isFpRoute ? 'FP Route' : 'Standard'}
+                                Tier {product?.tier}
                               </p>
                             </td>
                             <td className="px-3 py-2.5 text-xs text-slate-600">{entry.clientName || '—'}</td>

@@ -782,7 +782,7 @@ export default function MISPage() {
                   Product Credit Rules &amp; Tier Classification
                 </h3>
                 <p className="text-xs text-slate-400 mt-1">
-                  Every product is classified into 3 tiers based on the company&apos;s commission rate. Tier determines credit multiplier (100%/75%/50%).
+                  Every product is classified into 4 tiers based on the company&apos;s commission rate. Tier determines credit multiplier (100%/75%/50%/25%).
                 </p>
               </div>
               {isAdmin(userRole) && (
@@ -1275,15 +1275,14 @@ function SlabRowEditable({ slab, isEditing, canEdit: canEditSlab, isSuperAdmin: 
     achievementMin: slab.achievementMin,
     achievementMax: slab.achievementMax,
     incentiveRate: slab.incentiveRate,
-    multiplier: slab.multiplier,
     slabLabel: slab.slabLabel,
   });
 
   const slabColor = slab.incentiveRate === 0 ? 'text-red-600'
-    : slab.multiplier <= 1 ? 'text-yellow-700'
-    : slab.multiplier <= 1.25 ? 'text-blue-600'
-    : slab.multiplier <= 1.5 ? 'text-emerald-600'
-    : slab.multiplier <= 1.75 ? 'text-purple-600'
+    : slab.incentiveRate <= 2 ? 'text-yellow-700'
+    : slab.incentiveRate <= 4 ? 'text-blue-600'
+    : slab.incentiveRate <= 5 ? 'text-emerald-600'
+    : slab.incentiveRate <= 6 ? 'text-purple-600'
     : 'text-amber-600';
 
   if (isEditing) {
@@ -1298,9 +1297,6 @@ function SlabRowEditable({ slab, isEditing, canEdit: canEditSlab, isSuperAdmin: 
         </td>
         <td className="px-3 py-2">
           <input className="w-14 px-1 py-0.5 text-xs border border-slate-300 rounded" type="number" step="0.1" value={form.incentiveRate} onChange={e => setForm(p => ({ ...p, incentiveRate: Number(e.target.value) }))} />
-        </td>
-        <td className="px-3 py-2">
-          <input className="w-14 px-1 py-0.5 text-xs border border-slate-300 rounded" type="number" step="0.25" value={form.multiplier} onChange={e => setForm(p => ({ ...p, multiplier: Number(e.target.value) }))} />
         </td>
         <td className="px-3 py-2">
           <input className="w-28 px-1 py-0.5 text-xs border border-slate-300 rounded" value={form.slabLabel} onChange={e => setForm(p => ({ ...p, slabLabel: e.target.value }))} />
@@ -1326,7 +1322,6 @@ function SlabRowEditable({ slab, isEditing, canEdit: canEditSlab, isSuperAdmin: 
         {slab.achievementMin}%{slab.achievementMax ? `\u2013${slab.achievementMax}%` : '+'}
       </td>
       <td className={`px-3 py-2 text-xs font-bold ${slabColor}`}>{slab.incentiveRate}%</td>
-      <td className="px-3 py-2 text-xs font-medium text-slate-600">{slab.multiplier}\u00d7</td>
       <td className="px-3 py-2 text-xs font-semibold text-slate-700">{slab.slabLabel}</td>
       <td className="px-3 py-2">
         <span className="text-[10px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{slab.effectiveFrom}</span>
@@ -1359,7 +1354,6 @@ function SlabFormModal({ onClose, onSubmit, submitting }: {
     achievementMin: 0,
     achievementMax: 80 as number | null,
     incentiveRate: 0,
-    multiplier: 0,
     slabLabel: '',
     effectiveFrom: new Date().toISOString().split('T')[0],
     effectiveTo: null as string | null,
@@ -1393,8 +1387,8 @@ function SlabFormModal({ onClose, onSubmit, submitting }: {
           <Field label="Incentive Rate (%)">
             <input className={inputCls} type="number" step="0.1" value={form.incentiveRate} onChange={e => update('incentiveRate', Number(e.target.value))} />
           </Field>
-          <Field label="Multiplier">
-            <input className={inputCls} type="number" step="0.25" value={form.multiplier} onChange={e => update('multiplier', Number(e.target.value))} />
+          <Field label="Slab Label">
+            <input className={inputCls} value={form.slabLabel} onChange={e => update('slabLabel', e.target.value)} placeholder="e.g. Base 4%" />
           </Field>
         </div>
         <div className="grid grid-cols-2 gap-4">

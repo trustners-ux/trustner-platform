@@ -233,7 +233,6 @@ export async function POST(request: NextRequest) {
         channelId: body.channelId,
         rawAmount: body.rawAmount,
         channelPayoutPct: body.channelPayoutPct || 0,
-        isFpRoute: body.isFpRoute || false,
         policyNumber: body.policyNumber,
         clientName: body.clientName,
         clientPan: body.clientPan,

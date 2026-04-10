@@ -144,8 +144,8 @@ export default function PerformancePage() {
             <p>SIP Clawback    = -{formatINR(calc.sipClawbackDebit)}</p>
             <p>Net Business    = {formatINR(calc.netWeightedBusiness)}</p>
             <p>Achievement     = {calc.netWeightedBusiness} / {calc.monthlyTarget} = <span className="text-cyan-400">{calc.achievementPct}%</span></p>
-            <p>Slab            = {calc.slabLabel} ({calc.incentiveRate}% x {calc.slabMultiplier}x)</p>
-            <p>Gross Incentive = {formatINR(calc.netWeightedBusiness)} x {calc.incentiveRate}% x {calc.slabMultiplier} = {formatINR(calc.grossIncentive)}</p>
+            <p>Slab            = {calc.slabLabel} ({calc.incentiveRate}%)</p>
+            <p>Gross Incentive = {formatINR(calc.netWeightedBusiness)} x {calc.incentiveRate}% = {formatINR(calc.grossIncentive)}</p>
             <p>Compliance      = x {calc.complianceFactor}</p>
             <p className="text-amber-400 font-bold">Net Incentive   = {formatINR(calc.netIncentive)}</p>
             {calc.trailIncome > 0 && <p>+ Trail Income  = {formatINR(calc.trailIncome)}</p>}

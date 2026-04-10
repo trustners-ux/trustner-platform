@@ -12,7 +12,6 @@ export interface IncentiveSlabRow {
   achievementMin: number;
   achievementMax: number | null;
   incentiveRate: number;
-  multiplier: number;
   slabLabel: string;
   effectiveFrom: string;
   effectiveTo: string | null;
@@ -27,7 +26,6 @@ function mapRow(row: Record<string, unknown>): IncentiveSlabRow {
     achievementMin: Number(row.achievement_min) || 0,
     achievementMax: row.achievement_max != null ? Number(row.achievement_max) : null,
     incentiveRate: Number(row.incentive_rate) || 0,
-    multiplier: Number(row.multiplier) || 0,
     slabLabel: (row.slab_label as string) || '',
     effectiveFrom: (row.effective_from as string) || new Date().toISOString().split('T')[0],
     effectiveTo: (row.effective_to as string) || null,
@@ -43,7 +41,6 @@ function localSlabToRow(slab: IncentiveSlab, index: number): IncentiveSlabRow {
     achievementMin: slab.achievementMin,
     achievementMax: slab.achievementMax,
     incentiveRate: slab.incentiveRate,
-    multiplier: slab.multiplier,
     slabLabel: slab.slabLabel,
     effectiveFrom: new Date().toISOString().split('T')[0],
     effectiveTo: null,
@@ -115,7 +112,6 @@ export async function updateSlab(
   if (updates.achievementMin !== undefined) dbUpdates.achievement_min = updates.achievementMin;
   if (updates.achievementMax !== undefined) dbUpdates.achievement_max = updates.achievementMax;
   if (updates.incentiveRate !== undefined) dbUpdates.incentive_rate = updates.incentiveRate;
-  if (updates.multiplier !== undefined) dbUpdates.multiplier = updates.multiplier;
   if (updates.slabLabel !== undefined) dbUpdates.slab_label = updates.slabLabel;
   if (updates.effectiveFrom !== undefined) dbUpdates.effective_from = updates.effectiveFrom;
   if (updates.effectiveTo !== undefined) dbUpdates.effective_to = updates.effectiveTo;
@@ -164,7 +160,6 @@ export async function insertSlab(
     achievement_min: data.achievementMin,
     achievement_max: data.achievementMax,
     incentive_rate: data.incentiveRate,
-    multiplier: data.multiplier,
     slab_label: data.slabLabel,
     effective_from: data.effectiveFrom,
     effective_to: data.effectiveTo,

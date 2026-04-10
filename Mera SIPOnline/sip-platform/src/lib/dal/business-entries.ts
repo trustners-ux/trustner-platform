@@ -20,7 +20,6 @@ export interface BusinessEntryInput {
   channelId?: number;
   rawAmount: number;
   channelPayoutPct?: number;
-  isFpRoute?: boolean;
   policyNumber?: string;
   clientName?: string;
   clientPan?: string;
@@ -173,10 +172,8 @@ function mapRow(row: Record<string, unknown>): MonthlyBusinessEntry {
     productCreditPct: Number(row.product_credit_pct) || 0,
     channelPayoutPct: Number(row.channel_payout_pct) || 0,
     companyMarginPct: Number(row.company_margin_pct) || 100,
-    marginCreditFactor: row.channel_payout_pct ? (100 - Number(row.channel_payout_pct)) / 100 : 1,
     tierMultiplier: Number(row.tier_multiplier) || 100,
     weightedAmount: Number(row.weighted_amount) || 0,
-    isFpRoute: row.is_fp_route as boolean || false,
     policyNumber: row.policy_number as string | undefined,
     clientName: row.client_name as string | undefined,
     insurer: row.insurer as string | undefined,
@@ -402,7 +399,6 @@ export async function createBusinessEntry(
     productCreditPct,
     channelPayoutPct,
     tierMultiplier,
-    isFpRoute: input.isFpRoute || false,
   });
 
   // Default transactionDate to today if not provided
@@ -419,10 +415,8 @@ export async function createBusinessEntry(
       productCreditPct,
       channelPayoutPct,
       companyMarginPct: 100 - channelPayoutPct,
-      marginCreditFactor: channelPayoutPct > 0 ? (100 - channelPayoutPct) / 100 : 1,
       tierMultiplier,
       weightedAmount,
-      isFpRoute: input.isFpRoute || false,
       policyNumber: input.policyNumber,
       clientName: input.clientName,
       insurer: input.insurer,
@@ -462,7 +456,6 @@ export async function createBusinessEntry(
       company_margin_pct: 100 - channelPayoutPct,
       tier_multiplier: tierMultiplier,
       weighted_amount: weightedAmount,
-      is_fp_route: input.isFpRoute || false,
       policy_number: input.policyNumber || null,
       client_name: input.clientName || null,
       client_pan: input.clientPan || null,
@@ -517,14 +510,12 @@ export async function updateBusinessEntry(
       const rawAmount = updates.rawAmount ?? old.rawAmount;
       const channelPayoutPct = updates.channelPayoutPct ?? old.channelPayoutPct;
       const tierMultiplier = getTierMultiplier(product.tier);
-      const isFpRoute = updates.isFpRoute ?? old.isFpRoute;
 
       const weightedAmount = calculateWeightedBusiness({
         rawAmount,
         productCreditPct: product.creditPct,
         channelPayoutPct,
         tierMultiplier,
-        isFpRoute,
       });
 
       localEntries[idx] = {
@@ -535,7 +526,6 @@ export async function updateBusinessEntry(
         channelPayoutPct,
         tierMultiplier,
         weightedAmount,
-        isFpRoute,
       } as MonthlyBusinessEntry;
     } else {
       localEntries[idx] = { ...old, ...updates } as MonthlyBusinessEntry;
@@ -572,14 +562,12 @@ export async function updateBusinessEntry(
     const rawAmount = updates.rawAmount ?? Number(oldData.raw_amount);
     const channelPayoutPct = updates.channelPayoutPct ?? Number(oldData.channel_payout_pct);
     const tierMultiplier = getTierMultiplier(product.tier);
-    const isFpRoute = updates.isFpRoute ?? oldData.is_fp_route;
 
     const weightedAmount = calculateWeightedBusiness({
       rawAmount,
       productCreditPct: product.creditPct,
       channelPayoutPct,
       tierMultiplier,
-      isFpRoute,
     });
 
     dbUpdates.raw_amount = rawAmount;
@@ -589,7 +577,6 @@ export async function updateBusinessEntry(
     dbUpdates.company_margin_pct = 100 - channelPayoutPct;
     dbUpdates.tier_multiplier = tierMultiplier;
     dbUpdates.weighted_amount = weightedAmount;
-    dbUpdates.is_fp_route = isFpRoute;
   }
 
   if (updates.clientName !== undefined) dbUpdates.client_name = updates.clientName;
@@ -746,7 +733,11 @@ export async function getMonthlyBusinessSummary(
   entryCount: number;
   byProduct: { productId: number; rawAmount: number; weightedAmount: number }[];
 }> {
-  const entries = await getMyMonthEntries(employeeId, month);
+  const allEntries = await getMyMonthEntries(employeeId, month);
+  // Only count approved and submitted entries in business summary
+  const entries = allEntries.filter(
+    e => e.status === 'approved' || e.status === 'submitted'
+  );
 
   const byProduct = new Map<number, { rawAmount: number; weightedAmount: number }>();
   let totalRaw = 0;

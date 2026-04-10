@@ -5,14 +5,17 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, GraduationCap, BarChart3, FileText, LogOut,
+  IndianRupee, TrendingUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
 const TABS = [
   { label: 'Dashboard', href: '/rm', icon: LayoutDashboard, exact: true },
-  { label: 'MF Gyan', href: '/rm/learn', icon: GraduationCap },
   { label: 'Performance', href: '/rm/performance', icon: BarChart3 },
+  { label: 'My Payouts', href: '/rm/payouts', icon: IndianRupee },
+  { label: 'Trail Income', href: '/rm/trails', icon: TrendingUp },
   { label: 'Log Business', href: '/rm/business-entry', icon: FileText },
+  { label: 'MF Gyan', href: '/rm/learn', icon: GraduationCap },
 ];
 
 function isActive(pathname: string, href: string, exact?: boolean) {

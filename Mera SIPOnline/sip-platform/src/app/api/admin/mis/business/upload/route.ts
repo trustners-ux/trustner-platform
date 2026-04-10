@@ -213,7 +213,6 @@ export async function PUT(request: NextRequest) {
             productId: row.productId,
             rawAmount: row.amount,
             channelPayoutPct: row.channelPayoutPct || 0,
-            isFpRoute: row.fpRoute || false,
             policyNumber: row.policyNumber,
             clientName: row.clientName,
             insurer: row.insurer,

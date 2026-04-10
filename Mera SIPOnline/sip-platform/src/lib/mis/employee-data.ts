@@ -68,8 +68,13 @@ export const PRODUCTS: Product[] = [
   { id: 14, productName: 'MF Lumpsum Equity', productCategory: 'MF', tier: 3, commissionRange: '<15%', creditPct: 10, referralCreditPct: 0, isMotor: false },
   { id: 15, productName: 'MF Lumpsum Debt', productCategory: 'MF', tier: 3, commissionRange: '<15%', creditPct: 7.5, referralCreditPct: 0, isMotor: false },
   { id: 16, productName: 'GI Motor TP Only', productCategory: 'GI Motor', tier: 3, commissionRange: '<15%', creditPct: 100, referralCreditPct: 0, isMotor: true },
-  { id: 17, productName: 'GI GMC/GPA', productCategory: 'GI Non-Motor', tier: 3, commissionRange: '<15%', creditPct: 20, referralCreditPct: 0, isMotor: false },
+  { id: 17, productName: 'GI GMC/GPA', productCategory: 'GI Non-Motor', tier: 4, commissionRange: '≤7.5%', creditPct: 20, referralCreditPct: 0, isMotor: false },
   { id: 18, productName: 'MF Debt→Equity via STP', productCategory: 'MF', tier: 3, commissionRange: '<15%', creditPct: 10, referralCreditPct: 0, isMotor: false },
+
+  // Tier 4 (≤7.5%, 25% weightage)
+  { id: 19, productName: 'Group Term Life', productCategory: 'Life', tier: 4, commissionRange: '≤7.5%', creditPct: 100, referralCreditPct: 0, isMotor: false, notes: 'Group policies — lowest weightage' },
+  { id: 20, productName: 'Group Mediclaim (GMC)', productCategory: 'Health', tier: 4, commissionRange: '≤7.5%', creditPct: 100, referralCreditPct: 0, isMotor: false },
+  { id: 21, productName: 'Group Personal Accident (GPA)', productCategory: 'GI Non-Motor', tier: 4, commissionRange: '≤7.5%', creditPct: 100, referralCreditPct: 0, isMotor: false },
 ];
 
 // Tier multiplier lookup
@@ -78,5 +83,6 @@ export function getTierMultiplier(tier: ProductTier): number {
     case 1: return 100;
     case 2: return 75;
     case 3: return 50;
+    case 4: return 25;
   }
 }

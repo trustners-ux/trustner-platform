@@ -24,7 +24,7 @@ export interface ProductFilters {
   isActive?: boolean;
 }
 
-// ─── Local seed data (from types.ts PRODUCT_CREDIT_RULES) ───
+// ─── Local seed data (from types.ts PRODUCT_WEIGHTAGE_RULES) ───
 const LOCAL_PRODUCTS: ProductRow[] = [
   { id: 1, productName: 'MF SIP (Monthly)', productCategory: 'MF', tier: 1, commissionRange: '0.5-1.0%', creditPct: 100, referralCreditPct: 0, isMotor: false, notes: null, isActive: true, createdAt: '2026-01-01' },
   { id: 2, productName: 'MF Lumpsum - Equity', productCategory: 'MF', tier: 2, commissionRange: '0.3-0.8%', creditPct: 10, referralCreditPct: 0, isMotor: false, notes: null, isActive: true, createdAt: '2026-01-01' },

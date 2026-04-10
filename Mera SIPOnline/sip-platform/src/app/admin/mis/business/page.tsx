@@ -361,7 +361,6 @@ export default function AdminBusinessPage() {
   const [policyNumber, setPolicyNumber] = useState('');
   const [insurer, setInsurer] = useState('');
   const [channelPayoutPct, setChannelPayoutPct] = useState(0);
-  const [isFpRoute, setIsFpRoute] = useState(false);
   const [isCrossSale, setIsCrossSale] = useState(false);
   const [isBusinessLoss, setIsBusinessLoss] = useState(false);
   const [lossReason, setLossReason] = useState('');
@@ -501,8 +500,6 @@ export default function AdminBusinessPage() {
       result = result.filter(e => e.isCrossSale);
     } else if (specialFlag === 'business_loss') {
       result = result.filter(e => e.isBusinessLoss);
-    } else if (specialFlag === 'fp_route') {
-      result = result.filter(e => e.isFpRoute);
     }
     if (employeeFilter) {
       result = result.filter(e => e.employeeId === employeeFilter);
@@ -837,7 +834,7 @@ export default function AdminBusinessPage() {
 
   // Export CSV
   const handleExportCSV = useCallback(() => {
-    const headers = ['#', 'Employee', 'Employee Code', 'Product', 'Category', 'Client', 'Insurer', 'Policy No', 'Raw Amount', 'Weighted Amount', 'Credit %', 'Status', 'Cross Sale', 'Business Loss', 'FP Route', 'Transaction Date'];
+    const headers = ['#', 'Employee', 'Employee Code', 'Product', 'Category', 'Client', 'Insurer', 'Policy No', 'Raw Amount', 'Weighted Amount', 'Credit %', 'Status', 'Cross Sale', 'Business Loss', 'Transaction Date'];
     const rows = sortedEntries.map((entry, i) => {
       const product = PRODUCTS.find(p => p.id === entry.productId);
       const emp = employees.find(e => e.id === entry.employeeId);
@@ -856,7 +853,6 @@ export default function AdminBusinessPage() {
         entry.status || 'draft',
         entry.isCrossSale ? 'Yes' : 'No',
         entry.isBusinessLoss ? 'Yes' : 'No',
-        entry.isFpRoute ? 'Yes' : 'No',
         entry.transactionDate || '',
       ];
     });
@@ -926,7 +922,6 @@ export default function AdminBusinessPage() {
           policyNumber: policyNumber || undefined,
           insurer: insurer || undefined,
           channelPayoutPct: isChannelRM ? channelPayoutPct : 0,
-          isFpRoute,
           isCrossSale,
           isBusinessLoss,
           lossReason: isBusinessLoss ? lossReason : undefined,
@@ -950,7 +945,6 @@ export default function AdminBusinessPage() {
       setPolicyNumber('');
       setInsurer('');
       setChannelPayoutPct(0);
-      setIsFpRoute(false);
       setIsCrossSale(false);
       setIsBusinessLoss(false);
       setLossReason('');
@@ -1892,9 +1886,6 @@ export default function AdminBusinessPage() {
                             {entry.isBusinessLoss && (
                               <span className="px-1 py-0.5 text-[8px] font-bold rounded bg-red-100 text-red-600 border border-red-200" title="Business Loss">BL</span>
                             )}
-                            {entry.isFpRoute && (
-                              <span className="px-1 py-0.5 text-[8px] font-bold rounded bg-purple-100 text-purple-600 border border-purple-200" title="FP Route">FP</span>
-                            )}
                           </div>
                         </td>
                         <td className="px-3 py-2.5">
@@ -2220,21 +2211,6 @@ export default function AdminBusinessPage() {
               </select>
             </div>
           )}
-
-          {/* FP Route Toggle */}
-          <div className="flex items-center justify-between p-3 bg-purple-50/50 rounded-lg border border-purple-100">
-            <div>
-              <p className="text-xs font-medium text-purple-700">FP Route (125% bonus)</p>
-              <p className="text-[10px] text-purple-500">Complete Financial Plan done?</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsFpRoute(!isFpRoute)}
-              className="text-purple-600"
-            >
-              {isFpRoute ? <ToggleRight className="w-7 h-7" /> : <ToggleLeft className="w-7 h-7 text-slate-300" />}
-            </button>
-          </div>
 
           {/* Cross Sale Toggle */}
           <div className="flex items-center justify-between p-3 bg-blue-50/50 rounded-lg border border-blue-100">

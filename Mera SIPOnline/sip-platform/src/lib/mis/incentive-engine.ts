@@ -10,6 +10,9 @@ import {
   SlabTable,
   DST_SLABS,
   POSP_RM_SLABS,
+  POSPCategory,
+  PartnerType,
+  PARTNER_CODE_PREFIX,
 } from './types';
 
 /**
@@ -19,16 +22,10 @@ export function calculateWeightedBusiness(entry: {
   rawAmount: number;
   productCreditPct: number;
   channelPayoutPct: number;
-  tierMultiplier: number; // 100, 75, or 50
-  isFpRoute: boolean;
+  tierMultiplier: number; // 100, 75, 50, or 25
 }): number {
-  // Step 2: Apply Product Credit %
+  // Step 2: Apply Product Weightage %
   let weighted = entry.rawAmount * (entry.productCreditPct / 100);
-
-  // FP Route gets 125% credit bonus
-  if (entry.isFpRoute) {
-    weighted *= 1.25;
-  }
 
   // Step 4: Apply Channel Margin Credit (for non-direct business)
   if (entry.channelPayoutPct > 0) {
@@ -80,7 +77,7 @@ export function calculateIncentive(
   slab: IncentiveSlab
 ): number {
   if (slab.incentiveRate === 0) return 0;
-  const amount = netWeightedBusiness * (slab.incentiveRate / 100) * slab.multiplier;
+  const amount = netWeightedBusiness * (slab.incentiveRate / 100);
   return Math.round(amount * 100) / 100;
 }
 
@@ -107,10 +104,10 @@ export function getSlabTable(employee: Employee): SlabTable {
  * Determine performance status
  */
 export function getPerformanceStatus(achievementPct: number): PerformanceStatus {
-  if (achievementPct >= 151) return 'Champion';
-  if (achievementPct >= 131) return 'Star';
-  if (achievementPct >= 80) return 'Achiever';
-  if (achievementPct >= 1) return 'Below Target';
+  if (achievementPct > 150) return 'Champion';
+  if (achievementPct > 125) return 'Star';
+  if (achievementPct > 80) return 'Achiever';
+  if (achievementPct > 0) return 'Below Target';
   return 'No Incentive';
 }
 
@@ -205,7 +202,6 @@ export function calculateMonthlyIncentive(
     applicableSlab: slabTable,
     slabLabel: slab.slabLabel,
     incentiveRate: slab.incentiveRate,
-    slabMultiplier: slab.multiplier,
     grossIncentive,
     complianceFactor,
     netIncentive,
@@ -232,16 +228,16 @@ export function adjustTargetForMargin(
 }
 
 /**
- * POSP RM Credit Calculation (Section 1.5)
- * RM Credit % = 100% − Channel Payout %
+ * POSP RM Weightage Calculation (Section 1.5)
+ * RM Weightage % = 100% − Channel Payout %
  */
 export function calculateRmCredit(
   rawBusiness: number,
   channelPayoutPct: number,
-  tierMultiplier: number // 100, 75, or 50
+  tierMultiplier: number // 100, 75, 50, or 25
 ): number {
-  const rmCreditPct = 100 - channelPayoutPct;
-  return Math.round(rawBusiness * (rmCreditPct / 100) * (tierMultiplier / 100) * 100) / 100;
+  const rmWeightagePct = 100 - channelPayoutPct;
+  return Math.round(rawBusiness * (rmWeightagePct / 100) * (tierMultiplier / 100) * 100) / 100;
 }
 
 /**
@@ -255,4 +251,74 @@ export function formatINR(amount: number): string {
     return `₹${(amount / 100000).toFixed(2)} L`;
   }
   return `₹${amount.toLocaleString('en-IN')}`;
+}
+
+/**
+ * Calculate Franchise Differential Payout
+ * Franchise earns the difference between their agreement % and the POSP category %
+ * Formula: Franchise Payout = (Franchise Agreement % − POSP Category %) × Commission
+ */
+export function calculateFranchiseDifferential(
+  commissionAmount: number,
+  franchiseAgreementPct: number,
+  pospCategoryPct: number
+): {
+  pospPayout: number;
+  franchisePayout: number;
+  companyRetention: number;
+  franchiseDifferentialPct: number;
+  companyRetentionPct: number;
+} {
+  const pospPayout = Math.round(commissionAmount * (pospCategoryPct / 100) * 100) / 100;
+  const franchiseDifferentialPct = Math.max(0, franchiseAgreementPct - pospCategoryPct);
+  const franchisePayout = Math.round(commissionAmount * (franchiseDifferentialPct / 100) * 100) / 100;
+  const companyRetentionPct = 100 - franchiseAgreementPct;
+  const companyRetention = Math.round(commissionAmount * (companyRetentionPct / 100) * 100) / 100;
+
+  return {
+    pospPayout,
+    franchisePayout,
+    companyRetention,
+    franchiseDifferentialPct,
+    companyRetentionPct,
+  };
+}
+
+/**
+ * Calculate payout for self-sourced business by Franchise (no POSP involved)
+ */
+export function calculateFranchiseSelfSourced(
+  commissionAmount: number,
+  franchiseAgreementPct: number
+): {
+  franchisePayout: number;
+  companyRetention: number;
+} {
+  const franchisePayout = Math.round(commissionAmount * (franchiseAgreementPct / 100) * 100) / 100;
+  const companyRetention = commissionAmount - franchisePayout;
+  return { franchisePayout, companyRetention: Math.round(companyRetention * 100) / 100 };
+}
+
+/**
+ * Get POSP category payout percentage
+ */
+export function getPOSPCategoryPct(category: POSPCategory): number {
+  const CATEGORY_PCT: Record<POSPCategory, number> = {
+    'A': 50, 'B': 55, 'C': 60, 'D': 65, 'D+': 70,
+    'E': 75, 'E+': 80, 'F1': 85, 'F2': 90,
+  };
+  return CATEGORY_PCT[category] ?? 50;
+}
+
+/**
+ * Generate partner code
+ */
+export function generatePartnerCode(
+  type: PartnerType,
+  serialNumber: number,
+  financialYear: string = '2526'
+): string {
+  const prefix = PARTNER_CODE_PREFIX[type];
+  const serial = String(serialNumber).padStart(3, '0');
+  return `${prefix}/${serial}/${financialYear}`;
 }
