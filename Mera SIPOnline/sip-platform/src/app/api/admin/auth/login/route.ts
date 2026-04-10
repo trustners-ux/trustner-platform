@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { findUserByEmailFromBlob } from '@/lib/admin/admin-user-store';
 import { signToken, COOKIE_NAME } from '@/lib/auth/jwt';
+import { writeAuditLog } from '@/lib/dal/audit';
 
 export async function POST(request: Request) {
   try {
@@ -38,6 +39,14 @@ export async function POST(request: Request) {
       sameSite: 'lax',
       maxAge: 60 * 60 * 24, // 24 hours
       path: '/',
+    });
+
+    // Audit log — SEBI/IRDAI compliance
+    await writeAuditLog({
+      tableName: 'users',
+      action: 'LOGIN',
+      changedBy: user.email,
+      newValues: { loginType: 'admin', role: user.role },
     });
 
     return response;

@@ -5,7 +5,8 @@ import {
   BarChart3, Users, TrendingUp, Target, IndianRupee, Award,
   Building2, Shield, ChevronDown, Search, ArrowUpRight, ArrowDownRight,
   Briefcase, Clock, AlertTriangle, CheckCircle, Star, Zap,
-  Plus, Edit3, XCircle, Save, X, Loader2, UserPlus, Trash2, Layers
+  Plus, Edit3, XCircle, Save, X, Loader2, UserPlus, Trash2, Layers,
+  Upload, Download, FileSpreadsheet, ShieldCheck, ArrowRight
 } from 'lucide-react';
 import { formatINR } from '@/lib/mis/incentive-engine';
 import type { Employee, Product, IncentiveSlab, SlabTable } from '@/lib/mis/types';
@@ -107,9 +108,9 @@ const btnSecondary = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-
 const btnDanger = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors';
 
 // ─── Employee Row ───
-function EmployeeRow({ emp, rank, canEditRow, onEdit, onDeactivate }: {
+function EmployeeRow({ emp, rank, canEditRow, onEdit, onDeactivate, onRoleChange }: {
   emp: Employee; rank: number; canEditRow: boolean;
-  onEdit: (emp: Employee) => void; onDeactivate: (emp: Employee) => void;
+  onEdit: (emp: Employee) => void; onDeactivate: (emp: Employee) => void; onRoleChange?: (emp: Employee) => void;
 }) {
   const segmentColor: Record<string, string> = {
     'Direct Sales': 'bg-blue-100 text-blue-700',
@@ -167,6 +168,11 @@ function EmployeeRow({ emp, rank, canEditRow, onEdit, onDeactivate }: {
             <button onClick={() => onEdit(emp)} className="p-1 rounded hover:bg-blue-50 text-blue-600" title="Edit">
               <Edit3 className="w-3.5 h-3.5" />
             </button>
+            {onRoleChange && (
+              <button onClick={() => onRoleChange(emp)} className="p-1 rounded hover:bg-purple-50 text-purple-600" title="Change Role">
+                <ShieldCheck className="w-3.5 h-3.5" />
+              </button>
+            )}
             {emp.isActive && (
               <button onClick={() => onDeactivate(emp)} className="p-1 rounded hover:bg-red-50 text-red-500" title="Deactivate">
                 <XCircle className="w-3.5 h-3.5" />
@@ -211,6 +217,8 @@ export default function MISPage() {
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const [showAddSlab, setShowAddSlab] = useState(false);
   const [editingSlabId, setEditingSlabId] = useState<number | null>(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showRoleModal, setShowRoleModal] = useState<Employee | null>(null);
 
   // ─── Toast ───
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -658,6 +666,22 @@ export default function MISPage() {
               submitting={submitting}
             />
           )}
+          {/* Upload CSV Modal */}
+          {showUploadModal && (
+            <EmployeeUploadModal
+              onClose={() => setShowUploadModal(false)}
+              onSuccess={() => { setShowUploadModal(false); fetchEmployees(); showToast('Employees uploaded successfully'); }}
+            />
+          )}
+          {/* Role Change Modal */}
+          {showRoleModal && (
+            <RoleChangeModal
+              employee={showRoleModal}
+              userRole={userRole}
+              onClose={() => setShowRoleModal(null)}
+              onSuccess={(msg) => { setShowRoleModal(null); showToast(msg); }}
+            />
+          )}
           {/* Edit Employee Modal */}
           {editingEmployee && (
             <EmployeeFormModal
@@ -703,9 +727,14 @@ export default function MISPage() {
                 {filteredEmployees.length} of {employees.length} employees
               </span>
               {canEdit(userRole) && (
-                <button onClick={() => setShowAddEmployee(true)} className={btnPrimary}>
-                  <UserPlus className="w-4 h-4" /> Add Employee
-                </button>
+                <>
+                  <button onClick={() => setShowUploadModal(true)} className={btnSecondary}>
+                    <Upload className="w-4 h-4" /> Upload CSV
+                  </button>
+                  <button onClick={() => setShowAddEmployee(true)} className={btnPrimary}>
+                    <UserPlus className="w-4 h-4" /> Add Employee
+                  </button>
+                </>
               )}
             </div>
 
@@ -741,6 +770,7 @@ export default function MISPage() {
                         canEditRow={canEdit(userRole)}
                         onEdit={(e) => setEditingEmployee(e)}
                         onDeactivate={handleDeactivateEmployee}
+                        onRoleChange={canEdit(userRole) ? (e) => setShowRoleModal(e) : undefined}
                       />
                     ))}
                   </tbody>
@@ -888,7 +918,6 @@ export default function MISPage() {
                       <tr className="bg-slate-50 border-b border-slate-200">
                         <th className="px-3 py-2 text-left text-[10px] font-bold text-slate-400 uppercase">Achievement Range</th>
                         <th className="px-3 py-2 text-left text-[10px] font-bold text-slate-400 uppercase">Rate</th>
-                        <th className="px-3 py-2 text-left text-[10px] font-bold text-slate-400 uppercase">Multiplier</th>
                         <th className="px-3 py-2 text-left text-[10px] font-bold text-slate-400 uppercase">Label</th>
                         <th className="px-3 py-2 text-left text-[10px] font-bold text-slate-400 uppercase">Effective</th>
                         {isAdmin(userRole) && (
@@ -930,7 +959,6 @@ export default function MISPage() {
                       <tr className="bg-slate-50 border-b border-slate-200">
                         <th className="px-3 py-2 text-left text-[10px] font-bold text-slate-400 uppercase">Achievement Range</th>
                         <th className="px-3 py-2 text-left text-[10px] font-bold text-slate-400 uppercase">Rate</th>
-                        <th className="px-3 py-2 text-left text-[10px] font-bold text-slate-400 uppercase">Multiplier</th>
                         <th className="px-3 py-2 text-left text-[10px] font-bold text-slate-400 uppercase">Label</th>
                         <th className="px-3 py-2 text-left text-[10px] font-bold text-slate-400 uppercase">Effective</th>
                         {isAdmin(userRole) && (
@@ -1372,7 +1400,7 @@ function SlabFormModal({ onClose, onSubmit, submitting }: {
             </select>
           </Field>
           <Field label="Slab Label">
-            <input className={inputCls} value={form.slabLabel} onChange={e => update('slabLabel', e.target.value)} placeholder="e.g. Base 4%" />
+            <input className={inputCls} value={form.slabLabel} onChange={e => update('slabLabel', e.target.value)} placeholder="e.g. Base" />
           </Field>
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -1388,7 +1416,7 @@ function SlabFormModal({ onClose, onSubmit, submitting }: {
             <input className={inputCls} type="number" step="0.1" value={form.incentiveRate} onChange={e => update('incentiveRate', Number(e.target.value))} />
           </Field>
           <Field label="Slab Label">
-            <input className={inputCls} value={form.slabLabel} onChange={e => update('slabLabel', e.target.value)} placeholder="e.g. Base 4%" />
+            <input className={inputCls} value={form.slabLabel} onChange={e => update('slabLabel', e.target.value)} placeholder="e.g. Base" />
           </Field>
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -1597,5 +1625,253 @@ function IncentiveSimulator({ employees }: { employees: Employee[] }) {
         </div>
       </div>
     </div>
+  );
+}
+
+// =====================================================================
+// ─── EMPLOYEE CSV UPLOAD MODAL ───
+// =====================================================================
+function EmployeeUploadModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [result, setResult] = useState<{
+    totalRows: number; validCount: number; errorCount: number;
+    errors: { row: number; field: string; message: string }[];
+    preview: Record<string, unknown>[];
+    headers: string[];
+  } | null>(null);
+  const [importResult, setImportResult] = useState<{ success: boolean; imported: number; message: string } | null>(null);
+
+  const handleValidate = async () => {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('mode', 'validate');
+      const res = await fetch('/api/admin/mis/employees/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (res.ok) setResult(data);
+      else setResult(null);
+    } catch { /* ignore */ }
+    finally { setUploading(false); }
+  };
+
+  const handleImport = async () => {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('mode', 'import');
+      const res = await fetch('/api/admin/mis/employees/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setImportResult(data);
+        setTimeout(onSuccess, 1500);
+      }
+    } catch { /* ignore */ }
+    finally { setUploading(false); }
+  };
+
+  const downloadTemplate = () => {
+    window.open('/api/admin/mis/employees/upload', '_blank');
+  };
+
+  return (
+    <Modal title="Upload Employee Data (CSV)" onClose={onClose}>
+      <div className="space-y-4">
+        {/* Instructions */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-700 space-y-1">
+          <p className="font-bold">CSV Upload Instructions:</p>
+          <p>1. Download the template, fill in employee data, save as CSV</p>
+          <p>2. Upload the CSV file below to validate</p>
+          <p>3. Review validation results, fix any errors</p>
+          <p>4. Click Import to load employee data</p>
+        </div>
+
+        {/* Template Download */}
+        <button onClick={downloadTemplate} className="flex items-center gap-2 text-sm text-emerald-600 hover:text-emerald-700 font-medium">
+          <Download className="w-4 h-4" /> Download CSV Template
+        </button>
+
+        {/* File Input */}
+        <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
+          <FileSpreadsheet className="w-8 h-8 mx-auto mb-2 text-slate-400" />
+          <input type="file" accept=".csv" onChange={e => { setFile(e.target.files?.[0] || null); setResult(null); setImportResult(null); }}
+            className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" />
+          {file && <p className="text-xs text-slate-500 mt-2">{file.name} ({(file.size / 1024).toFixed(1)} KB)</p>}
+        </div>
+
+        {/* Validate Button */}
+        {file && !result && !importResult && (
+          <button onClick={handleValidate} disabled={uploading} className={btnPrimary + ' w-full justify-center'}>
+            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+            Validate CSV
+          </button>
+        )}
+
+        {/* Validation Results */}
+        {result && (
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-slate-50 rounded-lg p-3 text-center">
+                <p className="text-lg font-bold text-slate-700">{result.totalRows}</p>
+                <p className="text-[10px] text-slate-500">Total Rows</p>
+              </div>
+              <div className="bg-emerald-50 rounded-lg p-3 text-center">
+                <p className="text-lg font-bold text-emerald-600">{result.validCount}</p>
+                <p className="text-[10px] text-emerald-600">Valid</p>
+              </div>
+              <div className={`rounded-lg p-3 text-center ${result.errorCount > 0 ? 'bg-red-50' : 'bg-emerald-50'}`}>
+                <p className={`text-lg font-bold ${result.errorCount > 0 ? 'text-red-600' : 'text-emerald-600'}`}>{result.errorCount}</p>
+                <p className={`text-[10px] ${result.errorCount > 0 ? 'text-red-500' : 'text-emerald-600'}`}>Errors</p>
+              </div>
+            </div>
+
+            {result.errors.length > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 max-h-40 overflow-y-auto">
+                <p className="text-xs font-bold text-red-700 mb-2">Validation Errors:</p>
+                {result.errors.map((err, i) => (
+                  <p key={i} className="text-xs text-red-600">Row {err.row}: {err.field} — {err.message}</p>
+                ))}
+              </div>
+            )}
+
+            {result.preview.length > 0 && (
+              <div className="bg-slate-50 rounded-lg p-3">
+                <p className="text-xs font-bold text-slate-600 mb-2">Preview (first {result.preview.length}):</p>
+                <div className="space-y-1 max-h-32 overflow-y-auto">
+                  {result.preview.map((emp, i) => (
+                    <p key={i} className="text-xs text-slate-600">
+                      {(emp as Record<string, string>).employeeCode} — {(emp as Record<string, string>).name} ({(emp as Record<string, string>).designation}, {(emp as Record<string, string>).entity})
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {result.errorCount === 0 && (
+              <button onClick={handleImport} disabled={uploading} className={btnPrimary + ' w-full justify-center'}>
+                {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                Import {result.validCount} Employees
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Import Success */}
+        {importResult && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-center">
+            <CheckCircle className="w-8 h-8 mx-auto mb-2 text-emerald-600" />
+            <p className="text-sm font-bold text-emerald-700">{importResult.message}</p>
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+// =====================================================================
+// ─── ROLE CHANGE MODAL ───
+// =====================================================================
+const ROLE_OPTIONS = [
+  { value: 'support', label: 'Support Staff' },
+  { value: 'back_office', label: 'Back Office' },
+  { value: 'rm', label: 'RM / Executive' },
+  { value: 'sr_rm', label: 'Senior RM' },
+  { value: 'mentor', label: 'Mentor' },
+  { value: 'manager', label: 'Manager' },
+  { value: 'cdm', label: 'CDM (Channel Dev Manager)' },
+  { value: 'branch_head', label: 'Branch Head' },
+  { value: 'regional_manager', label: 'Regional Manager' },
+  { value: 'cdo', label: 'CDO' },
+  { value: 'bod', label: 'Board of Directors' },
+] as const;
+
+function RoleChangeModal({ employee, userRole, onClose, onSuccess }: {
+  employee: Employee; userRole: AdminRole;
+  onClose: () => void; onSuccess: (msg: string) => void;
+}) {
+  const [newRole, setNewRole] = useState('');
+  const [reason, setReason] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  // Determine what the current user can directly change to
+  const canDirectChange = userRole === 'super_admin' || userRole === 'admin';
+  const isHR = userRole === 'hr';
+  const rmMaxIndex = 2; // up to 'rm' in ROLE_OPTIONS
+
+  const handleSubmit = async () => {
+    if (!newRole) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/admin/mis/employees/roles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'change_role',
+          employeeId: employee.id,
+          employeeName: employee.name,
+          currentRole: employee.levelCode,
+          newRole,
+          reason,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        onSuccess(data.message);
+      }
+    } catch { /* ignore */ }
+    finally { setSubmitting(false); }
+  };
+
+  return (
+    <Modal title={`Change Role: ${employee.name}`} onClose={onClose}>
+      <div className="space-y-4">
+        <div className="bg-slate-50 rounded-lg p-3">
+          <p className="text-xs text-slate-500">Current Employee</p>
+          <p className="text-sm font-bold text-slate-700">{employee.name} ({employee.employeeCode})</p>
+          <p className="text-xs text-slate-500 mt-1">{employee.designation} — {employee.department}</p>
+          <p className="text-xs text-slate-500">Level: {employee.levelCode} | Segment: {employee.segment}</p>
+        </div>
+
+        <Field label="New Role">
+          <select className={inputCls} value={newRole} onChange={e => setNewRole(e.target.value)}>
+            <option value="">Select role...</option>
+            {ROLE_OPTIONS.map((r, i) => {
+              const needsApproval = isHR && i > rmMaxIndex;
+              return (
+                <option key={r.value} value={r.value}>
+                  {r.label}{needsApproval ? ' (needs Admin approval)' : ''}
+                </option>
+              );
+            })}
+          </select>
+        </Field>
+
+        {newRole && !canDirectChange && isHR && ROLE_OPTIONS.findIndex(r => r.value === newRole) > rmMaxIndex && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-700 flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <span>Roles above RM level require Admin/Super Admin approval. A pending request will be created.</span>
+          </div>
+        )}
+
+        <Field label="Reason (optional)">
+          <input className={inputCls} value={reason} onChange={e => setReason(e.target.value)} placeholder="e.g. Promoted based on Q4 performance" />
+        </Field>
+
+        <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+          <button onClick={onClose} className={btnSecondary}>Cancel</button>
+          <button onClick={handleSubmit} disabled={submitting || !newRole} className={btnPrimary}>
+            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+            {canDirectChange || (isHR && ROLE_OPTIONS.findIndex(r => r.value === newRole) <= rmMaxIndex)
+              ? 'Change Role'
+              : 'Submit for Approval'
+            }
+          </button>
+        </div>
+      </div>
+    </Modal>
   );
 }

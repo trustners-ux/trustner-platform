@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyLogin } from '@/lib/employee/employee-auth';
 import { signEmployeeToken, verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
+import { writeAuditLog } from '@/lib/dal/audit';
 
 /**
  * POST /api/employee/auth/login — Authenticate with email + password
@@ -55,6 +56,15 @@ export async function POST(req: NextRequest) {
       sameSite: 'lax',
       maxAge: 60 * 60 * 12, // 12 hours
       path: '/',
+    });
+
+    // Audit log — SEBI/IRDAI compliance
+    await writeAuditLog({
+      tableName: 'employees',
+      recordId: emp.id,
+      action: 'LOGIN',
+      changedBy: emp.email,
+      newValues: { loginType: 'employee', role: emp.role, designation: emp.designation },
     });
 
     return response;

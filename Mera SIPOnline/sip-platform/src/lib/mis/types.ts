@@ -212,18 +212,18 @@ export const PRODUCT_WEIGHTAGE_RULES: Record<string, number> = {
 // ─── Incentive Slab Tables (Section 1.7) ───
 export const DST_SLABS: IncentiveSlab[] = [
   { slabTableName: 'DST', achievementMin: 0, achievementMax: 80, incentiveRate: 0, slabLabel: 'No Incentive' },
-  { slabTableName: 'DST', achievementMin: 80.01, achievementMax: 100, incentiveRate: 4, slabLabel: 'Base 4%' },
-  { slabTableName: 'DST', achievementMin: 100.01, achievementMax: 125, incentiveRate: 5, slabLabel: 'Enhanced 5%' },
-  { slabTableName: 'DST', achievementMin: 125.01, achievementMax: 150, incentiveRate: 6, slabLabel: 'Super 6%' },
-  { slabTableName: 'DST', achievementMin: 150.01, achievementMax: null, incentiveRate: 8, slabLabel: 'Champion 8%' },
+  { slabTableName: 'DST', achievementMin: 80.01, achievementMax: 100, incentiveRate: 4, slabLabel: 'Base' },
+  { slabTableName: 'DST', achievementMin: 100.01, achievementMax: 125, incentiveRate: 5, slabLabel: 'Enhanced' },
+  { slabTableName: 'DST', achievementMin: 125.01, achievementMax: 150, incentiveRate: 6, slabLabel: 'Super' },
+  { slabTableName: 'DST', achievementMin: 150.01, achievementMax: null, incentiveRate: 8, slabLabel: 'Champion' },
 ];
 
 export const POSP_RM_SLABS: IncentiveSlab[] = [
   { slabTableName: 'POSP_RM', achievementMin: 0, achievementMax: 80, incentiveRate: 0, slabLabel: 'No Incentive' },
-  { slabTableName: 'POSP_RM', achievementMin: 80.01, achievementMax: 100, incentiveRate: 1.2, slabLabel: 'Base 1.2%' },
-  { slabTableName: 'POSP_RM', achievementMin: 100.01, achievementMax: 125, incentiveRate: 1.5, slabLabel: 'Enhanced 1.5%' },
-  { slabTableName: 'POSP_RM', achievementMin: 125.01, achievementMax: 150, incentiveRate: 1.8, slabLabel: 'Super 1.8%' },
-  { slabTableName: 'POSP_RM', achievementMin: 150.01, achievementMax: null, incentiveRate: 2.4, slabLabel: 'Champion 2.4%' },
+  { slabTableName: 'POSP_RM', achievementMin: 80.01, achievementMax: 100, incentiveRate: 1.2, slabLabel: 'Base' },
+  { slabTableName: 'POSP_RM', achievementMin: 100.01, achievementMax: 125, incentiveRate: 1.5, slabLabel: 'Enhanced' },
+  { slabTableName: 'POSP_RM', achievementMin: 125.01, achievementMax: 150, incentiveRate: 1.8, slabLabel: 'Super' },
+  { slabTableName: 'POSP_RM', achievementMin: 150.01, achievementMax: null, incentiveRate: 2.4, slabLabel: 'Champion' },
 ];
 
 // ─── Target Multipliers (Section 1.2) ───
