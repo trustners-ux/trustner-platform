@@ -2,6 +2,44 @@ import { MarketCommentary } from '@/types/market';
 
 export const marketCommentaries: MarketCommentary[] = [
   {
+    id: 'week-2026-04-07',
+    title: 'Ceasefire Rally: Nifty Surges 6% in Sharpest Weekly Gain in 5 Years as US-Iran Truce Crashes Oil',
+    date: '2026-04-11',
+    weekRange: 'Apr 5 - Apr 11, 2026',
+    summary:
+      'Indian equity markets staged their most powerful weekly recovery in five years, with the Nifty 50 surging ~6% to close at 24,050.60 and the Sensex rallying to 77,550.25 — decisively snapping the six-week losing streak. The catalyst was a Pakistan-brokered two-week ceasefire between the US and Iran on April 8, which included an agreement to reopen the Strait of Hormuz. Brent crude crashed ~14% from $111.69 to $96.48/bbl — the sharpest weekly oil decline since November 2022. India VIX plummeted ~20% to 19.2 as fear hedges were unwound. The RBI MPC held repo rate at 5.25% with a neutral stance, projecting FY27 GDP at 6.9% and CPI at 4.6%. AMFI released March data showing record SIP inflows of ₹32,087 crore (+7.5% MoM) and equity MF inflows surging 56% to ₹40,450 crore. Banking (+8%) and Auto (+7.5%) sectors led the charge. Market cap surged ₹29 lakh crore in one week.',
+    keyPoints: [
+      'Nifty 50 surged ~6% to 24,050.60 and Sensex rallied to 77,550.25 — the sharpest weekly gain since February 2021, snapping a six-week losing streak. Market cap surged ₹29 lakh crore. India VIX collapsed ~20% from 25.52 to 19.2, confirming a dramatic unwinding of defensive hedges.',
+      'US-Iran two-week ceasefire brokered by Pakistan on April 8, after 40 days of military strikes. Iran agreed to "complete, immediate and safe opening" of the Strait of Hormuz. Trump received a 10-point Iranian proposal, calling it a "workable basis to negotiate." However, the ceasefire is fragile — attacks were reported hours after the truce.',
+      'Brent crude crashed ~14% from $111.69 to $96.48/bbl — the sharpest weekly decline since November 2022. Every $10/bbl drop saves India ~$15 billion in import costs. IEA forecasts Brent at $80/bbl by Q3 2026 if ceasefire holds. Energy stocks (ONGC, Coal India) gave back gains as oil dropped.',
+      'RBI MPC held repo rate at 5.25% unanimously with a neutral stance. FY27 GDP projected at 6.9% (Q1: 6.8%, Q2: 6.7%, Q3: 7.0%, Q4: 7.2%). CPI at 4.6%. If oil sustains below $90, a 25 bps cut at June MPC becomes likely. Next MPC: June 3-5, 2026.',
+      'AMFI March data: SIP inflows hit record ₹32,087 crore (+7.5% MoM from ₹29,845 Cr). Equity MF inflows surged 56% to ₹40,450 crore. Flexi Cap led at ₹10,055 Cr. ETF inflows surged 341% to ₹19,802 Cr. MF AUM dipped to ₹73.73 lakh crore (-10.1% MoM) due to market decline, but flows prove SIP discipline held.',
+      'FIIs continued selling with April cumulative outflows of ₹37,933 crore, while DIIs absorbed ₹34,617 crore (~91%). Sectoral leaders: Nifty Bank (+8.2%), Auto (+7.5%), Financial Services (+6.8%). Top gainers: Shriram Finance (+14.2%), Adani Enterprises (+12.8%), Tata Motors (+11.5%). Top losers: Coal India (-4.4%), Sun Pharma (-3.7%).',
+    ],
+    outlook: 'Cautiously Optimistic',
+    sipAdvice:
+      'This is the week that rewarded every SIP investor who held their nerve. Six weeks of relentless decline, record FII selling, oil above $110, and a VIX above 25 — and yet investors who continued their SIPs accumulated units at the lowest prices in months. Now, a single week has delivered a 6% surge, and those discounted units are already compounding. Record SIP inflows of ₹32,087 crore in March prove that millions of Indian investors understood this. The ceasefire is fragile and volatility may return — but that is precisely why SIP works. Your installment does not need to predict geopolitics; it needs time and discipline. Continue your SIPs without interruption. If you paused or stopped during the correction, restart immediately — the recovery has begun but the compounding journey is measured in decades, not weeks. Speak to your Relationship Manager for a portfolio review.',
+  },
+  {
+    id: 'week-2026-03-31',
+    title: 'Sixth Straight Weekly Loss: Oil Crosses $110, Rupee Recovers to 92.73, RBI MPC Next Week',
+    date: '2026-04-04',
+    weekRange: 'Mar 29 - Apr 4, 2026',
+    summary:
+      'Indian equity markets extended their losing streak to a sixth consecutive week in a 4-day trading week (Good Friday holiday on April 3). Nifty 50 fell 2.5% to 22,713.10 and Sensex dropped 2.6% to 73,319.55. The week opened weak as Trump\'s renewed threat to strike Iran erased optimism, but April 1 saw a sharp FY27 opening rally — Nifty surged 2.7% to 22,941 — before selling resumed on April 2. Brent crude crossed $110/bbl as the Strait of Hormuz blockade tightened, with Iran\'s \'Tehran toll booth\' allowing only 5-10 ships daily. India\'s Manufacturing PMI fell to a 4-year low of 53.9, adding domestic concerns to the geopolitical fears. In a positive surprise, the rupee strengthened from 94.46 to 92.73 on RBI intervention and improving trade sentiment. All eyes now on the RBI MPC meeting (April 6-8) where the central bank faces a growth-vs-inflation dilemma with crude above $110.',
+    keyPoints: [
+      'Sixth consecutive weekly loss in a 4-day trading week: Nifty 50 fell 2.5% (593 points) to 22,713.10 and Sensex lost 2.6% (1,954 points) to 73,319.55. A strong April 1 FY27 opening rally (+2.7%) proved short-lived as selling resumed on April 2. Bank Nifty declined 1.4% to 51,549. India VIX held elevated at 25.52.',
+      'FY26 ended painfully — Nifty slipped 5% and Sensex dropped over 7% for the full year. Midcaps and smallcaps saw steeper declines. Only 5 of 12 Nifty sectors ended FY26 in positive territory, with IT, Metal, and FMCG among the survivors.',
+      'Brent crude breached $110/bbl, closing at $111.69 on April 2 — the highest since the crisis began. March saw the biggest monthly gain in crude history (+60%). The Strait of Hormuz remains effectively blockaded — Iran allowing 5-10 ships/day through a \'Tehran toll booth,\' charging up to $2M per ship. IEA warned the supply crunch will worsen in April.',
+      'Rupee staged a remarkable recovery from 94.46 to 92.73 — a 1.83% appreciation — driven by RBI intervention, improved trade sentiment, and easing FII outflow intensity. The currency pulled back from its all-time high of 94.86 hit in March. Gold MCX recovered 3.3% to ₹1,49,460/10g on safe-haven demand.',
+      'Manufacturing PMI fell to 53.9 in March — a 4-year low, down sharply from February\'s 56.9. Middle East tensions, energy shocks, and rising input costs drove the moderation. Bright spot: new export orders rose at the strongest pace on record, and employment grew at its 7-month high.',
+      'Weekly top gainers: ONGC (+19%), Power Grid (+7%), Tata Steel (+6.2%), Coal India (+5%), BEL (+4.6%). Top losers: HDFC Life (-7.6%), Shriram Finance (-6.7%), Dr. Reddy\'s (-6.4%), Bajaj Finance (-6.3%). Nifty IT (+2.6%) was the standout sector as rupee recovery boosted exporters.',
+    ],
+    outlook: 'Bearish',
+    sipAdvice:
+      'Six straight weeks of losses — and yet this is exactly the environment where SIP investors build their biggest future wealth. The Nifty is down ~20% from its 52-week high. Every SIP installment at these levels buys more units than it did six months ago. April 1\'s 2.7% rally and then April 2\'s pullback is textbook volatility — your SIP doesn\'t care about daily moves, it compounds over decades. DIIs continue absorbing FII selling, powered by your monthly SIP contributions. The rupee\'s recovery from 94.46 to 92.73 shows markets self-correct. Manufacturing PMI at a 4-year low is concerning short-term but irrelevant to 15-year compounding. RBI\'s MPC decision next week may introduce more volatility — but volatility is the price of admission for long-term equity returns. Continue your SIPs without interruption. Speak to your Relationship Manager before making any panic decisions.',
+  },
+  {
     id: 'week-2026-03-24',
     title: 'Fifth Straight Weekly Loss: Goldman Cuts India to Market Weight, Oil Near $108 & Rupee Breaches 94',
     date: '2026-03-27',

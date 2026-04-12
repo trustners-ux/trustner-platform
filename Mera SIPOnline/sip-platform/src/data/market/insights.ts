@@ -2,6 +2,86 @@ import { MarketInsight } from '@/types/market';
 
 export const marketInsights: MarketInsight[] = [
   {
+    id: 'insight-ceasefire-rally-sip',
+    title: 'Nifty +6% in One Week: Why SIP Investors Who Held Their Nerve Won Big',
+    category: 'SIP Timing',
+    content:
+      'The Nifty surged ~6% in a single week — the sharpest rally in five years — after six consecutive weeks of losses. This perfectly illustrates the SIP advantage. Investors who continued SIPs during the 6-week correction accumulated units at prices 15-20% below the September 2025 highs. Now, every one of those discounted units is compounding at the new, higher levels. March SIP data confirms the discipline: a record ₹32,087 crore flowed in despite the correction. Those who paused their SIPs in fear missed the cheapest accumulation window of 2026 AND the sharpest recovery. The math is clear: time in the market beats timing the market. If you stopped your SIP during the correction, restart immediately — the recovery has begun but the compounding opportunity spans decades.',
+    date: '2026-04-11',
+    icon: 'TrendingUp',
+    color: 'from-green-500 to-emerald-600',
+  },
+  {
+    id: 'insight-record-sip-32087',
+    title: 'Record SIP of ₹32,087 Crore in March: India\'s Quiet Wealth Revolution Accelerates',
+    category: 'Industry News',
+    content:
+      'March 2026 SIP inflows hit a record ₹32,087 crore — surpassing January\'s ₹31,000 crore milestone. Even more impressive: equity mutual fund inflows surged 56% MoM to ₹40,450 crore, with Flexi Cap funds leading at ₹10,055 crore. ETF inflows surged a staggering 341% to ₹19,802 crore. This data, released during a week when markets were at their most fearful, proves that Indian retail investors have matured beyond panic. With 10.2 crore active SIP accounts and over ₹3.85 lakh crore flowing annually through SIPs, systematic investing has become India\'s most powerful wealth creation mechanism. The MF AUM dipped to ₹73.73 lakh crore (-10.1% MoM) due to market decline — but as this week\'s 6% rally shows, flows matter more than AUM snapshots.',
+    date: '2026-04-10',
+    icon: 'TrendingUp',
+    color: 'from-brand-500 to-brand-700',
+  },
+  {
+    id: 'insight-oil-crash-india-benefit',
+    title: 'Oil Crashes 14% to $96: What the Biggest Weekly Drop Since 2022 Means for India',
+    category: 'Strategy',
+    content:
+      'Brent crude crashed from $111.69 to $96.48/bbl — the sharpest weekly decline since November 2022 — after the US-Iran ceasefire agreement to reopen the Strait of Hormuz. For India, which imports 85% of its crude, every $10/bbl drop saves approximately $15 billion in import costs, narrows the current account deficit by ~0.4% of GDP, and reduces CPI inflation by 30-40 bps. If oil sustains below $90 (IEA\'s Q3 forecast), it could trigger an RBI rate cut at the June MPC, further boosting equity markets. For SIP investors, falling oil is unambiguously positive: lower input costs boost corporate margins, cheaper fuel reduces household expenses, and a narrower CAD supports the rupee. However, the ceasefire is fragile — if it collapses, oil could spike back above $110. Maintain your SIP regardless; the allocation handles both scenarios over time.',
+    date: '2026-04-09',
+    icon: 'Flame',
+    color: 'from-orange-500 to-red-600',
+  },
+  {
+    id: 'insight-rbi-hold-june-cut',
+    title: 'RBI Holds at 5.25%: Why the June MPC Could Be the Turning Point for Markets',
+    category: 'Market Education',
+    content:
+      'The RBI MPC unanimously held the repo rate at 5.25% on April 8, maintaining a neutral stance. FY27 GDP is projected at 6.9% with CPI at 4.6%. The hold was expected given crude above $100 and ceasefire uncertainty. But here is the forward-looking insight: if the ceasefire holds and oil sustains below $90 by June, the RBI has significant room for a 25 bps cut at the June 3-5 MPC. A rate cut would be the fourth in the easing cycle (after 125 bps in 2025) and would further support equity markets, housing demand, and corporate borrowing costs. For SIP investors, rate cuts create a tailwind for both equity funds (lower rates = higher corporate earnings) and debt funds (bond prices rise when rates fall). A balanced SIP across equity and short-duration debt positions you to benefit either way.',
+    date: '2026-04-08',
+    icon: 'Landmark',
+    color: 'from-pink-500 to-rose-600',
+  },
+  {
+    id: 'insight-ceasefire-fragile',
+    title: 'US-Iran Ceasefire: Why Markets Rallied 6% — and Why Caution Is Still Warranted',
+    category: 'Strategy',
+    content:
+      'The Pakistan-brokered ceasefire between the US and Iran on April 8 ended 40 days of military strikes and triggered the sharpest global market rally in years. Iran agreed to reopen the Strait of Hormuz, and Trump received a 10-point proposal. Markets priced in the best-case scenario — oil crashed 14%, VIX collapsed 20%, and the Nifty surged 6%. However, the ceasefire is fragile: attacks were reported in UAE and Kuwait within hours. Iran called Israeli strikes in Lebanon a violation. The 15-20 day negotiation window could easily collapse. For SIP investors, the lesson is clear: do not make allocation decisions based on geopolitical outcomes. If the ceasefire holds, markets continue higher. If it collapses, your SIP buys more units at lower prices again. Either way, the SIP investor wins over time.',
+    date: '2026-04-08',
+    icon: 'Shield',
+    color: 'from-slate-500 to-slate-700',
+  },
+  {
+    id: 'insight-rbi-mpc-april',
+    title: 'RBI MPC April 6-8: Why the Decision Matters More Than Usual for SIP Investors',
+    category: 'Market Education',
+    content:
+      'The RBI MPC meeting on April 6-8 faces an extraordinary dilemma. After cutting rates by 125 bps in 2025 (repo at 5.25%), Governor Malhotra now confronts Brent crude above $110, manufacturing PMI at a 4-year low (53.9), and bond yields climbing to 7.13%. A rate cut could weaken the rupee and fuel imported inflation. A hold or hike could further slow an already-decelerating economy. For SIP investors, the outcome creates short-term volatility either way — and that is exactly when your SIP works hardest. Rate cuts favour equity (cheaper capital = higher corporate earnings), while holds/hikes support debt funds. A balanced SIP across equity and debt ensures you benefit regardless of the decision. Do not time your SIP around RBI announcements — the rate cycle plays out over years, not meetings.',
+    date: '2026-04-04',
+    icon: 'Landmark',
+    color: 'from-pink-500 to-rose-600',
+  },
+  {
+    id: 'insight-strait-hormuz-oil',
+    title: 'Strait of Hormuz \'Tehran Toll Booth\': What $110 Oil Means for Your SIP',
+    category: 'Strategy',
+    content:
+      'Iran has turned the Strait of Hormuz into a controlled checkpoint, allowing only 5-10 ships daily and charging up to $2 million per passage. With ~20% of global oil supply disrupted and Brent at $111.69, India — which imports 85% of its crude — faces significant inflation and fiscal pressure. However, the IEA forecasts oil returning below $80/bbl by Q3 2026 as strategic reserves are released and alternative shipping routes activated. For SIP investors, $110 oil is a temporary macro headwind, not a structural shift. Indian companies adapted to $130 oil in 2022 and $147 in 2008. Each time, markets recovered within 6-12 months. Your SIP accumulates units at fear-driven prices during these shocks — and those units deliver outsized returns when oil normalizes.',
+    date: '2026-04-03',
+    icon: 'Flame',
+    color: 'from-orange-500 to-red-600',
+  },
+  {
+    id: 'insight-6-weeks-correction',
+    title: 'Six Consecutive Weekly Losses: Historical Perspective for SIP Investors',
+    category: 'SIP Timing',
+    content:
+      'The Nifty has now fallen for six straight weeks — the longest losing streak since 2022. FY26 ended with a 5% decline. Headlines are alarming, but history offers perspective. In the 25-year history of the Nifty, extended losing streaks of 4+ weeks have occurred 18 times. In 14 of those 18 instances, the market was higher 12 months later — with an average gain of 22%. The three exceptions were 2008 (global financial crisis) and two instances in 2001 (dot-com bust). For SIP investors, extended weakness means 6 consecutive months where your installment bought more units at lower NAVs. In 2008, investors who continued SIPs through a 60% crash saw those discounted units deliver 400% returns over the next 5 years. Six weeks of losses is uncomfortable. Six years of compounding is transformative.',
+    date: '2026-04-02',
+    icon: 'Zap',
+    color: 'from-red-500 to-rose-600',
+  },
+  {
     id: 'insight-5pct-crash-sip',
     title: 'Markets Crashed 5% This Week — Here Is Why Your SIP Loves It',
     category: 'SIP Timing',
