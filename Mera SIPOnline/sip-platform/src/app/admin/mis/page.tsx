@@ -374,17 +374,22 @@ export default function MISPage() {
     }, 'Change request submitted for Super Admin approval').then(() => setEditingProductId(null));
   }
 
-  // ─── Slab handlers ───
+  // ─── Slab handlers (Super Admin = direct update, others = change request) ───
   function handleAddSlab(formData: Record<string, unknown>) {
+    const isSA = isSuperAdmin(userRole);
     submitChangeRequest('/api/admin/mis/slabs', {
       action: 'insert',
       slab: formData,
       title: `Add slab: ${formData.slabLabel} (${formData.slabTableName})`,
       description: `Request to add new incentive slab`,
-    }, 'Change request submitted for approval').then(() => setShowAddSlab(false));
+    }, isSA ? 'Slab added successfully' : 'Change request submitted for approval').then(() => {
+      setShowAddSlab(false);
+      if (isSA) fetchSlabs(); // Refresh slabs after direct update
+    });
   }
 
   function handleEditSlab(slab: IncentiveSlabRow, updates: Record<string, unknown>) {
+    const isSA = isSuperAdmin(userRole);
     submitChangeRequest('/api/admin/mis/slabs', {
       action: 'update',
       id: slab.id,
@@ -392,7 +397,10 @@ export default function MISPage() {
       previousData: slab,
       title: `Edit slab: ${slab.slabLabel} (${slab.slabTableName})`,
       description: `Request to update incentive slab ${slab.slabLabel}`,
-    }, 'Change request submitted for approval').then(() => setEditingSlabId(null));
+    }, isSA ? 'Slab updated successfully' : 'Change request submitted for approval').then(() => {
+      setEditingSlabId(null);
+      if (isSA) fetchSlabs(); // Refresh slabs after direct update
+    });
   }
 
   // ─── Loading Guard ───

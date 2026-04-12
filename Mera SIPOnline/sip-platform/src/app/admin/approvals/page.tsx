@@ -4,17 +4,51 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   ClipboardCheck, Clock, CheckCircle2, XCircle,
   RefreshCw, ChevronDown, ChevronUp, ChevronLeft, ChevronRight,
-  AlertTriangle, ArrowRight,
+  AlertTriangle, ArrowRight, ShieldAlert, UserX,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import type { ChangeRequest, ChangeRequestType, ChangeRequestStatus } from '@/types/change-request';
 
 /* ------------------------------------------------------------------ */
-/*  Constants                                                          */
+/*  Constants & Hierarchy                                              */
 /* ------------------------------------------------------------------ */
 
-const APPROVER_EMAILS = ['ram@trustner.in', 'sangeeta@trustner.in'];
-const SUPER_ADMIN_EMAIL = 'ram@trustner.in';
+type AdminRole = 'super_admin' | 'admin' | 'hr' | 'editor' | 'viewer';
+
+// Role hierarchy — higher number = more access
+const ROLE_HIERARCHY: Record<AdminRole, number> = {
+  super_admin: 5, admin: 4, hr: 3, editor: 2, viewer: 1,
+};
+
+const ROLE_LABELS: Record<AdminRole, string> = {
+  super_admin: 'Super Admin',
+  admin: 'Administrator',
+  hr: 'HR Manager',
+  editor: 'Editor',
+  viewer: 'Viewer',
+};
+
+/**
+ * Approval hierarchy:
+ * - super_admin: can approve ALL types (incentive_slab, product_rule, employee_*, payout_rule)
+ * - admin:       can approve product_rule, employee_*, payout_rule — NOT incentive_slab
+ * - hr/editor/viewer: CANNOT approve anything
+ *
+ * Maker-checker rule: nobody can approve their own change requests
+ */
+function canRoleApprove(role: AdminRole): boolean {
+  return ROLE_HIERARCHY[role] >= ROLE_HIERARCHY['admin']; // admin (4) or super_admin (5)
+}
+
+function canApproveType(role: AdminRole, changeType: ChangeRequestType): boolean {
+  if (!canRoleApprove(role)) return false;
+  if (changeType === 'incentive_slab') return role === 'super_admin';
+  return true; // admin+ can approve product_rule, employee_*, payout_rule
+}
+
+function isSelfRequest(userEmail: string, requestedBy: string): boolean {
+  return userEmail.toLowerCase() === requestedBy.toLowerCase();
+}
 
 interface StatsCard {
   label: string;
@@ -75,21 +109,31 @@ function matchesTypeFilter(type: ChangeRequestType, filter: ChangeRequestType | 
 function ReviewPanel({
   item,
   userEmail,
+  userRole,
   onAction,
   acting,
 }: {
   item: ChangeRequest;
   userEmail: string;
+  userRole: AdminRole;
   onAction: (id: string, action: 'approve' | 'reject', reason?: string) => Promise<void>;
   acting: boolean;
 }) {
   const [rejectMode, setRejectMode] = useState(false);
   const [reason, setReason] = useState('');
 
-  const canApprove = APPROVER_EMAILS.includes(userEmail.toLowerCase());
-  const isSuperAdmin = userEmail.toLowerCase() === SUPER_ADMIN_EMAIL;
-  const isIncentive = item.type === 'incentive_slab';
   const isPending = item.status === 'pending';
+  const isOwnRequest = isSelfRequest(userEmail, item.requestedBy);
+  const hasApprovalRole = canRoleApprove(userRole);
+  const canApproveThisType = canApproveType(userRole, item.type);
+  const isIncentive = item.type === 'incentive_slab';
+
+  // Super Admin can self-approve incentive slab changes (ultimate authority)
+  const superAdminSlabOverride = isOwnRequest && userRole === 'super_admin' && isIncentive;
+
+  // Final check: has role + can approve this type + not own request (or Super Admin slab override)
+  const canAct = isPending && hasApprovalRole && canApproveThisType && (!isOwnRequest || superAdminSlabOverride);
+  const canRejectOnly = isPending && hasApprovalRole && (!isOwnRequest || superAdminSlabOverride);
 
   const handleApprove = async () => {
     await onAction(item.id, 'approve');
@@ -110,6 +154,11 @@ function ReviewPanel({
         <span className="font-semibold text-primary-700">{item.requestedByName}</span>
         <span className="text-slate-400">({item.requestedBy})</span>
         <span className="text-slate-400">on {formatDate(item.requestedAt)}</span>
+        {isOwnRequest && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">
+            <UserX className="w-3 h-3" /> Your request
+          </span>
+        )}
       </div>
 
       {item.description && (
@@ -161,22 +210,52 @@ function ReviewPanel({
         </div>
       )}
 
-      {/* Incentive slab warning */}
-      {isIncentive && isPending && (
-        <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
-          <AlertTriangle className="w-4 h-4 shrink-0" />
-          Only Super Admin can approve incentive structure changes
+      {/* Hierarchy info banners for pending items */}
+      {isPending && (
+        <div className="space-y-2">
+          {/* Self-approval blocked (but NOT for Super Admin + incentive slabs) */}
+          {isOwnRequest && hasApprovalRole && !superAdminSlabOverride && (
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+              <ShieldAlert className="w-4 h-4 shrink-0" />
+              <span><strong>Maker-checker:</strong> You cannot approve your own change request. Another approver must review this.</span>
+            </div>
+          )}
+
+          {/* Super Admin self-approving incentive slab */}
+          {superAdminSlabOverride && (
+            <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700">
+              <ShieldAlert className="w-4 h-4 shrink-0" />
+              <span><strong>Super Admin Authority:</strong> You can approve your own incentive slab changes. All changes are logged in the audit trail.</span>
+            </div>
+          )}
+
+          {/* Incentive slab — Super Admin only */}
+          {isIncentive && !isOwnRequest && (
+            <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              Only Super Admin can approve incentive structure changes
+            </div>
+          )}
+
+          {/* Role too low */}
+          {!hasApprovalRole && (
+            <div className="flex items-center gap-2 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-600">
+              <ShieldAlert className="w-4 h-4 shrink-0" />
+              <span>Your role (<strong>{ROLE_LABELS[userRole]}</strong>) does not have approval authority. Only Admin or Super Admin can approve changes.</span>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Action buttons */}
-      {isPending && canApprove && (
+      {/* Action buttons — only if allowed by hierarchy AND not own request */}
+      {isPending && hasApprovalRole && !isOwnRequest && (
         <div className="flex items-center gap-3 pt-2">
           {!rejectMode ? (
             <>
               <button
                 onClick={handleApprove}
-                disabled={acting || (isIncentive && !isSuperAdmin)}
+                disabled={acting || !canApproveThisType}
+                title={!canApproveThisType ? 'Only Super Admin can approve this type' : undefined}
                 className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-green-600 rounded-xl hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <CheckCircle2 className="w-4 h-4" />
@@ -230,18 +309,21 @@ export default function ApprovalsPage() {
   const [approvals, setApprovals] = useState<ChangeRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState('');
+  const [userRole, setUserRole] = useState<AdminRole>('viewer');
   const [typeFilter, setTypeFilter] = useState<ChangeRequestType | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<ChangeRequestStatus | 'all'>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [acting, setActing] = useState(false);
   const [page, setPage] = useState(1);
 
-  // Fetch current user
+  // Fetch current user (email + role)
   useEffect(() => {
     fetch('/api/admin/auth/me')
       .then((res) => res.json())
       .then((data) => {
-        if (data.email) setUserEmail(data.email);
+        const user = data.user || data;
+        if (user.email) setUserEmail(user.email);
+        if (user.role) setUserRole(user.role as AdminRole);
       })
       .catch(() => {});
   }, []);
@@ -478,6 +560,7 @@ export default function ApprovalsPage() {
                             <ReviewPanel
                               item={item}
                               userEmail={userEmail}
+                              userRole={userRole}
                               onAction={handleAction}
                               acting={acting}
                             />

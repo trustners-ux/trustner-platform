@@ -4,7 +4,18 @@ import {
   approveChangeRequest,
   rejectChangeRequest,
 } from '@/lib/admin/change-request-store';
-import { isApprover, isSuperAdmin } from '@/lib/auth/config';
+import { isSuperAdmin } from '@/lib/auth/config';
+
+type AdminRole = 'super_admin' | 'admin' | 'hr' | 'editor' | 'viewer';
+
+const ROLE_HIERARCHY: Record<AdminRole, number> = {
+  super_admin: 5, admin: 4, hr: 3, editor: 2, viewer: 1,
+};
+
+/** Only admin (4) or super_admin (5) can approve/reject */
+function canRoleApprove(role: AdminRole): boolean {
+  return (ROLE_HIERARCHY[role] || 0) >= ROLE_HIERARCHY['admin'];
+}
 
 // ─── GET: Get single change request ───
 export async function GET(
@@ -36,19 +47,22 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
+
+    // Read identity from middleware-injected headers (trusted, not client-sent)
     const adminEmail = request.headers.get('x-admin-email');
+    const adminRole = (request.headers.get('x-admin-role') || 'viewer') as AdminRole;
 
     if (!adminEmail) {
       return NextResponse.json(
-        { error: 'Missing x-admin-email header' },
+        { error: 'Not authenticated' },
         { status: 401 }
       );
     }
 
-    // Only approvers can approve/reject
-    if (!isApprover(adminEmail)) {
+    // ── Role-based check: only admin / super_admin can approve/reject ──
+    if (!canRoleApprove(adminRole)) {
       return NextResponse.json(
-        { error: 'Unauthorized — only designated approvers can review change requests' },
+        { error: `Unauthorized — your role (${adminRole}) does not have approval authority. Only Admin or Super Admin can review change requests.` },
         { status: 403 }
       );
     }
@@ -63,7 +77,7 @@ export async function POST(
       );
     }
 
-    // Fetch the change request to check type-specific rules
+    // Fetch the change request
     const entry = await getChangeRequest(id);
     if (!entry) {
       return NextResponse.json({ error: 'Change request not found' }, { status: 404 });
@@ -76,9 +90,21 @@ export async function POST(
       );
     }
 
-    // Incentive slab changes require super admin (Ram only) approval
+    // ── Maker-checker: cannot approve/reject your own request ──
+    // Exception: Super Admin CAN self-approve incentive slab changes (they have ultimate authority)
+    const isSelfRequest = adminEmail.toLowerCase() === entry.requestedBy.toLowerCase();
+    const isSuperAdminUser = isSuperAdmin(adminEmail);
+
+    if (isSelfRequest && !(isSuperAdminUser && entry.type === 'incentive_slab')) {
+      return NextResponse.json(
+        { error: 'Maker-checker violation — you cannot approve or reject your own change request. Another approver must review this.' },
+        { status: 403 }
+      );
+    }
+
+    // ── Incentive slab changes require Super Admin approval ──
     if (entry.type === 'incentive_slab' && action === 'approve') {
-      if (!isSuperAdmin(adminEmail)) {
+      if (!isSuperAdminUser) {
         return NextResponse.json(
           { error: 'Incentive slab changes can only be approved by the Super Admin' },
           { status: 403 }
@@ -94,7 +120,7 @@ export async function POST(
           { status: 500 }
         );
       }
-      console.log(`[Approvals API] Approved ${id} by ${adminEmail}`);
+      console.log(`[Approvals API] Approved ${id} by ${adminEmail} (role: ${adminRole})`);
       return NextResponse.json({ success: true, approval: updated });
     }
 
@@ -114,7 +140,7 @@ export async function POST(
       );
     }
 
-    console.log(`[Approvals API] Rejected ${id} by ${adminEmail}`);
+    console.log(`[Approvals API] Rejected ${id} by ${adminEmail} (role: ${adminRole})`);
     return NextResponse.json({ success: true, approval: updated });
   } catch (error) {
     console.error('[Approvals API] Review error:', error);
