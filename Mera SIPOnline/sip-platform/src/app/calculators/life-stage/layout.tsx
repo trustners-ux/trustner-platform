@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { generateSEOMetadata } from '@/lib/seo';
+import { generateSEOMetadata, generateBreadcrumbSchema } from '@/lib/seo';
+import { calculatorSchemas } from '@/components/seo/CalculatorSchemas';
 
 export const metadata: Metadata = generateSEOMetadata({
   title: 'Life-Stage Planner | Invest, Grow & Withdraw SIP Calculator',
@@ -25,5 +26,25 @@ export default function LifeStageLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  const schema = calculatorSchemas['life-stage'];
+  const breadcrumb = generateBreadcrumbSchema([
+    { name: 'Home', url: '/' },
+    { name: 'Calculators', url: '/calculators' },
+    { name: 'Life-Stage Planner', url: '/calculators/life-stage' },
+  ]);
+  return (
+    <>
+      {schema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        />
+      )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
+      />
+      {children}
+    </>
+  );
 }

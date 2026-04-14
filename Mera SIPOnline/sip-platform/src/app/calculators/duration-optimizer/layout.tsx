@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { generateSEOMetadata } from '@/lib/seo';
+import { generateSEOMetadata, generateBreadcrumbSchema } from '@/lib/seo';
+import { calculatorSchemas } from '@/components/seo/CalculatorSchemas';
 
 export const metadata: Metadata = generateSEOMetadata({
   title: 'SIP Duration Optimizer | How Long to Reach Your Goal',
@@ -23,5 +24,25 @@ export default function DurationOptimizerLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  const schema = calculatorSchemas['duration-optimizer'];
+  const breadcrumb = generateBreadcrumbSchema([
+    { name: 'Home', url: '/' },
+    { name: 'Calculators', url: '/calculators' },
+    { name: 'SIP Duration Optimizer', url: '/calculators/duration-optimizer' },
+  ]);
+  return (
+    <>
+      {schema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        />
+      )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
+      />
+      {children}
+    </>
+  );
 }

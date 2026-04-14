@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { generateSEOMetadata } from '@/lib/seo';
+import { generateSEOMetadata, generateBreadcrumbSchema } from '@/lib/seo';
+import { calculatorSchemas } from '@/components/seo/CalculatorSchemas';
 
 export const metadata: Metadata = generateSEOMetadata({
   title: 'Lifestyle Inflation Calculator | How Lifestyle Creep Erodes Your Savings',
@@ -9,5 +10,25 @@ export const metadata: Metadata = generateSEOMetadata({
 });
 
 export default function LifestyleInflationLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  const schema = calculatorSchemas['lifestyle-inflation'];
+  const breadcrumb = generateBreadcrumbSchema([
+    { name: 'Home', url: '/' },
+    { name: 'Calculators', url: '/calculators' },
+    { name: 'Lifestyle Inflation Calculator', url: '/calculators/lifestyle-inflation' },
+  ]);
+  return (
+    <>
+      {schema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        />
+      )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
+      />
+      {children}
+    </>
+  );
 }

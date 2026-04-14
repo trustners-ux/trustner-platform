@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { generateSEOMetadata } from '@/lib/seo';
+import { generateSEOMetadata, generateBreadcrumbSchema } from '@/lib/seo';
+import { calculatorSchemas } from '@/components/seo/CalculatorSchemas';
 
 export const metadata: Metadata = generateSEOMetadata({
   title: 'Emergency Fund Calculator | How Much Emergency Fund Do You Need?',
@@ -9,5 +10,25 @@ export const metadata: Metadata = generateSEOMetadata({
 });
 
 export default function EmergencyFundLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  const schema = calculatorSchemas['emergency-fund'];
+  const breadcrumb = generateBreadcrumbSchema([
+    { name: 'Home', url: '/' },
+    { name: 'Calculators', url: '/calculators' },
+    { name: 'Emergency Fund Calculator', url: '/calculators/emergency-fund' },
+  ]);
+  return (
+    <>
+      {schema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        />
+      )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
+      />
+      {children}
+    </>
+  );
 }

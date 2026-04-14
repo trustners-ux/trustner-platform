@@ -55,6 +55,9 @@ export const metadata: Metadata = {
     description: 'India\'s most intelligent SIP learning & research hub. Smart calculators, education, and goal planning.',
   },
   metadataBase: new URL('https://www.merasip.com'),
+  alternates: {
+    canonical: '/',
+  },
 };
 
 export default function RootLayout({

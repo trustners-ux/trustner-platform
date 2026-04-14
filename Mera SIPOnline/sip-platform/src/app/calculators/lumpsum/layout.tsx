@@ -3,32 +3,31 @@ import { generateSEOMetadata, generateBreadcrumbSchema } from '@/lib/seo';
 import { calculatorSchemas } from '@/components/seo/CalculatorSchemas';
 
 export const metadata: Metadata = generateSEOMetadata({
-  title: 'Goal-Based SIP Calculator | Find SIP for Your Target',
+  title: 'Lumpsum Investment Planner | Plan Lump Sum Investments & Withdrawals',
   description:
-    'Calculate the exact monthly SIP amount needed to reach your financial goal. Set your target corpus, timeline, and expected returns to get a personalized SIP plan.',
-  path: '/calculators/goal-based',
+    'Plan lump sum investments and withdrawals over time. Visualize corpus growth with multiple cash flow events and see how your wealth evolves year by year.',
+  path: '/calculators/lumpsum',
   keywords: [
-    'goal-based SIP calculator',
-    'SIP goal planner',
-    'target amount SIP calculator',
-    'financial goal calculator',
-    'SIP for goal planning',
-    'how much SIP for target',
-    'reverse SIP calculator',
-    'SIP amount calculator',
+    'lumpsum calculator',
+    'lump sum investment calculator',
+    'one-time investment returns',
+    'lumpsum mutual fund calculator',
+    'lumpsum planner',
+    'lumpsum growth calculator',
+    'lump sum investment India',
   ],
 });
 
-export default function GoalBasedSIPLayout({
+export default function LumpsumLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const schema = calculatorSchemas['goal-based'];
+  const schema = calculatorSchemas['lumpsum'];
   const breadcrumb = generateBreadcrumbSchema([
     { name: 'Home', url: '/' },
     { name: 'Calculators', url: '/calculators' },
-    { name: 'Goal-Based SIP Calculator', url: '/calculators/goal-based' },
+    { name: 'Lumpsum Investment Planner', url: '/calculators/lumpsum' },
   ]);
   return (
     <>

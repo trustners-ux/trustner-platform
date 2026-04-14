@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { generateSEOMetadata } from '@/lib/seo';
+import { generateSEOMetadata, generateBreadcrumbSchema } from '@/lib/seo';
+import { calculatorSchemas } from '@/components/seo/CalculatorSchemas';
 
 export const metadata: Metadata = generateSEOMetadata({
   title: 'SIP Shield Calculator — Let Your SIP Pay Your Premiums & EMIs',
@@ -20,6 +21,26 @@ export const metadata: Metadata = generateSEOMetadata({
   ],
 });
 
-export default function Layout({ children }: { children: React.ReactNode }) {
-  return children;
+export default function SIPShieldLayout({ children }: { children: React.ReactNode }) {
+  const schema = calculatorSchemas['sip-shield'];
+  const breadcrumb = generateBreadcrumbSchema([
+    { name: 'Home', url: '/' },
+    { name: 'Calculators', url: '/calculators' },
+    { name: 'SIP Shield Calculator', url: '/calculators/sip-shield' },
+  ]);
+  return (
+    <>
+      {schema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        />
+      )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
+      />
+      {children}
+    </>
+  );
 }

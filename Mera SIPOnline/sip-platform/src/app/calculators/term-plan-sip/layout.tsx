@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { generateBreadcrumbSchema } from '@/lib/seo';
+import { calculatorSchemas } from '@/components/seo/CalculatorSchemas';
 
 export const metadata: Metadata = {
   title: 'Term Plan Regular Pay + SIP vs Limited Pay Calculator | Mera SIP Online',
@@ -15,6 +17,26 @@ export const metadata: Metadata = {
   ],
 };
 
-export default function Layout({ children }: { children: React.ReactNode }) {
-  return children;
+export default function TermPlanSIPLayout({ children }: { children: React.ReactNode }) {
+  const schema = calculatorSchemas['term-plan-sip'];
+  const breadcrumb = generateBreadcrumbSchema([
+    { name: 'Home', url: '/' },
+    { name: 'Calculators', url: '/calculators' },
+    { name: 'Term Plan Regular Pay + SIP vs Limited Pay Calculator', url: '/calculators/term-plan-sip' },
+  ]);
+  return (
+    <>
+      {schema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        />
+      )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
+      />
+      {children}
+    </>
+  );
 }
