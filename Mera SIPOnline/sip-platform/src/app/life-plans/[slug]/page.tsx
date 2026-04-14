@@ -105,11 +105,22 @@ export async function generateMetadata({
   return {
     title: profile.metaTitle,
     description: profile.metaDescription,
+    keywords: profile.tags,
     openGraph: {
       title: profile.metaTitle,
       description: profile.metaDescription,
       type: 'article',
       url: `https://www.merasip.com/life-plans/${profile.slug}`,
+      siteName: 'Mera SIP Online by Trustner',
+      images: [{ url: '/og-image.png', width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: profile.metaTitle,
+      description: profile.metaDescription,
+    },
+    alternates: {
+      canonical: `/life-plans/${profile.slug}`,
     },
   };
 }
@@ -133,8 +144,61 @@ export default async function LifePlanDetailPage({
   const IconComponent = ICON_MAP[profile.icon] || BookOpen;
   const whatsappUrl = `https://wa.me/916003903737?text=${encodeURIComponent(profile.ctaWhatsApp)}`;
 
+  /* ─── JSON-LD Structured Data ─── */
+  const jsonLdArticle = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: profile.metaTitle,
+    description: profile.metaDescription,
+    url: `https://www.merasip.com/life-plans/${profile.slug}`,
+    author: {
+      '@type': 'Person',
+      name: 'CFP Ram Shah',
+      url: 'https://www.merasip.com/about',
+      jobTitle: 'Certified Financial Planner',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Trustner Asset Services Pvt. Ltd.',
+      url: 'https://www.merasip.com',
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `https://www.merasip.com/life-plans/${profile.slug}`,
+    },
+    keywords: profile.tags.join(', '),
+  };
+
+  const jsonLdBreadcrumb = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.merasip.com' },
+      { '@type': 'ListItem', position: 2, name: 'Life Plans', item: 'https://www.merasip.com/life-plans' },
+      { '@type': 'ListItem', position: 3, name: profile.title, item: `https://www.merasip.com/life-plans/${profile.slug}` },
+    ],
+  };
+
+  const jsonLdFaq = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: profile.commonMistakes.map((m) => ({
+      '@type': 'Question',
+      name: `What is the impact of ${m.mistake.toLowerCase()}?`,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: `${m.impact} Recommended approach: ${m.fix}`,
+      },
+    })),
+  };
+
   return (
     <main className="min-h-screen bg-surface-100">
+      {/* ─── Structured Data ─── */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdArticle) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdBreadcrumb) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdFaq) }} />
+
       {/* ─── Breadcrumbs ─── */}
       <nav className="bg-white border-b border-surface-300">
         <div className="container-custom py-3">
