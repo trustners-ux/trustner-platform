@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Menu, X, ChevronDown, Calculator, BookOpen, Search, GraduationCap, FlaskConical, ArrowRight, Layers, FileText, Activity, LogIn, UserPlus, Camera, ChevronRight, ChevronsDown, Brain, Users, Briefcase, Handshake, ExternalLink } from 'lucide-react';
+import { Menu, X, ChevronDown, Calculator, BookOpen, Search, GraduationCap, FlaskConical, ArrowRight, Layers, FileText, Activity, LogIn, UserPlus, Camera, ChevronRight, ChevronsDown, Brain, Users, Briefcase, Handshake, ExternalLink, HeartHandshake } from 'lucide-react';
 import { NAVIGATION, NavItem } from '@/lib/constants/navigation';
 import { cn } from '@/lib/utils/cn';
 import { StockTicker } from './StockTicker';
@@ -149,6 +149,7 @@ export function Header() {
     Blog: FileText,
     'Market Pulse': Activity,
     'Financial Planning': Brain,
+    'Life Plans': HeartHandshake,
     Gallery: Camera,
     Glossary: GraduationCap,
   };

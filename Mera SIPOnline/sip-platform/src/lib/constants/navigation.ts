@@ -231,6 +231,52 @@ export const NAVIGATION: NavItem[] = [
     badge: 'FREE',
   },
   {
+    label: 'Life Plans',
+    href: '/life-plans',
+    badge: 'New',
+    children: [
+      {
+        label: 'Salaried Professionals',
+        href: '/life-plans#salaried',
+        children: [
+          { label: 'Doctors & Healthcare', href: '/life-plans/doctors-healthcare' },
+          { label: 'IT & Software Engineers', href: '/life-plans/it-engineers' },
+          { label: 'Defence Personnel', href: '/life-plans/defense-personnel' },
+          { label: 'Government Employees', href: '/life-plans/government-employees' },
+          { label: 'Lawyers & Legal', href: '/life-plans/lawyers-legal' },
+          { label: 'Teachers & Educators', href: '/life-plans/teachers-educators' },
+        ],
+      },
+      {
+        label: 'Business & Entrepreneurs',
+        href: '/life-plans#business',
+        children: [
+          { label: 'Small Business Owners', href: '/life-plans/small-business-owners' },
+          { label: 'Startup Founders', href: '/life-plans/startup-founders' },
+          { label: 'Freelancers & Gig Workers', href: '/life-plans/freelancers-gig-workers' },
+        ],
+      },
+      {
+        label: 'Life Stage',
+        href: '/life-plans#life-stage',
+        children: [
+          { label: 'Homemakers', href: '/life-plans/homemakers' },
+          { label: 'Students & Fresh Graduates', href: '/life-plans/students-fresh-graduates' },
+          { label: 'Newly Married Couples', href: '/life-plans/newly-married-couples' },
+          { label: 'Senior Citizens & Retirees', href: '/life-plans/senior-citizens-retirees' },
+        ],
+      },
+      {
+        label: 'Special Segments',
+        href: '/life-plans#special',
+        children: [
+          { label: 'NRIs', href: '/life-plans/nri-financial-planning' },
+          { label: 'Women Professionals', href: '/life-plans/women-professionals' },
+        ],
+      },
+    ],
+  },
+  {
     label: 'Resources',
     href: '/resources',
     children: [
@@ -278,6 +324,18 @@ export const FOOTER_LINKS = {
     { label: 'Rolling Returns', href: '/research/rolling-returns' },
     { label: 'Case Studies', href: '/research/case-studies' },
     { label: 'Volatility Simulator', href: '/research/volatility-simulator' },
+  ],
+  'Life Plans': [
+    { label: 'Doctors & Healthcare', href: '/life-plans/doctors-healthcare' },
+    { label: 'IT & Software Engineers', href: '/life-plans/it-engineers' },
+    { label: 'Defense Personnel', href: '/life-plans/defense-personnel' },
+    { label: 'Government Employees', href: '/life-plans/government-employees' },
+    { label: 'Small Business Owners', href: '/life-plans/small-business-owners' },
+    { label: 'Homemakers', href: '/life-plans/homemakers' },
+    { label: 'Newly Married Couples', href: '/life-plans/newly-married-couples' },
+    { label: 'NRIs', href: '/life-plans/nri-financial-planning' },
+    { label: 'Women Professionals', href: '/life-plans/women-professionals' },
+    { label: 'All 15 Life Plans', href: '/life-plans' },
   ],
   Explore: [
     { label: 'Financial Health Assessment', href: '/financial-planning' },
