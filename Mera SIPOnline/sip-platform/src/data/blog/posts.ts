@@ -4,6 +4,473 @@ const AUTHOR = { name: 'CFP Ram Shah', role: 'Certified Financial Planner | Foun
 
 export const blogPosts: BlogPost[] = [
 
+  // ───────────────────────────── POST 73 ────────────────────────────
+  {
+    id: 'post-073',
+    title: '5 Financial Mistakes Most Indian Families Make Before 40',
+    slug: '5-financial-mistakes-indian-families-make-before-40',
+    excerpt:
+      'The decade between 30 and 40 is when Indian families earn the most, spend the most, and make the costliest financial mistakes. From buying real estate too early to ignoring health insurance until it is too late, here are five errors that silently erode wealth — and what to do instead.',
+    author: AUTHOR,
+    date: '2026-04-14',
+    category: 'Beginner Guides',
+    readTime: '9 min read',
+    tags: ['financial mistakes', 'Indian families', 'wealth building', 'personal finance', 'SIP', 'health insurance', 'term insurance', 'real estate vs mutual funds', 'emergency fund', 'lifestyle inflation'],
+    featured: true,
+    coverGradient: 'from-amber-800 to-red-900',
+    content: [
+      {
+        type: 'paragraph',
+        text: 'Between the ages of 30 and 40, most Indian families go through the biggest financial transitions of their lives. Marriage, children, a first home, career switches, ageing parents, school admissions, car upgrades. The decisions come fast, the money goes faster, and somehow, the years disappear before you build the wealth you imagined you would.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The problem is rarely income. Indian households earning 15 to 50 lakh per annum often have less real wealth at 40 than someone earning 8 lakh who made fewer mistakes. The decade between 30 and 40 is not defined by how much you earn. It is defined by which mistakes you avoid.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Here are five of the most common ones. If you recognise yourself in even two of them, this article could change the trajectory of your family\'s financial future.',
+      },
+      {
+        type: 'heading',
+        text: 'Mistake 1: Buying a House Too Early with Too Much Loan',
+      },
+      {
+        type: 'paragraph',
+        text: 'This is the single most expensive financial decision most Indian families make — and they make it under social pressure, not financial logic.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The script is familiar. You are 31 or 32. Parents are asking, "When are you buying your own place?" Colleagues are sharing photos of their new flat. The broker says, "EMI is the same as your rent." So you stretch. You take a 30-lakh down payment from your savings and parents, add a 70-lakh home loan at 8.5 percent for 20 years, and commit to an EMI of 60,000 per month.',
+      },
+      {
+        type: 'paragraph',
+        text: 'What nobody tells you is this: over 20 years at 8.5 percent, you will pay approximately 74 lakh in interest alone on that 70-lakh loan. The total cost of your 1 crore flat becomes 1.74 crore. Meanwhile, the flat may appreciate to 1.8 to 2 crore in 20 years — a real return of barely 3 to 4 percent annually after accounting for maintenance, property tax, and repairs.',
+      },
+      {
+        type: 'callout',
+        variant: 'warning',
+        text: 'A family that invested 60,000 per month in a diversified equity SIP instead of paying an EMI would have approximately 5.8 crore after 20 years at 12 percent CAGR. That is nearly three times the value of the flat. We are not saying do not buy a home. We are saying do not buy a home at the cost of your wealth-building years.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The smarter approach: rent in your 30s if the rent-to-EMI ratio is favourable (rent is 40 percent or less of what EMI would be), invest the difference aggressively, and buy a home in your late 30s or early 40s with a larger down payment and a shorter loan tenure.',
+      },
+      {
+        type: 'heading',
+        text: 'Mistake 2: No Term Insurance or Buying the Wrong Insurance',
+      },
+      {
+        type: 'paragraph',
+        text: 'This mistake has two versions, and both are devastating.',
+      },
+      {
+        type: 'subheading',
+        text: 'Version A: No life cover at all',
+      },
+      {
+        type: 'paragraph',
+        text: 'A shocking number of Indian families have zero or inadequate life insurance. The breadwinner earns 20 lakh per annum, has a home loan of 50 lakh, two children under 10, and dependent parents. If something happens to them tomorrow, the family needs at least 2 to 2.5 crore to maintain their lifestyle, repay the loan, and fund the children\'s education. Most families have a group cover of 5 to 10 lakh from their employer. That covers roughly two months of expenses.',
+      },
+      {
+        type: 'subheading',
+        text: 'Version B: Expensive endowment or ULIP policies instead of term insurance',
+      },
+      {
+        type: 'paragraph',
+        text: 'The family has insurance, but it is the wrong kind. They are paying 50,000 to 1,00,000 per year for an endowment policy or ULIP that gives them 10 to 15 lakh of cover and returns of 4 to 6 percent. Meanwhile, a pure term plan for 1 crore costs just 12,000 to 15,000 per year for a 32-year-old non-smoker. The remaining 85,000 invested in a mutual fund SIP would grow to roughly 85 lakh over 20 years.',
+      },
+      {
+        type: 'table',
+        rows: [
+          ['Insurance Type', 'Annual Premium', 'Cover', '20-Year Value (Cover + Investment)'],
+          ['Endowment / ULIP', '1,00,000', '15 Lakh', '~30-40 Lakh (maturity + bonuses)'],
+          ['Term Plan + SIP', '15,000 + 85,000', '1 Crore + SIP', '1 Cr cover + ~85 Lakh SIP corpus'],
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'tip',
+        text: 'The rule is simple: buy term insurance for protection (10 to 15 times your annual income), and invest separately for wealth creation through mutual fund SIPs. Never mix insurance and investment. This single change can add 50 lakh or more to your family\'s net worth over 20 years.',
+      },
+      {
+        type: 'heading',
+        text: 'Mistake 3: No Health Insurance Beyond the Employer Cover',
+      },
+      {
+        type: 'paragraph',
+        text: 'Your employer gives you a 5-lakh family floater health cover. You feel covered. Then your father needs a knee replacement (4 to 6 lakh), your wife has a complicated delivery (3 to 5 lakh in a good hospital), or you discover a condition that needs surgery. Suddenly, 5 lakh covers one event, not a family\'s annual health needs.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Worse: when you leave your job or are laid off, the employer cover vanishes the same day. Buying individual health insurance at 42 with a pre-existing condition means higher premiums, waiting periods, and possible exclusions. The family that should have been paying 25,000 per year at age 30 for a 15-lakh policy now pays 55,000 at 42 with worse terms.',
+      },
+      {
+        type: 'list',
+        items: [
+          'Buy individual health insurance of at least 10 to 15 lakh per family by age 30 — do not rely solely on employer cover',
+          'Consider a super top-up policy for an additional 25 to 50 lakh at a relatively small premium (8,000 to 12,000 per year)',
+          'Medical inflation in India runs at 12 to 14 percent per annum — a procedure costing 5 lakh today will cost 20 lakh in 10 years',
+          'Health insurance premiums paid are tax-deductible under Section 80D (up to 25,000 for self and family, 50,000 for parents above 60)',
+          'Once you buy young and healthy, the policy renews at similar rates even if health deteriorates later',
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'warning',
+        text: 'A single hospitalisation without adequate insurance can wipe out 2 to 5 years of savings. Health insurance is not an expense — it is a shield that protects every rupee you have invested elsewhere. Do not wait for a health scare to buy it.',
+      },
+      {
+        type: 'heading',
+        text: 'Mistake 4: Lifestyle Inflation That Matches (or Exceeds) Income Growth',
+      },
+      {
+        type: 'paragraph',
+        text: 'You got a 40 percent raise. Congratulations. Within three months, you have upgraded your car (EMI up by 15,000), moved to a bigger apartment (rent up by 20,000), enrolled your child in a premium school (fees up by 1,50,000 per year), and started ordering in four times a week instead of cooking.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Your income went up by 4 lakh per year. Your expenses went up by 5.5 lakh. You are now poorer than before the raise.',
+      },
+      {
+        type: 'paragraph',
+        text: 'This is lifestyle inflation, and it is the silent killer of Indian middle-class wealth. It does not feel like a mistake because every individual upgrade feels reasonable and earned. But the compound effect is catastrophic.',
+      },
+      {
+        type: 'table',
+        rows: [
+          ['Scenario', 'Monthly Income', 'Monthly Savings', 'SIP Corpus in 15 Years (12% CAGR)'],
+          ['Family A: Saves 30% of every raise', '1,50,000', '45,000', '~1.13 Crore'],
+          ['Family B: Spends 100% of every raise', '1,50,000', '20,000 (same as 5 years ago)', '~50 Lakh'],
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'The difference is 63 lakh. Not because Family A earned more, but because they followed a simple rule: every time your income increases, increase your SIP first, then your lifestyle.',
+      },
+      {
+        type: 'callout',
+        variant: 'tip',
+        text: 'The 50-30-20 rule adapted for Indian families: at least 50 percent of every salary increment should go to increased SIP or investments. The remaining 50 percent can fund lifestyle upgrades. A step-up SIP that increases by 10 percent annually is the easiest way to automate this discipline.',
+      },
+      {
+        type: 'heading',
+        text: 'Mistake 5: No Emergency Fund — Using Credit Cards and Loans as the Safety Net',
+      },
+      {
+        type: 'paragraph',
+        text: 'The car breaks down. The laptop dies. A parent falls ill. The school demands a sudden deposit. These are not emergencies — they are certainties. They happen to every family, every year, in different forms. The only question is whether you are prepared.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Most Indian families under 40 have no dedicated emergency fund. When the unexpected happens, they reach for a credit card (interest: 36 to 42 percent per annum), a personal loan (12 to 18 percent), or worse — they redeem their mutual fund SIP units at a loss, breaking the compounding chain exactly when they should not.',
+      },
+      {
+        type: 'paragraph',
+        text: 'An emergency fund is not conservative or boring. It is the foundation that allows every other financial decision to work. Without it, one bad month can unravel years of disciplined investing.',
+      },
+      {
+        type: 'list',
+        items: [
+          'Build an emergency fund of 6 months of total household expenses (EMIs + rent + school fees + living costs)',
+          'Keep it in a liquid fund or a high-interest savings account — not fixed deposits with lock-in penalties',
+          'For a family spending 80,000 per month, the target is 4.8 lakh — this can be built over 12 months by setting aside 40,000 per month',
+          'Do not touch this fund for planned expenses like vacations or gadgets — it is only for genuine, unplanned emergencies',
+          'Once built, forget it exists. Replenish immediately if you ever use it',
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        text: 'Think of the emergency fund as your financial immune system. A strong immune system does not prevent illness — it prevents illness from becoming fatal. A strong emergency fund does not prevent financial shocks — it prevents them from destroying your investment portfolio.',
+      },
+      {
+        type: 'heading',
+        text: 'The Cost of All Five Mistakes Combined',
+      },
+      {
+        type: 'paragraph',
+        text: 'Let us put real numbers to what these five mistakes cost an Indian family earning 20 lakh per annum over a 10-year period (age 30 to 40):',
+      },
+      {
+        type: 'table',
+        rows: [
+          ['Mistake', 'Estimated 10-Year Cost'],
+          ['Buying a house too early (excess interest + opportunity cost)', '30 to 50 Lakh'],
+          ['Wrong insurance (endowment instead of term + SIP)', '15 to 25 Lakh'],
+          ['No health insurance (one major hospitalisation)', '5 to 15 Lakh'],
+          ['Lifestyle inflation (spending 100% of raises)', '25 to 40 Lakh'],
+          ['No emergency fund (credit card debt + broken SIPs)', '5 to 10 Lakh'],
+          ['Total potential wealth erosion', '80 Lakh to 1.4 Crore'],
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'Read that last row again. A family earning 20 lakh per annum can lose 80 lakh to 1.4 crore in wealth over just 10 years — not through bad luck, not through a market crash, but through five quietly compounding mistakes that felt perfectly normal at the time.',
+      },
+      {
+        type: 'heading',
+        text: 'The Fix: A Simple Checklist Before You Turn 40',
+      },
+      {
+        type: 'list',
+        items: [
+          'Term insurance of 10 to 15 times annual income — bought before 35, it costs less than your monthly phone bill',
+          'Health insurance of at least 10 to 15 lakh for the family, independent of employer — bought before 30 for the best rates',
+          'Emergency fund of 6 months of household expenses — built within your first year of following this checklist',
+          'SIP that increases with every raise — set up a step-up SIP that grows by 10 percent annually',
+          'Home purchase only when you can afford 40 percent or more as down payment with a loan tenure of 10 to 15 years maximum',
+          'Zero credit card debt carried forward month to month — if you cannot pay the full bill, you cannot afford the purchase',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'None of these are complicated. None require an MBA in finance. They require awareness, a plan, and a financial advisor who will tell you the truth instead of selling you a product.',
+      },
+      {
+        type: 'quote',
+        text: 'The biggest risk in your 30s is not a market crash. It is spending a decade earning well and having nothing to show for it at 40.',
+      },
+      {
+        type: 'heading',
+        text: 'Final Word',
+      },
+      {
+        type: 'paragraph',
+        text: 'If you are reading this at 28 or 32 or 37, you still have time. The families that build lasting wealth are not the ones who earn the most. They are the ones who avoid the costliest mistakes during the decade when it matters most.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Start with one change. Buy that term plan you have been postponing. Set up a step-up SIP. Build that emergency fund. Open a health insurance policy while you are still healthy and the premiums are low. Every single one of these actions takes less than an hour and protects decades of future wealth.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The best time to fix these mistakes was five years ago. The second best time is today.',
+      },
+      {
+        type: 'cta',
+        text: 'Want a personalised review of your family\'s financial plan? Speak to a Trustner Certified Financial Planner — no product push, just honest advice.',
+        buttonText: 'Book a Free Review',
+        buttonHref: 'https://wa.me/916003903737?text=Hi%20Trustner%2C%20I%20read%20the%20article%20on%205%20financial%20mistakes%20before%2040%20and%20would%20like%20a%20personalised%20review',
+      },
+      {
+        type: 'disclaimer',
+        text: 'Mutual fund investments are subject to market risks. Read all scheme-related documents carefully before investing. Past performance is not indicative of future results. Insurance is the subject matter of solicitation. Trustner Asset Services (ARN-286886, EUIN: E092119) is a registered mutual fund distributor. Trustner Insurance Brokers Pvt. Ltd. (IRDAI Code: 1067) is a licensed insurance broker. This article is for educational purposes only and does not constitute personalised financial advice.',
+      },
+    ],
+  },
+
+  // ───────────────────────────── POST 72 ────────────────────────────
+  {
+    id: 'post-072',
+    title: 'We Do Not Know What Happens Next. And That Is Okay.',
+    slug: 'we-do-not-know-what-happens-next-sip-investor-letter-april-2026',
+    excerpt:
+      'Six consecutive weeks of losses. Oil above $110. A war with no end date. Your portfolio is red, your stomach is tight, and nobody can tell you when this ends. This is not a market update. This is a letter to every investor who is wondering whether to stay.',
+    author: AUTHOR,
+    date: '2026-04-05',
+    category: 'SIP Strategy',
+    readTime: '7 min read',
+    tags: ['investor letter', 'market crash 2026', 'SIP discipline', 'behavioural finance', 'stay invested', 'Iran oil crisis', 'six weeks decline', 'Warren Buffett', 'rupee cost averaging'],
+    featured: true,
+    coverGradient: 'from-slate-800 to-slate-950',
+    content: [
+      {
+        type: 'paragraph',
+        text: 'You opened your app this morning. You felt it in your stomach before the numbers loaded.',
+      },
+      {
+        type: 'paragraph',
+        text: 'What you are feeling is not panic. It is something quieter and worse: the suspicion that maybe this time it is different. That the ground has shifted, and nobody told you what to do.',
+      },
+      {
+        type: 'paragraph',
+        text: 'We know that feeling. We have seen it in the eyes of clients who trusted us with their life savings and wanted us to say something reassuring that we could not honestly say.',
+      },
+      {
+        type: 'paragraph',
+        text: 'We do not know what happens next. We do not know when this ends, when it gets better, or if it gets worse first. We cannot predict oil prices, geopolitics, or the next notification that turns your screen red.',
+      },
+      {
+        type: 'paragraph',
+        text: 'But here are some truths we do know.',
+      },
+      {
+        type: 'heading',
+        text: 'Every Time It Felt Like the End, It Was Not',
+      },
+      {
+        type: 'paragraph',
+        text: 'Not in 2008, when the global financial system nearly collapsed and the Sensex fell 60 percent. Not in 2020, when a virus shut down the entire world and markets crashed 38 percent in weeks. Not in 2022, when Russia invaded Ukraine and crude oil spiked to 130 dollars. Not today, in April 2026, with six consecutive weeks of losses, oil above 110 dollars, a war in the Middle East, and the rupee touching record lows before recovering.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Every crash feels unique. The reasons keep changing. The fear does not.',
+      },
+      {
+        type: 'paragraph',
+        text: 'And every single time, the investors who lost the most were not the ones who stayed. They were the ones who left. The cost of selling at the bottom, of re-entering after the recovery, is almost always greater than the cost of sitting with discomfort.',
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        text: 'Since 1979, the Sensex has delivered positive returns in 34 out of 47 calendar years. It has recovered from every single crash — 1992, 2000, 2008, 2020, and every crisis in between. The only investors who permanently lost money were those who sold during the fall and never came back.',
+      },
+      {
+        type: 'heading',
+        text: 'Your Brain Is Lying to You Right Now',
+      },
+      {
+        type: 'paragraph',
+        text: 'It is telling you to wait for clarity. But markets never send a notification saying, "The danger is over, invest now." They just quietly start going up while everyone is still arguing about whether the bottom is in.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Your brain is telling you to do something. Sell, pause, switch, anything. Because action feels like control. But what you have lost is not money. It is the feeling of control. And selling will not give it back.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The Nifty is down 20 percent from its 52-week high. Bank Nifty has fallen 14.67 percent in March alone. FIIs have pulled out over one lakh crore in 2026. Oil is above 110 dollars because a strait that carries 20 percent of the world\'s oil supply is effectively blockaded. Goldman Sachs has cut India\'s GDP forecast. Manufacturing PMI is at a four-year low.',
+      },
+      {
+        type: 'paragraph',
+        text: 'These are facts. They are real. They are also temporary. Every single one of them.',
+      },
+      {
+        type: 'heading',
+        text: 'So, What Should You Do?',
+      },
+      {
+        type: 'paragraph',
+        text: 'Not nothing. And not everything.',
+      },
+      {
+        type: 'subheading',
+        text: 'If You Have SIPs Running, Do Not Stop Them',
+      },
+      {
+        type: 'paragraph',
+        text: 'This is the moment they were designed for. Continuing to invest when it is the hardest means buying more units at lower prices. Your SIP bought units at NAV 500 six months ago. Today it is buying at NAV 400. Those extra units you are accumulating right now will be the ones that generate the highest returns when markets recover. Remind yourself: I will not stop.',
+      },
+      {
+        type: 'callout',
+        variant: 'tip',
+        text: 'In March 2020, the Nifty hit 7,511. Investors who continued their SIPs through the crash saw those units deliver over 100 percent returns within 18 months. Every SIP installment during a crash is a seed planted at the deepest discount. You do not see the tree today. You will see the forest in five years.',
+      },
+      {
+        type: 'subheading',
+        text: 'If You Have Idle Money and a 10-Year Horizon, Consider Putting It to Work',
+      },
+      {
+        type: 'paragraph',
+        text: 'Not all of it. Not recklessly. But the best days in market history have almost all come within weeks of the worst days. You cannot capture one while perfectly avoiding the other. If you have surplus cash that you genuinely do not need for 7 to 10 years, a staggered deployment alongside your regular SIP can capture this correction effectively.',
+      },
+      {
+        type: 'subheading',
+        text: 'If You Are All In, Know That This Is Not the First Storm',
+      },
+      {
+        type: 'paragraph',
+        text: 'And it will not be the last. Remind yourself that those who do better in markets are not the ones who were smarter. They were calmer. They had a plan, and they stuck to it when sticking to it felt impossible.',
+      },
+      {
+        type: 'subheading',
+        text: 'If You Are Unsure, Call Your Mutual Fund Distributor',
+      },
+      {
+        type: 'paragraph',
+        text: 'If you are lucky enough to have one. They know your life, not just your portfolio. Their value is even greater in uncertain times. Not for predictions. For perspective. So you can outlast the discomfort. And make decisions you will not regret three years later.',
+      },
+      {
+        type: 'heading',
+        text: 'Stop Checking. Start Trusting Your Plan.',
+      },
+      {
+        type: 'paragraph',
+        text: 'If you must check your portfolio, check it less. Your phone will not stop buzzing. Group chats will not stop panicking. NAVs will not look good for a while. That is not a failure of your plan. It is what a plan looks like when being tested.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Your only job right now? Let the plan keep working.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Does doing nothing work? One of the world\'s greatest investors, when asked how much he lost when stocks fell 50 percent in 2008, said: "Nothing — because I did nothing." The markets recovered. He was still in them when they did.',
+      },
+      {
+        type: 'heading',
+        text: 'The Numbers That Matter',
+      },
+      {
+        type: 'table',
+        rows: [
+          ['Crisis', 'Peak Fall', 'Time to New High', 'SIP Return (If Continued)'],
+          ['2008 Global Financial Crisis', '-60%', '~3.5 years', '400%+ over next 5 years'],
+          ['2011 European Debt Crisis', '-28%', '~2 years', '110%+ over next 5 years'],
+          ['2016 Demonetisation', '-11%', '~4 months', '95%+ over next 5 years'],
+          ['2020 COVID Crash', '-38%', '~7 months', '130% in 18 months'],
+          ['2022 Russia-Ukraine War', '-17%', '~8 months', '35%+ over next 2 years'],
+          ['2026 Iran-Oil Crisis (ongoing)', '-20% so far', '?', 'Your SIP is buying right now'],
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'Notice the pattern? The fall is always scary. The recovery always comes. And the investors who stayed always did better than the ones who tried to time their exit and re-entry.',
+      },
+      {
+        type: 'heading',
+        text: 'What the Quiet Majority Is Doing',
+      },
+      {
+        type: 'paragraph',
+        text: 'While headlines scream about FII selling of one lakh crore, here is what is happening quietly: Domestic institutional investors are absorbing nearly 100 percent of FII outflows. Monthly SIP inflows remain above 29,000 crore. Over 10 crore SIP accounts are still active. The SIP AUM has crossed 16.64 lakh crore.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Millions of ordinary Indian investors — teachers, engineers, shopkeepers, professionals — are doing the most powerful thing possible right now. They are doing nothing different. Their SIPs are running. Their plans are intact. They are not on television. They are not on Twitter. They are quietly building wealth while the noise plays out.',
+      },
+      {
+        type: 'callout',
+        variant: 'info',
+        text: 'DII ownership in Indian markets (19.2 percent) now exceeds FPI ownership (18.5 percent) for the first time in history. This is a structural shift. India\'s markets are no longer at the mercy of foreign hot money. Your SIP contributions are literally the market\'s floor.',
+      },
+      {
+        type: 'heading',
+        text: 'A Final Word',
+      },
+      {
+        type: 'paragraph',
+        text: 'You cannot do much about what happens next. The war, the oil, the rupee, the RBI decision next week — these are beyond your control.',
+      },
+      {
+        type: 'paragraph',
+        text: 'But you can decide whether you will stay the course while those around you are losing their nerve.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Staying is not comfortable. Which is why most people leave. Which is also why most people earn average returns.',
+      },
+      {
+        type: 'quote',
+        text: 'The stock market is a device for transferring money from the impatient to the patient. — Warren Buffett',
+      },
+      {
+        type: 'paragraph',
+        text: 'What about you? Will you be unaverage?',
+      },
+      {
+        type: 'cta',
+        text: 'If you need perspective — not predictions — talk to your Trustner Relationship Manager. We are here to help you stay calm, stay invested, and stay on plan.',
+        buttonText: 'Schedule a Portfolio Review',
+        buttonHref: 'https://wa.me/916003903737?text=Hi%20Trustner%2C%20I%20read%20the%20blog%20post%20and%20would%20like%20to%20discuss%20my%20investments%20during%20this%20correction.',
+      },
+      {
+        type: 'disclaimer',
+        text: 'Mutual fund investments are subject to market risks. Read all scheme related documents carefully before investing. Past performance is not indicative of future results. This blog is for educational purposes only and should not be construed as investment advice. Trustner Asset Services Pvt Ltd (ARN-286886) is a registered Mutual Fund Distributor. Please consult your financial consultant before making any investment decisions.',
+      },
+    ],
+  },
+
   // ───────────────────────────── POST 71 ────────────────────────────
   {
     id: 'post-071',
