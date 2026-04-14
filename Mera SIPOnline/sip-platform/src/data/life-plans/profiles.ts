@@ -86,7 +86,7 @@ export const lifePlanProfiles: LifePlanProfile[] = [
       {
         category: 'Tax',
         items: [
-          'Section 44ADA presumptive taxation for practitioners with receipts under Rs 75 lakh',
+          'Section 44ADA presumptive taxation for practitioners with gross receipts under Rs 50 lakh (Rs 75 lakh if 95%+ receipts are through digital/banking channels)',
           'Section 80C optimization via ELSS mutual funds rather than endowment policies',
           'Section 80D deductions for health insurance premiums (self, family, and parents)',
           'Depreciation claims on medical equipment if running own practice',
@@ -184,7 +184,7 @@ export const lifePlanProfiles: LifePlanProfile[] = [
     checklist: [
       'Consider starting SIPs during residency, even with small amounts — the habit matters more than the amount',
       'Evaluate term insurance of 15-20x annual income and professional indemnity insurance',
-      'Explore Section 44ADA presumptive taxation if you are a private practitioner',
+      'Explore Section 44ADA presumptive taxation if you are a private practitioner (Rs 50 lakh limit; Rs 75 lakh if 95%+ digital receipts)',
       'Consider separating personal and clinic finances with dedicated bank accounts',
       'Evaluate step-up SIP strategy to automatically increase investments as income grows',
       'Explore health insurance with super top-up while you are young and premiums are low',
@@ -428,7 +428,7 @@ export const lifePlanProfiles: LifePlanProfile[] = [
       { label: 'Early retirement age range', value: '35-54 (rank dependent)' },
       { label: 'Pension', value: '~50% of last drawn pay + DA' },
       { label: 'CSD canteen savings', value: '15-30% on consumer goods' },
-      { label: 'AGIF insurance', value: 'Rs 50 lakh group insurance' },
+      { label: 'AGIF/AGIS insurance', value: 'Rs 35-75 lakh (varies by rank)' },
     ],
 
     challenges: [
@@ -463,7 +463,7 @@ export const lifePlanProfiles: LifePlanProfile[] = [
       {
         category: 'Protection',
         items: [
-          'AGIF (Army Group Insurance Fund) provides Rs 50 lakh cover — evaluate if additional term insurance is needed',
+          'AGIF/AGIS provides Rs 35-75 lakh cover depending on rank — evaluate if additional personal term insurance is needed',
           'Personal health insurance beyond ECHS (Ex-Servicemen Contributory Health Scheme)',
           'Personal accident cover supplementing service-provided cover',
           'Critical illness cover especially post-retirement when ECHS has limitations',
@@ -617,11 +617,11 @@ export const lifePlanProfiles: LifePlanProfile[] = [
     overview:
       'Government employees enjoy unmatched job security, 7th Pay Commission salary structures, DA revisions, NPS or GPF benefits, and pension provisions. However, this very security often breeds complacency — many government employees assume pension will cover retirement needs and under-invest during their earning years. With rising inflation and lifestyle expectations, a pension-only retirement strategy is increasingly inadequate.',
     incomePattern:
-      'Structured pay scales under 7th CPC (Rs 18,000-2,50,000 basic pay), biannual DA revisions, predictable promotion-based increments, pension at 50% of last basic + DA.',
+      'Structured pay scales under 7th CPC (Rs 18,000-2,50,000 basic pay), biannual DA revisions, predictable promotion-based increments. OPS employees (pre-2004): pension at 50% of last basic + DA. NPS employees (post-2004): market-linked corpus, no guaranteed pension.',
     keyNumbers: [
       { label: '7th CPC pay range', value: 'Rs 18,000-2,50,000 (basic pay)' },
       { label: 'NPS employer contribution', value: '14% of basic + DA' },
-      { label: 'GPF interest rate', value: '7.1% (2025-26)' },
+      { label: 'GPF interest rate', value: '7.1% (subject to annual revision)' },
       { label: 'Retirement age', value: '60 years (central govt)' },
     ],
 
@@ -629,7 +629,7 @@ export const lifePlanProfiles: LifePlanProfile[] = [
       {
         title: 'False Sense of Financial Security',
         description:
-          'Job security and pension create a comfort zone where employees believe they do not need to invest actively. However, pension at 50% of last salary may cover only 30-40% of actual post-retirement expenses when inflation is factored in.',
+          'Job security and pension create a comfort zone where employees believe they do not need to invest actively. For OPS employees (pre-2004 joining), pension at 50% of last salary may cover only 30-40% of actual expenses after inflation. For NPS employees (post-2004 joining), there is no guaranteed pension at all — the retirement corpus is market-linked, making personal investing even more critical.',
       },
       {
         title: 'Limited Awareness Beyond Traditional Instruments',
@@ -683,7 +683,7 @@ export const lifePlanProfiles: LifePlanProfile[] = [
           'Section 80C: prefer ELSS mutual funds over NSC/LIC for growth + tax saving',
           'Section 80CCD(1B): additional Rs 50,000 NPS deduction beyond 80C limit',
           'Section 80D: health insurance premiums for self, family, and parents',
-          'HRA exemption: calculate actual tax benefit vs home loan interest deduction (80EEA)',
+          'HRA exemption: calculate actual tax benefit vs home loan interest deduction under Section 24(b) (up to Rs 2 lakh)',
           'Standard deduction of Rs 75,000 under new tax regime considerations',
         ],
       },
@@ -711,7 +711,7 @@ export const lifePlanProfiles: LifePlanProfile[] = [
       {
         mistake: 'Assuming pension will cover all retirement needs',
         impact:
-          'At 6-7% inflation, expenses double every 10-12 years. A pension of Rs 50,000/month today will feel like Rs 25,000 in 10 years. Medical expenses rise even faster at 12-14% inflation.',
+          'At 6-7% inflation, expenses double every 10-12 years. An OPS pension of Rs 50,000/month feels like Rs 25,000 in 10 years. NPS employees (post-2004) have no guaranteed pension at all — their retirement income depends entirely on corpus accumulation. Medical expenses rise even faster at 12-14% inflation.',
         fix: 'Consider building a retirement top-up corpus through equity SIPs that generates additional monthly income via SWP alongside pension.',
       },
     ],
@@ -874,7 +874,7 @@ export const lifePlanProfiles: LifePlanProfile[] = [
       {
         category: 'Tax',
         items: [
-          'Section 44ADA presumptive taxation for professional income under Rs 75 lakh',
+          'Section 44ADA presumptive taxation for professional income under Rs 50 lakh (Rs 75 lakh if 95%+ receipts are through digital/banking channels)',
           'Maintain proper books of accounts if income exceeds presumptive threshold',
           'Deduction for professional expenses including chamber rent, travel, and subscriptions',
           'Section 80C via ELSS, Section 80D for health insurance premiums',
@@ -956,7 +956,7 @@ export const lifePlanProfiles: LifePlanProfile[] = [
     checklist: [
       'Consider starting SIPs from your first regular fee income — the amount can be small',
       'Evaluate term insurance and health insurance as soon as practice income stabilizes',
-      'Explore Section 44ADA presumptive taxation for simplifying tax compliance',
+      'Explore Section 44ADA presumptive taxation for simplifying tax compliance (Rs 50 lakh limit; Rs 75 lakh if 95%+ digital receipts)',
       'Consider separate bank accounts for professional and personal finances',
       'Evaluate professional indemnity insurance for your legal practice',
       'Explore step-up SIPs that grow with your practice income',
@@ -1258,8 +1258,8 @@ export const lifePlanProfiles: LifePlanProfile[] = [
       {
         category: 'Tax',
         items: [
-          'Section 44AD presumptive taxation for businesses with turnover under Rs 3 crore (Rs 2 crore for cash)',
-          'Separate business and personal PAN accounts for proprietorships',
+          'Section 44AD presumptive taxation for businesses with turnover under Rs 2 crore (Rs 3 crore if 95%+ receipts are through digital/banking channels)',
+          'Separate business and personal bank accounts (proprietorship uses the individual\'s PAN)',
           'Advance tax quarterly to avoid Section 234B/234C interest',
           'Section 80C via ELSS, 80D for personal health insurance, 80CCD(1B) for NPS',
           'Proper books of accounts if opting out of presumptive taxation',
@@ -1343,7 +1343,7 @@ export const lifePlanProfiles: LifePlanProfile[] = [
       'Explore keyman insurance if the business depends heavily on you',
       'Consider treating personal SIPs as a fixed monthly business expense',
       'Evaluate building both a personal and business emergency fund separately',
-      'Explore Section 44AD presumptive taxation for simplified tax compliance',
+      'Explore Section 44AD presumptive taxation for simplified tax compliance (Rs 2 crore limit; Rs 3 crore if 95%+ digital receipts)',
       'Consider personal health insurance for the family — no employer cover exists',
       'Review business continuity and succession plan annually',
     ],
@@ -1455,7 +1455,7 @@ export const lifePlanProfiles: LifePlanProfile[] = [
           'Startup India tax exemption under Section 80-IAC (3 of 10 years) for DPIIT-registered startups',
           'Section 54GB capital gains exemption when investing in eligible startup equity',
           'ESOP taxation for startups — deferral benefit for employees of eligible startups',
-          'Angel tax provisions (Section 56(2)(viib)) awareness for fundraising',
+          'Angel tax (Section 56(2)(viib)) abolished from FY 2024-25 — fundraising no longer attracts this provision',
           'Founder salary as a deductible business expense — optimize personal vs business tax',
         ],
       },
@@ -1648,7 +1648,7 @@ export const lifePlanProfiles: LifePlanProfile[] = [
       {
         category: 'Tax',
         items: [
-          'Income up to Rs 3-3.5 lakh (old regime) or Rs 7-7.5 lakh (new regime) is tax-free',
+          'Income up to Rs 2.5 lakh (old regime) or effectively Rs 7 lakh (new regime, with rebate under Section 87A) is tax-free for individuals below 60',
           'Investment income in homemaker\'s name up to basic exemption is tax-free',
           'Clubbing provisions: income from assets gifted by spouse is taxable in spouse\'s hands',
           'Income earned by homemaker independently (business, freelancing) is taxable in her own hands',
@@ -2229,9 +2229,9 @@ export const lifePlanProfiles: LifePlanProfile[] = [
       {
         category: 'Tax',
         items: [
-          'Section 44ADA presumptive taxation for professionals with receipts under Rs 75 lakh',
+          'Section 44ADA presumptive taxation for professionals with gross receipts under Rs 50 lakh (Rs 75 lakh if 95%+ receipts are through digital/banking channels)',
           'Advance tax: pay quarterly to avoid Section 234B/234C penal interest',
-          'GST registration required if turnover exceeds Rs 20 lakh (Rs 10 lakh for services in special states)',
+          'GST registration required if turnover exceeds Rs 20 lakh (Rs 10 lakh for services in special category states)',
           'Maintain proper expense records: office rent, internet, equipment, software subscriptions',
           'NPS for additional Rs 50,000 deduction under Section 80CCD(1B)',
         ],
@@ -2314,7 +2314,7 @@ export const lifePlanProfiles: LifePlanProfile[] = [
       'Explore setting aside 30-35% of every invoice for advance tax and GST obligations',
       'Consider starting SIPs from your self-assigned monthly salary — maintain consistency',
       'Evaluate building an emergency fund covering 6-9 months of expenses',
-      'Explore Section 44ADA presumptive taxation for simplified tax compliance',
+      'Explore Section 44ADA presumptive taxation for simplified tax compliance (Rs 50 lakh limit; Rs 75 lakh if 95%+ digital receipts)',
       'Consider NPS for the additional Rs 50,000 tax deduction under Section 80CCD(1B)',
       'Review advance tax payment schedule quarterly to avoid penal interest',
     ],
@@ -2555,7 +2555,7 @@ export const lifePlanProfiles: LifePlanProfile[] = [
     keyNumbers: [
       { label: 'Life expectancy (India)', value: '~72 years (urban: 75+)' },
       { label: 'Medical inflation', value: '12-14% annually' },
-      { label: 'SCSS interest rate', value: '8.2% (2025-26)' },
+      { label: 'SCSS interest rate', value: '8.2% (subject to quarterly govt revision)' },
       { label: 'FD real return after inflation', value: '~0-1% (nearly zero)' },
     ],
 
@@ -2602,7 +2602,7 @@ export const lifePlanProfiles: LifePlanProfile[] = [
         category: 'Savings',
         items: [
           'Emergency fund: 12-18 months expenses in savings account or liquid fund',
-          'SCSS (Senior Citizen Savings Scheme): up to Rs 30 lakh at 8.2% with quarterly interest',
+          'SCSS (Senior Citizen Savings Scheme): up to Rs 30 lakh at 8.2% (rate subject to quarterly govt revision) with quarterly interest payout',
           'POMIS (Post Office Monthly Income Scheme): up to Rs 9 lakh (single) / Rs 15 lakh (joint)',
           'Maintain sufficient liquidity for unexpected medical expenses',
         ],
