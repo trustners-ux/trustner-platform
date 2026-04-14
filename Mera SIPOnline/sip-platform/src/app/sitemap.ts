@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next';
 import { getAllModules } from '@/data/modules';
 import { blogPosts } from '@/data/blog';
+import { getAllProfiles } from '@/data/life-plans';
 
 const BASE_URL = 'https://www.merasip.com';
 
@@ -108,5 +109,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE_URL}/resources/taxation/nri`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8 },
   ];
 
-  return [...staticPages, ...calculatorPages, ...researchPages, ...blogPages, ...financialPlanningPages, ...galleryPage, ...resourcePages, ...modulePages];
+  // Life Plans section — profession-based financial guidance
+  const lifePlanProfiles = getAllProfiles();
+  const lifePlanPages: MetadataRoute.Sitemap = [
+    { url: `${BASE_URL}/life-plans`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.9 },
+    ...lifePlanProfiles.map((profile) => ({
+      url: `${BASE_URL}/life-plans/${profile.slug}`,
+      lastModified: now,
+      changeFrequency: 'monthly' as const,
+      priority: 0.8,
+    })),
+  ];
+
+  // Fund explorer & tools
+  const fundToolPages: MetadataRoute.Sitemap = [
+    { url: `${BASE_URL}/funds/explore`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
+    { url: `${BASE_URL}/funds/screener`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
+    { url: `${BASE_URL}/funds/selection`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.7 },
+  ];
+
+  return [...staticPages, ...calculatorPages, ...researchPages, ...blogPages, ...financialPlanningPages, ...galleryPage, ...resourcePages, ...lifePlanPages, ...fundToolPages, ...modulePages];
 }
