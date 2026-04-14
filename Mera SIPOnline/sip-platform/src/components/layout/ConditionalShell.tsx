@@ -7,6 +7,7 @@ import { WhatsAppButton } from '@/components/sections/WhatsAppButton';
 import { ChatWidget } from '@/components/sections/ChatWidget';
 import { LeadCaptureModal } from '@/components/sections/LeadCaptureModal';
 import { FloatingInvestCTA } from '@/components/sections/FloatingInvestCTA';
+import { CallbackCTA } from '@/components/sections/CallbackCTA';
 import { ContentProtection } from '@/components/security/ContentProtection';
 
 /**
@@ -34,6 +35,7 @@ export function ConditionalShell({ children }: { children: React.ReactNode }) {
       <Footer />
       <WhatsAppButton />
       <ChatWidget />
+      <CallbackCTA />
       <LeadCaptureModal />
       <FloatingInvestCTA />
     </>
