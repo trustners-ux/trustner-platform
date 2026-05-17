@@ -9,6 +9,10 @@ load_dotenv()
 
 from routers import cas, reports, portfolio, auth, nav, review  # noqa: E402
 from routers.employees import router as employees_router  # noqa: E402
+from routers.risk_profile import router as risk_profile_router  # noqa: E402
+from routers.goals import router as goals_router
+from routers.scorecard import router as scorecard_router  # noqa: E402
+from routers.ai_advisor import router as ai_advisor_router  # noqa: E402
 
 app = FastAPI(
     title="MeraSIP S.M.A.R.T API",
@@ -42,6 +46,10 @@ app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(nav.router, prefix="/api", tags=["NAV"])
 app.include_router(review.router, prefix="/api/review", tags=["Review Workflow"])
 app.include_router(employees_router, prefix="/api/employees", tags=["employees"])
+app.include_router(risk_profile_router, prefix="/api", tags=["Risk Profile & Health"])
+app.include_router(goals_router, prefix="/api", tags=["Goal Planning"])
+app.include_router(scorecard_router, prefix="/api", tags=["Portfolio Scorecard"])
+app.include_router(ai_advisor_router, prefix="/api", tags=["AI Advisor"])
 
 
 @app.get("/health")

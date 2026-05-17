@@ -14,6 +14,10 @@ const TeamPage = lazy(() => import('./pages/TeamPage'))
 const AdminPanel = lazy(() => import('./pages/AdminPanel'))
 const ProfilePage = lazy(() => import('./pages/ProfilePage'))
 const PortfolioAnalyser = lazy(() => import('./pages/PortfolioAnalyser'))
+const RiskProfiler = lazy(() => import('./pages/RiskProfiler'))
+const GoalPlanner = lazy(() => import('./pages/GoalPlanner'))
+const ModelPortfolios = lazy(() => import('./pages/ModelPortfolios'))
+const AIAdvisor = lazy(() => import('./pages/AIAdvisor'))
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'))
 const TermsPage = lazy(() => import('./pages/TermsPage'))
 
@@ -39,6 +43,8 @@ export default function App() {
             <Route path="/review" element={<ReviewPage />} />
             <Route path="/client/:id" element={<ClientApp />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/risk-profile" element={<RiskProfiler />} />
+            <Route path="/ai-advisor" element={<AIAdvisor />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />
 
@@ -50,6 +56,10 @@ export default function App() {
             <Route path="/advisor/team" element={<PrivateRoute><TeamPage /></PrivateRoute>} />
             <Route path="/advisor/admin" element={<PrivateRoute requireAdmin><AdminPanel /></PrivateRoute>} />
             <Route path="/advisor/analyse" element={<PrivateRoute><PortfolioAnalyser /></PrivateRoute>} />
+            <Route path="/advisor/risk-profile" element={<PrivateRoute><RiskProfiler /></PrivateRoute>} />
+            <Route path="/advisor/goals" element={<PrivateRoute><GoalPlanner /></PrivateRoute>} />
+            <Route path="/advisor/models" element={<PrivateRoute><ModelPortfolios /></PrivateRoute>} />
+            <Route path="/advisor/ai" element={<PrivateRoute><AIAdvisor /></PrivateRoute>} />
             <Route path="/advisor/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
 
             {/* Default redirect */}

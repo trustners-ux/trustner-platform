@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { api } from '../api'
@@ -61,6 +61,115 @@ export default function PortfolioAnalyser() {
   const [saveSuccess, setSaveSuccess] = useState('')
   const [expandedNotes, setExpandedNotes] = useState({})
 
+  // Health Score state
+  const [healthScore, setHealthScore] = useState(null)
+  const [healthScoreLoading, setHealthScoreLoading] = useState(false)
+  const [healthScoreExpanded, setHealthScoreExpanded] = useState(true)
+
+  // Gap Analysis state
+  const [gapAnalysis, setGapAnalysis] = useState(null)
+  const [gapAnalysisLoading, setGapAnalysisLoading] = useState(false)
+  const [gapExpanded, setGapExpanded] = useState(true)
+
+  // ─── CLIENT-SIDE FALLBACK HEALTH SCORE ─────────────────────
+  const calculateFallbackHealthScore = useCallback((funds) => {
+    const amcSet = new Set(funds.map(f => (f.amc || f.name?.split(' ')[0] || '').toUpperCase()))
+    const catSet = new Set(funds.map(f => f.category || f.cat || 'Unknown'))
+    const catCounts = funds.reduce((acc, f) => {
+      const c = f.category || f.cat || 'Unknown'
+      acc[c] = (acc[c] || 0) + 1
+      return acc
+    }, {})
+    const maxCatOverlap = Math.max(...Object.values(catCounts), 0)
+    const totalValue = funds.reduce((s, f) => s + (f.value ?? f.val ?? 0), 0)
+
+    // Diversification: based on unique AMCs and categories
+    const divScore = Math.min(20, Math.round((amcSet.size / Math.max(funds.length, 1)) * 15 + (catSet.size >= 4 ? 5 : catSet.size >= 2 ? 3 : 0)))
+    const divIssues = amcSet.size <= 2 ? [`Only ${amcSet.size} AMC${amcSet.size === 1 ? '' : 's'} — consider diversifying across fund houses`] : []
+
+    // Allocation: simplified — penalize if one category dominates
+    const catWeights = {}
+    funds.forEach(f => {
+      const c = f.category || f.cat || 'Unknown'
+      catWeights[c] = (catWeights[c] || 0) + (f.value ?? f.val ?? 0)
+    })
+    const maxWeight = totalValue > 0 ? Math.max(...Object.values(catWeights)) / totalValue : 0
+    const allocScore = maxWeight > 0.8 ? 6 : maxWeight > 0.6 ? 10 : maxWeight > 0.4 ? 15 : 18
+    const allocIssues = maxWeight > 0.6 ? ['Portfolio is heavily concentrated in one category'] : []
+
+    // Overlap: penalize duplicate categories
+    const overlapScore = maxCatOverlap > 4 ? 5 : maxCatOverlap > 3 ? 8 : maxCatOverlap > 2 ? 12 : maxCatOverlap > 1 ? 16 : 20
+    const overlapIssues = maxCatOverlap > 2 ? [`${maxCatOverlap} funds in the same category — review for overlap`] : []
+
+    // Performance: based on average abs return
+    const returnsArr = funds.map(f => f.abs_return ?? f.abs).filter(v => v != null)
+    const avgReturn = returnsArr.length > 0 ? returnsArr.reduce((s, v) => s + v, 0) / returnsArr.length : 0
+    const perfScore = avgReturn > 15 ? 20 : avgReturn > 10 ? 16 : avgReturn > 5 ? 12 : avgReturn > 0 ? 8 : 4
+    const perfIssues = avgReturn < 5 ? ['Average portfolio return is below expectations'] : []
+
+    // Discipline: check if most funds have SIP-like patterns (simplified: assume OK)
+    const discScore = 16
+    const discIssues = []
+
+    const total = divScore + allocScore + overlapScore + perfScore + discScore
+    const grade = total >= 90 ? 'A+' : total >= 80 ? 'A' : total >= 70 ? 'B+' : total >= 60 ? 'B' : total >= 50 ? 'C' : 'D'
+
+    const recommendations = [...divIssues, ...allocIssues, ...overlapIssues, ...perfIssues].filter(Boolean)
+    const strengths = []
+    if (amcSet.size >= 4) strengths.push('Good AMC diversification')
+    if (avgReturn > 10) strengths.push('Strong overall returns')
+    if (maxCatOverlap <= 2) strengths.push('Low fund overlap')
+    const hasRegular = funds.some(f => (f.plan || '').toLowerCase().includes('regular'))
+    if (hasRegular) strengths.push('Regular plan funds with advisor guidance')
+
+    return {
+      total_score: total,
+      grade,
+      dimensions: {
+        diversification: { score: divScore, max: 20, issues: divIssues },
+        allocation: { score: allocScore, max: 20, issues: allocIssues },
+        overlap: { score: overlapScore, max: 20, issues: overlapIssues },
+        performance: { score: perfScore, max: 20, issues: perfIssues },
+        discipline: { score: discScore, max: 20, issues: discIssues },
+      },
+      recommendations: recommendations.length > 0 ? recommendations : ['Portfolio looks balanced — continue periodic reviews'],
+      strengths: strengths.length > 0 ? strengths : ['Portfolio is being actively managed'],
+    }
+  }, [])
+
+  // ─── TRIGGER HEALTH SCORE + GAP ANALYSIS ──────────────────
+  const triggerHealthScore = useCallback(async (funds) => {
+    setHealthScoreLoading(true)
+    setHealthScore(null)
+    try {
+      const riskProfile = localStorage.getItem('merasip_risk_profile') || null
+      const result = await api.calculateHealthScore(funds, riskProfile)
+      setHealthScore(result)
+      return result
+    } catch {
+      // Fallback: client-side calculation
+      const fallback = calculateFallbackHealthScore(funds)
+      setHealthScore(fallback)
+      return fallback
+    } finally {
+      setHealthScoreLoading(false)
+    }
+  }, [calculateFallbackHealthScore])
+
+  const triggerGapAnalysis = useCallback(async (funds) => {
+    const stored = localStorage.getItem('merasip_risk_profile')
+    if (!stored) { setGapAnalysis(null); return }
+    setGapAnalysisLoading(true)
+    try {
+      const result = await api.calculateGapAnalysis(funds, stored)
+      setGapAnalysis(result)
+    } catch {
+      setGapAnalysis(null)
+    } finally {
+      setGapAnalysisLoading(false)
+    }
+  }, [])
+
   // ─── FILE HANDLING ─────────────────────────────────────────
   const handleFileSelect = (e) => {
     const f = e.target.files?.[0]
@@ -108,6 +217,22 @@ export default function PortfolioAnalyser() {
       setEditableFunds(funds)
       setExpandedNotes({})
       setStep('result')
+
+      // Auto-trigger health score + gap analysis in parallel
+      const hsPromise = triggerHealthScore(funds)
+      triggerGapAnalysis(funds)
+
+      // Store portfolio data in localStorage after health score resolves
+      hsPromise.then(hsResult => {
+        try {
+          localStorage.setItem('merasip_portfolio_data', JSON.stringify({
+            funds,
+            summary: result.summary,
+            healthScore: hsResult,
+            timestamp: Date.now(),
+          }))
+        } catch { /* localStorage quota — ignore */ }
+      })
     } catch (err) {
       const msg = err.message || ''
       if (msg.includes('timed out') || msg.includes('Unable to reach') || msg.includes('Load Failed') || msg.includes('load failed') || msg.includes('fetch')) {
@@ -207,6 +332,12 @@ export default function PortfolioAnalyser() {
     setSaveSuccess('')
     setClientInfo({ name: '', email: '', mobile: '' })
     setExpandedNotes({})
+    setHealthScore(null)
+    setHealthScoreLoading(false)
+    setHealthScoreExpanded(true)
+    setGapAnalysis(null)
+    setGapAnalysisLoading(false)
+    setGapExpanded(true)
   }
 
   // ─── DERIVED DATA ─────────────────────────────────────────
@@ -224,6 +355,10 @@ export default function PortfolioAnalyser() {
     { label: 'Dashboard', href: '/advisor' },
     { label: 'Rebalance', href: '/advisor/rebalance' },
     { label: 'Analyse', href: '/advisor/analyse' },
+    { label: 'Risk Profile', href: '/advisor/risk-profile' },
+    { label: 'Goals', href: '/advisor/goals' },
+    { label: 'Models', href: '/advisor/models' },
+    { label: 'AI Advisor', href: '/advisor/ai' },
     { label: 'NAV Engine', href: '/advisor/nav' },
     ...(isManager ? [{ label: 'Review Queue', href: '/advisor/review-queue' }] : []),
     { label: 'Team', href: '/advisor/team' },
@@ -582,6 +717,390 @@ export default function PortfolioAnalyser() {
                     </span>
                   )
                 })}
+              </div>
+            )}
+
+            {/* ─ Portfolio Health Score Panel ─ */}
+            {(healthScore || healthScoreLoading) && (
+              <div style={{
+                background: C.bg0, border: `1px solid ${C.border}`, borderRadius: 12,
+                marginBottom: 20, overflow: 'hidden',
+              }}>
+                {/* Header bar — always visible */}
+                <button
+                  onClick={() => setHealthScoreExpanded(p => !p)}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center',
+                    padding: '16px 20px', gap: 20, background: 'transparent',
+                    border: 'none', cursor: 'pointer', textAlign: 'left',
+                  }}
+                >
+                  {/* Score circle */}
+                  {healthScoreLoading ? (
+                    <div style={{
+                      width: 64, height: 64, borderRadius: '50%',
+                      border: `4px solid ${C.navyPale}`, borderTopColor: C.navy,
+                      animation: 'spin 1s linear infinite', flexShrink: 0,
+                    }} />
+                  ) : healthScore && (
+                    <svg width="64" height="64" viewBox="0 0 64 64" style={{ flexShrink: 0 }}>
+                      <circle cx="32" cy="32" r="28" fill="none"
+                        stroke={C.bg2} strokeWidth="6" />
+                      <circle cx="32" cy="32" r="28" fill="none"
+                        stroke={
+                          healthScore.total_score >= 80 ? C.green
+                          : healthScore.total_score >= 60 ? C.navy
+                          : healthScore.total_score >= 50 ? C.amber
+                          : C.red
+                        }
+                        strokeWidth="6" strokeLinecap="round"
+                        strokeDasharray={`${(healthScore.total_score / 100) * 175.9} 175.9`}
+                        transform="rotate(-90 32 32)"
+                        style={{ transition: 'stroke-dasharray 0.8s ease' }}
+                      />
+                      <text x="32" y="30" textAnchor="middle" dominantBaseline="central"
+                        style={{
+                          fontSize: 18, fontWeight: 800, fontFamily: 'Georgia, serif',
+                          fill: healthScore.total_score >= 80 ? C.green
+                            : healthScore.total_score >= 60 ? C.navy
+                            : healthScore.total_score >= 50 ? C.amber
+                            : C.red,
+                        }}>
+                        {healthScore.total_score}
+                      </text>
+                      <text x="32" y="44" textAnchor="middle"
+                        style={{ fontSize: 8, fontWeight: 700, fill: C.muted }}>
+                        / 100
+                      </text>
+                    </svg>
+                  )}
+
+                  {/* Grade + label */}
+                  <div style={{ flex: 1 }}>
+                    {healthScoreLoading ? (
+                      <div style={{ fontSize: 14, fontWeight: 700, color: C.navy }}>
+                        Calculating Health Score...
+                      </div>
+                    ) : healthScore && (
+                      <>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span style={{
+                            fontSize: 22, fontWeight: 800, fontFamily: 'Georgia, serif',
+                            color: healthScore.total_score >= 80 ? C.green
+                              : healthScore.total_score >= 60 ? C.navy
+                              : healthScore.total_score >= 50 ? C.amber
+                              : C.red,
+                          }}>
+                            {healthScore.grade}
+                          </span>
+                          <span style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>
+                            Portfolio Health Score
+                          </span>
+                        </div>
+                        <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>
+                          {healthScore.total_score >= 90 ? 'Excellent — well-diversified portfolio'
+                            : healthScore.total_score >= 80 ? 'Good — minor improvements possible'
+                            : healthScore.total_score >= 70 ? 'Fair — some areas need attention'
+                            : healthScore.total_score >= 60 ? 'Below Average — action recommended'
+                            : 'Needs Attention — significant improvements needed'}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Expand arrow */}
+                  {healthScore && (
+                    <span style={{
+                      fontSize: 14, color: C.muted, transition: 'transform 0.2s',
+                      transform: healthScoreExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                    }}>
+                      {'▼'}
+                    </span>
+                  )}
+                </button>
+
+                {/* Expanded content */}
+                {healthScoreExpanded && healthScore && (
+                  <div style={{ padding: '0 20px 20px', borderTop: `1px solid ${C.border}` }}>
+
+                    {/* 5 Dimension Bars */}
+                    <div style={{ marginTop: 16 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: '0.06em', marginBottom: 12 }}>
+                        SCORE BREAKDOWN
+                      </div>
+                      {Object.entries(healthScore.dimensions || {}).map(([key, dim]) => {
+                        const barColor = dim.score >= 15 ? C.green : dim.score >= 10 ? C.amber : C.red
+                        const pctWidth = dim.max > 0 ? (dim.score / dim.max) * 100 : 0
+                        const label = key.charAt(0).toUpperCase() + key.slice(1)
+                        return (
+                          <div key={key} style={{ marginBottom: 10 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                              <span style={{ fontSize: 12, fontWeight: 600, color: C.ink }}>{label}</span>
+                              <span style={{ fontSize: 11, fontWeight: 700, color: barColor }}>{dim.score}/{dim.max}</span>
+                            </div>
+                            <div style={{
+                              height: 8, borderRadius: 4, background: C.bg2,
+                              overflow: 'hidden',
+                            }}>
+                              <div style={{
+                                height: '100%', borderRadius: 4, background: barColor,
+                                width: `${pctWidth}%`, transition: 'width 0.6s ease',
+                              }} />
+                            </div>
+                            {dim.issues && dim.issues.length > 0 && (
+                              <div style={{ marginTop: 3 }}>
+                                {dim.issues.map((issue, ii) => (
+                                  <div key={ii} style={{ fontSize: 10, color: C.muted, lineHeight: 1.4, paddingLeft: 8 }}>
+                                    {issue}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    {/* Two-column: Recommendations + Strengths */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 20 }}>
+                      {/* Recommendations */}
+                      {healthScore.recommendations && healthScore.recommendations.length > 0 && (
+                        <div style={{
+                          background: C.amberPale, border: `1px solid ${C.amber}25`,
+                          borderRadius: 8, padding: 16,
+                        }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: C.amber, marginBottom: 8 }}>
+                            RECOMMENDATIONS
+                          </div>
+                          <div style={{ fontSize: 12, color: C.ink, marginBottom: 8 }}>
+                            Based on your portfolio analysis:
+                          </div>
+                          <ol style={{ margin: 0, paddingLeft: 18 }}>
+                            {healthScore.recommendations.map((rec, ri) => (
+                              <li key={ri} style={{ fontSize: 11, color: C.ink, lineHeight: 1.6, marginBottom: 4 }}>
+                                {rec}
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      )}
+
+                      {/* Strengths */}
+                      {healthScore.strengths && healthScore.strengths.length > 0 && (
+                        <div style={{
+                          background: C.greenPale, border: `1px solid ${C.green}25`,
+                          borderRadius: 8, padding: 16,
+                        }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: C.green, marginBottom: 8 }}>
+                            STRENGTHS
+                          </div>
+                          {healthScore.strengths.map((s, si) => (
+                            <div key={si} style={{
+                              fontSize: 11, color: C.ink, lineHeight: 1.6, marginBottom: 4,
+                              display: 'flex', alignItems: 'flex-start', gap: 6,
+                            }}>
+                              <span style={{ color: C.green, fontWeight: 700, flexShrink: 0 }}>{'✓'}</span>
+                              <span>{s}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ─ Gap Analysis (if risk profile exists) ─ */}
+            {(gapAnalysis || gapAnalysisLoading || !localStorage.getItem('merasip_risk_profile')) && step === 'result' && (
+              <div style={{
+                background: C.bg0, border: `1px solid ${C.border}`, borderRadius: 12,
+                marginBottom: 20, overflow: 'hidden',
+              }}>
+                <button
+                  onClick={() => setGapExpanded(p => !p)}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '14px 20px', background: 'transparent',
+                    border: 'none', cursor: 'pointer', textAlign: 'left',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 18 }}>{'🎯'}</span>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: C.navy }}>
+                      Portfolio vs Model Comparison
+                    </span>
+                    {gapAnalysisLoading && (
+                      <span style={{ fontSize: 11, color: C.muted, fontWeight: 400 }}>Analysing...</span>
+                    )}
+                  </div>
+                  <span style={{
+                    fontSize: 14, color: C.muted, transition: 'transform 0.2s',
+                    transform: gapExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                  }}>
+                    {'▼'}
+                  </span>
+                </button>
+
+                {gapExpanded && (
+                  <div style={{ padding: '0 20px 20px', borderTop: `1px solid ${C.border}` }}>
+                    {!localStorage.getItem('merasip_risk_profile') ? (
+                      /* No risk profile — show CTA */
+                      <div style={{
+                        marginTop: 16, padding: 20, background: C.navyPale,
+                        borderRadius: 8, textAlign: 'center',
+                      }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: C.navy, marginBottom: 8 }}>
+                          No risk profile found
+                        </div>
+                        <div style={{ fontSize: 12, color: C.muted, marginBottom: 14 }}>
+                          Complete the risk assessment to see how this portfolio compares to the recommended model allocation
+                        </div>
+                        <a href="/advisor/risk-profile" style={{
+                          display: 'inline-block', padding: '10px 24px',
+                          background: C.navy, color: '#fff', borderRadius: 8,
+                          fontSize: 13, fontWeight: 700, textDecoration: 'none',
+                        }}>
+                          Take Risk Assessment
+                        </a>
+                      </div>
+                    ) : gapAnalysisLoading ? (
+                      <div style={{ textAlign: 'center', padding: 24 }}>
+                        <div style={{
+                          width: 32, height: 32, margin: '0 auto 12px',
+                          borderRadius: '50%', border: `3px solid ${C.navyPale}`,
+                          borderTopColor: C.navy, animation: 'spin 1s linear infinite',
+                        }} />
+                        <div style={{ fontSize: 12, color: C.muted }}>Running gap analysis...</div>
+                      </div>
+                    ) : gapAnalysis ? (
+                      <div style={{ marginTop: 16 }}>
+                        {/* Profile label */}
+                        <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: '0.06em', marginBottom: 12 }}>
+                          MODEL: {(gapAnalysis.profile || localStorage.getItem('merasip_risk_profile') || '').toUpperCase()}
+                        </div>
+
+                        {/* Stacked bar comparison */}
+                        {gapAnalysis.your_allocation && gapAnalysis.model_allocation && (
+                          <div style={{ marginBottom: 16 }}>
+                            {['Your Portfolio', 'Model'].map((label, barIdx) => {
+                              const alloc = barIdx === 0 ? gapAnalysis.your_allocation : gapAnalysis.model_allocation
+                              const allocColors = {
+                                equity: C.navy, debt: C.green, hybrid: C.violet,
+                                gold: '#D97706', international: '#6366F1', other: C.muted, cash: C.border,
+                              }
+                              return (
+                                <div key={label} style={{ marginBottom: 10 }}>
+                                  <div style={{ fontSize: 11, fontWeight: 600, color: C.ink, marginBottom: 4 }}>{label}</div>
+                                  <div style={{
+                                    display: 'flex', height: 24, borderRadius: 6, overflow: 'hidden',
+                                    border: `1px solid ${C.border}`,
+                                  }}>
+                                    {Object.entries(alloc).map(([cat, pctVal]) => {
+                                      if (!pctVal || pctVal < 1) return null
+                                      return (
+                                        <div key={cat} title={`${cat}: ${pctVal.toFixed(1)}%`} style={{
+                                          width: `${pctVal}%`, background: allocColors[cat.toLowerCase()] || C.muted,
+                                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                          fontSize: 9, color: '#fff', fontWeight: 700,
+                                          minWidth: pctVal > 8 ? 0 : undefined,
+                                        }}>
+                                          {pctVal >= 8 ? `${cat} ${pctVal.toFixed(0)}%` : ''}
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
+
+                        {/* Gap items */}
+                        {gapAnalysis.gaps && gapAnalysis.gaps.length > 0 && (
+                          <div>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: '0.06em', marginBottom: 8 }}>
+                              GAPS IDENTIFIED
+                            </div>
+                            {gapAnalysis.gaps.map((gap, gi) => (
+                              <div key={gi} style={{
+                                padding: '8px 12px', background: C.bg2, borderRadius: 6,
+                                marginBottom: 6, fontSize: 12, color: C.ink,
+                                display: 'flex', alignItems: 'center', gap: 8,
+                              }}>
+                                <span style={{
+                                  width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+                                  background: (gap.direction === 'over' || gap.type === 'over') ? C.red : C.amber,
+                                }} />
+                                <span>{gap.message || gap.description || `${gap.category}: ${gap.direction === 'over' ? 'Overweight' : 'Underweight'} by ${Math.abs(gap.diff ?? gap.gap ?? 0).toFixed(1)}%`}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Suggestions */}
+                        {gapAnalysis.suggestions && gapAnalysis.suggestions.length > 0 && (
+                          <div style={{ marginTop: 12 }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: '0.06em', marginBottom: 6 }}>
+                              SUGGESTIONS
+                            </div>
+                            {gapAnalysis.suggestions.map((s, si) => (
+                              <div key={si} style={{ fontSize: 11, color: C.ink, lineHeight: 1.5, marginBottom: 3, paddingLeft: 8 }}>
+                                {si + 1}. {s}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div style={{ marginTop: 16, padding: 16, textAlign: 'center', color: C.muted, fontSize: 12 }}>
+                        Gap analysis unavailable. Try refreshing the page.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ─ Download Scorecard Button ─ */}
+            {healthScore && (
+              <div style={{ marginBottom: 20, display: 'flex', gap: 10 }}>
+                <button
+                  onClick={async () => {
+                    try {
+                      const blob = await api.generateScorecard({
+                        investor: portfolio?.investor || {},
+                        summary: portfolio?.summary || {},
+                        funds: editableFunds.length > 0 ? editableFunds : (portfolio?.funds || []),
+                        health_score: healthScore,
+                        risk_profile: localStorage.getItem('merasip_risk_profile') || null,
+                        gap_analysis: gapAnalysis || null,
+                      })
+                      const url = URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = `MeraSIP-Portfolio-Scorecard-${new Date().toISOString().slice(0,10)}.pdf`
+                      document.body.appendChild(a)
+                      a.click()
+                      document.body.removeChild(a)
+                      URL.revokeObjectURL(url)
+                    } catch (err) {
+                      setError('Failed to generate scorecard: ' + (err.message || 'Please try again'))
+                    }
+                  }}
+                  style={{
+                    background: C.navy, border: 'none',
+                    borderRadius: 8, padding: '10px 20px', color: '#fff',
+                    fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    transition: 'opacity 0.2s',
+                  }}
+                  onMouseEnter={e => e.target.style.opacity = '0.85'}
+                  onMouseLeave={e => e.target.style.opacity = '1'}
+                >
+                  <span style={{ fontSize: 16 }}>{'📄'}</span>
+                  Download Portfolio Scorecard (PDF)
+                </button>
               </div>
             )}
 

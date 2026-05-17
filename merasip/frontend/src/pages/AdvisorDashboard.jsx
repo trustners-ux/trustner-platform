@@ -298,6 +298,10 @@ export default function AdvisorDashboard() {
           {/* Nav links */}
           <button onClick={() => navigate('/advisor/analyse')} style={{ ...navBtn, background: 'rgba(255,255,255,0.2)' }}>Analyse</button>
           <button onClick={() => navigate('/advisor/rebalance')} style={navBtn}>Rebalance</button>
+          <button onClick={() => navigate('/advisor/risk-profile')} style={navBtn}>Risk Profile</button>
+          <button onClick={() => navigate('/advisor/goals')} style={navBtn}>Goals</button>
+          <button onClick={() => navigate('/advisor/models')} style={navBtn}>Models</button>
+          <button onClick={() => navigate('/advisor/ai')} style={navBtn}>AI Advisor</button>
           <button onClick={() => navigate('/advisor/nav')} style={navBtn}>NAV</button>
           {isManager && <button onClick={() => navigate('/advisor/review-queue')} style={{ ...navBtn, background: 'rgba(255,255,255,0.2)' }}>Review Queue</button>}
           <button onClick={() => navigate('/advisor/team')} style={navBtn}>Team</button>

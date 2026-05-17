@@ -186,4 +186,64 @@ export const api = {
 
   getActivityLog: () =>
     fetch(`${BASE}/api/employees/activity`, { headers: headers(true) }).then(handleResponse),
+
+  // === Risk Profiling (public) ===
+  getRiskQuestions: () =>
+    fetch(`${BASE}/api/risk-profile/questions`).then(handleResponse),
+
+  calculateRiskProfile: (answers) =>
+    fetch(`${BASE}/api/risk-profile/calculate`, {
+      method: 'POST', headers: headers(),
+      body: JSON.stringify({ answers })
+    }).then(handleResponse),
+
+  // === Health Score ===
+  calculateHealthScore: (funds, risk_profile = null) =>
+    fetch(`${BASE}/api/health-score`, {
+      method: 'POST', headers: headers(),
+      body: JSON.stringify({ funds, risk_profile })
+    }).then(handleResponse),
+
+  // === Model Portfolios ===
+  getModelPortfolios: () =>
+    fetch(`${BASE}/api/model-portfolios`).then(handleResponse),
+
+  getModelForProfile: (profile) =>
+    fetch(`${BASE}/api/model-portfolios/${encodeURIComponent(profile)}`).then(handleResponse),
+
+  calculateGapAnalysis: (funds, profile) =>
+    fetch(`${BASE}/api/model-portfolios/gap-analysis`, {
+      method: 'POST', headers: headers(),
+      body: JSON.stringify({ funds, profile })
+    }).then(handleResponse),
+
+  // === Goal Planning ===
+  calculateGoal: (goal) =>
+    fetch(`${BASE}/api/goals/calculate`, {
+      method: 'POST', headers: headers(),
+      body: JSON.stringify(goal)
+    }).then(handleResponse),
+
+  calculateGoalsBatch: (goals) =>
+    fetch(`${BASE}/api/goals/batch-calculate`, {
+      method: 'POST', headers: headers(),
+      body: JSON.stringify(goals)
+    }).then(handleResponse),
+
+  // === AI Advisor ===
+  aiAdvisorChat: (data) =>
+    fetch(`${BASE}/api/ai-advisor/chat`, {
+      method: 'POST', headers: headers(),
+      body: JSON.stringify(data)
+    }).then(handleResponse),
+
+  // === Portfolio Scorecard ===
+  generateScorecard: (data) =>
+    fetch(`${BASE}/api/portfolio-review/generate`, {
+      method: 'POST', headers: headers(),
+      body: JSON.stringify(data)
+    }).then(res => {
+      if (!res.ok) throw new Error('Failed to generate scorecard')
+      return res.blob()
+    }),
 }

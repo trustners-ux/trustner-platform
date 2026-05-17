@@ -216,3 +216,85 @@ class EmployeeUpdate(BaseModel):
     department: Optional[str] = None
     role: Optional[str] = None
     status: Optional[str] = None
+
+
+# =============================================================================
+# RISK PROFILING SCHEMAS
+# =============================================================================
+
+class RiskQuestion(BaseModel):
+    id: str
+    text: str
+    options: list[dict]  # [{label, weight}]
+
+
+class RiskProfileRequest(BaseModel):
+    answers: dict[str, int]  # question_id → selected weight
+    client_id: Optional[str] = None  # Optional: link to client
+
+
+class RiskProfileResponse(BaseModel):
+    score: int
+    profile: str  # Conservative | Moderate | Aggressive | Very Aggressive
+    description: str
+    model_allocation: dict
+
+
+# =============================================================================
+# HEALTH SCORE SCHEMAS
+# =============================================================================
+
+class HealthScoreRequest(BaseModel):
+    funds: list[dict]
+    risk_profile: Optional[str] = None
+
+
+class HealthDimension(BaseModel):
+    score: int
+    max: int = 20
+    issues: list[str] = []
+
+
+class HealthScoreResponse(BaseModel):
+    total_score: int
+    grade: str
+    dimensions: dict[str, HealthDimension]
+    recommendations: list[str]
+    strengths: list[str]
+
+
+# =============================================================================
+# GOAL PLANNING SCHEMAS
+# =============================================================================
+
+class GoalCreate(BaseModel):
+    client_id: Optional[str] = None
+    name: str  # e.g., "Retirement", "Child Education", "House Purchase"
+    target_amount: float
+    target_date: str  # ISO date
+    current_savings: float = 0
+    monthly_sip: float = 0
+    expected_return: float = 12.0  # annual %
+    inflation: float = 6.0  # annual %
+    priority: str = "High"  # High | Medium | Low
+
+
+class GoalResponse(BaseModel):
+    id: Optional[str] = None
+    name: str
+    target_amount: float
+    inflation_adjusted_target: float
+    target_date: str
+    current_savings: float
+    monthly_sip: float
+    expected_return: float
+    inflation: float
+    priority: str
+    gap_analysis: dict  # projected_value, shortfall, required_sip, on_track: bool
+
+
+class GapAnalysisResponse(BaseModel):
+    current_allocation: dict
+    target_allocation: dict
+    gaps: list[dict]
+    rebalancing_actions: list[str]
