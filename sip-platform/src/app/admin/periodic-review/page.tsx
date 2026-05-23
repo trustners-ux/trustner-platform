@@ -80,7 +80,7 @@ export default function PeriodicReviewDashboard() {
 
       {employee.role.canUpload && <Queue title="My Drafts" items={myDrafts} hrefFn={(i) => `/admin/periodic-review/${i.id}/edit`} />}
       {employee.role.canReview && <Queue title="Awaiting My Review" items={awaiting} hrefFn={(i) => `/admin/periodic-review/${i.id}/review`} />}
-      {employee.role.canPublish && <Queue title="Approved — Pending Publish" items={approvedPending} hrefFn={(i) => `/admin/periodic-review/${i.id}/publish`} />}
+      {employee.role.canPublish && <Queue title="Approved — Pending Publish" items={approvedPending} hrefFn={(i) => `/admin/periodic-review/${i.id}/review`} />}
     </div>
   );
 }

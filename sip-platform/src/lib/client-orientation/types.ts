@@ -80,7 +80,72 @@ export const RISK_QUESTIONS: RiskQuestion[] = [
       { label: 'Significantly increase allocation', score: 5 },
     ],
   },
-  // ... 13 more questions seeded by the engine
+  {
+    code: 'Q03',
+    text: 'What is your investment experience?',
+    options: [
+      { label: 'None — first time investor', score: 1 },
+      { label: 'Some — bank deposits, PPF', score: 2 },
+      { label: 'Moderate — mutual funds for 2-5 years', score: 3 },
+      { label: 'Good — diversified portfolio for 5+ years', score: 4 },
+      { label: 'Extensive — multiple asset classes, derivatives', score: 5 },
+    ],
+  },
+  {
+    code: 'Q04',
+    text: 'What is your primary investment objective?',
+    options: [
+      { label: 'Preserve capital — safety above all', score: 1 },
+      { label: 'Steady income with low volatility', score: 2 },
+      { label: 'Balanced growth and income', score: 3 },
+      { label: 'Long-term capital appreciation', score: 4 },
+      { label: 'Aggressive wealth creation', score: 5 },
+    ],
+  },
+  {
+    code: 'Q05',
+    text: 'What portion of your savings does this investment represent?',
+    options: [
+      { label: 'Almost all my savings', score: 1 },
+      { label: 'A large portion (>50%)', score: 2 },
+      { label: 'About half', score: 3 },
+      { label: 'A small portion (<25%)', score: 4 },
+      { label: 'Only surplus / disposable funds', score: 5 },
+    ],
+  },
+  {
+    code: 'Q06',
+    text: 'How would you describe your monthly income stability?',
+    options: [
+      { label: 'Highly variable / irregular', score: 1 },
+      { label: 'Mostly stable with occasional fluctuations', score: 2 },
+      { label: 'Stable salary with annual variations', score: 3 },
+      { label: 'Very stable salary + side income', score: 4 },
+      { label: 'Multiple stable income sources', score: 5 },
+    ],
+  },
+  {
+    code: 'Q07',
+    text: 'Imagine your ₹10 lakh investment grows to ₹13 lakh in 1 year, then drops to ₹8 lakh in the next year. What do you do?',
+    options: [
+      { label: 'Exit completely — preserve what is left', score: 1 },
+      { label: 'Move to safer instruments', score: 2 },
+      { label: 'Stay invested but stop additional investments', score: 3 },
+      { label: 'Continue SIP — markets recover', score: 4 },
+      { label: 'Invest a lump sum to average down', score: 5 },
+    ],
+  },
+  {
+    code: 'Q08',
+    text: 'How important is liquidity (ability to withdraw quickly)?',
+    options: [
+      { label: 'Critical — may need funds in 6 months', score: 1 },
+      { label: 'Very important — may need in 1-2 years', score: 2 },
+      { label: 'Somewhat important — emergency reserve elsewhere', score: 3 },
+      { label: 'Not very important — long-term horizon', score: 4 },
+      { label: 'Not at all — funds set aside for 10+ years', score: 5 },
+    ],
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────────

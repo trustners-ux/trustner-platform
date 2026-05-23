@@ -71,7 +71,7 @@ export default function InvestmentProposalDashboard() {
       <KpiRow counts={counts} />
       {employee.role.canUpload && <Queue title="My Drafts" items={myDrafts} hrefFn={(i) => `/admin/investment-proposal/${i.id}/edit`} accent="amber" />}
       {employee.role.canReview && <Queue title="Awaiting My Review" items={awaiting} hrefFn={(i) => `/admin/investment-proposal/${i.id}/review`} accent="blue" />}
-      {employee.role.canPublish && <Queue title="Approved — Pending Publish" items={approvedPending} hrefFn={(i) => `/admin/investment-proposal/${i.id}/publish`} accent="emerald" />}
+      {employee.role.canPublish && <Queue title="Approved — Pending Publish" items={approvedPending} hrefFn={(i) => `/admin/investment-proposal/${i.id}/review`} accent="emerald" />}
     </div>
   );
 }

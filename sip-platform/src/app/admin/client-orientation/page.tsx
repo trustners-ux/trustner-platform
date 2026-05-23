@@ -78,7 +78,7 @@ export default function ClientOrientationDashboard() {
 
       {employee.role.canUpload && <Queue title="My Drafts" items={myDrafts} hrefFn={(i) => `/admin/client-orientation/${i.id}/edit`} />}
       {employee.role.canReview && <Queue title="Awaiting My Review" items={awaiting} hrefFn={(i) => `/admin/client-orientation/${i.id}/review`} />}
-      {employee.role.canPublish && <Queue title="Approved — Pending Publish" items={approvedPending} hrefFn={(i) => `/admin/client-orientation/${i.id}/publish`} />}
+      {employee.role.canPublish && <Queue title="Approved — Pending Publish" items={approvedPending} hrefFn={(i) => `/admin/client-orientation/${i.id}/review`} />}
     </div>
   );
 }
