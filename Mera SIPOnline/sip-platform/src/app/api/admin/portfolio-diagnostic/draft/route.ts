@@ -262,29 +262,33 @@ export async function POST(request: NextRequest) {
 }
 
 async function resolveEmployeeId(): Promise<number | null> {
+  // The JWT's `employeeId` field comes from the hardcoded directory
+  // (/lib/employee/employee-directory.ts) which uses different IDs
+  // than the database `employees` table. Always resolve via email
+  // — that's the canonical bridge between the two ID systems.
   const cookieStore = await cookies();
-
-  const empToken = cookieStore.get(EMPLOYEE_COOKIE)?.value;
-  if (empToken) {
-    const payload = await verifyEmployeeToken(empToken);
-    if (payload) return payload.employeeId;
-  }
+  let email: string | undefined;
 
   const adminToken = cookieStore.get(COOKIE_NAME)?.value;
   if (adminToken) {
     const payload = await verifyToken(adminToken);
-    if (payload?.email) {
-      const supabase = getSupabaseAdmin();
-      if (supabase) {
-        const { data } = await supabase
-          .from('employees')
-          .select('id')
-          .eq('email', payload.email)
-          .single();
-        return (data?.id as number) ?? null;
-      }
+    if (payload?.email) email = payload.email;
+  }
+  if (!email) {
+    const empToken = cookieStore.get(EMPLOYEE_COOKIE)?.value;
+    if (empToken) {
+      const payload = await verifyEmployeeToken(empToken);
+      if (payload?.email) email = payload.email;
     }
   }
+  if (!email) return null;
 
-  return null;
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return null;
+  const { data } = await supabase
+    .from('employees')
+    .select('id')
+    .eq('email', email)
+    .single();
+  return (data?.id as number) ?? null;
 }

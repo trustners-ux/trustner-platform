@@ -50,8 +50,8 @@ export async function fetchMfApiScheme(
     const url = `${MFAPI_BASE_URL}/mf/${schemeCode}`;
     const res = await fetch(url, {
       headers: { Accept: 'application/json' },
-      // 30s timeout via AbortController
-      signal: AbortSignal.timeout(30_000),
+      // 60s timeout — MFAPI can be slow under load
+      signal: AbortSignal.timeout(60_000),
     });
 
     if (!res.ok) {
@@ -74,7 +74,7 @@ export async function fetchMfApiScheme(
 // AMFI Daily NAV file
 // ─────────────────────────────────────────────────────────────────
 
-const AMFI_NAV_URL = 'https://www.amfiindia.com/spages/NAVAll.txt';
+const AMFI_NAV_URL = 'https://portal.amfiindia.com/spages/NAVAll.txt';
 
 export interface AmfiNavRow {
   schemeCode: string;
@@ -118,19 +118,27 @@ export function parseAmfiNavFile(text: string): AmfiNavRow[] {
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
-    if (!line) continue;
+    if (!line || line.startsWith('Scheme Code;')) continue;
 
-    // AMC blocks are introduced like:  "Mutual Fund\nAxis Mutual Fund\n..."
-    // We detect them by the pattern: lines that contain "Mutual Fund" but no semicolons
+    // Lines without semicolons are headers (scheme-type or AMC name)
     if (!line.includes(';')) {
-      // Likely a header (AMC name or scheme type)
-      if (/mutual fund/i.test(line) && !line.includes('Open Ended')) {
+      // Scheme-type header looks like:
+      //   "Open Ended Schemes(Debt Scheme - Banking and PSU Fund)"
+      //   "Open Ended Schemes(Equity Scheme - Large Cap Fund)"
+      //   "Close Ended Schemes(Income)"
+      // The category sits INSIDE the parentheses, often after a dash.
+      const schemeTypeMatch = line.match(/^(Open|Close|Interval)\s+Ended\s+Schemes?\s*\((.+?)\)/i);
+      if (schemeTypeMatch) {
+        currentSchemeType = schemeTypeMatch[1] + ' Ended';
+        const rawCategory = schemeTypeMatch[2].trim();
+        // Strip the "Equity Scheme - " / "Debt Scheme - " / "Hybrid Scheme - " prefix
+        const dashIdx = rawCategory.indexOf(' - ');
+        currentCategory = dashIdx > 0 ? rawCategory.slice(dashIdx + 3).trim() : rawCategory;
+        continue;
+      }
+      // AMC header lines look like:  "Aditya Birla Sun Life Mutual Fund"
+      if (/mutual fund\s*$/i.test(line)) {
         currentAmc = line;
-      } else if (/open ended|close ended|interval/i.test(line)) {
-        currentSchemeType = line;
-        // Try to extract category from scheme-type header
-        const categoryMatch = line.match(/-\s*(.+?)\s+Schemes?$/i);
-        if (categoryMatch) currentCategory = categoryMatch[1].trim();
       }
       continue;
     }

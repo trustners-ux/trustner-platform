@@ -5,6 +5,7 @@ import Link from 'next/link';
 import {
   TrendingUp, FileText, BarChart3, Users, ArrowRight,
   Calendar, Database, Activity, Plus, FileCheck, Clock, CheckCircle2,
+  ClipboardList, Briefcase, UserPlus, RefreshCw, Sparkles, Send,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { CURRENT_TRUSTNER_LIST, getTotalFundCount, getCategoryCount } from '@/data/funds/trustner';
@@ -56,6 +57,10 @@ export default function AdminDashboard() {
   // Financial Planning report stats
   const [reportStats, setReportStats] = useState({ pending: 0, sent: 0, total: 0 });
 
+  // Advisory Workbench overview (across all 5 agents)
+  interface AgentSummary { agent: string; myDrafts: number; awaitingMyReview: number; approvedPending: number; publishedThisMonth: number }
+  const [workbench, setWorkbench] = useState<{ summaries: AgentSummary[]; totals: { myDrafts: number; awaitingMyReview: number; approvedPending: number; publishedThisMonth: number } } | null>(null);
+
   useEffect(() => {
     fetch('/api/admin/reports', { credentials: 'include' })
       .then((r) => r.ok ? r.json() : null)
@@ -70,7 +75,21 @@ export default function AdminDashboard() {
         }
       })
       .catch(() => {/* silent — dashboard still works */});
+
+    // Load workbench overview (across all 5 agents)
+    fetch('/api/admin/workbench-overview', { credentials: 'include' })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data?.summaries) setWorkbench(data); })
+      .catch(() => {/* silent */});
   }, []);
+
+  const AGENT_META: Record<string, { label: string; href: string; icon: React.ElementType; tone: string }> = {
+    portfolio_diagnostic: { label: 'Portfolio Diagnostic', href: '/admin/portfolio-diagnostic', icon: ClipboardList, tone: 'text-teal-700 bg-teal-50' },
+    meeting_prep:         { label: 'Meeting Prep',         href: '/admin/meeting-prep',         icon: Calendar,       tone: 'text-blue-700 bg-blue-50' },
+    investment_proposal:  { label: 'Investment Proposal',  href: '/admin/investment-proposal',  icon: Briefcase,      tone: 'text-amber-700 bg-amber-50' },
+    client_orientation:   { label: 'Client Orientation',   href: '/admin/client-orientation',   icon: UserPlus,       tone: 'text-purple-700 bg-purple-50' },
+    periodic_review:      { label: 'Periodic Review',      href: '/admin/periodic-review',      icon: RefreshCw,      tone: 'text-emerald-700 bg-emerald-50' },
+  };
 
   return (
     <div className="space-y-6">
@@ -116,6 +135,68 @@ export default function AdminDashboard() {
           ))}
         </div>
       </div>
+
+      {/* Advisory Workbench (5 agents) */}
+      {workbench && workbench.summaries.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-brand" />
+              Advisory Workbench
+            </h2>
+            <div className="text-xs text-slate-400">
+              {workbench.totals.publishedThisMonth} published this month · {workbench.totals.awaitingMyReview} awaiting your review
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+            {workbench.summaries.map((s) => {
+              const meta = AGENT_META[s.agent];
+              if (!meta) return null;
+              const Icon = meta.icon;
+              const hasUrgent = s.awaitingMyReview > 0;
+              return (
+                <Link
+                  key={s.agent}
+                  href={meta.href}
+                  className={cn(
+                    'card-base p-4 group hover:shadow-elevated transition-all relative',
+                    hasUrgent ? 'ring-1 ring-blue-200 border-blue-300' : ''
+                  )}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center', meta.tone)}>
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    {hasUrgent && (
+                      <span className="text-[9px] font-bold text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded">URGENT</span>
+                    )}
+                  </div>
+                  <div className="text-[11px] font-semibold text-slate-700 uppercase tracking-wide mb-1">{meta.label}</div>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">My drafts</span>
+                      <span className="font-semibold text-slate-900">{s.myDrafts}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Awaiting me</span>
+                      <span className={cn('font-semibold', hasUrgent ? 'text-blue-700' : 'text-slate-900')}>{s.awaitingMyReview}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Pending publish</span>
+                      <span className="font-semibold text-slate-900">{s.approvedPending}</span>
+                    </div>
+                    <div className="flex justify-between pt-1 border-t border-slate-100">
+                      <span className="text-slate-500 inline-flex items-center gap-1"><Send className="w-3 h-3" />This month</span>
+                      <span className="font-semibold text-emerald-700">{s.publishedThisMonth}</span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Financial Planning Reports */}
       <div>

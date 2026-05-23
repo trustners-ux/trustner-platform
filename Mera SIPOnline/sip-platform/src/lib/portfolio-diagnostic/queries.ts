@@ -290,10 +290,22 @@ export async function getEmployeeWithPdRole(
 
   if (error || !data) return null;
 
-  const empRole = (data.pd_employee_role as unknown as Array<Record<string, unknown>>)[0];
+  // Supabase returns the joined relationship as a single object when
+  // it's a 1:1 (UNIQUE constraint on employee_id), or as an array
+  // when 1:N. We handle both shapes defensively.
+  const rawEmpRole = data.pd_employee_role as unknown;
+  const empRole =
+    Array.isArray(rawEmpRole)
+      ? (rawEmpRole[0] as Record<string, unknown> | undefined)
+      : (rawEmpRole as Record<string, unknown> | undefined);
   if (!empRole) return null;
 
-  const roleRow = empRole.pd_role as Record<string, unknown>;
+  const rawRole = empRole.pd_role as unknown;
+  const roleRow =
+    Array.isArray(rawRole)
+      ? (rawRole[0] as Record<string, unknown>)
+      : (rawRole as Record<string, unknown>);
+  if (!roleRow) return null;
 
   const role: Role = {
     id: String(roleRow.id),

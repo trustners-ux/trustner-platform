@@ -1,15 +1,20 @@
 /**
- * Portfolio Diagnostic — CAS PDF Parser
+ * Portfolio Diagnostic — Portfolio PDF Parser
  *
- * Parses Karvy/CAMS Consolidated Account Statement (CAS) PDFs into
- * structured holdings + active SIPs.
+ * Parses three input formats:
+ *   1. CAMS Consolidated Account Statement (CAS)
+ *   2. Karvy Consolidated Account Statement (CAS)
+ *   3. Trustner Valuation Report (MFD back-office export)
  *
- * Indian CAS PDFs are text-based (not scanned). Both CAMS and Karvy
- * use similar formats with sections per AMC and per folio.
+ * All formats normalize to the same RawHolding[] / RawSip[] schema.
+ *
+ * Indian CAS PDFs are text-based (not scanned). Trustner valuation
+ * reports are also text-based with tabular columns.
  *
  * @owner Trustner Asset Services Pvt. Ltd. | ARN-286886
  */
 
+import { extractText, getDocumentProxy } from 'unpdf';
 import type { RawHolding, RawSip, EntityType, SipFrequency } from './types';
 
 // ─────────────────────────────────────────────────────────────────
@@ -30,40 +35,43 @@ export interface CasParseResult {
 }
 
 /**
- * Parse a CAS PDF buffer. Returns structured holdings + SIPs.
+ * Parse a portfolio PDF buffer (CAS or Trustner Valuation Report).
+ * Auto-detects format and routes to the right sub-parser.
  *
- * Implementation note: we use `pdf-parse` (npm) to extract text;
- * then regex-based section parsing. CAS format is stable enough
- * that regex is reliable for v1.
+ * Implementation note: uses `unpdf` (serverless-friendly fork of
+ * pdfjs-dist that works on Vercel/Cloudflare). `pdf-parse` requires
+ * `DOMMatrix` which is not available in Node runtime.
  */
 export async function parseCasPdf(input: {
   pdfBuffer: Buffer;
-  password?: string;          // CAS PDFs are usually password-protected (PAN)
+  password?: string;          // CAS PDFs are usually password-protected (PAN); Trustner reports are not
 }): Promise<CasParseResult> {
   try {
-    // Lazy import so the heavy dep is only loaded server-side.
-    // pdf-parse's installed ESM index doesn't expose a clean `default` —
-    // cast through unknown then a permissive callable type so build is
-    // happy whether the resolved module is CJS-default or ESM-named.
-    const mod = (await import('pdf-parse')) as unknown as {
-      default?: (buf: Buffer, opts?: unknown) => Promise<{ text: string }>;
-    } & ((buf: Buffer, opts?: unknown) => Promise<{ text: string }>);
-    const pdfParse = (mod.default ?? mod) as (buf: Buffer, opts?: unknown) => Promise<{ text: string }>;
+    // Convert Buffer to Uint8Array for unpdf
+    const uint8 = new Uint8Array(input.pdfBuffer);
 
-    const data = await pdfParse(input.pdfBuffer, {
+    // Try to open the document (handles password if provided)
+    const pdf = await getDocumentProxy(uint8, {
       password: input.password,
-    });
+    } as { password?: string });
 
-    const text = data.text;
+    const { text: pages } = await extractText(pdf, { mergePages: false });
+    const text = Array.isArray(pages) ? pages.join('\n') : String(pages);
+
     if (!text || text.length < 500) {
       return {
         success: false,
-        error: 'PDF text is too short — likely scanned image, not text-based',
+        error: 'PDF text is too short — likely a scanned image, not text-based',
         holdings: [],
         sips: [],
         totalFoliosFound: 0,
         totalAmcsFound: 0,
       };
+    }
+
+    // Auto-detect format
+    if (isTrustnerValuationReport(text)) {
+      return parseTrustnerValuationReport(text);
     }
 
     return parseTextContent(text);
@@ -88,6 +96,272 @@ export async function parseCasPdf(input: {
       totalAmcsFound: 0,
     };
   }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TRUSTNER VALUATION REPORT (MFD back-office export)
+// ─────────────────────────────────────────────────────────────────
+
+/**
+ * Detects a Trustner Valuation Report by the distinctive header
+ * markers used by the MFD back-office tool.
+ */
+function isTrustnerValuationReport(text: string): boolean {
+  const markers = [
+    /Valuation\s+Report\s+as\s+on\s+Date/i,
+    /Mutual\s+Fund\s+Summary\s+Report/i,
+    /Fund\s+House\s+Wise\s+Investment\s+Summary/i,
+    /Scheme\s+Type\s+Wise\s+Investment\s+Summary/i,
+  ];
+  let hits = 0;
+  for (const m of markers) if (m.test(text)) hits++;
+  return hits >= 2;
+}
+
+/**
+ * Parser for Trustner Valuation Report format. Sections look like:
+ *
+ *   Equity - Flexi Cap Fund
+ *   <Scheme Name> <Folio> <ARN> <Inv Since> (<days>) <Sensex> <InvCost> <SDuty> <DivR> <Units> <Price> <CurNav> <NavDate> <CurValue> <DivReinv> <DivPaid> <Total> <Gain> <AbsRtn> <XIRR>
+ *
+ * Active SIPs are flagged by "(SIP)" in the scheme name.
+ */
+function parseTrustnerValuationReport(text: string): CasParseResult {
+  // The unpdf text extraction often loses line breaks inside table rows.
+  // We normalize whitespace and then scan for "scheme blocks" by recognizing
+  // category headers and per-row anchors.
+
+  const investorName = extractInvestorNameTrustner(text) ?? extractInvestorName(text);
+  const pan = extractPan(text);
+
+  const holdings: RawHolding[] = [];
+  const sips: RawSip[] = [];
+
+  // Known asset/category markers from the report
+  const categoryRe = /(Debt\s*-\s*[A-Z][^\n]*?Fund|Equity\s*-\s*[A-Z][^\n]*?Fund|Hybrid\s*-\s*[A-Z][^\n]*?Fund)/g;
+  const categoryMatches = [...text.matchAll(categoryRe)];
+
+  // Build a list of (category, span) pairs to limit per-row parsing
+  const spans: Array<{ category: string; start: number; end: number }> = [];
+  for (let i = 0; i < categoryMatches.length; i++) {
+    const m = categoryMatches[i];
+    spans.push({
+      category: m[1].trim(),
+      start: m.index ?? 0,
+      end: i + 1 < categoryMatches.length ? (categoryMatches[i + 1].index ?? text.length) : text.length,
+    });
+  }
+
+  // For each span, extract individual holdings using a row regex anchored on
+  // (a) presence of "ARN-" tag and (b) a date in DD-MM-YY format.
+  // Tolerant to extra whitespace because unpdf flattens columns.
+  const rowRe = /([A-Za-z][A-Za-z0-9 &\-/().,'']+?)(?:Growth|Dividend|IDCW)(?:\s*\(SIP\))?\s*(?:\(Direct\)|\(Regular\))?\s+([0-9/]+)\s*ARN-[\d,]+\s+(\d{2}-\d{2}-\d{2})\s*\((\d+)\s*Days?\)\s+([\d.,]+)?\s*([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+(\d{1,2}-[A-Za-z]+)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.,-]+)\s+([\d.\-]+%)\s+([\d.\-]+%)/g;
+
+  for (const span of spans) {
+    const slice = text.slice(span.start, span.end);
+    for (const m of slice.matchAll(rowRe)) {
+      const [
+        ,
+        rawScheme,
+        folio,
+        invSince,
+        ,
+        ,
+        invCost,
+        ,
+        ,
+        unitsStr,
+        ,
+        currentNav,
+        ,
+        currentValue,
+        ,
+        ,
+        ,
+        gainLoss,
+        absRtn,
+        xirr,
+      ] = m as unknown as string[];
+
+      // Reconstruct scheme name + plan/option
+      const schemeMatch = slice.slice(Math.max(0, (m.index ?? 0) - 80), (m.index ?? 0) + 200).match(/([A-Za-z][A-Za-z0-9 &\-/().,'']+?)(?:Growth|Dividend|IDCW)(?:\s*\(SIP\))?/);
+      const schemeRaw = (schemeMatch?.[0] ?? rawScheme).trim();
+      const hasSip = /\(SIP\)/i.test(schemeRaw);
+
+      // Resolve AMC by scanning leading words
+      const amc = guessAmcFromSchemeName(schemeRaw);
+
+      const units = numeric(unitsStr);
+      const invCostInr = numeric(invCost);
+      const currentValInr = numeric(currentValue);
+      const gain = numeric(gainLoss);
+      const absRtnPct = pctNumeric(absRtn);
+      const xirrPct = pctNumeric(xirr);
+
+      if (!invCostInr || !currentValInr) continue;
+
+      void absRtnPct; void xirrPct; void gain; // captured for future use; not in RawHolding shape
+
+      const entityName = investorName ?? 'Unknown';
+      const cleanedScheme = cleanSchemeName(schemeRaw);
+      const firstInvDate = normaliseDdMmYy(invSince);
+
+      const holding: RawHolding = {
+        entityName,
+        entityType: detectEntityType(entityName),
+        fundName: cleanedScheme,
+        folioNumber: folio,
+        amcName: amc,
+        units,
+        currentNav: numeric(currentNav),
+        currentValue: currentValInr,
+        investedAmount: invCostInr,
+        firstInvestmentDate: firstInvDate,
+      };
+      holdings.push(holding);
+
+      // Infer active SIP from the (SIP) flag.
+      // We don't know the actual installment amount from the valuation report,
+      // so we estimate by amortizing invested amount over months-held.
+      if (hasSip && firstInvDate) {
+        const monthsHeld = Math.max(1, monthsBetween(firstInvDate, new Date()));
+        const estMonthly = Math.round(invCostInr / monthsHeld);
+        sips.push({
+          entityName,
+          fundName: cleanedScheme,
+          folioNumber: folio,
+          amcName: amc,
+          monthlyAmountInr: estMonthly,
+          actualAmountInr: estMonthly,
+          frequency: 'Monthly' as SipFrequency,
+          startDate: firstInvDate,
+          status: 'Active',
+          hasStepUp: false,
+        });
+      }
+    }
+  }
+
+  const amcSet = new Set(holdings.map((h) => h.amcName ?? '').filter(Boolean));
+  const folioSet = new Set(holdings.map((h) => h.folioNumber ?? '').filter(Boolean));
+
+  return {
+    success: holdings.length > 0,
+    error: holdings.length === 0
+      ? 'Trustner Valuation Report detected but no rows could be extracted. The PDF layout may have changed.'
+      : undefined,
+    investorName,
+    pan,
+    holdings,
+    sips,
+    totalFoliosFound: folioSet.size,
+    totalAmcsFound: amcSet.size,
+  };
+}
+
+function extractInvestorNameTrustner(text: string): string | undefined {
+  // Trustner reports start with the holder's full name in caps on its own line
+  // right after "Valuation Report as on Date - <date>".
+  const m = text.match(/Valuation\s+Report\s+as\s+on\s+Date[^\n]*\n([A-Z][A-Z\s.]+?)\s*\(PAN:/);
+  return m?.[1]?.trim();
+}
+
+function numeric(s?: string): number {
+  if (!s) return 0;
+  const cleaned = s.replace(/,/g, '').replace(/[^\d.\-]/g, '');
+  const n = parseFloat(cleaned);
+  return isFinite(n) ? n : 0;
+}
+
+function pctNumeric(s?: string): number {
+  if (!s) return 0;
+  return numeric(s.replace('%', ''));
+}
+
+function normaliseDdMmYy(s?: string): string | undefined {
+  if (!s) return undefined;
+  const m = s.match(/^(\d{2})-(\d{2})-(\d{2})$/);
+  if (!m) return s;
+  const [, dd, mm, yy] = m;
+  const fullYear = parseInt(yy, 10) > 50 ? `19${yy}` : `20${yy}`;
+  return `${fullYear}-${mm}-${dd}`;
+}
+
+function monthsBetween(startIso: string, end: Date): number {
+  const start = new Date(startIso);
+  if (isNaN(start.getTime())) return 1;
+  const years = end.getFullYear() - start.getFullYear();
+  const months = end.getMonth() - start.getMonth();
+  return Math.max(1, years * 12 + months);
+}
+
+function guessAmcFromSchemeName(scheme: string): string | undefined {
+  const knownAmcs: Record<string, string> = {
+    'icici pru': 'ICICI Prudential Mutual Fund',
+    'icici prudential': 'ICICI Prudential Mutual Fund',
+    'hdfc': 'HDFC Mutual Fund',
+    'axis': 'Axis Mutual Fund',
+    'mirae': 'Mirae Asset Mutual Fund',
+    'motilal oswal': 'Motilal Oswal Mutual Fund',
+    'parag parikh': 'PPFAS Mutual Fund',
+    'ppfas': 'PPFAS Mutual Fund',
+    'invesco': 'Invesco Mutual Fund',
+    'bandhan': 'Bandhan Mutual Fund',
+    'pgim': 'PGIM India Mutual Fund',
+    'nippon': 'Nippon India Mutual Fund',
+    'franklin': 'Franklin Templeton Mutual Fund',
+    'sbi': 'SBI Mutual Fund',
+    'kotak': 'Kotak Mutual Fund',
+    'aditya birla': 'Aditya Birla Sun Life Mutual Fund',
+    'absl': 'Aditya Birla Sun Life Mutual Fund',
+    'uti': 'UTI Mutual Fund',
+    'dsp': 'DSP Mutual Fund',
+    'tata': 'Tata Mutual Fund',
+    'sundaram': 'Sundaram Mutual Fund',
+    'edelweiss': 'Edelweiss Mutual Fund',
+    'baroda bnp': 'Baroda BNP Paribas Mutual Fund',
+    'hsbc': 'HSBC Mutual Fund',
+    'lic': 'LIC Mutual Fund',
+    'quant': 'Quant Mutual Fund',
+    'mahindra manulife': 'Mahindra Manulife Mutual Fund',
+    'samco': 'Samco Mutual Fund',
+    '360 one': '360 ONE Mutual Fund',
+    'navi': 'Navi Mutual Fund',
+    'groww': 'Groww Mutual Fund',
+    'old bridge': 'Old Bridge Mutual Fund',
+    'iti': 'ITI Mutual Fund',
+    'union': 'Union Mutual Fund',
+    'zerodha': 'Zerodha Mutual Fund',
+    'taurus': 'Taurus Mutual Fund',
+    'nj': 'NJ Mutual Fund',
+    'bajaj finserv': 'Bajaj Finserv Mutual Fund',
+    'whiteoak': 'WhiteOak Capital Mutual Fund',
+  };
+  const lower = scheme.toLowerCase();
+  for (const [needle, fullName] of Object.entries(knownAmcs)) {
+    if (lower.includes(needle)) return fullName;
+  }
+  return undefined;
+}
+
+function cleanSchemeName(s: string): string {
+  return s
+    .replace(/\s*\(SIP\)\s*/i, '')
+    .replace(/\s+ARN-[\d,]+\s*$/i, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function normalizeCategoryFromHeader(header: string): string {
+  // "Equity - Flexi Cap Fund" → "Flexi Cap"
+  // "Debt - Ultra Short Duration Fund" → "Ultra Short Duration"
+  // "Hybrid - Aggressive Hybrid Fund" → "Aggressive Hybrid"
+  return header
+    .replace(/^Equity\s*-\s*/i, '')
+    .replace(/^Debt\s*-\s*/i, '')
+    .replace(/^Hybrid\s*-\s*/i, '')
+    .replace(/\s*Fund\s*$/i, '')
+    .trim();
 }
 
 // ─────────────────────────────────────────────────────────────────

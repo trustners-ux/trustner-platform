@@ -43,33 +43,33 @@ export async function GET() {
     }
   }
 
-  // Try employee JWT
-  if (!employeeId) {
+  // Try employee JWT (carries hardcoded directory employeeId, NOT db employees.id)
+  if (!employeeEmail) {
     const empToken = cookieStore.get(EMPLOYEE_COOKIE)?.value;
     if (empToken) {
       const payload = await verifyEmployeeToken(empToken);
       if (payload) {
-        employeeId = payload.employeeId;
         employeeEmail = payload.email;
       }
     }
   }
 
-  if (!employeeId && !employeeEmail) {
+  if (!employeeEmail) {
     return NextResponse.json(
       { error: 'Not authenticated' },
       { status: 401 }
     );
   }
 
-  // If we only have email (admin JWT), resolve to employee_id
-  if (!employeeId && employeeEmail) {
-    employeeId = await resolveEmployeeIdByEmail(employeeEmail);
-  }
+  // ALWAYS resolve employees.id by email (the JWT's employeeId comes
+  // from the hardcoded directory which uses different IDs than the
+  // database `employees` table — see /lib/employee/employee-directory.ts).
+  // The email is the canonical bridge.
+  employeeId = await resolveEmployeeIdByEmail(employeeEmail);
 
   if (!employeeId) {
     return NextResponse.json(
-      { error: 'Could not resolve employee identity' },
+      { error: `Could not resolve employee row for ${employeeEmail}. Add a row to the employees table.` },
       { status: 403 }
     );
   }

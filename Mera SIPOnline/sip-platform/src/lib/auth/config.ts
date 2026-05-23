@@ -74,7 +74,12 @@ export const ADMIN_NAV = [
   { label: 'Market Pulse', href: '/admin/market', icon: 'BarChart3', role: 'editor' as AdminRole },
   { label: 'Leads', href: '/admin/leads', icon: 'Users', role: 'editor' as AdminRole },
   { label: 'Reports', href: '/admin/reports', icon: 'FileCheck', role: 'editor' as AdminRole },
-  { label: 'Portfolio Diagnostic', href: '/admin/portfolio-diagnostic', icon: 'ClipboardList', role: 'editor' as AdminRole },
+  // ─── Trustner Advisory Workbenches (grouped, role-gated at API level) ───
+  { label: 'Portfolio Diagnostic', href: '/admin/portfolio-diagnostic', icon: 'ClipboardList', role: 'editor' as AdminRole, group: 'Advisory Workbench' as const },
+  { label: 'Meeting Prep',         href: '/admin/meeting-prep',         icon: 'Calendar',       role: 'editor' as AdminRole, group: 'Advisory Workbench' as const },
+  { label: 'Investment Proposal',  href: '/admin/investment-proposal',  icon: 'Briefcase',      role: 'editor' as AdminRole, group: 'Advisory Workbench' as const },
+  { label: 'Client Orientation',   href: '/admin/client-orientation',   icon: 'UserPlus',       role: 'editor' as AdminRole, group: 'Advisory Workbench' as const },
+  { label: 'Periodic Review',      href: '/admin/periodic-review',      icon: 'RefreshCw',      role: 'editor' as AdminRole, group: 'Advisory Workbench' as const },
   { label: 'Gallery', href: '/admin/gallery', icon: 'Image', role: 'editor' as AdminRole },
   { label: 'Approvals', href: '/admin/approvals', icon: 'ClipboardCheck', role: 'admin' as AdminRole },
   { label: 'MIS Dashboard', href: '/admin/mis', icon: 'BarChart3', role: 'admin' as AdminRole },

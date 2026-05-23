@@ -8,6 +8,7 @@ import {
   ChevronLeft, ChevronRight, X, Image as ImageIcon, FileCheck, UserCog,
   ClipboardCheck, ClipboardList, ScrollText, FileSpreadsheet, Percent, GraduationCap,
   Shield, ShieldCheck, Car,
+  Calendar, Briefcase, UserPlus, RefreshCw, Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { canAccess, ADMIN_NAV, type AdminRole } from '@/lib/auth/config';
@@ -16,6 +17,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, TrendingUp, FileText, BarChart3, BarChart2, Users, UsersRound, Settings,
   Image: ImageIcon, FileCheck, UserCog, ClipboardCheck, ClipboardList, ScrollText, FileSpreadsheet, Percent, GraduationCap,
   Shield, ShieldCheck, Car,
+  Calendar, Briefcase, UserPlus, RefreshCw, Sparkles,
 };
 
 export function AdminSidebar({
@@ -65,25 +67,42 @@ export function AdminSidebar({
 
         {/* Navigation */}
         <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
-          {visibleNav.map((item) => {
+          {visibleNav.map((item, idx) => {
             const Icon = ICON_MAP[item.icon] || LayoutDashboard;
             const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
 
+            // Render a group header before the first item in a new group
+            const itemGroup = (item as { group?: string }).group;
+            const prevGroup = idx > 0 ? (visibleNav[idx - 1] as { group?: string }).group : undefined;
+            const isFirstInGroup = itemGroup && itemGroup !== prevGroup;
+
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onMobileClose}
-                className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
-                  isActive
-                    ? 'bg-brand/20 text-brand-300'
-                    : 'text-slate-300 hover:bg-white/5 hover:text-white'
+              <div key={item.href}>
+                {isFirstInGroup && !collapsed && (
+                  <div className="px-3 pt-3 pb-1 flex items-center gap-1.5">
+                    <Sparkles className="w-3 h-3 text-brand-300" />
+                    <span className="text-[10px] uppercase tracking-wider text-brand-300 font-bold">
+                      {itemGroup}
+                    </span>
+                  </div>
                 )}
-              >
-                <Icon className="w-5 h-5 flex-shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
-              </Link>
+                {isFirstInGroup && collapsed && (
+                  <div className="my-2 border-t border-white/10" />
+                )}
+                <Link
+                  href={item.href}
+                  onClick={onMobileClose}
+                  className={cn(
+                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+                    isActive
+                      ? 'bg-brand/20 text-brand-300'
+                      : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                  )}
+                >
+                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  {!collapsed && <span>{item.label}</span>}
+                </Link>
+              </div>
             );
           })}
         </nav>
