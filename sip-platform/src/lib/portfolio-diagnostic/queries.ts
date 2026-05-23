@@ -8,6 +8,7 @@
  */
 
 import { getSupabaseAdmin } from '@/lib/db/supabase';
+import { APPROVER_EMAILS } from '@/lib/auth/config';
 import type {
   WorkflowStatus,
   RoleName,
@@ -258,53 +259,73 @@ export async function getEmployeeWithPdRole(
   const supabase = getSupabaseAdmin();
   if (!supabase) return null;
 
-  const { data, error } = await supabase
+  // ── 1. Fetch the base employee row ────────────────────────────
+  const { data: emp, error: empErr } = await supabase
     .from('employees')
-    .select(`
-      id,
-      employee_code,
-      name,
-      email,
-      reporting_manager_id,
-      pd_employee_role:pd_employee_roles!inner(
-        certifications,
-        pending_review_count,
-        is_active,
-        pd_role:pd_roles!inner(
-          id,
-          name,
-          level,
-          can_upload,
-          can_edit_draft,
-          can_review,
-          can_approve,
-          can_publish,
-          can_override_hierarchy,
-          can_manage_users,
-          approval_aum_ceiling_inr
-        )
-      )
-    `)
+    .select('id, employee_code, name, email, reporting_manager_id')
     .eq('id', employeeId)
     .single();
 
-  if (error || !data) return null;
+  if (empErr || !emp) return null;
 
-  // Supabase returns the joined relationship as a single object when
-  // it's a 1:1 (UNIQUE constraint on employee_id), or as an array
-  // when 1:N. We handle both shapes defensively.
-  const rawEmpRole = data.pd_employee_role as unknown;
-  const empRole =
-    Array.isArray(rawEmpRole)
-      ? (rawEmpRole[0] as Record<string, unknown> | undefined)
-      : (rawEmpRole as Record<string, unknown> | undefined);
-  if (!empRole) return null;
+  // ── 2. Try to fetch the active PD role assignment ─────────────
+  const { data: empRoleRow } = await supabase
+    .from('pd_employee_roles')
+    .select(`
+      certifications,
+      pending_review_count,
+      is_active,
+      pd_role:pd_roles!inner(
+        id,
+        name,
+        level,
+        can_upload,
+        can_edit_draft,
+        can_review,
+        can_approve,
+        can_publish,
+        can_override_hierarchy,
+        can_manage_users,
+        approval_aum_ceiling_inr
+      )
+    `)
+    .eq('employee_id', employeeId)
+    .eq('is_active', true)
+    .maybeSingle();
 
-  const rawRole = empRole.pd_role as unknown;
-  const roleRow =
-    Array.isArray(rawRole)
+  let roleRow: Record<string, unknown> | null = null;
+  let certifications: string[] = [];
+  let pendingReviewCount = 0;
+
+  if (empRoleRow) {
+    const rawRole = (empRoleRow as Record<string, unknown>).pd_role;
+    roleRow = Array.isArray(rawRole)
       ? (rawRole[0] as Record<string, unknown>)
       : (rawRole as Record<string, unknown>);
+    certifications = ((empRoleRow as Record<string, unknown>).certifications as string[]) ?? [];
+    pendingReviewCount = ((empRoleRow as Record<string, unknown>).pending_review_count as number) ?? 0;
+  } else {
+    // ── 3. Fallback: firm principals (Ram, Sangeeta) auto-promote to Admin ──
+    // The Trustner founders sit at the top of the approval matrix and
+    // should never be locked out of their own workbenches. If they don't
+    // have an explicit pd_employee_roles row yet, synthesize an Admin role
+    // from the pd_roles table (level 5, all permissions).
+    const emailLc = (emp.email as string).toLowerCase();
+    if (APPROVER_EMAILS.includes(emailLc)) {
+      const { data: adminRole } = await supabase
+        .from('pd_roles')
+        .select(
+          'id, name, level, can_upload, can_edit_draft, can_review, can_approve, can_publish, can_override_hierarchy, can_manage_users, approval_aum_ceiling_inr'
+        )
+        .eq('name', 'admin')
+        .maybeSingle();
+      if (adminRole) {
+        roleRow = adminRole as Record<string, unknown>;
+        certifications = ['CFP'];
+      }
+    }
+  }
+
   if (!roleRow) return null;
 
   const role: Role = {
@@ -322,13 +343,13 @@ export async function getEmployeeWithPdRole(
   };
 
   return {
-    id: data.id as number,
-    employeeCode: data.employee_code as string,
-    name: data.name as string,
-    email: data.email as string,
-    managerId: data.reporting_manager_id as number | undefined,
+    id: emp.id as number,
+    employeeCode: emp.employee_code as string,
+    name: emp.name as string,
+    email: emp.email as string,
+    managerId: emp.reporting_manager_id as number | undefined,
     role,
-    certifications: (empRole.certifications as string[]) ?? [],
-    pendingReviewCount: (empRole.pending_review_count as number) ?? 0,
+    certifications,
+    pendingReviewCount,
   };
 }
