@@ -161,7 +161,8 @@ export default function EditOrientationPage() {
     setGoals((gs) => gs.filter((g) => g._key !== key));
   }
 
-  async function handleSave() {
+  // Returns true on success, false on failure (so callers can guard)
+  async function handleSave(): Promise<boolean> {
     setSaving(true);
     setMessage(null);
     try {
@@ -199,12 +200,14 @@ export default function EditOrientationPage() {
       const data = await res.json();
       if (!res.ok) {
         setMessage({ type: 'error', text: data.error ?? 'Save failed' });
-      } else {
-        setMessage({ type: 'success', text: 'Saved' });
-        load();
+        return false;
       }
+      setMessage({ type: 'success', text: 'Saved' });
+      load();
+      return true;
     } catch (err) {
       setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Network error' });
+      return false;
     } finally {
       setSaving(false);
     }
@@ -221,7 +224,12 @@ export default function EditOrientationPage() {
     }
     setSubmitting(true);
     try {
-      await handleSave();
+      // Save first — if save fails, ABORT (don't submit stale data)
+      const ok = await handleSave();
+      if (!ok) {
+        setSubmitting(false);
+        return;
+      }
       const res = await fetch(`/api/admin/client-orientation/${id}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

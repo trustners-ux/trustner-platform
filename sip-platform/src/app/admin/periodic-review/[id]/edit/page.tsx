@@ -156,7 +156,8 @@ export default function EditPeriodicReviewPage() {
     setActionItems((ai) => ai.filter((i) => i._key !== key));
   }
 
-  async function handleSave() {
+  // Returns true on success, false on failure
+  async function handleSave(): Promise<boolean> {
     setSaving(true);
     setMessage(null);
     try {
@@ -190,12 +191,14 @@ export default function EditPeriodicReviewPage() {
       const data = await res.json();
       if (!res.ok) {
         setMessage({ type: 'error', text: data.error ?? 'Save failed' });
-      } else {
-        setMessage({ type: 'success', text: 'Saved' });
-        load();
+        return false;
       }
+      setMessage({ type: 'success', text: 'Saved' });
+      load();
+      return true;
     } catch (err) {
       setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Network error' });
+      return false;
     } finally {
       setSaving(false);
     }
@@ -204,7 +207,12 @@ export default function EditPeriodicReviewPage() {
   async function handleSubmit() {
     setSubmitting(true);
     try {
-      await handleSave();
+      // Save first — abort if save fails
+      const ok = await handleSave();
+      if (!ok) {
+        setSubmitting(false);
+        return;
+      }
       const res = await fetch(`/api/admin/periodic-review/${id}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

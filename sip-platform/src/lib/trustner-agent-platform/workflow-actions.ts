@@ -47,8 +47,10 @@ interface ActionDef {
 const ACTION_MAP: Record<string, ActionDef> = {
   submit: {
     action: 'SUBMIT',
+    // After SUBMIT, transition straight to IN_REVIEW so the item appears
+    // in reviewer queues (queue filter on current_reviewer OR unassigned).
     from: ['DRAFT', 'CHANGES_REQUESTED'],
-    to: 'SUBMITTED',
+    to: 'IN_REVIEW',
     permission: 'canEditDraft',
   },
   approve: {
@@ -86,6 +88,7 @@ const ACTION_MAP: Record<string, ActionDef> = {
 };
 
 interface RolePermissions {
+  name: string;                 // e.g. 'admin', 'senior_reviewer'
   canEditDraft: boolean;
   canReview: boolean;
   canApprove: boolean;
@@ -192,14 +195,19 @@ export async function handleWorkflowAction(opts: HandleWorkflowOptions) {
     updated_at: new Date().toISOString(),
   };
 
-  if (def.to === 'SUBMITTED' || def.to === 'IN_REVIEW') {
-    // Auto-assign reviewer: simple — use the uploader's reporting manager if
-    // there's no one assigned yet. For MVP we leave as-is (existing reviewer or null);
-    // a richer routing rule lives in pickReviewer() in PD.
-    if (!row.current_reviewer_employee_id) {
-      updatePayload.current_reviewer_employee_id = null;
-    }
+  // Reviewer routing: when the actor reviews/approves an unassigned
+  // item, claim it for them so the audit trail records who acted.
+  // (For SUBMITTED → IN_REVIEW transitions, current_reviewer stays null
+  // so the item appears in every reviewer's open pool — the dashboard
+  // queue filter includes null-reviewer rows.)
+  if (
+    (def.action === 'APPROVE' || def.action === 'REQUEST_CHANGES' || def.action === 'REJECT' || def.action === 'ESCALATE') &&
+    actorEmployeeId &&
+    !row.current_reviewer_employee_id
+  ) {
+    updatePayload.current_reviewer_employee_id = actorEmployeeId;
   }
+
   if (def.action === 'APPROVE') {
     updatePayload.approved_by_employee_id = actorEmployeeId ?? null;
     updatePayload.approved_at = new Date().toISOString();
@@ -217,18 +225,18 @@ export async function handleWorkflowAction(opts: HandleWorkflowOptions) {
     return NextResponse.json({ error: updateErr.message }, { status: 500 });
   }
 
-  // ── Audit event ──
-  await supabase.from('pd_workflow_events').insert({
-    entity_type: agentName,
-    entity_id: numericId,
-    from_status: currentStatus,
-    to_status: def.to,
+  // ── Audit event (resilient — must never break the workflow) ──
+  await writeAuditEvent({
+    entityType: agentName,
+    entityId: numericId,
+    fromStatus: currentStatus,
+    toStatus: def.to,
     action: def.action,
-    actor_employee_id: actorEmployeeId ?? null,
-    actor_name: actorName,
-    actor_email: email,
+    actorEmployeeId: actorEmployeeId ?? null,
+    actorName,
+    actorEmail: email,
+    actorRole: roleName(role),
     comment: body.comment ?? null,
-    occurred_at: new Date().toISOString(),
   });
 
   return NextResponse.json({
@@ -257,12 +265,78 @@ async function resolveEmployeeEmail(): Promise<string | null> {
   return null;
 }
 
+// ─────────────────────────────────────────────────────────────────
+// AUDIT EVENT WRITER (resilient — never throws)
+// ─────────────────────────────────────────────────────────────────
+//
+// Writes to the generic agent_workflow_events table (migration 010).
+// If that table doesn't exist yet (migration pending), falls back to
+// console.error and continues — the workflow transition still succeeds.
+//
+// Once migration 010 is applied via Supabase SQL editor, audit writes
+// start working immediately with no code change.
+// ─────────────────────────────────────────────────────────────────
+
+export interface AuditEventPayload {
+  entityType: string;
+  entityId: number;
+  fromStatus: string | null;
+  toStatus: string;
+  action: string;
+  actorEmployeeId: number | null;
+  actorName: string;
+  actorEmail: string;
+  actorRole?: string | null;
+  comment?: string | null;
+  metadata?: Record<string, unknown> | null;
+}
+
+export async function writeAuditEvent(p: AuditEventPayload): Promise<void> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) {
+    console.error('[audit] No Supabase client available for audit write:', p);
+    return;
+  }
+  try {
+    const { error } = await supabase.from('agent_workflow_events').insert({
+      entity_type: p.entityType,
+      entity_id: p.entityId,
+      from_status: p.fromStatus,
+      to_status: p.toStatus,
+      action: p.action,
+      actor_employee_id: p.actorEmployeeId,
+      actor_name: p.actorName,
+      actor_email: p.actorEmail,
+      actor_role: p.actorRole ?? null,
+      comment: p.comment ?? null,
+      metadata: p.metadata ?? null,
+    });
+    if (error) {
+      // Most likely cause in production today: agent_workflow_events
+      // table not yet created (migration 010 pending). Log loudly so
+      // Ram sees it in Vercel runtime logs.
+      console.error(
+        `[audit] Failed to insert agent_workflow_events for ${p.entityType}#${p.entityId} action=${p.action}: ${error.message}. ` +
+        `If error mentions "relation does not exist", apply migration 010 via Supabase SQL editor.`
+      );
+    }
+  } catch (e) {
+    // Defensive — never throw out of audit
+    console.error('[audit] Unexpected audit write error:', e);
+  }
+}
+
+function roleName(role: RolePermissions | null): string | null {
+  return role?.name ?? null;
+}
+
 async function resolveRolePermissions(
   employeeId: number | undefined,
   isApprover: boolean
 ): Promise<RolePermissions | null> {
   if (isApprover) {
     return {
+      name: 'admin',
       canEditDraft: true,
       canReview: true,
       canApprove: true,
@@ -276,7 +350,7 @@ async function resolveRolePermissions(
   const { data } = await supabase
     .from('pd_employee_roles')
     .select(
-      'pd_role:pd_roles!inner(can_edit_draft, can_review, can_approve, can_publish)'
+      'pd_role:pd_roles!inner(name, can_edit_draft, can_review, can_approve, can_publish)'
     )
     .eq('employee_id', employeeId)
     .eq('is_active', true)
@@ -289,6 +363,7 @@ async function resolveRolePermissions(
     : (raw as Record<string, unknown>);
   if (!r) return null;
   return {
+    name: (r.name as string) ?? 'unknown',
     canEditDraft: Boolean(r.can_edit_draft),
     canReview: Boolean(r.can_review),
     canApprove: Boolean(r.can_approve),

@@ -43,10 +43,15 @@ export async function getAgentDashboardCounts(
       .select('id', { count: 'exact', head: true })
       .eq('uploaded_by_employee_id', employeeId)
       .in('status', ['DRAFT', 'CHANGES_REQUESTED']),
+    // Awaiting review: items where I am the reviewer OR unassigned
+    // (orphaned). Matches queryAgentQueue('reviewer_is_me') so the
+    // dashboard count matches the queue length.
     supabase
       .from(table)
       .select('id', { count: 'exact', head: true })
-      .eq('current_reviewer_employee_id', employeeId)
+      .or(
+        `current_reviewer_employee_id.eq.${employeeId},current_reviewer_employee_id.is.null`
+      )
       .in('status', ['IN_REVIEW', 'ESCALATED']),
     supabase
       .from(table)
@@ -94,7 +99,13 @@ export async function queryAgentQueue<TRow extends Record<string, unknown>>(opts
     if (opts.filter === 'uploaded_by_me') {
       query = query.eq('uploaded_by_employee_id', opts.employeeId);
     } else if (opts.filter === 'reviewer_is_me') {
-      query = query.eq('current_reviewer_employee_id', opts.employeeId);
+      // Include items where I am the assigned reviewer OR the item is
+      // unassigned (current_reviewer_employee_id IS NULL). This prevents
+      // SUBMITTED-but-unclaimed items from being orphaned and ensures
+      // every authorised reviewer sees the open pool.
+      query = query.or(
+        `current_reviewer_employee_id.eq.${opts.employeeId},current_reviewer_employee_id.is.null`
+      );
     } else if (opts.filter === 'approved_by_me_or_uploader') {
       query = query.or(
         `approved_by_employee_id.eq.${opts.employeeId},uploaded_by_employee_id.eq.${opts.employeeId}`

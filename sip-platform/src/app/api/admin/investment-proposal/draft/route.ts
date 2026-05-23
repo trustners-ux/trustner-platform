@@ -18,6 +18,7 @@ import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '@/lib/auth/jwt';
 import { verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 import { getSupabaseAdmin } from '@/lib/db/supabase';
+import { writeAuditEvent } from '@/lib/trustner-agent-platform/workflow-actions';
 import { ALLOCATION_TEMPLATES } from '@/lib/investment-proposal/types';
 import type { RiskProfile, ProposalPurpose, HorizonBand } from '@/lib/investment-proposal/types';
 
@@ -98,17 +99,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error?.message ?? 'Failed to create draft' }, { status: 500 });
   }
 
-  // Audit
-  await supabase.from('pd_workflow_events').insert({
-    entity_type: 'investment_proposal',
-    entity_id: row.id,
-    from_status: null,
-    to_status: 'DRAFT',
+  await writeAuditEvent({
+    entityType: 'investment_proposal',
+    entityId: row.id,
+    fromStatus: null,
+    toStatus: 'DRAFT',
     action: 'CREATE',
-    actor_employee_id: employeeId,
-    actor_name: emp.name,
-    actor_email: email,
-    occurred_at: new Date().toISOString(),
+    actorEmployeeId: employeeId,
+    actorName: emp.name,
+    actorEmail: email,
   });
 
   return NextResponse.json({

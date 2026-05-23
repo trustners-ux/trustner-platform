@@ -133,12 +133,18 @@ export default function EditInvestmentProposalPage() {
     }
     setSubmitting(true);
     try {
-      // Save first
-      await fetch(`/api/admin/investment-proposal/${id}`, {
+      // Save first — abort if save fails (don't submit stale data)
+      const saveRes = await fetch(`/api/admin/investment-proposal/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ allocation, goalStatement: goalStatement || null }),
       });
+      if (!saveRes.ok) {
+        const saveData = await saveRes.json().catch(() => ({}));
+        setMessage({ type: 'error', text: saveData.error ?? 'Save failed before submit' });
+        setSubmitting(false);
+        return;
+      }
       // Then submit
       const res = await fetch(`/api/admin/investment-proposal/${id}/submit`, {
         method: 'POST',

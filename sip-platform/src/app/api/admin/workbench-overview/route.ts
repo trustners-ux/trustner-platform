@@ -55,11 +55,16 @@ export async function GET() {
               .eq('uploaded_by_employee_id', employeeId)
               .in('status', ['DRAFT', 'CHANGES_REQUESTED'])
           : Promise.resolve({ count: 0 }),
-        // Awaiting My Review
+        // Awaiting My Review — items where I am the assigned reviewer
+        // OR the item is unassigned (open pool, claimable by any reviewer).
+        // Matches queryAgentQueue('reviewer_is_me') so the count is
+        // consistent with what's shown in the dashboard queue.
         employeeId
           ? supabase.from(ag.table)
               .select('id', { count: 'exact', head: true })
-              .eq('current_reviewer_employee_id', employeeId)
+              .or(
+                `current_reviewer_employee_id.eq.${employeeId},current_reviewer_employee_id.is.null`
+              )
               .in('status', ['IN_REVIEW', 'ESCALATED'])
           : Promise.resolve({ count: 0 }),
         // Approved pending publish (team-wide)
