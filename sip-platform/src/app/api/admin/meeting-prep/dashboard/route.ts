@@ -14,6 +14,8 @@ import {
   getAgentDashboardCounts,
   queryAgentQueue,
   resolveEmployeeIdByEmail,
+  isApproverEmail,
+  buildApproverFallbackResponse,
 } from '@/lib/trustner-agent-platform/generic-queries';
 import { getEmployeeWithPdRole } from '@/lib/portfolio-diagnostic/queries';
 
@@ -31,12 +33,25 @@ export async function GET() {
   if (!email) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
   const employeeId = await resolveEmployeeIdByEmail(email);
+  const approver = isApproverEmail(email);
   if (!employeeId) {
+    if (approver) {
+      return NextResponse.json({
+        ...buildApproverFallbackResponse(email),
+        meetingsTomorrow: [],
+      });
+    }
     return NextResponse.json({ error: 'Employee row not found' }, { status: 403 });
   }
 
   const employee = await getEmployeeWithPdRole(employeeId);
   if (!employee) {
+    if (approver) {
+      return NextResponse.json({
+        ...buildApproverFallbackResponse(email),
+        meetingsTomorrow: [],
+      });
+    }
     return NextResponse.json({
       employee: null, counts: null, myDrafts: [], awaiting: [], approvedPending: [], meetingsTomorrow: [],
     });

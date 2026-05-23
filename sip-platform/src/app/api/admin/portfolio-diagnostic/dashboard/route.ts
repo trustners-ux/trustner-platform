@@ -25,6 +25,10 @@ import {
   getRecentlyPublished,
   getEmployeeWithPdRole,
 } from '@/lib/portfolio-diagnostic/queries';
+import {
+  isApproverEmail,
+  buildApproverFallbackResponse,
+} from '@/lib/trustner-agent-platform/generic-queries';
 
 export async function GET() {
   // ── Authenticate ────────────────────────────────────────────
@@ -66,8 +70,15 @@ export async function GET() {
   // database `employees` table — see /lib/employee/employee-directory.ts).
   // The email is the canonical bridge.
   employeeId = await resolveEmployeeIdByEmail(employeeEmail);
+  const approver = isApproverEmail(employeeEmail);
 
   if (!employeeId) {
+    // Firm principals (Ram, Sangeeta) get an Admin fallback even if
+    // their employees row is missing — they cannot be locked out of
+    // their own approval matrix.
+    if (approver) {
+      return NextResponse.json(buildApproverFallbackResponse(employeeEmail));
+    }
     return NextResponse.json(
       { error: `Could not resolve employee row for ${employeeEmail}. Add a row to the employees table.` },
       { status: 403 }
@@ -78,6 +89,11 @@ export async function GET() {
   const employee = await getEmployeeWithPdRole(employeeId);
 
   if (!employee) {
+    if (approver) {
+      // Defensive: even with an employees row, if the role join
+      // ever fails for a principal, synthesize Admin.
+      return NextResponse.json(buildApproverFallbackResponse(employeeEmail));
+    }
     // No PD role assigned yet; return null employee so UI can show
     // the "contact admin" prompt
     return NextResponse.json({
@@ -131,11 +147,12 @@ async function resolveEmployeeIdByEmail(email: string): Promise<number | null> {
   const supabase = getSupabaseAdmin();
   if (!supabase) return null;
 
+  // Case-insensitive lookup — JWT-carried email casing can vary.
   const { data } = await supabase
     .from('employees')
     .select('id')
-    .eq('email', email)
-    .single();
+    .ilike('email', email.trim())
+    .maybeSingle();
 
   return (data?.id as number) ?? null;
 }
