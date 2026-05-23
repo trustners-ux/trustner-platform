@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils/cn';
 import { DISCLAIMER } from '@/lib/constants/company';
 import NumberInput from '@/components/ui/NumberInput';
 import DownloadPDFButton from '@/components/ui/DownloadPDFButton';
+import PersonalInfoBar from '@/components/ui/PersonalInfoBar';
 
 const COLORS = {
   expenses: '#2563EB',
@@ -40,6 +41,8 @@ const STATUS_CONFIG: Record<CoverageStatus, { label: string; color: string; bg: 
 };
 
 export default function TermInsuranceCalculatorPage() {
+  const [clientName, setClientName] = useState('');
+  const [clientAge, setClientAge] = useState<number | null>(35);
   const [monthlyExpenses, setMonthlyExpenses] = useState(50000);
   const [dependents, setDependents] = useState(3);
   const [yearsToSupport, setYearsToSupport] = useState(25);
@@ -171,6 +174,15 @@ export default function TermInsuranceCalculatorPage() {
             <div className="card-base p-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
               <h2 className="font-bold text-primary-700 mb-6 text-lg">Coverage Needs</h2>
 
+              <PersonalInfoBar
+                name={clientName}
+                onNameChange={setClientName}
+                age={clientAge}
+                onAgeChange={setClientAge}
+                ageLabel="Current Age"
+                namePlaceholder="e.g., Ram"
+              />
+
               <div className="space-y-5">
                 {/* Family Expenses Section */}
                 <div>
@@ -226,7 +238,7 @@ export default function TermInsuranceCalculatorPage() {
               {/* PDF Download */}
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-primary-700">Results</h3>
-                <DownloadPDFButton elementId="calculator-results" title="Term Insurance Calculator" fileName="term-insurance-calculator" />
+                <DownloadPDFButton elementId="calculator-results" title="Term Insurance Calculator" fileName={`term-insurance-calculator${clientName ? `-${clientName.replace(/\s+/g, '-')}` : ''}`} />
               </div>
 
               {/* Recommended Sum Assured - Hero Card */}

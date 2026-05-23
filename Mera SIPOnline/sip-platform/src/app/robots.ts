@@ -6,7 +6,20 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/mfd/', '/admin/'],
+        // Only block the 6 internal MFD business-planning calculators that reveal
+        // granular MFD economics (GST, LTV, cost-ratio, valuation, churn, NFO).
+        // /mfd landing + /mfd/trail-calculator are intentionally indexable so the
+        // Trustner team can surface them during sub-broker onboarding via search.
+        disallow: [
+          '/api/',
+          '/admin/',
+          '/mfd/gst-brokerage',
+          '/mfd/client-ltv',
+          '/mfd/cost-ratio',
+          '/mfd/business-valuation',
+          '/mfd/sip-churn',
+          '/mfd/nfo-tracker',
+        ],
       },
       // Block known scraper/cloner bots
       {

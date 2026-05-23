@@ -93,18 +93,29 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // ─── Content Protection Headers for all public pages ───
+  // ─── Security Headers for all public pages ───
   if (!pathname.startsWith('/admin') && !pathname.startsWith('/api/admin')) {
     const response = NextResponse.next();
 
+    // Clickjacking protection
     response.headers.set('X-Frame-Options', 'SAMEORIGIN');
     response.headers.set('Content-Security-Policy', "frame-ancestors 'self'");
+    // MIME sniffing protection
     response.headers.set('X-Content-Type-Options', 'nosniff');
+    // Referrer control
     response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    // Feature / permissions policy
     response.headers.set(
       'Permissions-Policy',
       'camera=(), microphone=(), geolocation=(self), interest-cohort=()'
     );
+    // HSTS — tell browsers to always use HTTPS for the next year
+    response.headers.set(
+      'Strict-Transport-Security',
+      'max-age=31536000; includeSubDomains; preload'
+    );
+    // XSS auditor hint (legacy browsers)
+    response.headers.set('X-XSS-Protection', '1; mode=block');
 
     return response;
   }

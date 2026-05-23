@@ -16,27 +16,49 @@ import { PeerComparisonTable } from '@/components/funds/PeerComparisonTable';
 import { DISCLAIMER } from '@/lib/constants/company';
 
 /**
- * Resolves a text-based slug to a numeric scheme code by searching MFapi.
- * Converts hyphens to spaces and uses the search API.
+ * Resolves a text-based slug to a numeric scheme code.
+ * 1. First tries the curated Trustner list — fast, no network — by matching id (slug).
+ * 2. Falls back to MFAPI search if not in curated set.
+ * 3. Final fallback: progressively shortens the query (drops "Regular", "Direct", "(G)")
+ *    so awkward suffixes don't break resolution.
  */
 async function resolveSlugToCode(slug: string): Promise<number | null> {
+  // ── Tier 1: Direct lookup in the curated Trustner list ──
+  // Dynamic import keeps this client component bundle slim.
   try {
-    // Convert slug to search query: "whiteoak-capital-large-cap-fund" → "whiteoak capital large cap fund"
-    const query = slug.replace(/-/g, ' ').trim();
-    if (!query) return null;
-
-    const res = await fetch(`/api/funds/search?q=${encodeURIComponent(query)}`);
-    if (!res.ok) return null;
-
-    const data = await res.json();
-    // API returns { results: [...] }
-    if (data.results && data.results.length > 0) {
-      return data.results[0].schemeCode;
+    const { CURRENT_TRUSTNER_LIST } = await import('@/data/funds/trustner');
+    for (const cat of CURRENT_TRUSTNER_LIST.categories) {
+      const fund = cat.funds.find((f) => f.id === slug);
+      if (fund?.schemeCode) return fund.schemeCode;
     }
-    return null;
   } catch {
-    return null;
+    // ignore — fall through to MFAPI search
   }
+
+  // ── Tier 2: MFAPI search via /api/funds/search ──
+  const cleanQuery = (slug: string) =>
+    slug
+      .replace(/-/g, ' ')
+      .replace(/\bg\b/gi, '')        // strip standalone "g" (was "(G)" suffix)
+      .replace(/\bregular\b/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const tryQueries = [slug.replace(/-/g, ' ').trim(), cleanQuery(slug)];
+  for (const query of tryQueries) {
+    if (!query) continue;
+    try {
+      const res = await fetch(`/api/funds/search?q=${encodeURIComponent(query)}`);
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data.results && data.results.length > 0) {
+        return data.results[0].schemeCode;
+      }
+    } catch {
+      // continue to next query
+    }
+  }
+  return null;
 }
 
 export default function FundDetailPage() {

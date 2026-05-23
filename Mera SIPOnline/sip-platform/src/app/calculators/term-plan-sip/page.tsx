@@ -671,7 +671,7 @@ export default function TermPlanSIPCalculatorPage() {
                     { icon: TrendingUp, color: 'text-teal-600', bg: 'bg-teal-50', text: 'The power of compounding makes even small premium differences grow into substantial corpora over 10-15 years of SIP accumulation.' },
                     { icon: Shield, color: 'text-violet-600', bg: 'bg-violet-50', text: `Both Regular Pay and Limited Pay offer identical life cover of ${formatINR(sumAssured)}. The only difference is how you pay — and where your money works harder for you.` },
                     { icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50', text: 'Market returns are not guaranteed. The accumulation phase uses equity-based growth — actual returns may vary. Use conservative estimates for planning.' },
-                    { icon: Lightbulb, color: 'text-brand', bg: 'bg-brand-50', text: 'Talk to a Trustner financial advisor to find the right SIP strategy and term plan combination based on your risk profile and goals.' },
+                    { icon: Lightbulb, color: 'text-brand', bg: 'bg-brand-50', text: 'Talk to the Trustner team to find the right SIP strategy and term plan combination based on your risk profile and goals.' },
                   ].map((tip, i) => (
                     <div key={i} className="flex gap-3">
                       <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0', tip.bg)}>

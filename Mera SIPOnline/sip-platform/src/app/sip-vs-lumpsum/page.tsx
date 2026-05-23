@@ -474,8 +474,9 @@ export default function SIPvsLumpsumPage() {
             Not Sure Which Strategy to Choose?
           </h2>
           <p className="text-lg text-brand-100 mb-8 max-w-2xl mx-auto">
-            Our advisors can help you create a personalized investment plan that combines
-            SIP and lump sum strategies based on your unique financial situation.
+            The Trustner team can help you build a personalised investment plan that
+            combines SIP and lump sum strategies for your unique financial situation —
+            executed through Regular plans of mutual funds.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <a
@@ -494,7 +495,7 @@ export default function SIPvsLumpsumPage() {
               className="inline-flex items-center gap-2 bg-white text-primary-700 px-8 py-3.5 rounded-lg font-bold hover:bg-slate-50 transition-colors shadow-lg text-sm"
             >
               <MessageCircle className="w-5 h-5" />
-              Talk to Advisor
+              Talk to Us
             </a>
           </div>
         </div>

@@ -8,6 +8,16 @@ import { COMPANY } from '@/lib/constants/company';
 import type { FinancialHealthReport, FinancialPlanningData } from '@/types/financial-planning';
 import type { PlanTierLabel } from '@/types/report-queue';
 
+/** Escape user/admin-supplied strings before interpolating into HTML email bodies */
+function esc(s: unknown): string {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // ─── User Report Email (sent on approval) ───
 export function buildReportEmailHTML(
   userName: string,
@@ -33,25 +43,25 @@ export function buildReportEmailHTML(
 <h1 style="color:#ffffff;margin:0;font-size:20px;font-weight:700;">Trustner Financial Health Report</h1>
 <p style="color:#99f6e4;margin:6px 0 0;font-size:13px;">Your personalized financial wellness assessment is ready</p></td></tr>
 <tr><td style="padding:30px;">
-<p style="color:#334155;font-size:15px;margin:0 0 20px;">Dear ${firstName},</p>
+<p style="color:#334155;font-size:15px;margin:0 0 20px;">Dear ${esc(firstName)},</p>
 <p style="color:#475569;font-size:14px;line-height:1.6;margin:0 0 24px;">Thank you for completing the Trustner Financial Wellness Assessment. Your detailed 10-page report is attached as a PDF.</p>
 <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
 <tr><td style="background:#f0fdfa;border:2px solid #99f6e4;border-radius:12px;padding:20px;text-align:center;">
 <p style="color:#64748b;font-size:12px;margin:0 0 6px;text-transform:uppercase;letter-spacing:1px;">Your Financial Health Score</p>
 <p style="color:${gradeColor};font-size:42px;font-weight:800;margin:0;line-height:1;">${score}</p>
 <p style="color:#94a3b8;font-size:13px;margin:4px 0 12px;">out of 900</p>
-<span style="display:inline-block;background:${gradeColor};color:#ffffff;padding:4px 16px;border-radius:20px;font-size:13px;font-weight:600;">${grade}</span>
+<span style="display:inline-block;background:${gradeColor};color:#ffffff;padding:4px 16px;border-radius:20px;font-size:13px;font-weight:600;">${esc(grade)}</span>
 </td></tr></table>
 ${insights.length > 0 ? `<p style="color:#334155;font-size:14px;font-weight:600;margin:0 0 12px;">Key Insights:</p>
-${insights.map(i => `<p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 8px;padding-left:16px;border-left:3px solid #0f766e;">${i}</p>`).join('')}` : ''}
+${insights.map(i => `<p style="color:#475569;font-size:13px;line-height:1.5;margin:0 0 8px;padding-left:16px;border-left:3px solid #0f766e;">${esc(i)}</p>`).join('')}` : ''}
 ${adminNotes ? `<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:14px 16px;margin:16px 0;">
-<p style="color:#0369a1;font-size:13px;font-weight:600;margin:0 0 6px;">A note from your advisor:</p>
-<p style="color:#475569;font-size:13px;line-height:1.6;margin:0;">${adminNotes.replace(/\n/g, '<br/>')}</p>
+<p style="color:#0369a1;font-size:13px;font-weight:600;margin:0 0 6px;">A note from your Relationship Manager:</p>
+<p style="color:#475569;font-size:13px;line-height:1.6;margin:0;">${esc(adminNotes).replace(/\n/g, '<br/>')}</p>
 </div>` : ''}
 <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
 <tr><td style="text-align:center;">
 <p style="color:#475569;font-size:13px;margin:0 0 12px;">Ready to turn insights into action?</p>
-<a href="tel:+916003903737" style="display:inline-block;background:#0f766e;color:#ffffff;padding:12px 32px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">Talk to a Trustner Advisor</a>
+<a href="tel:+916003903737" style="display:inline-block;background:#0f766e;color:#ffffff;padding:12px 32px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">Talk to Trustner</a>
 <p style="color:#94a3b8;font-size:12px;margin:8px 0 0;">or call ${COMPANY.contact.phoneDisplay}</p></td></tr></table>
 <p style="color:#64748b;font-size:12px;line-height:1.5;margin:20px 0 0;padding-top:16px;border-top:1px solid #e2e8f0;">Your detailed 10-page Financial Health Report is attached as a PDF. Save it for your records.</p>
 </td></tr>
@@ -168,7 +178,7 @@ function emailFooter(): string {
 </td></tr>
 <tr><td style="background:#f8fafc;padding:20px 30px;border-top:1px solid #e2e8f0;">
 <p style="color:#94a3b8;font-size:11px;margin:0 0 4px;text-align:center;">${COMPANY.mfEntity.name} | ${COMPANY.mfEntity.amfiArn} | CIN: ${COMPANY.mfEntity.cin}</p>
-<p style="color:#cbd5e1;font-size:10px;margin:0 0 4px;text-align:center;">AMFI Registered Mutual Fund Distributor | EUIN: ${COMPANY.mfEntity.euin}</p>
+<p style="color:#cbd5e1;font-size:10px;margin:0 0 4px;text-align:center;">${COMPANY.mfEntity.typeExtended}</p>
 <p style="color:#cbd5e1;font-size:10px;margin:0 0 4px;text-align:center;">Mutual fund investments are subject to market risks. Read all scheme-related documents carefully before investing.</p>
 <p style="color:#cbd5e1;font-size:10px;margin:0 0 4px;text-align:center;">This report is for educational and planning purposes only and should not be considered as financial advice.</p>
 <p style="color:#e2e8f0;font-size:9px;margin:8px 0 0;text-align:center;">You received this email because you completed a financial planning assessment on merasip.com. To unsubscribe, reply with "UNSUBSCRIBE".</p>
@@ -188,7 +198,7 @@ function scoreBlock(score: number, grade: string): string {
 
 function adminNotesBlock(notes: string): string {
   return `<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:14px 16px;margin:16px 0;">
-<p style="color:#0369a1;font-size:13px;font-weight:600;margin:0 0 6px;">A note from your advisor:</p>
+<p style="color:#0369a1;font-size:13px;font-weight:600;margin:0 0 6px;">A note from your Relationship Manager:</p>
 <p style="color:#475569;font-size:13px;line-height:1.6;margin:0;">${notes.replace(/\n/g, '<br/>')}</p>
 </div>`;
 }
@@ -262,7 +272,7 @@ ${pdfDownloadUrl ? `<div style="text-align:center;margin:20px 0;">
 </div>` : '<p style="color:#64748b;font-size:12px;line-height:1.5;margin:20px 0 0;padding-top:16px;border-top:1px solid #e2e8f0;">Your detailed Financial Health Report is attached as a PDF. Save it for your records.</p>'}
 <div style="background:#f0fdfa;border:2px solid #99f6e4;border-radius:12px;padding:20px;margin:24px 0;text-align:center;">
 <p style="color:#0f766e;font-size:14px;font-weight:700;margin:0 0 8px;">Want a more detailed plan?</p>
-<p style="color:#475569;font-size:13px;margin:0 0 14px;line-height:1.5;">Upgrade to our <strong>Goal-Based Financial Plan</strong> for personalized investment recommendations, goal tracking, and a dedicated advisor consultation.</p>
+<p style="color:#475569;font-size:13px;margin:0 0 14px;line-height:1.5;">Upgrade to our <strong>Goal-Based Financial Plan</strong> for personalized investment recommendations, goal tracking, and a dedicated consultation.</p>
 <a href="https://merasip.com/financial-planning?tier=standard" style="display:inline-block;background:#0f766e;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">Upgrade to Goal-Based Plan</a>
 </div>
 </td></tr>
@@ -333,7 +343,7 @@ ${pdfDownloadUrl ? `<div style="text-align:center;margin:20px 0;">
 </div>` : '<p style="color:#64748b;font-size:12px;line-height:1.5;margin:20px 0 0;padding-top:16px;border-top:1px solid #e2e8f0;">Your detailed Goal-Based Financial Plan is attached as a PDF. Save it for your records.</p>'}
 <div style="background:#f0fdfa;border:2px solid #99f6e4;border-radius:12px;padding:20px;margin:24px 0;text-align:center;">
 <p style="color:#0f766e;font-size:14px;font-weight:700;margin:0 0 8px;">Ready to take the next step?</p>
-<p style="color:#475569;font-size:13px;margin:0 0 14px;line-height:1.5;">Book a free consultation call with CFP Ram Shah to discuss your plan and get started on your financial journey.</p>
+<p style="color:#475569;font-size:13px;margin:0 0 14px;line-height:1.5;">Book a free consultation call with Trustner team to discuss your plan and get started on your financial journey.</p>
 <a href="https://wa.me/916003903737?text=Hi%2C%20I%20received%20my%20Goal-Based%20Plan%20and%20would%20like%20to%20book%20a%20consultation." style="display:inline-block;background:#0f766e;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">Book Free Consultation</a>
 </div>
 </td></tr>
@@ -381,7 +391,7 @@ function buildComprehensiveTierEmail(
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="margin:0;padding:0;background-color:#f8fafc;font-family:Arial,Helvetica,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;">
-${emailHeader('Your Comprehensive Financial Blueprint', 'A complete financial roadmap prepared by CFP Ram Shah', true)}
+${emailHeader('Your Comprehensive Financial Blueprint', 'A complete financial roadmap prepared by Trustner', true)}
 <tr><td style="padding:30px;">
 <p style="color:#334155;font-size:15px;margin:0 0 20px;">Dear ${firstName},</p>
 <p style="color:#475569;font-size:14px;line-height:1.6;margin:0 0 8px;">Your Comprehensive Financial Blueprint has been personally reviewed and is now ready. This is our most detailed assessment, covering all five pillars of financial health with tailored recommendations.</p>
@@ -418,9 +428,9 @@ ${pdfDownloadUrl ? `<div style="text-align:center;margin:24px 0;">
 <a href="${pdfDownloadUrl}" style="display:inline-block;background:linear-gradient(135deg,#b45309,#92400e);color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;letter-spacing:0.5px;">Download Your Blueprint</a>
 </div>` : '<p style="color:#64748b;font-size:12px;line-height:1.5;margin:20px 0 0;padding-top:16px;border-top:1px solid #e2e8f0;">Your Comprehensive Financial Blueprint is attached as a PDF. This is a premium document — please save it for your records.</p>'}
 <div style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border:2px solid #fde68a;border-radius:12px;padding:20px;margin:24px 0;text-align:center;">
-<p style="color:#92400e;font-size:14px;font-weight:700;margin:0 0 8px;">Schedule Your CFP Consultation</p>
-<p style="color:#78350f;font-size:13px;margin:0 0 14px;line-height:1.5;">As a Comprehensive Blueprint client, you get a dedicated one-on-one session with CFP Ram Shah to walk through your plan and begin implementation.</p>
-<a href="https://wa.me/916003903737?text=Hi%2C%20I%20received%20my%20Comprehensive%20Blueprint%20and%20would%20like%20to%20schedule%20my%20CFP%20consultation." style="display:inline-block;background:#92400e;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">Schedule Consultation</a>
+<p style="color:#92400e;font-size:14px;font-weight:700;margin:0 0 8px;">Schedule Your Consultation</p>
+<p style="color:#78350f;font-size:13px;margin:0 0 14px;line-height:1.5;">As a Comprehensive Blueprint client, you get a dedicated one-on-one session with our team to walk through your plan and begin implementation.</p>
+<a href="https://wa.me/916003903737?text=Hi%2C%20I%20received%20my%20Comprehensive%20Blueprint%20and%20would%20like%20to%20schedule%20my%20consultation." style="display:inline-block;background:#92400e;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">Schedule Consultation</a>
 </div>
 </td></tr>
 ${emailFooter()}

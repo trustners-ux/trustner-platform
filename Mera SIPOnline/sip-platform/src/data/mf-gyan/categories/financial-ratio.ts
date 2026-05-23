@@ -14,76 +14,74 @@ export const FINANCIAL_RATIO: GyanCategory = {
     /* ──────────────────────────── 1 ──────────────────────────── */
     {
       id: 'pe-ratio',
-      title: 'PE Ratio — Price to Earnings',
-      description: 'The most popular valuation yardstick — what investors pay for every rupee of profit.',
+      title: 'PE Ratio',
+      description: 'Price-to-earnings — the most widely used stock valuation metric.',
       readTime: '5 min',
       content: [
-        'Imagine you are buying a chai stall. The owner tells you it earns Rs 2 lakh profit every year and he wants Rs 20 lakh for it. You are essentially paying 10 times its annual earnings — a PE ratio of 10. Now apply the same logic to stocks. If TCS trades at Rs 4,200 per share and its earnings per share over the last twelve months were Rs 150, the PE ratio is 4,200 / 150 = 28. You are paying Rs 28 for every rupee of TCS\'s annual profit. The PE ratio — Price to Earnings — is the single most widely used valuation metric in equity markets worldwide.',
+        'You are comparing two stocks: TCS at Rs 4,200 per share and a lesser-known IT company at Rs 150 per share. Which is "cheaper"? The share price alone tells you nothing — you need to compare the price relative to what the company earns. That is exactly what the PE ratio does. PE (Price-to-Earnings) = Share Price / Earnings Per Share. If TCS earns Rs 150 per share annually, its PE is 4,200 / 150 = 28. If the smaller company earns Rs 5 per share, its PE is 150 / 5 = 30. Despite its lower share price, the smaller company is actually more "expensive" on a PE basis.',
 
-        'There are two flavours of PE. Trailing PE uses actual reported earnings from the past four quarters. Forward PE uses analyst estimates for the next four quarters. As of April 2026, the Nifty 50 trailing PE hovers around 21, which is near its long-term average. TCS trades at a trailing PE of about 28, HDFC Bank around 19, and a high-growth stock like Zomato might sport a PE north of 100. The number alone means nothing — context is everything. A mature, slow-growing FMCG company with a PE of 60 is expensive; a fast-growing fintech with a PE of 60 might actually be reasonable if earnings are doubling every two years.',
+        'There are two versions of PE. Trailing PE uses the last four quarters of actual reported earnings — it is backward-looking but factual. Forward PE uses analyst estimates of next year\'s earnings — it is forward-looking but based on projections that may be wrong. Most screeners show trailing PE by default. As of April 2026, the Nifty 50 trailing PE is around 21, which is near its long-term average. TCS trades at about 28x trailing PE, HDFC Bank at around 18-19x, and Reliance at about 25x.',
 
-        'Why should MFDs care about PE? When a client asks "is the market overvalued?", the Nifty PE gives you a quick sanity check. Historically, buying the Nifty when its PE is below 18 has delivered strong 3-5 year returns, while buying above 25 has often led to muted returns or drawdowns. This does not mean you stop SIPs when PE is high — rupee cost averaging handles that. But it helps you set expectations: "The market is richly valued right now, so near-term returns may be modest, but your 10-year SIP will ride through multiple cycles."',
+        'How do you use PE? First, compare with the company\'s own historical PE. If HDFC Bank has traded between 16-24x PE over the last decade and currently trades at 19x, it is in the middle of its range — neither cheap nor expensive. If it drops to 15x, it might be a bargain; at 25x, it might be overvalued. Second, compare with sector peers. If TCS trades at 28x and Infosys at 24x, either TCS deserves a premium (perhaps it is growing faster or has better margins) or TCS is relatively overvalued. Third, compare with the market. A stock trading at 40x when the Nifty is at 21x needs to have significantly superior growth to justify that premium.',
 
-        'A common trap is comparing PE ratios across sectors. Banking stocks in India typically trade at 12-20 PE because their earnings are cyclical and tied to credit quality. IT services companies trade at 25-35 PE because they generate high free cash flow with asset-light models. Comparing HDFC Bank\'s PE of 19 with Infosys\'s PE of 27 and concluding HDFC Bank is "cheaper" misses the point entirely — they are in different industries with different growth profiles, margins, and risk characteristics. Always compare a company\'s PE with its own historical average and with peers in the same sector.',
+        'The biggest trap with PE is applying it blindly. PE does not work well for cyclical companies (as we discussed in the cyclicals topic — profits peak at cycle tops, making PE deceptively low). It does not work for loss-making companies (you cannot divide by zero or negative earnings). It does not work for companies with one-time extraordinary gains or losses. And a low PE is not always a buy — sometimes a stock is cheap because the business is genuinely deteriorating. The market is not always wrong when it assigns a low PE.',
 
-        'One more nuance: PE can be misleading when earnings are temporarily depressed or inflated. If a cyclical steel company has a bad year with near-zero profits, its PE shoots to 200+ — that does not mean it is expensive. Conversely, a company that had a one-time windfall gain shows an artificially low PE. For such situations, analysts use the PEG ratio (next topic), or look at EV/EBITDA as a cleaner valuation metric. For MFDs evaluating equity mutual funds, the weighted average PE of the fund\'s portfolio — available in the fund factsheet — tells you whether the fund manager is buying growth-oriented or value-oriented stocks.'
+        'For mutual fund advisors, PE is relevant at two levels. At the stock level, it helps you understand whether a fund manager is buying expensive or cheap stocks — a fund with a portfolio PE of 35 is betting on high-growth stocks, while one at 18 is playing the value game. At the market level, the Nifty PE gives you a temperature check: below 18 is historically cheap (good time for aggressive equity allocation), 18-22 is fair value, and above 22-24 signals expensive markets where caution is warranted. Use the Nifty PE as one input (among many) when advising clients on lump-sum deployments or tactical allocation shifts.'
       ],
       keyTakeaways: [
-        'PE Ratio = Market Price per Share / Earnings per Share — it tells you how much investors pay for each rupee of profit.',
-        'Nifty 50 PE around 21 (April 2026) is near the long-term average; below 18 is historically attractive, above 25 signals caution.',
-        'Always compare PE within the same sector — banking PEs (12-20) are structurally lower than IT PEs (25-35).',
-        'Trailing PE uses past earnings while Forward PE uses analyst estimates — both have limitations during unusual profit cycles.',
-        'Check the weighted average PE of a mutual fund\'s portfolio in its factsheet to understand the fund manager\'s valuation stance.'
+        'PE Ratio = Share Price / EPS — it tells you how many rupees investors pay for every rupee of earnings.',
+        'Trailing PE uses actual past earnings; forward PE uses estimated future earnings — both have pros and cons.',
+        'Nifty 50 PE of ~21 (April 2026) is near long-term average; TCS ~28x, HDFC Bank ~19x are sector benchmarks.',
+        'Always compare PE with the company\'s own history, its sector peers, and the broader market — never evaluate PE in isolation.',
+        'PE fails for cyclical, loss-making, and turnaround companies — use it as one tool among many, not a standalone buy/sell signal.'
       ],
     },
 
     /* ──────────────────────────── 2 ──────────────────────────── */
     {
       id: 'peg-ratio',
-      title: 'PEG Ratio — PE Adjusted for Growth',
-      description: 'Dividing PE by earnings growth rate to find stocks that are priced fairly for their growth.',
+      title: 'PEG Ratio',
+      description: 'Adjusting PE for growth to find stocks that are cheap relative to their growth rate.',
       readTime: '4 min',
       content: [
-        'The PE ratio has one major blind spot — it ignores how fast a company is growing. Consider two IT companies: Company A has a PE of 30 and is growing earnings at 30% per year. Company B also has a PE of 30 but is growing at only 10%. Clearly, Company A offers better value for the same PE. The PEG ratio — Price/Earnings to Growth — captures this by dividing the PE ratio by the annual earnings growth rate. Company A\'s PEG is 30/30 = 1.0. Company B\'s PEG is 30/10 = 3.0. A PEG of 1 or below generally signals fair value; above 2 suggests you are overpaying for the growth on offer.',
+        'A stock with a PE of 40 looks expensive. But what if the company is growing earnings at 40% per year? Suddenly, 40x PE does not seem unreasonable — you are paying a fair price for exceptional growth. Conversely, a stock with PE of 12 looks cheap, but if earnings are growing at only 5%, it is actually expensive relative to its growth. The PEG ratio captures this relationship: PEG = PE / Earnings Growth Rate. A PE of 40 with 40% growth gives PEG = 1.0. A PE of 12 with 5% growth gives PEG = 2.4. The "expensive" stock is actually the better deal.',
 
-        'Peter Lynch, the legendary Fidelity fund manager, popularized the PEG ratio in his 1989 book "One Up on Wall Street." His rule of thumb: a fairly priced company should have a PEG close to 1. In the Indian context, a stock like Bajaj Finance with a PE of 35 and expected earnings growth of 25% has a PEG of 1.4 — somewhat premium but not outrageous for a dominant franchise. Compare that with a PSU bank trading at PE 8 but with earnings growth of only 5% — PEG of 1.6, actually more expensive on a growth-adjusted basis than Bajaj Finance.',
+        'The legendary investor Peter Lynch popularized the PEG ratio. His rule of thumb: a PEG below 1.0 means the stock is undervalued relative to its growth, PEG around 1.0 is fairly valued, and PEG above 1.5-2.0 is overvalued. In the Indian market, finding PEG below 1.0 among quality companies is rare in April 2026 because the market is reasonably valued. But during corrections, quality stocks can briefly dip to PEG below 1.0 — those are moments to deploy.',
 
-        'For MFDs, PEG is a great concept to explain during client conversations. When a client says "this small-cap fund has a PE of 40, isn\'t that too expensive?", you can point out that the portfolio companies might be growing earnings at 35-40% annually, giving a PEG near 1. Conversely, a value fund with portfolio PE of 15 might hold slow-growers with 8% earnings growth — PEG of 1.9. The "cheap-looking" fund is not necessarily the better deal. Growth-at-a-reasonable-price (GARP) fund managers specifically target PEG ratios between 0.8 and 1.5.',
+        'Let us apply this to real Indian stocks in April 2026. Say Bajaj Finance has a PE of 30 and is growing earnings at 25% annually — PEG = 1.2. HDFC Bank has a PE of 19 and is growing at 18% — PEG = 1.06. A small-cap tech company has PE of 45 but is growing at 50% — PEG = 0.9. On a PEG basis, the small-cap is the cheapest of the three. Of course, the small-cap carries higher risk — the 50% growth may not sustain, while HDFC Bank\'s 18% growth is far more dependable. PEG does not account for the quality or sustainability of growth.',
 
-        'PEG has limitations too. It relies on future earnings growth estimates, which are exactly that — estimates. Analysts can be wildly off, especially during economic transitions. A company projected to grow at 25% might deliver only 10% if demand slows. PEG also does not work well for companies with negative earnings or cyclical businesses where growth rates swing dramatically. For stable compounders — think Asian Paints, Pidilite, HDFC Bank — PEG is a reliable compass. For turnaround stories or commodity plays, stick with other metrics like EV/EBITDA or price-to-book.'
+        'The limitations of PEG are important. It uses a single growth rate, but growth is never linear — a company growing at 30% today might slow to 15% in three years. It does not account for the quality of earnings (cash-backed vs accounting-driven). It ignores debt — a highly leveraged company can show high earnings growth that is unsustainable. And it does not differentiate between different types of growth (organic vs inorganic). Use PEG as a screening tool to shortlist stocks, then do deeper analysis on business quality, management integrity, and cash flow sustainability.'
       ],
       keyTakeaways: [
-        'PEG Ratio = PE Ratio / Annual Earnings Growth Rate — it adjusts valuation for how fast the company is growing.',
-        'A PEG near 1.0 suggests fair value; below 1 is potentially undervalued; above 2 means you are paying a steep premium for growth.',
-        'A low-PE stock with low growth can have a higher PEG than a high-PE stock with rapid growth — PE alone can mislead.',
-        'PEG works best for stable compounders and GARP strategies; it is less reliable for cyclicals, turnarounds, or loss-making companies.',
-        'Use PEG to help clients understand why a growth-oriented fund\'s higher portfolio PE may still represent fair value.'
+        'PEG = PE / Earnings Growth Rate — it adjusts the PE ratio for the company\'s growth speed.',
+        'PEG below 1.0 suggests the stock is undervalued relative to growth; above 1.5-2.0 suggests overvaluation.',
+        'PEG is useful for comparing companies with different growth rates — a high PE is justified if growth is proportionally high.',
+        'PEG ignores growth sustainability, quality of earnings, debt levels, and whether growth is organic or acquired.',
+        'Use PEG as a screening tool, not a final verdict — follow up with deep analysis on cash flows, management, and business quality.'
       ],
     },
 
     /* ──────────────────────────── 3 ──────────────────────────── */
     {
-      id: 'price-to-book',
+      id: 'price-to-book-ratio',
       title: 'Price-to-Book Ratio',
-      description: 'Comparing market price to net asset value on the balance sheet — a value investor\'s favourite tool.',
-      readTime: '5 min',
+      description: 'Comparing market price to net asset value per share.',
+      readTime: '4 min',
       content: [
-        'Suppose you want to buy a flat in Mumbai. The builder quotes Rs 2 crore, but the government\'s circle rate values it at only Rs 1.2 crore. You are paying 1.67 times the "official" book value. The Price-to-Book ratio (P/B) works the same way for stocks. It divides the market price per share by the book value per share — where book value is the company\'s total assets minus total liabilities, divided by the number of shares outstanding. If HDFC Bank trades at Rs 1,750 and its book value per share is Rs 625, the P/B ratio is 1,750 / 625 = 2.8.',
+        'Imagine a company that owns land, buildings, machinery, inventory, and cash worth Rs 1,000 crore, and has debts of Rs 300 crore. Its net worth (book value) is Rs 700 crore. If it has 10 crore shares outstanding, the book value per share is Rs 70. If the stock trades at Rs 196 in the market, the Price-to-Book (P/B) ratio is 196 / 70 = 2.8. Investors are paying Rs 2.80 for every Rs 1 of net assets. Why would anyone pay more than book value? Because the market is pricing in the company\'s future earning power, brand value, management quality, and growth potential — intangibles that do not appear on the balance sheet.',
 
-        'Book value represents the accounting net worth — what shareholders would theoretically receive if the company liquidated all assets and paid off all debts today. For banks and NBFCs, P/B is the primary valuation metric because their assets (loans) and liabilities (deposits) are already marked close to market value. A well-run bank like HDFC Bank commands a P/B of 2.5-3.0 because the market trusts its asset quality and growth. A struggling PSU bank with high NPAs might trade at P/B of 0.7 — below book value — because investors fear that its reported book value includes bad loans that will need to be written off.',
+        'P/B is especially useful for valuing financial companies — banks, NBFCs, and insurance companies. This is because a bank\'s primary assets are financial (loans, investments) that are already marked close to fair value on the balance sheet, making book value a meaningful reference point. HDFC Bank trades at around 2.8x P/B as of April 2026, reflecting the market\'s confidence in its asset quality and growth potential. SBI trades at about 1.5-1.8x P/B — lower because of historical NPA issues and public sector perception. A distressed bank might trade below 1.0x P/B, meaning the market values it at less than its stated net assets.',
 
-        'Value investors love fishing for stocks trading below book value (P/B < 1), but this requires caution. A stock might trade below book because the market rightly suspects its assets are overstated — think of a real estate company that values its land bank at 2010 prices. Or a company with obsolete inventory sitting on the balance sheet at cost. Benjamin Graham\'s famous "net-net" strategy — buying stocks trading below net current asset value — worked in the 1930s-50s but is very rare in today\'s efficient Indian market. When you do find genuine P/B bargains, they tend to be in PSU banks, capital goods companies, or holding companies with unlisted subsidiaries.',
+        'P/B below 1.0 can mean one of two things: either the market believes the book value is overstated (hidden bad loans, obsolete inventory, or impaired assets that have not been written down), or the stock is genuinely undervalued. For asset-heavy companies like real estate developers or commodity producers, P/B below 1.0 sometimes signals value — the company\'s land, plant, or mineral reserves are worth more than the market is giving credit for.',
 
-        'For asset-light businesses — IT services, FMCG, pharma — P/B is almost meaningless. Infosys has a P/B above 8 because its real value lies in brand, talent, and client relationships — none of which appear on the balance sheet. Asian Paints trades at P/B of 15+ because its distribution network and brand equity are worth far more than its physical assets. For these businesses, PE, PEG, or EV/EBITDA are more appropriate valuation lenses.',
-
-        'As an MFD, P/B is most useful when discussing banking and financial sector funds. If a banking fund factsheet shows a weighted average P/B of 1.5, the manager is leaning towards PSU or mid-tier private banks (value tilt). If the P/B is 3.0+, the fund is loaded with premium private banks like HDFC Bank, Kotak, and Bajaj Finance. Neither is inherently better — it depends on where you are in the credit cycle. After an NPA cleanup, low P/B banking stocks can deliver explosive returns. During periods of asset quality stress, high-quality banks with higher P/B tend to hold up better.'
+        'P/B has limitations for asset-light businesses. A company like TCS or Infosys has most of its value in human capital, client relationships, and brand — none of which appear as "assets" on the balance sheet. TCS might have a P/B of 15-16x, which looks absurdly high, but it is simply because the balance sheet does not capture the company\'s true value drivers. For such companies, PE, PEG, or EV/EBITDA are more meaningful valuation metrics. Use P/B primarily for banks, NBFCs, insurance companies, and asset-heavy industries like real estate and metals.'
       ],
       keyTakeaways: [
-        'Price-to-Book = Market Price per Share / Book Value per Share — it compares market valuation to accounting net worth.',
-        'P/B is the primary valuation metric for banks and NBFCs, where assets and liabilities are close to market value.',
-        'A P/B below 1 can signal a bargain or a value trap — always investigate whether reported book value is reliable.',
-        'P/B is less useful for asset-light companies (IT, FMCG) whose real value — brand, talent, IP — does not appear on the balance sheet.',
-        'HDFC Bank P/B of ~2.8 (April 2026) reflects market confidence in its asset quality and consistent return on equity.'
+        'P/B Ratio = Market Price / Book Value per Share — it compares what investors pay to the company\'s net asset value.',
+        'P/B is most useful for financial companies (banks, NBFCs) where book value closely approximates fair asset value.',
+        'HDFC Bank P/B ~2.8x reflects premium quality; distressed banks may trade below 1.0x P/B (April 2026).',
+        'P/B below 1.0 can signal either genuine undervaluation or that the market believes book value is overstated.',
+        'P/B is misleading for asset-light businesses (IT, FMCG) — use PE, PEG, or EV/EBITDA for those sectors instead.'
       ],
     },
 
@@ -91,72 +89,71 @@ export const FINANCIAL_RATIO: GyanCategory = {
     {
       id: 'earnings-per-share',
       title: 'Earnings Per Share (EPS)',
-      description: 'The profit attributable to each share — the building block behind PE and most valuation ratios.',
+      description: 'A company\'s profit allocated to each outstanding share.',
       readTime: '4 min',
       content: [
-        'If a company earns Rs 10,000 crore in net profit and has 100 crore shares outstanding, each share "earned" Rs 100. That is Earnings Per Share — EPS. It is the most fundamental profitability metric and the denominator of the PE ratio. When TCS reports quarterly results and announces an EPS of Rs 38, it means each share of TCS generated Rs 38 of profit that quarter. Multiply by four quarters and you get the annual trailing EPS, which drives the stock\'s valuation.',
+        'Two companies both report Rs 500 crore in net profit. Company A has 10 crore shares outstanding; Company B has 50 crore shares. Which is "earning" more per share? Company A: Rs 500 crore / 10 crore shares = Rs 50 per share. Company B: Rs 500 crore / 50 crore shares = Rs 10 per share. Company A earns five times more per share despite identical total profits. Earnings Per Share (EPS) normalizes a company\'s profit on a per-share basis, making it directly comparable and forming the denominator of the PE ratio.',
 
-        'There are two versions: Basic EPS and Diluted EPS. Basic EPS simply divides net profit by the number of shares outstanding. Diluted EPS accounts for all potential shares that could come into existence — from stock options (ESOPs), convertible bonds, or warrants. If a startup-turned-listed-company has granted generous ESOPs to employees, the diluted share count might be 10-15% higher than the basic count, making diluted EPS meaningfully lower. Always look at diluted EPS for a more conservative and realistic picture.',
+        'There are two versions of EPS. Basic EPS uses the current number of outstanding shares. Diluted EPS assumes all convertible instruments (stock options, warrants, convertible bonds) are converted into equity shares, increasing the share count and reducing EPS. Diluted EPS is always equal to or less than basic EPS. SEBI requires companies to report both. Always use diluted EPS for analysis because it reflects the worst-case dilution scenario — if all options and convertibles are exercised, your per-share earnings shrink accordingly.',
 
-        'EPS growth is what drives stock prices over the long term. If a company\'s EPS grows from Rs 50 to Rs 100 over five years — a 15% CAGR — and the market maintains the same PE multiple, the stock price doubles. If the market also re-rates the PE upward (say from 20 to 25 because growth accelerated), the stock could go up 2.5x. This twin engine of earnings growth plus PE re-rating is how multibagger returns are generated. Indian IT bellwethers like TCS and Infosys have compounded EPS at 12-15% over the past decade, and their stocks have delivered similar long-term CAGR plus dividend yield on top.',
+        'EPS growth is one of the most important metrics for stock investors. If a company\'s EPS grows at 20% per year consistently, and the market maintains the same PE ratio, the stock price should also grow at 20% per year. In reality, PE ratios expand and contract based on sentiment, but over long periods, EPS growth is the primary driver of stock price appreciation. Indian IT companies like TCS and Infosys have delivered 12-15% EPS CAGR over the last decade, which (combined with PE expansion) has translated into 14-18% stock return CAGR.',
 
-        'For MFDs, EPS matters when evaluating fund factsheets and explaining fund performance to clients. A fund manager who consistently picks stocks with accelerating EPS growth — quarter after quarter beating estimates — is likely to deliver superior returns. When reviewing a fund\'s top holdings, a quick check of those companies\' EPS trajectory over 3-5 years tells you whether the portfolio is filled with genuine earners or speculative stories. Quality-focused fund managers like those at PPFAS or Parag Parikh prioritize sustainable EPS compounders over momentum-driven stocks.'
+        'Watch out for EPS manipulation. Companies can artificially boost EPS by buying back shares (reducing the denominator), by reporting one-time extraordinary gains, or by capitalizing expenses that should be on the income statement. Always look at the quality of earnings behind EPS — is the profit coming from core operations (sustainable) or from asset sales, tax write-backs, or accounting adjustments (one-time)? Operating EPS, which strips out exceptional items, gives a cleaner picture. For MFDs evaluating fund portfolios, the weighted average EPS growth of the portfolio stocks indicates the fund\'s fundamental growth trajectory.'
       ],
       keyTakeaways: [
-        'EPS = Net Profit / Number of Shares Outstanding — it measures the profit attributable to each share.',
-        'Diluted EPS includes potential shares from ESOPs, convertibles, and warrants — it gives a more conservative picture than Basic EPS.',
-        'Long-term stock returns are driven by EPS growth plus any change in PE multiple — the twin engine of compounding.',
-        'Check EPS growth trajectory of a fund\'s top holdings to judge whether the portfolio is built on real earnings or speculation.'
+        'EPS = Net Profit / Number of Outstanding Shares — it normalizes earnings on a per-share basis for comparison.',
+        'Diluted EPS accounts for potential share dilution from stock options, warrants, and convertibles — always use diluted EPS for analysis.',
+        'Consistent EPS growth (15-20% CAGR) is the primary long-term driver of stock price appreciation.',
+        'Scrutinize EPS quality — buybacks reduce the denominator, one-time gains inflate the numerator; operating EPS is a cleaner metric.',
+        'Portfolio weighted-average EPS growth indicates a mutual fund\'s fundamental growth trajectory.'
       ],
     },
 
     /* ──────────────────────────── 5 ──────────────────────────── */
     {
-      id: 'dividend-yield',
+      id: 'dividend-yield-ratio',
       title: 'Dividend Yield Ratio',
-      description: 'Annual dividends as a percentage of stock price — the income investor\'s go-to metric.',
+      description: 'Measuring the cash income a stock generates relative to its price.',
       readTime: '4 min',
       content: [
-        'Your grandfather probably invested in Coal India or NTPC not because he expected the stock price to double, but because they paid handsome dividends every year — like clockwork, rain or shine. Dividend Yield is the annual dividend per share divided by the current market price, expressed as a percentage. If ITC pays Rs 15 per share annually and the stock trades at Rs 450, the dividend yield is 15/450 = 3.33%. This tells you that just by holding the stock, you earn 3.33% per year in cash — before any price appreciation.',
+        'Your retired client wants stocks that pay regular cash income. You screen for dividend yield — the annual dividend per share divided by the stock price. If Coal India pays Rs 25 per share as annual dividend and the stock trades at Rs 400, the dividend yield is 25 / 400 = 6.25%. Compare this with Infosys paying Rs 65 dividend at Rs 1,600 share price — yield of 4.06%. Coal India offers a higher income stream per rupee invested, but the question is whether the dividend is sustainable.',
 
-        'In India, dividend yield has become less attractive since the 2020 budget change that shifted taxation from Dividend Distribution Tax (paid by the company) to taxing dividends as income in the hands of the investor. For someone in the 30% tax bracket, a 3% dividend yield effectively becomes about 2.1% post-tax. Despite this, dividend yield stocks serve an important purpose in portfolios — they tend to be mature, cash-rich businesses with stable earnings. Companies like Coal India (yield ~6%), Power Grid (yield ~4%), and ITC (yield ~3%) provide a cushion during market downturns because the dividend acts as a floor for the stock price.',
+        'Dividend yield is the income investor\'s primary metric. In India, high-dividend-yield stocks are typically found in mature, cash-generating businesses — PSUs like Coal India, ONGC, Power Grid, and REC; private sector giants like ITC, HCL Technologies, and Infosys. As of April 2026, the Nifty Dividend Opportunities 50 index has a yield of about 3.5-4%, compared to the overall Nifty 50 yield of about 1.3-1.5%. Banks generally have lower dividend yields because they retain profits to fund loan growth.',
 
-        'For mutual fund investors, dividend yield funds (now technically called IDCW — Income Distribution cum Capital Withdrawal plans) focus on high-yield stocks. But here is the critical distinction MFDs must explain to clients: when a mutual fund declares a "dividend," it is paying out from the fund\'s own NAV — the NAV drops by the dividend amount. It is not free money; it is your own capital being returned. The growth option reinvests all profits, letting compounding work uninterrupted. For most investors, especially those not in the withdrawal phase, the growth option is far superior.',
+        'There is a classic value investing trap called the "high yield trap." A stock\'s dividend yield might be high not because the dividend is generous, but because the stock price has crashed. If a company paid Rs 10 dividend when the stock was at Rs 200 (5% yield), and the stock drops to Rs 80 due to business problems, the yield jumps to 12.5%. But if the business is deteriorating, the next year\'s dividend might be cut to Rs 3 or eliminated entirely. Always check the dividend payout ratio (dividends / net profit) — if it exceeds 70-80%, the company might be paying more than it can sustain.',
 
-        'Dividend yield is also a useful valuation signal. When the Nifty\'s dividend yield rises above 2%, it often coincides with market bottoms — high yields mean stock prices have fallen relative to dividends. When the yield compresses below 1%, markets may be overheated. As of April 2026, the Nifty dividend yield is around 1.2%, reflecting the bull market and the fact that many growth companies prefer buybacks over dividends. For clients seeking regular income — especially retirees — a combination of debt funds with SWP (Systematic Withdrawal Plan) and a small allocation to dividend yield funds can provide a tax-efficient cash flow stream.'
+        'Tax matters for dividend investors. Post-2020, dividends are taxed in the hands of the investor at their income tax slab rate. For someone in the 30% bracket, a 5% pre-tax dividend yield becomes only 3.5% post-tax. This has made dividend investing less attractive compared to growth investing, where capital gains tax (12.5% LTCG for equity) is lower. For MFDs advising income-seeking clients, Systematic Withdrawal Plans (SWPs) from growth-oriented equity or hybrid funds often provide more tax-efficient "income" than dividend-paying stocks or dividend options of mutual funds.'
       ],
       keyTakeaways: [
-        'Dividend Yield = Annual Dividend per Share / Market Price per Share x 100 — it measures cash income as a percentage of investment.',
-        'Since 2020, dividends are taxed in the investor\'s hands at their slab rate — reducing the after-tax appeal for high-income investors.',
-        'Mutual fund "dividends" (IDCW) are paid from NAV, not extra income — the growth option is better for long-term compounding.',
-        'High Nifty dividend yield (>2%) often signals undervaluation; low yield (<1%) may signal an expensive market.',
-        'For retirees needing income, a debt fund SWP is usually more tax-efficient than a dividend yield fund\'s IDCW option.'
+        'Dividend Yield = Annual Dividend Per Share / Share Price — it measures cash income per rupee invested.',
+        'High-yield sectors in India: PSU energy, utilities, and ITC/HCL Tech among private companies (April 2026).',
+        'Beware the "high yield trap" — a crashed stock price inflates yield, but the dividend may be unsustainable.',
+        'Check dividend payout ratio: above 70-80% of net profit may signal unsustainable dividend levels.',
+        'Post-2020 taxation makes SWPs from growth funds often more tax-efficient than dividend income for high-bracket investors.'
       ],
     },
 
     /* ──────────────────────────── 6 ──────────────────────────── */
     {
       id: 'debt-equity-ratio',
-      title: 'Debt-Equity Ratio — Leverage',
-      description: 'How much borrowed money a company uses versus its own capital — a key risk indicator.',
-      readTime: '5 min',
+      title: 'Debt-Equity Ratio',
+      description: 'How leveraged a company is — measuring debt relative to shareholder equity.',
+      readTime: '4 min',
       content: [
-        'Think of two friends starting restaurants. Priya invests Rs 50 lakh of her own money and borrows nothing. Rahul invests Rs 20 lakh of his own money and borrows Rs 80 lakh from the bank. Both restaurants earn Rs 15 lakh in annual profit. Priya\'s return on equity is 30% — solid. Rahul\'s return on equity is a stunning 75% (Rs 15 lakh profit on Rs 20 lakh of his own capital, ignoring interest for simplicity). Leverage has amplified Rahul\'s returns. But here is the catch: if the restaurant has a bad year and earns only Rs 5 lakh, Rahul still owes Rs 8 lakh in interest payments. He is in trouble. Leverage amplifies both gains and losses. The Debt-Equity ratio — total debt divided by shareholders\' equity — measures this risk.',
+        'Imagine two real estate developers. Company A has Rs 500 crore of equity and Rs 2,000 crore of debt — a debt-equity (D/E) ratio of 4.0. Company B has Rs 500 crore of equity and Rs 300 crore of debt — D/E of 0.6. Both are building apartments, but Company A is four times more leveraged. If the real estate market booms, Company A makes outsized returns on equity because it has invested borrowed money alongside its own. But if the market slumps, Company A still has to pay interest on Rs 2,000 crore of debt regardless of sales — it could go bankrupt. Company B, with less debt, has a much larger margin of safety.',
 
-        'In the Indian corporate world, a D/E ratio below 1.0 is generally considered conservative — the company has more equity than debt. HDFC Bank, for instance, has equity capital that comfortably backs its operations. Infrastructure and capital-intensive companies like Adani Group entities or JSW Steel often carry D/E ratios of 1.5-3.0 because their projects require massive upfront capital that equity alone cannot fund. FMCG companies like HUL and Nestlé typically have D/E ratios near zero — they generate so much cash that they rarely need to borrow.',
+        'Debt-Equity Ratio = Total Debt / Shareholders\' Equity. It measures financial leverage — how much a company relies on borrowed money versus its own capital. A D/E of 0 means the company has no debt (rare and not always optimal). A D/E of 1.0 means equal debt and equity. Above 1.5-2.0 for non-financial companies is generally considered high leverage in the Indian context. For banks and NBFCs, D/E ratios are naturally high (8-12x) because their entire business model is borrowing money (deposits) and lending it out — you cannot compare a bank\'s D/E with a manufacturing company\'s.',
 
-        'The debt-equity ratio is crucial when evaluating companies in a fund\'s portfolio, especially during rising interest rate environments. When the RBI raises the repo rate — as it did during 2022-23 — heavily leveraged companies see their interest costs balloon, squeezing profit margins. A real estate company with D/E of 3.0 might see its interest cost jump by Rs 200 crore annually for every 100 basis point rate hike. Zero-debt or low-debt companies are largely insulated. This is why during rate-hike cycles, quality-focused fund managers tilt portfolios towards low-leverage businesses.',
+        'In India, the best wealth creators tend to have low D/E ratios. Asian Paints, TCS, Pidilite, and Bajaj Finance (adjusting for the financial sector norm) have all maintained conservative leverage. The exceptions are capital-intensive businesses — infrastructure, real estate, telecom, and power — where high debt is a structural feature of the industry because building assets requires massive upfront capital. Adani Green Energy has a high D/E because building solar plants costs billions, with returns spread over 25 years. The key question is: can the business generate enough cash flow to service this debt comfortably?',
 
-        'For MFDs, understanding leverage helps during client conversations about sector funds. An infrastructure fund will naturally hold companies with higher D/E ratios — that is the nature of the sector, and clients should be prepared for higher volatility. A consumption or FMCG fund will hold low-leverage stocks and tend to be more stable. When reviewing a fund factsheet, check the top holdings for debt levels. If a flexi-cap fund\'s top ten holdings are all debt-heavy, the fund is making a concentrated bet on favourable interest rates and economic growth — higher risk, potentially higher reward, but not suitable for a conservative client.',
-
-        'One nuance: for banks and NBFCs, the debt-equity ratio works differently. Their business is borrowing money (deposits, bonds) and lending it out — so a bank with D/E of 8 is not reckless; it is just leveraging its balance sheet as banks are designed to do. For financial companies, the relevant metric is Capital Adequacy Ratio (CAR) — the ratio of the bank\'s own capital to its risk-weighted assets. SEBI and RBI have strict norms here. For non-financial companies, though, D/E remains the go-to leverage indicator.'
+        'For stock analysis, always look at D/E alongside the interest coverage ratio (EBIT / Interest Expense). A company with D/E of 2.0 but interest coverage of 5x is comfortable — it earns five times what it needs to pay in interest. A company with D/E of 1.5 but interest coverage of just 1.5x is skating on thin ice. When evaluating mutual fund portfolios, check the weighted average D/E of the portfolio stocks. A fund with portfolio D/E above 1.5 is taking significant leverage risk, which may amplify both gains and losses.'
       ],
       keyTakeaways: [
-        'Debt-Equity Ratio = Total Debt / Shareholders\' Equity — it measures how much leverage a company employs.',
-        'D/E below 1.0 is conservative; infrastructure and capital-intensive sectors routinely operate at 1.5-3.0.',
-        'Rising interest rates hurt high-leverage companies disproportionately — their interest costs balloon, squeezing margins.',
-        'For banks and NBFCs, D/E is structurally high by design — use Capital Adequacy Ratio (CAR) instead.',
-        'Check a fund\'s top holdings for debt levels to gauge the portfolio\'s sensitivity to interest rate changes and economic cycles.'
+        'D/E Ratio = Total Debt / Shareholders\' Equity — it measures how leveraged a company is relative to its own capital.',
+        'D/E above 1.5-2.0 is generally high for non-financial companies in India; banks naturally have D/E of 8-12x.',
+        'India\'s best long-term wealth creators (Asian Paints, TCS, Pidilite) typically maintain low D/E ratios.',
+        'Always pair D/E with interest coverage ratio — high D/E with strong coverage is manageable; high D/E with weak coverage is dangerous.',
+        'A mutual fund portfolio\'s weighted-average D/E indicates the aggregate leverage risk across all holdings.'
       ],
     },
 
@@ -164,148 +161,147 @@ export const FINANCIAL_RATIO: GyanCategory = {
     {
       id: 'debt-service-ratio',
       title: 'Debt Service Ratio',
-      description: 'Can a company comfortably pay its loan EMIs? This ratio checks if earnings cover debt obligations.',
+      description: 'Measuring whether a company (or borrower) can comfortably service its debt obligations.',
       readTime: '4 min',
       content: [
-        'Before a bank sanctions your home loan, it checks whether your monthly income comfortably covers the EMI. If you earn Rs 1 lakh per month and the EMI is Rs 40,000, your debt service ratio is 40%. Banks typically want this below 50% — leaving you enough for living expenses. The same logic applies to companies. The Debt Service Coverage Ratio (DSCR) divides a company\'s operating income (EBITDA or net operating income) by its total debt obligations (principal repayment plus interest) for the period. A DSCR of 1.5 means the company earns 1.5 times what it needs to service its debt — a comfortable cushion.',
+        'A bank evaluating a home loan application for your client does not just check their salary — they check the Debt Service Ratio (also called DSCR or debt service coverage ratio). If your client earns Rs 1,50,000 per month and the new EMI will be Rs 50,000, while existing EMIs total Rs 20,000, the total debt obligation is Rs 70,000. The DSCR is Rs 1,50,000 / Rs 70,000 = 2.14. Banks typically want this ratio above 1.5-2.0 for home loans — meaning income should be 1.5 to 2 times the total EMI burden.',
 
-        'A DSCR below 1.0 is a red flag — the company is not generating enough operating cash to meet its loan obligations. It will have to dip into reserves, sell assets, or take on new debt to repay old debt — a dangerous spiral. During the 2018-20 NBFC crisis in India, many infrastructure-focused NBFCs like IL&FS had DSCRs that slipped below 1, triggering defaults that cascaded through the financial system. On the other hand, a company like Infosys with zero debt has an infinitely high DSCR — it has no debt to service.',
+        'For companies, the DSCR formula is: Net Operating Income / Total Debt Service. Total debt service includes both interest payments and principal repayments (not just interest, as in the interest coverage ratio). If a company generates Rs 200 crore in operating cash flow and its annual debt service (interest + principal) is Rs 80 crore, the DSCR is 2.5. This means the company earns 2.5 times what it needs to pay its lenders. A DSCR below 1.0 means the company cannot cover its debt obligations from operations — it would need to sell assets, raise fresh capital, or default.',
 
-        'For MFDs, DSCR is particularly relevant when clients ask about credit risk funds or corporate bond funds. These debt mutual funds invest in lower-rated bonds (A or BBB rated) that offer higher yields. The DSCR of the issuing companies directly determines whether those bonds will be repaid on time. The Franklin Templeton debt fund crisis in April 2020 was partly because the fund held bonds of companies with deteriorating DSCRs — Vodafone Idea, Yes Bank group companies — and when those companies could not service their debt, the bonds became illiquid.',
+        'DSCR is critical in project finance — infrastructure projects, power plants, highways, and real estate developments. When a bank lends Rs 5,000 crore for a highway project, it builds financial projections showing what the DSCR will be over the next 20 years as the highway earns toll revenue. The loan covenant might specify a minimum DSCR of 1.3x — if it falls below that, the company must deposit extra cash as security or halt dividend payments. A declining DSCR trend is a red flag for credit analysts.',
 
-        'In personal finance, the debt service ratio is equally important. When you build a financial plan for a client, add up all their EMIs — home loan, car loan, personal loan, credit card minimum payments — and divide by their gross monthly income. If it exceeds 40%, the client is over-leveraged and should focus on debt reduction before increasing investments. As an MFD, recommending more SIPs to a client who is drowning in EMIs is poor advice. Fix the liability side first, then build the asset side.'
+        'For personal finance clients, the individual version is the Fixed Obligation to Income Ratio (FOIR), which RBI guidelines cap at 50-60% for unsecured lending. If a client\'s total EMIs (housing loan + car loan + credit card dues) exceed 50% of their gross income, most banks will reject new loan applications. As an MFD, when planning SIP investments for clients with loans, always check their FOIR first. It makes no sense to start a Rs 25,000 SIP if the client is struggling to meet Rs 80,000 in monthly EMIs on a Rs 1.5 lakh salary — get the debt under control first, then invest.'
       ],
       keyTakeaways: [
-        'Debt Service Coverage Ratio (DSCR) = Operating Income / Total Debt Service (Principal + Interest) — it checks if earnings cover loan repayments.',
-        'DSCR above 1.5 is comfortable; below 1.0 means the company cannot service debt from operations — a serious red flag.',
-        'Credit risk and corporate bond funds carry exposure to companies with varying DSCRs — lower DSCR means higher default risk.',
-        'For personal finance clients, a debt service ratio above 40% of income signals over-leverage — prioritize debt reduction before new SIPs.'
+        'DSCR = Net Operating Income / Total Debt Service (interest + principal) — it measures ability to meet all debt obligations.',
+        'DSCR above 1.5x is comfortable; below 1.0x means the entity cannot cover debt payments from operations.',
+        'Project finance lenders set minimum DSCR covenants (often 1.3x) — breach triggers penalty clauses.',
+        'For individuals, FOIR (Fixed Obligation to Income Ratio) should stay below 50% — banks use this to approve/reject loans.',
+        'Before starting SIPs for clients with loans, verify their FOIR is healthy — investing while drowning in EMIs is counterproductive.'
       ],
     },
 
     /* ──────────────────────────── 8 ──────────────────────────── */
     {
       id: 'liquidity-ratio',
-      title: 'Liquidity Ratio — Current Ratio & Quick Ratio',
-      description: 'Can a company pay its short-term bills? These ratios measure near-term financial health.',
-      readTime: '5 min',
+      title: 'Liquidity Ratio',
+      description: 'Current ratio and quick ratio — can the company pay its short-term bills?',
+      readTime: '4 min',
       content: [
-        'Imagine running a kirana store. You have Rs 5 lakh worth of stock on the shelves, Rs 1 lakh cash in the drawer, and Rs 2 lakh owed to you by customers who buy on credit. Your current assets total Rs 8 lakh. But you owe Rs 4 lakh to your wholesaler (due within 30 days) and Rs 1 lakh in rent and salaries (also due this month). Your current liabilities are Rs 5 lakh. Your current ratio — current assets divided by current liabilities — is 8/5 = 1.6. You can pay your short-term bills with room to spare. A current ratio above 1.5 is generally healthy for most industries.',
+        'A company might be profitable on paper but still go bankrupt if it cannot pay tomorrow\'s bills. This is the difference between profitability and liquidity. Liquidity ratios measure whether a company has enough short-term assets (cash, receivables, inventory) to cover its short-term liabilities (trade payables, short-term loans, salaries due). The two most important liquidity ratios are the current ratio and the quick ratio.',
 
-        'The quick ratio (also called the acid-test ratio) is a stricter version. It strips out inventory from current assets because inventory cannot always be converted to cash quickly — especially if it is slow-moving or perishable. In our kirana example, quick assets = Rs 1 lakh cash + Rs 2 lakh receivables = Rs 3 lakh. Quick ratio = 3/5 = 0.6. That is below 1.0, which means without selling inventory, the store cannot cover its immediate obligations. For manufacturing companies sitting on large raw material or finished goods inventory, the gap between current ratio and quick ratio can be enormous — and the quick ratio tells the truer story.',
+        'The current ratio = Current Assets / Current Liabilities. If a company has Rs 500 crore in current assets (cash Rs 50 crore, receivables Rs 200 crore, inventory Rs 250 crore) and Rs 300 crore in current liabilities (payables Rs 180 crore, short-term debt Rs 120 crore), the current ratio is 500 / 300 = 1.67. This means the company has Rs 1.67 of short-term assets for every Rs 1 of short-term obligations. A current ratio above 1.5 is generally healthy; below 1.0 means the company might struggle to meet near-term obligations.',
 
-        'In the Indian market, different sectors have structurally different liquidity profiles. IT companies like TCS and Infosys boast current ratios above 2.5 — they collect cash from global clients and have minimal inventory. Auto companies like Maruti carry moderate current ratios of 1.2-1.5 because they hold significant vehicle and parts inventory. Real estate companies often have current ratios that look high on paper (unsold inventory is classified as current asset) but quick ratios that are alarmingly low — the "current assets" are unsold flats that may take months or years to convert to cash.',
+        'The quick ratio (or acid test ratio) is more conservative: Quick Ratio = (Current Assets - Inventory) / Current Liabilities. It excludes inventory because inventory is the least liquid current asset — it cannot always be converted to cash quickly at full value. Using the same example: (500 - 250) / 300 = 0.83. The quick ratio is below 1.0, meaning if the company cannot sell its inventory, it might face a cash crunch. For trading companies with fast-moving inventory, a quick ratio below 1.0 is less concerning. For a manufacturer with slow-moving inventory, it is a red flag.',
 
-        'Liquidity ratios matter for debt fund selection. When a liquid fund or ultra-short-term fund holds commercial paper or certificates of deposit issued by a company, that company\'s liquidity ratios determine whether it can repay the instrument on maturity. After the IL&FS crisis, SEBI tightened norms for liquid funds — they must hold at least 20% in liquid assets (cash, government securities, repo). But the underlying credit quality of the remaining 80% still depends on the issuing companies\' liquidity positions.',
-
-        'For MFDs advising clients, liquidity ratios are also a useful personal finance analogy. Ask your client: "If you lost your income today, how many months could you sustain your household expenses from liquid savings alone?" If the answer is less than 6 months, they need an emergency fund before committing to equity SIPs. A client\'s personal liquidity ratio — liquid assets divided by monthly expenses — should ideally be 6-12 before taking on any illiquidity risk through equity or real estate investments.'
+        'Liquidity ratios are especially important when analyzing NBFCs and financial companies, where the business model involves borrowing short and lending long. An NBFC with a poor liquidity position can face a "run" — lenders and depositors demanding their money back simultaneously. The 2018 IL&FS crisis and the subsequent NBFC liquidity crunch in India demonstrated how quickly liquidity problems can turn into solvency problems. For MFDs, when evaluating debt mutual funds, check the credit quality of NBFC and corporate bonds in the portfolio — a bond from a company with poor liquidity ratios carries higher default risk, which can hit the fund\'s NAV if the bond has to be marked down.'
       ],
       keyTakeaways: [
-        'Current Ratio = Current Assets / Current Liabilities — measures ability to pay short-term obligations; above 1.5 is generally healthy.',
+        'Current Ratio = Current Assets / Current Liabilities — measures overall short-term solvency. Above 1.5 is generally healthy.',
         'Quick Ratio = (Current Assets - Inventory) / Current Liabilities — a stricter test that excludes hard-to-liquidate inventory.',
-        'IT companies have high liquidity ratios (2.5+); real estate firms may show inflated current ratios due to unsold inventory.',
-        'Debt fund safety depends partly on the liquidity ratios of the companies whose instruments the fund holds.',
-        'Personal liquidity ratio (liquid savings / monthly expenses) should be 6-12 months before clients commit heavily to equity SIPs.'
+        'A current ratio below 1.0 means the company may not be able to meet immediate obligations from current assets alone.',
+        'Liquidity ratios are critical for NBFCs and financial companies — the 2018 IL&FS crisis showed how liquidity problems cascade.',
+        'When evaluating debt funds, check the liquidity ratios of underlying NBFC/corporate bond issuers to assess default risk.'
       ],
     },
 
     /* ──────────────────────────── 9 ──────────────────────────── */
     {
       id: 'savings-ratio',
-      title: 'Savings Ratio — Personal Finance Metric',
-      description: 'What percentage of income you save — the foundation number for every financial plan.',
+      title: 'Savings Ratio',
+      description: 'A personal finance metric — what percentage of income gets saved and invested.',
       readTime: '4 min',
       content: [
-        'Every financial plan starts with one simple question: how much of your income do you save? The savings ratio — total savings divided by gross income, expressed as a percentage — is the foundation upon which all investment planning rests. If a young professional in Bengaluru earns Rs 1,00,000 per month, pays Rs 25,000 in taxes, Rs 50,000 on rent, food, transport, and lifestyle, and saves Rs 25,000, their savings ratio is 25%. That Rs 25,000 is what an MFD can work with to build a portfolio of SIPs across equity, debt, and gold.',
+        'Here is a simple truth that many financial professionals overlook: the savings ratio is more important than the return on investment for the first 10-15 years of a client\'s investment journey. If a 25-year-old earns Rs 8 lakh per year and saves 30% (Rs 2.4 lakh), they invest Rs 20,000 per month. Even at a modest 10% return, they accumulate Rs 41 lakh in 10 years. But if they save only 10% (Rs 6,667/month), even at a stellar 15% return, they accumulate only Rs 18.5 lakh. The savings rate dominated the outcome.',
 
-        'India\'s gross domestic savings rate hovers around 30% of GDP — one of the highest in the world — but the distribution is uneven. Salaried professionals in metros with high rents and EMIs often save 15-20%, while double-income households in Tier 2 cities with family-owned homes may save 40-50%. The savings ratio tends to follow a lifecycle: low in the 20s (entry-level salaries, lifestyle spending), peaks in the 40s-50s (higher income, lower relative expenses as loans get paid off), and declines after retirement as savings are drawn down.',
+        'The savings ratio is calculated as: Savings / Gross Income x 100. "Savings" here means money that is actually invested or set aside — not the leftover after spending. The global benchmark for a healthy savings ratio is 20-30% of gross income. India\'s household savings rate has historically been around 30% of GDP (one of the highest globally), but this includes physical savings (gold, real estate). The financial savings rate — money going into bank deposits, mutual funds, insurance, and stocks — is lower, around 10-12% for many families.',
 
-        'For MFDs, the savings ratio is the starting point of every client conversation. Before recommending any fund, ask: "What is your monthly take-home pay, and how much can you consistently set aside for investments?" If the client says Rs 50,000, but they already have Rs 30,000 in EMIs and Rs 10,000 in insurance premiums, the investable surplus is only Rs 10,000. Starting SIPs beyond that capacity leads to frequent pauses or cancellations — which hurts the client\'s compounding and your trail revenue. Be realistic, not aspirational.',
+        'For MFDs, the savings ratio is the first number to calculate in any financial planning exercise. Before recommending funds, first understand: what is the client\'s income, what are their non-negotiable expenses (rent, EMIs, insurance premiums, children\'s school fees), and what is realistically available for investment? A client earning Rs 1.5 lakh per month with Rs 80,000 in EMIs and Rs 40,000 in essential expenses has only Rs 30,000 available — a savings ratio of 20%. Pushing a Rs 40,000 SIP on this client sets them up for failure.',
 
-        'A practical rule of thumb: aim for a savings ratio of at least 20% in your 20s, 30% in your 30s, and 35-40% in your 40s and 50s. The "pay yourself first" strategy — setting up SIPs on salary day before discretionary spending happens — is the most effective way to maintain the savings ratio. As an MFD, positioning the SIP as a non-negotiable expense (like rent or EMI) in the client\'s mental accounting dramatically improves SIP persistency. Clients who treat SIPs as optional — investing "whatever is left" — rarely build meaningful wealth.'
+        'The power move is to increase the savings ratio over time. When a client gets a salary hike of Rs 15,000, the natural tendency is to upgrade their lifestyle by Rs 15,000. Your job as a financial advisor is to help them allocate at least Rs 10,000 of that hike to additional SIPs (the step-up SIP concept). If a client starts at a 20% savings ratio and increases it by 2% each year, by the time they are in their peak earning years, they could be saving 35-40% of income — dramatically accelerating wealth creation. The savings ratio is the lever that the client controls completely, unlike market returns.'
       ],
       keyTakeaways: [
-        'Savings Ratio = Total Savings / Gross Income x 100 — it measures what percentage of income is retained for future use.',
-        'India\'s domestic savings rate is ~30% of GDP, but individual rates vary widely based on income, city, lifestyle, and life stage.',
-        'Always determine a client\'s realistic investable surplus before recommending SIP amounts — overcommitting leads to SIP stoppages.',
-        'Target savings ratio: 20% in 20s, 30% in 30s, 35-40% in 40s-50s — "pay yourself first" on salary day is the best strategy.',
-        'Position SIPs as a fixed monthly obligation (like rent) in the client\'s mind — this dramatically improves persistency and long-term wealth creation.'
+        'Savings Ratio = (Savings / Gross Income) x 100 — a healthy target is 20-30% of gross income.',
+        'In the early years of investing, the savings rate matters more than the rate of return for wealth accumulation.',
+        'Calculate the realistic savings ratio first before recommending SIP amounts — overstretching leads to SIP stoppage.',
+        'Use salary hikes to boost the savings ratio via step-up SIPs — allocate at least 60-70% of each hike to investments.',
+        'India\'s household savings rate is ~30% of GDP, but financial savings (MFs, stocks, deposits) are only 10-12% — a massive opportunity for MFDs.'
       ],
     },
 
     /* ──────────────────────────── 10 ──────────────────────────── */
     {
       id: 'sharpe-ratio',
-      title: 'Sharpe Ratio — Risk-Adjusted Return',
-      description: 'How much extra return a fund delivers per unit of total risk — the gold standard of performance measurement.',
+      title: 'Sharpe Ratio',
+      description: 'Measuring risk-adjusted return — how much return you earn per unit of risk.',
       readTime: '5 min',
       content: [
-        'Two friends compare their mutual fund returns. Anil\'s fund delivered 18% last year. Vikram\'s fund delivered 15%. Anil brags about beating Vikram. But here is what Anil does not mention: his fund\'s NAV swung wildly — up 8% one month, down 6% the next — while Vikram\'s fund delivered steady, consistent returns with barely any stomach-churning drops. Who actually had the better experience? The Sharpe ratio answers this by measuring return per unit of risk. Developed by Nobel laureate William Sharpe in 1966, it remains the gold standard for evaluating risk-adjusted performance.',
+        'Imagine two mutual funds that both delivered 15% returns last year. Fund A did it with steady, low-volatility performance — smooth upward trajectory with small dips. Fund B was a roller coaster — up 40% in three months, down 25% the next quarter, recovering to end at +15%. Both gave you 15%, but Fund A gave you a far better ride. The Sharpe ratio captures this distinction — it measures how much excess return you earned for each unit of volatility (risk) you endured.',
 
-        'The formula is straightforward: Sharpe Ratio = (Fund Return - Risk-Free Rate) / Standard Deviation of Fund Returns. The risk-free rate in India is typically the 91-day T-bill yield, currently around 6.5%. If Anil\'s fund returned 18% with a standard deviation of 20%, its Sharpe ratio is (18 - 6.5) / 20 = 0.575. Vikram\'s fund returned 15% with a standard deviation of 8%, giving a Sharpe of (15 - 6.5) / 8 = 1.0625. Vikram\'s fund delivered far more return per unit of risk. A Sharpe ratio above 1.0 is considered good; above 1.5 is excellent; below 0.5 suggests the risk taken was not adequately compensated.',
+        'The formula: Sharpe Ratio = (Fund Return - Risk-Free Rate) / Standard Deviation of Fund Returns. The risk-free rate is typically the return on government securities (around 7% in India as of April 2026). If Fund A returned 15% with a standard deviation of 10%, its Sharpe is (15 - 7) / 10 = 0.80. If Fund B returned 15% with a standard deviation of 20%, its Sharpe is (15 - 7) / 20 = 0.40. Fund A delivered the same return with half the volatility — its Sharpe ratio is twice as good. Higher Sharpe ratio = better risk-adjusted performance.',
 
-        'For MFDs, the Sharpe ratio is the single most important number on a fund factsheet — more important than raw returns. When comparing two large-cap funds that both delivered 14% CAGR over 5 years, the one with the higher Sharpe ratio achieved those returns with less volatility and smaller drawdowns. This matters enormously for client behavior: investors in the low-Sharpe fund experienced bigger drops during corrections and were more likely to panic-sell. The high-Sharpe fund kept investors calm and invested, which is half the battle in wealth creation.',
+        'What constitutes a "good" Sharpe ratio? In the Indian equity mutual fund context, a Sharpe ratio above 0.50 over a 3-year period is decent, above 0.75 is good, and above 1.0 is excellent. Most large-cap funds have Sharpe ratios of 0.40-0.70. Flexi-cap funds from good AMCs might show 0.60-0.90. Small-cap funds, despite higher absolute returns, often have lower Sharpe ratios because their volatility is also much higher. Debt funds, with lower returns but also much lower volatility, can have attractive Sharpe ratios.',
 
-        'Morningstar, Value Research, and AMFI all publish Sharpe ratios for mutual funds. When building a client portfolio, compare Sharpe ratios within the same category — do not compare a large-cap fund\'s Sharpe with a small-cap fund\'s Sharpe, as small caps are inherently more volatile. A large-cap fund with a 3-year Sharpe of 0.9 is doing well. A small-cap fund with a 3-year Sharpe of 0.7 might also be doing well for its category. Context always matters.',
+        'For MFDs comparing mutual funds, the Sharpe ratio is one of the most useful metrics. When a client says "Fund X gave 22% and Fund Y gave only 18%, let us switch to X," check the Sharpe ratios. If Fund X achieved 22% with extremely high volatility (Sharpe 0.45) while Fund Y achieved 18% with low volatility (Sharpe 0.85), Fund Y is actually the better-managed fund. It delivered more return per unit of risk. Fund X just happened to take on excessive risk that paid off this time — but the next year, that same risk could produce a -15% return.',
 
-        'One caveat: the Sharpe ratio treats all volatility equally — both upside and downside. A fund that occasionally shoots up 10% in a month (upside volatility) gets penalized the same as one that drops 10% (downside volatility). For investors who do not mind upside surprises but hate downside drops, the Sortino ratio (next topic) is a better fit. Still, for an overall risk-adjusted performance snapshot, the Sharpe ratio is where every analysis should start.'
+        'One caveat: the Sharpe ratio assumes returns are normally distributed and that volatility (both upside and downside) is equally bad. But investors do not mind upside volatility — they mind downside losses. If a fund shoots up 40% in a month (high upside volatility), the Sharpe ratio penalizes it the same as if it fell 40%. For a metric that only penalizes downside risk, see the Sortino ratio (the next topic). Use Sharpe as a primary screening tool and Sortino for a more nuanced view.'
       ],
       keyTakeaways: [
-        'Sharpe Ratio = (Fund Return - Risk-Free Rate) / Standard Deviation — it measures extra return earned per unit of total risk.',
-        'A Sharpe above 1.0 is good, above 1.5 is excellent — always compare within the same fund category.',
-        'Higher Sharpe means smoother returns and fewer gut-wrenching drops — leading to better investor behavior and lower panic-selling.',
-        'The Sharpe ratio penalizes both upside and downside volatility equally — for downside-only risk, use the Sortino ratio.',
-        'When two funds have similar returns, always recommend the one with the higher Sharpe ratio — the client\'s experience will be far better.'
+        'Sharpe Ratio = (Return - Risk-Free Rate) / Standard Deviation — it measures excess return earned per unit of total volatility.',
+        'Higher Sharpe = better risk-adjusted performance. Above 0.75 is good; above 1.0 is excellent for Indian equity funds.',
+        'Two funds with identical returns can have vastly different Sharpe ratios — always compare risk-adjusted, not just absolute returns.',
+        'Sharpe penalizes both upside and downside volatility equally, which is a limitation for equity investors who welcome upside surprises.',
+        'Use Sharpe ratio alongside absolute returns, rolling returns, and the Sortino ratio for a complete picture of fund quality.'
       ],
     },
 
     /* ──────────────────────────── 11 ──────────────────────────── */
     {
       id: 'sortino-ratio',
-      title: 'Sortino Ratio — Downside Risk Adjusted',
-      description: 'Like Sharpe but only penalizes bad volatility — the ratio that investors actually care about.',
+      title: 'Sortino Ratio',
+      description: 'A refined risk-adjusted measure that only penalizes downside volatility.',
       readTime: '4 min',
       content: [
-        'Imagine two cricketers. Batsman A scores 50, 20, 80, 10, 60 across five innings — an average of 44 with wild swings. Batsman B scores 50, 45, 80, 40, 60 — an average of 55 with much less downside. Both have some big scores (upside volatility), but Batsman B rarely fails. The Sortino ratio captures exactly this difference for mutual funds. While the Sharpe ratio penalizes all volatility (up and down), the Sortino ratio only penalizes downside deviation — returns that fall below a target or minimum acceptable return. Because no investor complains about unexpected gains, the Sortino ratio is arguably the more intuitive measure.',
+        'We just discussed how the Sharpe ratio treats all volatility as "risk" — including upside volatility, which investors actually like. The Sortino ratio fixes this by replacing standard deviation with downside deviation in the denominator. It only penalizes the fund for volatility that hurts you (negative returns or returns below a target), not volatility that helps you (strong positive returns).',
 
-        'The formula: Sortino Ratio = (Fund Return - Target Return) / Downside Deviation. The target return is usually the risk-free rate (around 6.5% in India) or zero. Downside deviation is calculated by looking only at periods where returns fell below the target — ignoring all positive periods. If a fund returned 16% with downside deviation of 7%, the Sortino ratio is (16 - 6.5) / 7 = 1.36. Compare that with another fund that returned 16% but with downside deviation of 12% — Sortino of 0.79. The first fund protects capital far better during bad months.',
+        'The formula: Sortino Ratio = (Fund Return - Risk-Free Rate) / Downside Deviation. Downside deviation is calculated using only the negative returns (or returns below the minimum acceptable return). Consider two funds: Fund A had monthly returns of +5%, +3%, -1%, +6%, +2%, -2%. Fund B had returns of +1%, +1%, +1%, +1%, +1%, +1%. Both average about 2.17% per month. Standard deviation is higher for Fund A. But Fund A\'s downside deviation is quite low (only two small negative months), while its upside months are very strong. The Sortino ratio would favor Fund A over Fund B because the "extra volatility" is all on the upside.',
 
-        'For MFDs, the Sortino ratio is the perfect metric to discuss with risk-averse clients — especially those who say, "I am okay with decent returns, but I cannot handle big drops." A fund with a high Sortino ratio delivers the experience these clients need: it participates in rallies but limits damage during corrections. Balanced advantage funds (BAFs) and large-cap funds from quality-focused AMCs tend to have the highest Sortino ratios because their fund managers actively manage downside by raising cash or shifting to defensive sectors during market stress.',
+        'In practice, for Indian equity mutual funds, the Sortino ratio is always higher than the Sharpe ratio (because downside deviation is a subset of total deviation, so the denominator is smaller). A fund with a Sharpe of 0.70 might have a Sortino of 1.1 or higher. As with Sharpe, compare Sortino ratios within the same fund category — a small-cap fund should be compared with other small-cap funds, not with a liquid fund. Look at 3-year rolling Sortino for meaningful comparison.',
 
-        'Not all fund research platforms prominently display the Sortino ratio — you might need to check Morningstar or dedicated analytics tools. But when you do find it, it is incredibly revealing. During the 2020 COVID crash, funds with high historical Sortino ratios (say, 1.2+) fell less than their category average and recovered faster. Their investors were less likely to panic-redeem, which meant the fund manager did not have to sell holdings at the worst time. This virtuous cycle — good downside management attracts patient investors who further enable good management — is why Sortino-leading funds tend to stay at the top over multiple cycles.'
+        'For MFDs, the Sortino ratio is particularly useful when advising risk-averse clients. A conservative client does not mind if their fund suddenly gains 5% in a month — they mind if it loses 5%. By using the Sortino ratio, you can identify funds that avoid sharp drawdowns while still capturing upside. Fund factsheets from most AMCs now include the Sortino ratio alongside Sharpe. When presenting fund comparisons to a client who has experienced past losses and is nervous about re-entering equity, the Sortino ratio tells a more reassuring story than Sharpe because it focuses on what they actually fear: downside.'
       ],
       keyTakeaways: [
-        'Sortino Ratio = (Fund Return - Target Return) / Downside Deviation — it only penalizes negative volatility, not upside surprises.',
-        'A higher Sortino means the fund protects capital better during downturns while still capturing upside during rallies.',
-        'Sortino is more intuitive than Sharpe for risk-averse clients who fear losses but welcome positive surprises.',
-        'Balanced advantage funds and quality large-cap funds typically have the highest Sortino ratios in their categories.',
-        'During market crashes, high-Sortino funds fall less and recover faster — creating a virtuous cycle of investor confidence.'
+        'Sortino Ratio = (Return - Risk-Free Rate) / Downside Deviation — it penalizes only harmful (negative) volatility, not upside surprises.',
+        'Sortino is always higher than Sharpe because downside deviation is smaller than total standard deviation.',
+        'Sortino is better suited for equity funds where investors welcome upside volatility but fear drawdowns.',
+        'Compare Sortino within the same fund category and use 3-year rolling periods for meaningful analysis.',
+        'For risk-averse clients, Sortino tells a more relevant story than Sharpe — it focuses on the downside risk they actually care about.'
       ],
     },
 
     /* ──────────────────────────── 12 ──────────────────────────── */
     {
       id: 'treynor-ratio',
-      title: 'Treynor Ratio — Systematic Risk Adjusted Return',
-      description: 'Return per unit of market risk (beta) — ideal for evaluating funds within a diversified portfolio.',
+      title: 'Treynor Ratio',
+      description: 'Measuring return per unit of systematic (market) risk using beta.',
       readTime: '5 min',
       content: [
-        'The Sharpe ratio measures return per unit of total risk (standard deviation). But if an investor holds a diversified portfolio of multiple funds, much of the individual fund\'s volatility gets diversified away. What remains is systematic risk — the fund\'s sensitivity to overall market movements, measured by beta. The Treynor ratio, developed by Jack Treynor in 1965, divides excess return by beta instead of standard deviation. It answers the question: "For every unit of market risk this fund carries, how much extra return does it deliver?"',
+        'The Sharpe ratio uses total volatility (standard deviation) as the risk measure. But financial theory says that investors who hold a diversified portfolio have already eliminated company-specific (unsystematic) risk. The only risk they are left with is market risk (systematic risk), measured by beta. The Treynor ratio says: given that you are a diversified investor, let us measure how much excess return you earned per unit of systematic risk. Treynor Ratio = (Fund Return - Risk-Free Rate) / Beta.',
 
-        'The formula: Treynor Ratio = (Fund Return - Risk-Free Rate) / Beta. If a large-cap fund returned 15%, the risk-free rate is 6.5%, and the fund\'s beta is 0.9, the Treynor ratio is (15 - 6.5) / 0.9 = 9.44. Another fund returned 17% with a beta of 1.3: Treynor = (17 - 6.5) / 1.3 = 8.08. Despite delivering higher raw returns, the second fund actually generated less return per unit of market risk. The first fund is more efficient — it achieved nearly the same return without taking on excess market exposure.',
+        'Let us compare. Fund A returned 16% with a beta of 1.2. Fund B returned 14% with a beta of 0.8. Risk-free rate is 7%. Fund A Treynor = (16 - 7) / 1.2 = 7.5. Fund B Treynor = (14 - 7) / 0.8 = 8.75. Despite Fund A having higher absolute returns, Fund B delivered more return per unit of market risk. Fund B\'s manager generated better returns relative to the market risk they took on. If you could leverage Fund B (by borrowing at the risk-free rate and investing more), you would earn higher returns than Fund A at any given level of market risk.',
 
-        'Beta itself deserves a quick explanation. A fund with beta 1.0 moves exactly in line with the benchmark (say Nifty 50). Beta 1.2 means the fund moves 20% more than the market — if Nifty rises 10%, the fund is expected to rise 12%, but if Nifty falls 10%, the fund falls 12%. Beta 0.8 means the fund is less volatile than the market. Aggressive small-cap and sectoral funds typically have betas above 1.2. Defensive large-cap and balanced funds have betas of 0.7-1.0. The Treynor ratio helps you see if that extra beta is actually being rewarded with proportionally higher returns.',
+        'When should you use Treynor vs Sharpe? Treynor is more appropriate when the fund is part of a larger diversified portfolio — because the client\'s total portfolio already eliminates unsystematic risk, and you want to evaluate the fund\'s contribution to the portfolio\'s risk-return profile. Sharpe is better when the fund IS the portfolio (like a client who has only one mutual fund). For most retail MFD clients who hold 3-5 funds plus other investments, Treynor gives a more theoretically sound comparison.',
 
-        'For MFDs building multi-fund portfolios, the Treynor ratio is more relevant than the Sharpe ratio. Here is why: when you combine a large-cap fund, a mid-cap fund, a debt fund, and a gold fund in a client\'s portfolio, the unsystematic risk (stock-specific volatility) gets diversified across funds. What drives the portfolio\'s overall return is each fund\'s systematic risk exposure and how well it is compensated. A high-Treynor large-cap fund paired with a high-Treynor mid-cap fund creates an efficient portfolio core.',
+        'In practice, for Indian mutual funds, Treynor ratio is reported less frequently than Sharpe on fund factsheets. You may need to calculate it using the fund\'s beta (available on Morningstar, Value Research, or the AMC factsheet) and the fund\'s return. A higher Treynor ratio means the fund manager is generating more "alpha" — excess return above what the market exposure (beta) alone would predict. For MFDs, when a client holds multiple funds, the Treynor ratio of each fund helps identify which funds are genuinely adding value through stock selection versus which ones are simply riding market beta.',
 
-        'In practice, you will find the Treynor ratio on advanced fund analytics platforms and some Morningstar fund pages. It is less commonly discussed than the Sharpe ratio, but it is the theoretically correct measure for evaluating any fund that is part of a broader portfolio. Use the Sharpe ratio when evaluating a standalone fund investment. Use the Treynor ratio when evaluating how a fund contributes to a diversified multi-asset portfolio. Both tell you about risk-adjusted performance, but they measure different types of risk — and knowing the difference puts you a notch above most MFDs in the industry.'
+        'A practical tip: if two funds have similar Sharpe ratios but different Treynor ratios, the one with the higher Treynor is generating more stock-selection alpha (less market-driven, more skill-driven returns). This is the fund you want in a diversified portfolio because its returns are less correlated with the market, improving overall portfolio diversification.'
       ],
       keyTakeaways: [
-        'Treynor Ratio = (Fund Return - Risk-Free Rate) / Beta — it measures excess return per unit of systematic (market) risk.',
-        'Unlike the Sharpe ratio which uses total volatility, Treynor uses beta — making it ideal for funds within a diversified portfolio.',
-        'Beta above 1.0 means the fund amplifies market moves; below 1.0 means it dampens them — Treynor checks if the extra beta is rewarded.',
-        'Use Sharpe for standalone fund evaluation; use Treynor when assessing a fund\'s contribution to a multi-fund portfolio.',
-        'A fund with lower raw returns but a higher Treynor ratio is more efficient — it generates more return per unit of market risk taken.'
+        'Treynor Ratio = (Return - Risk-Free Rate) / Beta — it measures excess return per unit of systematic (market) risk.',
+        'Use Treynor when the fund is part of a diversified portfolio; use Sharpe when the fund is the entire portfolio.',
+        'Higher Treynor = more alpha from stock selection skill, less dependence on market direction.',
+        'In a multi-fund portfolio, Treynor helps identify which funds add genuine value versus which just ride market beta.',
+        'Similar Sharpe but higher Treynor indicates better stock-selection skill and lower correlation with market movements.'
       ],
     },
   ],

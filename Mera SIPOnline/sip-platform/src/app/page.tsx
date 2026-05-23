@@ -15,6 +15,8 @@ import { formatINR } from '@/lib/utils/formatters';
 import { AMCPartners } from '@/components/sections/AMCPartners';
 import { ComplianceBanner } from '@/components/sections/ComplianceBanner';
 import { ExitIntentPopup } from '@/components/sections/ExitIntentPopup';
+import { PlatformShowcase } from '@/components/sections/PlatformShowcase';
+import { QuickGoalSelector } from '@/components/sections/QuickGoalSelector';
 import { COMPANY, DISCLAIMER } from '@/lib/constants/company';
 import LeadershipCarousel from '@/components/ui/LeadershipCarousel';
 import { generateFAQSchema } from '@/lib/seo';
@@ -42,23 +44,42 @@ function SIPCalculator() {
   const result = calculateSIP(monthly, rate, years);
   const multiplier = (result.totalValue / result.totalInvested).toFixed(1);
 
+  // Delay impact: what you lose by waiting 2 years
+  const delayedResult = calculateSIP(monthly, rate, Math.max(years - 2, 1));
+  const delayLoss = result.totalValue - delayedResult.totalValue;
+
+  // Emotional milestone
+  const milestone =
+    result.totalValue >= 10000000 ? 'You could be a Crorepati!'
+    : result.totalValue >= 5000000 ? 'That\'s over ₹50 Lakhs — a life-changing corpus!'
+    : result.totalValue >= 2500000 ? 'Over ₹25 Lakhs — serious wealth building!'
+    : result.totalValue >= 1000000 ? 'You\'ll cross the ₹10 Lakh milestone!'
+    : result.totalValue >= 500000 ? 'Half a lakh — a strong start!'
+    : 'Every rupee counts — start building!';
+
   return (
     <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
       {/* Inputs */}
       <div className="space-y-6">
         <div>
-          <div className="flex justify-between text-sm mb-2">
+          <div className="flex justify-between text-sm mb-1">
             <span className="text-slate-600 font-medium">Monthly Investment</span>
             <span className="font-bold text-primary-700">{formatINR(monthly)}</span>
           </div>
+          <p className="text-[10px] text-slate-400 mb-2">
+            {monthly <= 5000 ? 'Even small SIPs create big wealth over time' : monthly <= 25000 ? 'Building a strong foundation for your goals' : 'Accelerating your wealth creation journey'}
+          </p>
           <input type="range" min={500} max={100000} step={500} value={monthly} onChange={(e) => setMonthly(Number(e.target.value))} className="slider-input w-full" />
           <div className="flex justify-between text-[10px] text-slate-400 mt-1"><span>&#8377;500</span><span>&#8377;1,00,000</span></div>
         </div>
         <div>
-          <div className="flex justify-between text-sm mb-2">
+          <div className="flex justify-between text-sm mb-1">
             <span className="text-slate-600 font-medium">Investment Duration</span>
             <span className="font-bold text-primary-700">{years} Years</span>
           </div>
+          <p className="text-[10px] text-slate-400 mb-2">
+            {years <= 5 ? 'Short-term goal — emergency fund or car' : years <= 15 ? 'Medium-term — child education or home' : 'Long-term — retirement & wealth creation'}
+          </p>
           <input type="range" min={1} max={40} step={1} value={years} onChange={(e) => setYears(Number(e.target.value))} className="slider-input w-full" />
           <div className="flex justify-between text-[10px] text-slate-400 mt-1"><span>1 Yr</span><span>40 Yrs</span></div>
         </div>
@@ -84,19 +105,34 @@ function SIPCalculator() {
             <div className="text-lg font-bold text-positive tabular-nums">{formatINR(result.estimatedReturns)}</div>
           </div>
         </div>
-        <div className="bg-gradient-to-r from-brand-50 to-teal-50 rounded-xl p-5 mb-6">
+        <div className="bg-gradient-to-r from-brand-50 to-teal-50 rounded-xl p-5 mb-4">
           <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Total Wealth Created</div>
           <div className="text-3xl font-extrabold gradient-text tabular-nums">{formatINR(result.totalValue)}</div>
           <div className="text-xs text-brand font-medium mt-1">
             Your money grows {multiplier}x in {years} years
           </div>
+          {/* Emotional milestone */}
+          <div className="mt-2 text-sm font-bold text-amber-600">
+            {milestone}
+          </div>
         </div>
+        {/* Delay cost nudge */}
+        {years > 2 && (
+          <div className="flex items-center gap-2 bg-rose-50 border border-rose-200/50 rounded-lg px-4 py-2.5 mb-4">
+            <Clock className="w-4 h-4 text-rose-500 shrink-0" />
+            <p className="text-xs text-rose-700">
+              <span className="font-bold">Delay by just 2 years?</span> You lose{' '}
+              <span className="font-extrabold">{formatINR(delayLoss)}</span> in potential wealth.
+              Start today.
+            </p>
+          </div>
+        )}
         <div className="flex flex-col sm:flex-row gap-3">
           <a href="https://trustner.investwell.app/app/#/kycOnBoarding/mobileSignUp" target="_blank" rel="noopener noreferrer" className="btn-primary flex-1 text-sm py-3 text-center">
-            Start This SIP Now <ArrowRight className="w-4 h-4 ml-1 inline" />
+            Start Building This Wealth <ArrowRight className="w-4 h-4 ml-1 inline" />
           </a>
           <Link href="/calculators/sip" className="btn-secondary flex-1 text-sm py-3 text-center">
-            Explore Full Calculator
+            Explore Advanced Tools
           </Link>
         </div>
         <p className="text-[9px] text-slate-400 text-center mt-3">{DISCLAIMER.calculator}</p>
@@ -149,7 +185,7 @@ export default function HomePage() {
               </a>
               <a href="#sip-calculator" className="inline-flex items-center gap-2 bg-white/15 text-white border border-white/30 px-8 py-3.5 rounded-lg font-bold text-sm hover:bg-white/25 transition-colors backdrop-blur-sm">
                 <Calculator className="w-4 h-4" />
-                Calculate SIP
+                See My Future Wealth
               </a>
             </div>
 
@@ -171,6 +207,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ═══════════ 1.5 QUICK GOAL SELECTOR ═══════════ */}
+      <QuickGoalSelector />
 
       {/* ═══════════ 2. SIP CALCULATOR (Interactive) ═══════════ */}
       <section id="sip-calculator" className="section-padding bg-surface-100 bg-[radial-gradient(circle,rgba(15,118,110,0.06)_1px,transparent_1px)] bg-[size:24px_24px]">
@@ -251,7 +290,7 @@ export default function HomePage() {
               { icon: UserCheck, title: 'Risk Profiling First', desc: 'We assess your risk appetite and time horizon before recommending any product. No one-size-fits-all approach.' },
               { icon: Target, title: 'Goal-Based Planning', desc: 'Every recommendation is tied to your specific goals \u2014 retirement, education, home, or wealth creation.' },
               { icon: LineChart, title: 'Portfolio Review Support', desc: 'Regular portfolio monitoring, rebalancing suggestions, and performance reviews \u2014 not just a one-time investment.' },
-              { icon: Headphones, title: 'Human Advisor Access', desc: 'A dedicated relationship manager for all your queries. Reach out via phone, WhatsApp, or email anytime.' },
+              { icon: Headphones, title: 'Dedicated Relationship Manager', desc: 'A dedicated relationship manager for all your queries. Reach out via phone, WhatsApp, or email anytime.' },
               { icon: Brain, title: 'AI-Assisted Insights', desc: 'Smart calculators, data-driven research tools, and AI-powered recommendations to help you invest better.' },
               { icon: Shield, title: 'AMFI Registered & Compliant', desc: 'Fully regulated by SEBI/AMFI (ARN-286886). Your investments are safe, transparent, and compliant.' },
             ].map((item) => (
@@ -266,6 +305,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ═══════════ 4.5 PLATFORM SHOWCASE ═══════════ */}
+      <PlatformShowcase />
 
       {/* ═══════════ 5. ABOUT TRUSTNER (Authority Section) ═══════════ */}
       <section className="section-padding bg-white">
@@ -357,14 +399,14 @@ export default function HomePage() {
             <LeadershipCarousel
               members={[
                 { name: 'Ram Shah', role: 'CEO & Founder', experience: '23 Years', initials: 'RS', photo: '/team/ram-shah.jpeg', color: 'from-brand-400 to-brand-600' },
-                { name: 'Sangeeta Shah', role: 'Co-Founder & COO', experience: '23 Years', initials: 'SS', color: 'from-teal-400 to-teal-600' },
-                { name: 'Ajanta Saikia', role: 'Director & Principal Officer', experience: '23 Years', initials: 'AS', color: 'from-purple-400 to-purple-600' },
-                { name: 'Abir Das', role: 'Addl. Director & CDO', experience: '23 Years', initials: 'AD', color: 'from-sky-400 to-sky-600' },
-                { name: 'Bhola Singh', role: 'Leading GI Team', experience: '22 Years', initials: 'BS', color: 'from-amber-400 to-amber-600' },
-                { name: 'Subhasish Kar', role: 'Institutional Sales', experience: '30 Years', initials: 'SK', color: 'from-emerald-400 to-emerald-600' },
-                { name: 'Rafiquddin Ahmed', role: 'Consultant — GI Team', experience: '38 Years', initials: 'RA', color: 'from-rose-400 to-rose-600' },
-                { name: 'Tamanna Somani', role: 'Head HNI Division', experience: '21 Years', initials: 'TS', color: 'from-violet-400 to-violet-600' },
-                { name: 'Raju Chakraborty', role: 'Regional Manager North East', experience: '25 Years', initials: 'RC', color: 'from-cyan-400 to-cyan-600' },
+                { name: 'Sangeeta Shah', role: 'Co-Founder & COO', experience: '23 Years', initials: 'SS', photo: '/team/sangeeta-shah.jpeg', color: 'from-teal-400 to-teal-600' },
+                { name: 'Ajanta Saikia', role: 'Director & Principal Officer', experience: '23 Years', initials: 'AS', photo: '/team/ajanta-saikia.jpeg', color: 'from-purple-400 to-purple-600' },
+                { name: 'Abir Das', role: 'Addl. Director & CDO', experience: '23 Years', initials: 'AD', photo: '/team/abir-das.jpeg', color: 'from-sky-400 to-sky-600' },
+                { name: 'Bhola Singh', role: 'Leading GI Team', experience: '22 Years', initials: 'BS', photo: '/team/bhola-singh.jpeg', color: 'from-amber-400 to-amber-600' },
+                { name: 'Subhasish Kar', role: 'Institutional Sales', experience: '30 Years', initials: 'SK', photo: '/team/subhasish-kar.jpeg', color: 'from-emerald-400 to-emerald-600' },
+                { name: 'Rafiquddin Ahmed', role: 'Consultant — GI Team', experience: '38 Years', initials: 'RA', photo: '/team/rafiquddin-ahmed.jpeg', color: 'from-rose-400 to-rose-600' },
+                { name: 'Tamanna Kejriwal', role: 'Head HNI Division', experience: '21 Years', initials: 'TK', photo: '/team/tamanna-kejriwal.jpeg', color: 'from-violet-400 to-violet-600' },
+                { name: 'Raju Chakraborty', role: 'Regional Manager North East', experience: '25 Years', initials: 'RC', photo: '/team/raju-chakraborty.jpeg', color: 'from-cyan-400 to-cyan-600' },
               ]}
               visibleCount={4}
               interval={3000}
@@ -399,7 +441,7 @@ export default function HomePage() {
             <div className="flex-1 text-center lg:text-left">
               <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-2 text-xs font-semibold mb-5 backdrop-blur-sm border border-white/10">
                 <Brain className="w-3.5 h-3.5 text-amber-400" />
-                <span>100% Free &middot; AI-Powered &middot; CFP-Grade Analysis</span>
+                <span>100% Free &middot; AI-Powered &middot; Professional-Grade Analysis</span>
               </div>
               <h2 className="text-3xl sm:text-4xl font-extrabold leading-tight mb-4">
                 Know Your{' '}
@@ -433,7 +475,7 @@ export default function HomePage() {
                 className="inline-flex items-center gap-2 bg-amber-400 text-slate-900 px-8 py-3.5 rounded-lg font-bold text-sm hover:bg-amber-300 transition-colors shadow-lg shadow-amber-400/25"
               >
                 <Brain className="w-4 h-4" />
-                Start Free Assessment
+                Check My Financial Health
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -461,7 +503,8 @@ export default function HomePage() {
                 city: 'Bengaluru',
                 gradient: 'from-pink-500 to-rose-600',
                 gender: 'female' as const,
-                text: 'The SIP calculators on Mera SIP helped me plan my daughter\'s education fund. The step-up SIP calculator showed me exactly how increasing my SIP by 10% annually would make a huge difference. Trustner team guided me through every step.',
+                highlight: 'Started \u20B910K/month SIP \u2192 \u20B97.2L in 4 years',
+                text: 'The SIP calculators on Mera SIP helped me plan my daughter\'s education fund. Started with \u20B910,000/month in 2021 and the step-up approach grew it to \u20B97.2 lakh. Trustner team guided me through every step.',
               },
               {
                 name: 'Rajesh Kalita',
@@ -469,7 +512,8 @@ export default function HomePage() {
                 city: 'Guwahati',
                 gradient: 'from-amber-500 to-orange-600',
                 gender: 'male' as const,
-                text: 'As a business owner, my income is irregular. Trustner helped me understand how to use SIP with flexible amounts. The Life-Stage calculator is brilliant \u2014 it showed me I don\'t need to invest forever, just smartly for a few years.',
+                highlight: '\u20B925K/month SIP \u2192 \u20B926L+ portfolio',
+                text: 'As a business owner, my income is irregular. Trustner helped me use flexible SIP amounts \u2014 \u20B925,000 in good months, \u20B910,000 in lean. Built a \u20B926 lakh corpus in just 5 years. The Life-Stage calculator was brilliant.',
               },
               {
                 name: 'Anita & Deepak Verma',
@@ -477,7 +521,8 @@ export default function HomePage() {
                 city: 'Delhi NCR',
                 gradient: 'from-teal-500 to-teal-700',
                 gender: 'couple' as const,
-                text: 'We started our SIP journey with Trustner 5 years ago with just \u20B95,000 each. Today our combined portfolio has grown beautifully. The transparency and education-first approach is what sets them apart.',
+                highlight: '\u20B95K each \u2192 \u20B99.8L combined in 5 yrs',
+                text: 'We started our SIP journey with \u20B95,000 each in 2020. Today our combined portfolio is \u20B99.8 lakh. The transparency and education-first approach is what sets Trustner apart from apps.',
               },
               {
                 name: 'Dr. Manish Borgohain',
@@ -485,7 +530,8 @@ export default function HomePage() {
                 city: 'Jorhat',
                 gradient: 'from-indigo-500 to-indigo-700',
                 gender: 'male' as const,
-                text: 'I had no knowledge of mutual funds before meeting Trustner. Their learning modules and personal guidance made me confident about investing. Now I recommend them to all my colleagues.',
+                highlight: 'Zero knowledge \u2192 \u20B915L portfolio',
+                text: 'I had zero knowledge of mutual funds. Trustner\'s learning modules made me confident. Started with \u20B920K/month and now have a \u20B915 lakh portfolio. I recommend them to all my colleagues.',
               },
               {
                 name: 'Sneha Patil',
@@ -493,7 +539,8 @@ export default function HomePage() {
                 city: 'Pune',
                 gradient: 'from-purple-500 to-violet-700',
                 gender: 'female' as const,
-                text: 'What I love about Mera SIP is the education content. Before investing a single rupee, I understood SIP, compounding, and risk. The MCQ quizzes actually helped me retain what I learned.',
+                highlight: '\u20B93K/month SIP \u2014 growing steadily',
+                text: 'As a teacher, every rupee counts. MeraSIP\'s education content helped me understand SIP and compounding before investing. Started \u20B93,000/month and I step it up every year. The MCQ quizzes actually helped me learn.',
               },
               {
                 name: 'Arun Choudhury',
@@ -501,7 +548,8 @@ export default function HomePage() {
                 city: 'Guwahati',
                 gradient: 'from-rose-500 to-rose-700',
                 gender: 'male' as const,
-                text: 'After retirement, I was worried about managing my corpus. Trustner\'s SWP calculator and the Life-Stage planner helped me plan systematic withdrawals. My money is working for me now.',
+                highlight: '\u20B940L corpus \u2192 \u20B930K/month SWP income',
+                text: 'After retirement, I was worried about managing my \u20B940 lakh corpus. Trustner set up an SWP giving me \u20B930,000/month while the principal keeps growing. The SWP calculator made it clear.',
               },
             ].map((t, idx) => (
               <div key={idx} className="card-base p-6 relative">
@@ -511,6 +559,12 @@ export default function HomePage() {
                     <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
                   ))}
                 </div>
+                {t.highlight && (
+                  <div className="inline-flex items-center gap-1.5 bg-positive-50 text-positive text-[11px] font-bold px-3 py-1 rounded-full mb-3 border border-positive/20">
+                    <TrendingUp className="w-3 h-3" />
+                    {t.highlight}
+                  </div>
+                )}
                 <p className="text-sm text-slate-600 leading-relaxed mb-4">{t.text}</p>
                 <div className="flex items-center gap-3 pt-3 border-t border-surface-300/50">
                   <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${t.gradient} flex items-center justify-center shrink-0 shadow-sm ring-2 ring-white overflow-hidden`}>
@@ -591,23 +645,23 @@ export default function HomePage() {
       {/* ═══════════ 8. FINAL CTA ═══════════ */}
       <section className="section-padding bg-cta-gradient text-white">
         <div className="container-custom text-center">
-          <h2 className="text-3xl sm:text-4xl font-extrabold mb-4" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>Start Your Wealth Journey Today</h2>
+          <h2 className="text-3xl sm:text-4xl font-extrabold mb-4" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>Your Future Self Will Thank You</h2>
           <p className="text-lg text-brand-100 mb-8 max-w-2xl mx-auto">
-            Whether you invest &#8377;500 or &#8377;5,00,000 monthly &mdash; the principles are the same.
-            Start planning, start investing, start building wealth with professional guidance.
+            Whether it&apos;s &#8377;500 or &#8377;5,00,000 monthly &mdash; every SIP is a step towards
+            financial freedom. Start today and let compounding do the heavy lifting.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <a href="https://trustner.investwell.app/app/#/kycOnBoarding/mobileSignUp" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-amber-400 text-slate-900 px-8 py-3.5 rounded-lg font-bold hover:bg-amber-300 transition-all shadow-lg shadow-amber-400/25 text-sm animate-gentle-pulse hover:animate-none">
               <IndianRupee className="w-5 h-5" />
-              Start SIP
+              Start My SIP Journey
             </a>
             <a href={`https://wa.me/916003903737?text=Hi%20Trustner%20team%2C%20I%20want%20to%20start%20my%20SIP%20investment%20journey.%20Please%20guide%20me.`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-white/10 text-white px-8 py-3.5 rounded-lg font-bold hover:bg-white/20 transition-all border border-white/20 text-sm">
-              <Phone className="w-5 h-5" />
-              Talk to Advisor
+              <MessageCircle className="w-5 h-5" />
+              Get Guidance on WhatsApp
             </a>
           </div>
           <p className="text-xs text-white/50 mt-6">
-            {COMPANY.mfEntity.amfiArn} &middot; EUIN: {COMPANY.mfEntity.euin} &middot; {COMPANY.mfEntity.name}
+            {COMPANY.mfEntity.amfiArn} &middot; {COMPANY.mfEntity.name}
           </p>
         </div>
       </section>
@@ -624,7 +678,7 @@ export default function HomePage() {
           <p className="text-xs text-slate-400 text-center leading-relaxed">
             {DISCLAIMER.mutual_fund}
             {' '}{DISCLAIMER.general}
-            {' '}AMFI Registered Mutual Fund Distributor | {COMPANY.mfEntity.amfiArn} | EUIN: {COMPANY.mfEntity.euin} | {COMPANY.mfEntity.name}
+            {' '}{COMPANY.mfEntity.typeExtended} | {COMPANY.mfEntity.amfiArn} | {COMPANY.mfEntity.name}
           </p>
         </div>
       </section>

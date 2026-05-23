@@ -11,6 +11,7 @@ import { formatINR } from '@/lib/utils/formatters';
 import { cn } from '@/lib/utils/cn';
 import { DISCLAIMER } from '@/lib/constants/company';
 import DownloadPDFButton from '@/components/ui/DownloadPDFButton';
+import PersonalInfoBar from '@/components/ui/PersonalInfoBar';
 
 /* ─── Types ─── */
 interface Item {
@@ -59,6 +60,8 @@ function getWealthScore(debtToAssetRatio: number): { score: number; label: strin
 /* ─── Main Component ─── */
 /* ═══════════════════════════════════════════════════════════════ */
 export default function NetWorthCalculatorPage() {
+  const [clientName, setClientName] = useState('');
+  const [clientAge, setClientAge] = useState<number | null>(35);
   const [assets, setAssets] = useState<Item[]>(DEFAULT_ASSETS);
   const [liabilities, setLiabilities] = useState<Item[]>(DEFAULT_LIABILITIES);
 
@@ -141,6 +144,15 @@ export default function NetWorthCalculatorPage() {
           <div id="calculator-results" className="grid lg:grid-cols-[440px_1fr] gap-8">
             {/* ═══ Left Panel — Inputs ═══ */}
             <div className="card-base p-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
+
+              <PersonalInfoBar
+                name={clientName}
+                onNameChange={setClientName}
+                age={clientAge}
+                onAgeChange={setClientAge}
+                ageLabel="Current Age"
+                namePlaceholder="e.g., Ram"
+              />
 
               {/* ── Assets Section ── */}
               <div className="mb-6">
@@ -329,7 +341,7 @@ export default function NetWorthCalculatorPage() {
               {/* PDF Download */}
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-primary-700">Results</h3>
-                <DownloadPDFButton elementId="calculator-results" title="Net Worth Calculator" fileName="net-worth-calculator" />
+                <DownloadPDFButton elementId="calculator-results" title="Net Worth Calculator" fileName={`net-worth-calculator${clientName ? `-${clientName.replace(/\s+/g, '-')}` : ''}`} />
               </div>
 
               {/* ── Horizontal Bar Chart ── */}

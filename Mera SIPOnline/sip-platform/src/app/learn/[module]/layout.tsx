@@ -20,7 +20,7 @@ export async function generateMetadata({
 
   return generateSEOMetadata({
     title: `${mod.title} — ${levelLabel} Module | Learn SIP Investing | MeraSIP`,
-    description: `${mod.description} Covers ${mod.sections.length} topics with practice MCQs, FAQs, formulas, and real-life examples. Estimated time: ${mod.estimatedTime}. Free course by CFP Ram Shah.`,
+    description: `${mod.description} Covers ${mod.sections.length} topics with practice MCQs, FAQs, formulas, and real-life examples. Estimated time: ${mod.estimatedTime}. Free course by Ram Shah.`,
     path: `/learn/${mod.slug}`,
     keywords: [
       mod.title.toLowerCase(),
@@ -57,8 +57,8 @@ export default async function ModuleLayout({ params, children }: Props) {
     },
     instructor: {
       '@type': 'Person',
-      name: 'CFP Ram Shah',
-      jobTitle: 'Certified Financial Planner',
+      name: 'Ram Shah',
+      jobTitle: 'Founder & CEO',
     },
     educationalLevel: levelLabel,
     inLanguage: 'en-IN',

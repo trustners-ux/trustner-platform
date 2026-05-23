@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils/cn';
 import { DISCLAIMER } from '@/lib/constants/company';
 import NumberInput from '@/components/ui/NumberInput';
 import DownloadPDFButton from '@/components/ui/DownloadPDFButton';
+import PersonalInfoBar from '@/components/ui/PersonalInfoBar';
 
 const COLORS = {
   loan: '#2563EB',
@@ -21,6 +22,8 @@ const COLORS = {
 };
 
 export default function CarLoanVsCashCalculatorPage() {
+  const [clientName, setClientName] = useState('');
+  const [clientAge, setClientAge] = useState<number | null>(35);
   const [carPrice, setCarPrice] = useState(1200000);
   const [downPaymentPct, setDownPaymentPct] = useState(20);
   const [loanRate, setLoanRate] = useState(9);
@@ -206,6 +209,15 @@ export default function CarLoanVsCashCalculatorPage() {
             <div className="card-base p-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
               <h2 className="font-bold text-primary-700 mb-6 text-lg">Configure Scenario</h2>
 
+              <PersonalInfoBar
+                name={clientName}
+                onNameChange={setClientName}
+                age={clientAge}
+                onAgeChange={setClientAge}
+                ageLabel="Current Age"
+                namePlaceholder="e.g., Ram"
+              />
+
               <div className="space-y-5">
                 <NumberInput label="Car Price" value={carPrice} onChange={setCarPrice} prefix="₹" step={50000} min={300000} max={10000000} />
                 <NumberInput label="Down Payment" value={downPaymentPct} onChange={setDownPaymentPct} suffix="%" step={5} min={0} max={50} />
@@ -267,7 +279,7 @@ export default function CarLoanVsCashCalculatorPage() {
             {/* Charts & Analysis */}
             <div className="space-y-8">
               <div className="flex justify-end">
-                <DownloadPDFButton elementId="calculator-results" title="Car Loan vs Cash Calculator" fileName="car-loan-vs-cash-calculator" />
+                <DownloadPDFButton elementId="calculator-results" title="Car Loan vs Cash Calculator" fileName={`car-loan-vs-cash-calculator${clientName ? `-${clientName.replace(/\s+/g, '-')}` : ''}`} />
               </div>
 
               {/* Verdict Banner */}

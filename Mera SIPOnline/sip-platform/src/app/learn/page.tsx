@@ -26,7 +26,11 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
-import { getAllModules, getTotalStats } from '@/data/modules';
+import { getAllModules, getTotalStats, getModuleCountByTrack } from '@/data/modules';
+import { getAllTracks } from '@/data/learn-tracks';
+import {
+  PiggyBank, BriefcaseBusiness, GitBranch, Globe2, Plane, Shield as ShieldIcon,
+} from 'lucide-react';
 
 const ICON_MAP: Record<string, React.ElementType> = {
   BookOpen,
@@ -47,6 +51,12 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Handshake,
   Users,
   TrendingUp,
+  PiggyBank,
+  BriefcaseBusiness,
+  GitBranch,
+  Globe2,
+  Plane,
+  Shield: ShieldIcon,
 };
 
 const LEVEL_BADGE: Record<string, string> = {
@@ -132,21 +142,90 @@ export default function LearnPage() {
         </div>
       </section>
 
+      {/* ===== SEVEN-TRACK CHOOSER ===== */}
+      <section id="learning-tracks" className="section-padding bg-white">
+        <div className="container-custom">
+          <div className="text-center mb-10">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-brand mb-3">
+              The Trustner Learn Academy
+            </p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-primary-700 mb-4">
+              Seven Wealth-Management Tracks
+            </h2>
+            <p className="text-slate-500 max-w-2xl mx-auto text-sm sm:text-base">
+              Trustner covers the complete Indian investment-product spectrum &mdash; from mutual funds
+              to AIFs, GIFT IFSC, and insurance &mdash; with regulator-aligned, investor-focused content
+              written from a third-person authoritative perspective.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
+            {getAllTracks().map((t) => {
+              const TrackIcon = ICON_MAP[t.icon] || BookOpen;
+              const moduleCount = getModuleCountByTrack(t.id);
+              return (
+                <Link
+                  key={t.id}
+                  href={`/learn/track/${t.id}`}
+                  className={cn(
+                    'group rounded-xl p-5 text-white shadow-md hover:shadow-xl transition-all relative overflow-hidden bg-gradient-to-br',
+                    t.gradient,
+                  )}
+                >
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3" />
+                  <div className="relative z-10">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center">
+                        <TrackIcon className="w-5 h-5" />
+                      </div>
+                      <span className="text-[9px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">
+                        {moduleCount} {moduleCount === 1 ? 'module' : 'modules'}
+                      </span>
+                    </div>
+                    <h3 className="text-lg font-extrabold mb-1">{t.name}</h3>
+                    <p className="text-xs text-white/70 mb-1 font-mono uppercase tracking-wider">
+                      {t.shortName}
+                    </p>
+                    <p className="text-xs text-white/85 leading-relaxed mb-3 line-clamp-3">
+                      {t.description}
+                    </p>
+                    <div className="flex items-center justify-between text-[10px] text-white/80">
+                      <span>{t.regulator}</span>
+                      <span className="inline-flex items-center gap-1 font-semibold group-hover:translate-x-0.5 transition-transform">
+                        Explore <ArrowRight className="w-3 h-3" />
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+
+          <div className="text-center mt-8">
+            <p className="text-xs text-slate-400">
+              Foundation tracks are written for investor education. Advanced certification-grade
+              tracks (NISM / APMI / IRDAI exam-style) coming soon for sub-broker onboarding.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* ===== ALL MODULES GRID ===== */}
       <section id="all-modules" className="section-padding bg-surface-100">
         <div className="container-custom">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-extrabold text-primary-700 mb-4">
-              Choose Your Learning Path
+              All Modules — Mutual Funds Curriculum
             </h2>
             <p className="text-slate-500 max-w-2xl mx-auto">
-              Each module is designed as a complete learning unit with structured topics,
-              real-world examples, interactive quizzes, and summary notes.
+              The flagship 12-module Mutual Funds curriculum. Each module is designed as a complete
+              learning unit with structured topics, real-world examples, interactive quizzes, and
+              summary notes. Browse other tracks (SIF, PMS, AIF, GIFT, International, Insurance) above.
             </p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {modules.map((module, index) => {
+            {modules.filter((m) => (m.track ?? 'mutual-funds') === 'mutual-funds').map((module, index) => {
               const IconComponent = ICON_MAP[module.icon] || BookOpen;
               const totalMCQs = module.sections.reduce(
                 (acc, s) => acc + s.content.mcqs.length,

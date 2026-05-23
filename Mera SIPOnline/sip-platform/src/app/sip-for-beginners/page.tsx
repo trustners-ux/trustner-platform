@@ -34,7 +34,7 @@ const faqs = [
   {
     question: 'Which is the best mutual fund for a first-time SIP investor?',
     answer:
-      'For beginners, large-cap index funds (like Nifty 50 or Sensex index funds) are generally recommended as a starting point because they offer broad market exposure, lower costs, and eliminate fund manager risk. Balanced advantage or hybrid funds are also suitable as they automatically manage equity-debt allocation. Consult a financial advisor for personalized recommendations.',
+      'For beginners, large-cap or flexi-cap diversified funds and balanced advantage / hybrid funds are commonly suitable starting points — they offer broad market exposure and automatically managed equity-debt allocation through Regular plans. Reach out to the Trustner team or a SEBI-Registered Investment Adviser for personalised recommendations tailored to your goals and risk profile.',
   },
   {
     question: 'Is it safe to invest in SIP during a market crash?',
@@ -500,7 +500,7 @@ export default function SIPForBeginnersPage() {
               className="inline-flex items-center gap-2 bg-white text-primary-700 px-8 py-3.5 rounded-lg font-bold hover:bg-slate-50 transition-colors shadow-lg text-sm"
             >
               <MessageCircle className="w-5 h-5" />
-              Talk to Advisor
+              Talk to Us
             </a>
           </div>
         </div>

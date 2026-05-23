@@ -28,7 +28,7 @@ export function generateSEOMetadata({
       'investment calculator',
       'financial planning India',
     ],
-    authors: [{ name: 'CFP Ram Shah', url: `${BASE_URL}/about` }],
+    authors: [{ name: 'Ram Shah', url: `${BASE_URL}/about` }],
     openGraph: {
       title,
       description,
@@ -117,9 +117,9 @@ export function generateArticleSchema(
     ...(options?.wordCount && { wordCount: options.wordCount }),
     author: {
       '@type': 'Person',
-      name: 'CFP Ram Shah',
+      name: 'Ram Shah',
       url: `${BASE_URL}/about`,
-      jobTitle: 'Certified Financial Planner',
+      jobTitle: 'Founder & CEO',
       worksFor: {
         '@type': 'Organization',
         name: 'Trustner Asset Services Pvt. Ltd.',

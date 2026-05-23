@@ -52,7 +52,7 @@ const UPGRADE_CONFIG: Record<string, {
   standard: {
     nextTier: 'comprehensive',
     nextName: 'Comprehensive Blueprint',
-    message: 'Ready for a CFP-grade financial blueprint with 5-year cashflow projection?',
+    message: 'Ready for a comprehensive financial blueprint with 5-year cashflow projection?',
     features: ['5-Year Cashflow Projection', 'Asset Allocation Matrix', 'Tax Optimization Strategy', 'Executive Summary & Action Timeline'],
     icon: Crown,
     color: 'text-amber-700',

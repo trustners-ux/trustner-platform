@@ -1,9 +1,38 @@
 import { MetadataRoute } from 'next';
+import { readdirSync, existsSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 import { getAllModules } from '@/data/modules';
 import { blogPosts } from '@/data/blog';
 import { getAllProfiles } from '@/data/life-plans';
 
 const BASE_URL = 'https://www.merasip.com';
+
+/**
+ * Auto-discover all sub-routes that have a `page.tsx`, scanning the app
+ * directory at build time. This guarantees the sitemap always reflects every
+ * shipped calculator / research / financial-planning page — no more drift
+ * between the actual filesystem and the sitemap. Without this, every new
+ * calculator added (e.g. swp-sip-combo, term-plan-sip, lifeline) was silently
+ * missing from search until someone remembered to update the hard-coded list.
+ */
+function discoverRoutesIn(appSubDir: string): string[] {
+  try {
+    const dir = join(process.cwd(), 'src', 'app', appSubDir);
+    if (!existsSync(dir)) return [];
+    return readdirSync(dir)
+      .filter((name) => {
+        // Skip dynamic [slug] segments, route groups (), private _folders, files
+        if (name.startsWith('[') || name.startsWith('(') || name.startsWith('_') || name.includes('.')) return false;
+        const sub = join(dir, name);
+        if (!statSync(sub).isDirectory()) return false;
+        // Only include if the sub-route has a page.tsx (i.e. it's a real route)
+        return existsSync(join(sub, 'page.tsx'));
+      })
+      .sort();
+  } catch {
+    return [];
+  }
+}
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const modules = getAllModules();
@@ -35,27 +64,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE_URL}/sip-calculator`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
   ];
 
-  // Calculator pages
-  const calculatorPages: MetadataRoute.Sitemap = [
-    'sip', 'step-up-sip', 'goal-based', 'inflation-adjusted',
-    'retirement', 'swp', 'sip-vs-lumpsum', 'duration-optimizer', 'correction-impact', 'life-stage', 'daily-sip',
-    'bucket-strategy', 'sip-shield', 'lumpsum', 'emi', 'fire', 'delay-cost',
-    'emergency-fund', 'net-worth', 'income-tax', 'capital-gains-tax', 'tax-saving',
-    'health-insurance', 'term-insurance', 'human-life-value',
-    'rent-vs-buy', 'home-affordability', 'loan-prepayment', 'fd-vs-loan', 'car-loan-vs-cash',
-    'lifestyle-inflation',
-  ].map((calc) => ({
+  // Calculator pages — auto-discovered from filesystem so every calculator
+  // added to /src/app/calculators/<slug>/ is automatically in the sitemap
+  // (previously hard-coded list missed 3 calcs: lifeline, swp-sip-combo, term-plan-sip).
+  const calculatorPages: MetadataRoute.Sitemap = discoverRoutesIn('calculators').map((calc) => ({
     url: `${BASE_URL}/calculators/${calc}`,
     lastModified: now,
     changeFrequency: 'monthly' as const,
     priority: 0.9,
   }));
 
-  // Research pages
-  const researchPages: MetadataRoute.Sitemap = [
-    'historical-returns', 'bull-vs-bear', 'rolling-returns',
-    'xirr-explained', 'case-studies', 'volatility-simulator',
-  ].map((topic) => ({
+  // Research pages — auto-discovered
+  const researchPages: MetadataRoute.Sitemap = discoverRoutesIn('research').map((topic) => ({
     url: `${BASE_URL}/research/${topic}`,
     lastModified: now,
     changeFrequency: 'monthly' as const,
@@ -68,6 +88,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: post.date,
     changeFrequency: 'monthly' as const,
     priority: 0.7,
+  }));
+
+  // Track landing pages (NEW — seven-track architecture)
+  const trackPages: MetadataRoute.Sitemap = [
+    'mutual-funds', 'sif', 'pms', 'aif', 'gift-city', 'international', 'insurance',
+  ].map((track) => ({
+    url: `${BASE_URL}/learn/track/${track}`,
+    lastModified: now,
+    changeFrequency: 'weekly' as const,
+    priority: 0.85,
   }));
 
   // Learning module pages
@@ -126,7 +156,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE_URL}/funds/explore`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
     { url: `${BASE_URL}/funds/screener`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
     { url: `${BASE_URL}/funds/selection`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.7 },
+    { url: `${BASE_URL}/funds/portfolio-builder`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8 },
   ];
 
-  return [...staticPages, ...calculatorPages, ...researchPages, ...blogPages, ...financialPlanningPages, ...galleryPage, ...resourcePages, ...lifePlanPages, ...fundToolPages, ...modulePages];
+  // MFD tools — only the landing page and Trail Calculator are indexable.
+  // The 6 business-planning calcs (GST, LTV, cost-ratio, valuation, churn, NFO)
+  // remain noindex + robots-disallowed because they reveal granular MFD economics
+  // that could confuse or alienate investor clients stumbling in via search.
+  // Trail Calculator kept indexable so Ram's team can surface it easily during
+  // sub-broker onboarding conversations.
+  const mfdPages: MetadataRoute.Sitemap = [
+    { url: `${BASE_URL}/mfd`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.6 },
+    { url: `${BASE_URL}/mfd/trail-calculator`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.7 },
+  ];
+
+  return [...staticPages, ...calculatorPages, ...researchPages, ...blogPages, ...financialPlanningPages, ...galleryPage, ...resourcePages, ...lifePlanPages, ...fundToolPages, ...mfdPages, ...trackPages, ...modulePages];
 }

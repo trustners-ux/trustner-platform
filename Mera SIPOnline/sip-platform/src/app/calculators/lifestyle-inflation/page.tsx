@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils/cn';
 import { DISCLAIMER } from '@/lib/constants/company';
 import NumberInput from '@/components/ui/NumberInput';
 import DownloadPDFButton from '@/components/ui/DownloadPDFButton';
+import PersonalInfoBar from '@/components/ui/PersonalInfoBar';
 
 const COLORS = {
   income: '#059669',
@@ -64,6 +65,8 @@ function computeProjection(
 }
 
 export default function LifestyleInflationCalculatorPage() {
+  const [clientName, setClientName] = useState('');
+  const [clientAge, setClientAge] = useState<number | null>(35);
   const [monthlyIncome, setMonthlyIncome] = useState(100000);
   const [monthlyExpenses, setMonthlyExpenses] = useState(60000);
   const [incomeGrowth, setIncomeGrowth] = useState(8);
@@ -160,6 +163,15 @@ export default function LifestyleInflationCalculatorPage() {
             {/* Left: Inputs + Summary */}
             <div className="card-base p-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
               <h2 className="font-bold text-primary-700 mb-6 text-lg">Configure Inputs</h2>
+
+              <PersonalInfoBar
+                name={clientName}
+                onNameChange={setClientName}
+                age={clientAge}
+                onAgeChange={setClientAge}
+                ageLabel="Current Age"
+                namePlaceholder="e.g., Ram"
+              />
 
               <div className="space-y-6">
                 <NumberInput label="Current Monthly Income" value={monthlyIncome} onChange={setMonthlyIncome} prefix="₹" step={5000} min={10000} max={10000000} />
@@ -306,7 +318,7 @@ export default function LifestyleInflationCalculatorPage() {
               <div className="card-base p-6">
                 <div className="flex items-center justify-between mb-1">
                   <h3 className="font-bold text-primary-700">Income vs Expenses</h3>
-                  <DownloadPDFButton elementId="calculator-results" title="Lifestyle Inflation Calculator" fileName="lifestyle-inflation-calculator" />
+                  <DownloadPDFButton elementId="calculator-results" title="Lifestyle Inflation Calculator" fileName={`lifestyle-inflation-calculator${clientName ? `-${clientName.replace(/\s+/g, '-')}` : ''}`} />
                 </div>
                 <p className="text-sm text-slate-500 mb-6">Watch the gap between income and expenses over time ({effectiveLifestyleInflation}% lifestyle inflation)</p>
                 <div className="h-80">

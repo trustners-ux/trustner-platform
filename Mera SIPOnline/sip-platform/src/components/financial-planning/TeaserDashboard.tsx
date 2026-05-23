@@ -233,8 +233,8 @@ export default function TeaserDashboard({ data, userName, userEmail, tier = 'sta
           <div>
             <h3 className="text-base font-bold mb-1">Your Detailed Report is Being Reviewed!</h3>
             <p className="text-sm text-teal-100 mb-3">
-              Your comprehensive 10-page Financial Health Report with AI-powered personalized
-              recommendations is being reviewed by our expert team. It will be delivered to <strong className="text-white">{userEmail}</strong> shortly — our advisors personally review every report to ensure accuracy.
+              Your comprehensive 10-page Financial Health Report with AI-powered personalised
+              recommendations is being reviewed by our expert team. It will be delivered to <strong className="text-white">{userEmail}</strong> shortly — the Trustner team personally reviews every report to ensure accuracy.
             </p>
             <div className="text-xs text-teal-200">
               Includes: Net Worth Analysis • Retirement Gap • Insurance Check • Goal Planning • Action Plan

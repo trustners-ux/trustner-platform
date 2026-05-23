@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils/cn';
 import { DISCLAIMER } from '@/lib/constants/company';
 import NumberInput from '@/components/ui/NumberInput';
 import DownloadPDFButton from '@/components/ui/DownloadPDFButton';
+import PersonalInfoBar from '@/components/ui/PersonalInfoBar';
 
 const COLORS = {
   fd: '#0F766E',
@@ -25,6 +26,8 @@ const COLORS = {
 const TAX_BRACKETS = [0, 5, 10, 15, 20, 30];
 
 export default function FDvsLoanCalculatorPage() {
+  const [clientName, setClientName] = useState('');
+  const [clientAge, setClientAge] = useState<number | null>(35);
   // FD Details
   const [fdAmount, setFdAmount] = useState(1000000);
   const [fdRate, setFdRate] = useState(7);
@@ -162,6 +165,15 @@ export default function FDvsLoanCalculatorPage() {
           <div id="calculator-results" className="grid lg:grid-cols-[400px_1fr] gap-8">
             {/* Input Panel */}
             <div className="card-base p-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
+              <PersonalInfoBar
+                name={clientName}
+                onNameChange={setClientName}
+                age={clientAge}
+                onAgeChange={setClientAge}
+                ageLabel="Current Age"
+                namePlaceholder="e.g., Ram"
+              />
+
               {/* FD Details */}
               <h2 className="font-bold text-primary-700 mb-5 text-lg flex items-center gap-2">
                 <Landmark className="w-5 h-5 text-teal-600" /> FD Details
@@ -251,7 +263,7 @@ export default function FDvsLoanCalculatorPage() {
             {/* Charts & Analysis */}
             <div className="space-y-8">
               <div className="flex justify-end">
-                <DownloadPDFButton elementId="calculator-results" title="Break FD vs Take Loan Calculator" fileName="fd-vs-loan-calculator" />
+                <DownloadPDFButton elementId="calculator-results" title="Break FD vs Take Loan Calculator" fileName={`fd-vs-loan-calculator${clientName ? `-${clientName.replace(/\s+/g, '-')}` : ''}`} />
               </div>
 
               {/* Verdict Banner */}

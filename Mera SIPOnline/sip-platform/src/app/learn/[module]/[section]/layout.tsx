@@ -71,8 +71,8 @@ export default async function SectionLayout({ params, children }: Props) {
     url: `https://www.merasip.com/learn/${mod.slug}/${section.slug}`,
     author: {
       '@type': 'Person',
-      name: 'CFP Ram Shah',
-      jobTitle: 'Certified Financial Planner',
+      name: 'Ram Shah',
+      jobTitle: 'Founder & CEO',
       worksFor: {
         '@type': 'Organization',
         name: 'Trustner Asset Services Pvt. Ltd.',

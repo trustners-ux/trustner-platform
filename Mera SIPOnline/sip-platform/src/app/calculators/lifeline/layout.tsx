@@ -3,14 +3,14 @@ import { generateSEOMetadata, generateBreadcrumbSchema } from '@/lib/seo';
 import { calculatorSchemas } from '@/components/seo/CalculatorSchemas';
 
 export const metadata: Metadata = generateSEOMetadata({
-  title: 'Lifeline Financial Planner | CFP-Style Investment & Withdrawal Calculator',
+  title: 'Lifeline Investment Tool | Professional-Grade Investment & Withdrawal Calculator',
   description:
-    'Plan your complete financial lifeline like a Certified Financial Planner. Add SIPs, lump sum investments, SWP withdrawals, and one-time withdrawals at any year. The most comprehensive financial planning tool.',
+    'Plan your complete investment lifeline with this professional-grade tool. Add SIPs, lump sum investments, SWP withdrawals, and one-time withdrawals at any year. The most comprehensive investment planning tool on MeraSIP.',
   path: '/calculators/lifeline',
   keywords: [
     'lifeline calculator',
-    'CFP calculator',
-    'financial planner calculator',
+    'lifeline investment tool',
+    'investment planning calculator',
     'SIP SWP combined calculator',
     'lumpsum invest withdraw planner',
     'life stage investment calculator',
@@ -30,7 +30,7 @@ export default function LifelineLayout({
   const breadcrumb = generateBreadcrumbSchema([
     { name: 'Home', url: '/' },
     { name: 'Calculators', url: '/calculators' },
-    { name: 'Lifeline Financial Planner', url: '/calculators/lifeline' },
+    { name: 'Lifeline Investment Tool', url: '/calculators/lifeline' },
   ]);
   return (
     <>

@@ -8,9 +8,13 @@ interface FundReturnsTableProps {
   fund: LiveFundDetail;
 }
 
+// Returns from LiveFundDetail (calculatedReturns + enriched.returns) are stored
+// as decimal CAGR (e.g. 0.1349 = 13.49%). Multiply by 100 at display time —
+// matches the convention used by FundCard, TrustnerCategoryTable, etc.
 function formatReturn(val: number | null): string {
   if (val === null || val === undefined) return '--';
-  return `${val >= 0 ? '+' : ''}${val.toFixed(2)}%`;
+  const pct = val * 100;
+  return `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%`;
 }
 
 function returnColor(val: number | null): string {

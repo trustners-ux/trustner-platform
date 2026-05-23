@@ -131,35 +131,54 @@ export default function FundsPage() {
         </div>
       </section>
 
-      {/* Live Fund Explorer Banner */}
+      {/* Live Fund Explorer + Portfolio Builder Banners */}
       <section className="py-6 bg-surface-100">
-        <div className="container-custom">
-          <Link
-            href="/funds/explore"
-            className="block group"
-          >
-            <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-teal-600 via-teal-700 to-brand-700 p-6 sm:p-8 text-white shadow-md hover:shadow-lg transition-shadow">
+        <div className="container-custom grid md:grid-cols-2 gap-4">
+          <Link href="/funds/explore" className="block group">
+            <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-teal-600 via-teal-700 to-brand-700 p-6 text-white shadow-md hover:shadow-lg transition-shadow h-full">
               <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
-              <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
-                    <Sparkles className="w-6 h-6 text-white" />
+              <div className="relative z-10 flex flex-col h-full">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="w-5 h-5 text-white" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">
-                        New
-                      </span>
-                      <h3 className="text-lg font-extrabold">Live Fund Explorer</h3>
+                      <span className="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">Live Data</span>
+                      <h3 className="text-base font-extrabold">Live Fund Explorer</h3>
                     </div>
-                    <p className="text-sm text-teal-100 leading-relaxed max-w-lg">
-                      Search, compare, and analyze 37,000+ mutual fund schemes with real-time NAV data
+                    <p className="text-xs text-teal-100 leading-relaxed">
+                      Search 37,000+ schemes with real-time NAV. Click any fund for the full factsheet, NAV chart, and peer comparison.
                     </p>
                   </div>
                 </div>
-                <div className="inline-flex items-center gap-2 bg-white text-teal-700 text-sm font-bold px-5 py-2.5 rounded-lg group-hover:bg-teal-50 transition-colors flex-shrink-0">
-                  Explore Now
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                <div className="mt-auto inline-flex items-center gap-2 bg-white text-teal-700 text-xs font-bold px-4 py-2 rounded-lg group-hover:bg-teal-50 transition-colors w-fit">
+                  Explore Now <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                </div>
+              </div>
+            </div>
+          </Link>
+
+          <Link href="/funds/portfolio-builder" className="block group">
+            <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-rose-600 via-pink-600 to-violet-700 p-6 text-white shadow-md hover:shadow-lg transition-shadow h-full">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+              <div className="relative z-10 flex flex-col h-full">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">New</span>
+                      <h3 className="text-base font-extrabold">Model Portfolio Builder</h3>
+                    </div>
+                    <p className="text-xs text-pink-100 leading-relaxed">
+                      Build a multi-fund portfolio, set allocations, see weighted returns & SIP projection. Hand it off to your Trustner RM.
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-auto inline-flex items-center gap-2 bg-white text-rose-700 text-xs font-bold px-4 py-2 rounded-lg group-hover:bg-rose-50 transition-colors w-fit">
+                  Build Portfolio <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                 </div>
               </div>
             </div>

@@ -14,7 +14,7 @@ INSERT INTO employees (id, employee_code, name, email, phone, doj, designation, 
 (4, 'TIB003', 'Subhasish Kar', NULL, NULL, '2020-04-01', 'VP - Institutional Sales', 'Sales - GI', 120000, 'TIB', 1440000, 6, 'L3', 'Direct Sales', 6, 720000, 8640000, 192000, true),
 (5, 'TIB004', 'Rafiquddin Ahmed', NULL, NULL, '1988-01-01', 'Consultant — GI Team', 'Sales - GI', 80000, 'TIB', 960000, 38, 'L3', 'Direct Sales', 6, 480000, 5760000, 128000, true),
 -- L4 Area Manager / Branch Head
-(6, 'TAS002', 'Tamanna Somani', NULL, NULL, '2021-07-01', 'Head HNI Division', 'Sales - MF', 75000, 'TAS', 900000, 4.7, 'L4', 'Direct Sales', 6, 450000, 5400000, 120000, true),
+(6, 'TAS002', 'Tamanna Kejriwal', NULL, NULL, '2021-07-01', 'Head HNI Division', 'Sales - MF', 75000, 'TAS', 900000, 4.7, 'L4', 'Direct Sales', 6, 450000, 5400000, 120000, true),
 (7, 'TIB005', 'Raju Chakraborty', NULL, NULL, '2001-05-01', 'Regional Manager North East', 'Sales - CDM', 50000, 'TIB', 600000, 25, 'L4', 'CDM/POSP RM', 20, 1000000, 12000000, 80000, true),
 -- L5 Sr. RM / Team Leader
 (8, 'TIB006', 'Priya Sharma', NULL, NULL, '2022-03-15', 'Sr. RM - Life', 'Sales - Life', 45000, 'TIB', 540000, 4, 'L5', 'Direct Sales', 6, 270000, 3240000, 72000, true),
@@ -108,7 +108,7 @@ INSERT INTO business_entries (employee_id, month, product_id, raw_amount, produc
 (4, '2026-04', 5, 250000, 100, 0, 100, 100, 250000, false, 'ABC Corporation', 'New India', 'NIA-2026-108', 'approved', 4),
 (4, '2026-04', 17, 180000, 20, 0, 100, 50, 36000, false, 'XYZ Group', 'ICICI Lombard', 'ICL-GPA-2026-05', 'approved', 4),
 (4, '2026-04', 8, 95000, 100, 0, 100, 75, 71250, false, 'Fleet Motors', 'Bajaj Allianz', 'BAL-MV-2026-33', 'submitted', 4),
--- Tamanna Somani (HNI)
+-- Tamanna Kejriwal (HNI)
 (6, '2026-04', 13, 50000, 100, 0, 100, 50, 25000, false, 'HNI SIPs', NULL, NULL, 'approved', 6),
 (6, '2026-04', 14, 500000, 10, 0, 100, 50, 25000, false, 'Dr. Sharma', NULL, NULL, 'approved', 6),
 (6, '2026-04', 2, 75000, 100, 0, 100, 100, 75000, false, 'Amit Agarwal Family', 'Niva Bupa', 'NB-2026-099', 'approved', 6),

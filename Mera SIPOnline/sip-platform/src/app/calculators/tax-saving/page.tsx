@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils/cn';
 import { DISCLAIMER } from '@/lib/constants/company';
 import NumberInput from '@/components/ui/NumberInput';
 import DownloadPDFButton from '@/components/ui/DownloadPDFButton';
+import PersonalInfoBar from '@/components/ui/PersonalInfoBar';
 
 /* ── colour tokens ─────────────────────────────────────── */
 const COLORS = {
@@ -103,6 +104,8 @@ function UtilBar({ label, used, limit, color }: { label: string; used: number; l
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 export default function TaxSavingCalculatorPage() {
   /* ── state ───────────────────────────────────────────── */
+  const [clientName, setClientName] = useState('');
+  const [clientAge, setClientAge] = useState<number | null>(35);
   const [regime, setRegime] = useState<'old' | 'new'>('old');
   const [grossIncome, setGrossIncome] = useState(1200000);
 
@@ -291,6 +294,15 @@ export default function TaxSavingCalculatorPage() {
             <div className="card-base p-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
               <h2 className="font-bold text-primary-700 mb-6 text-lg">Configure Deductions</h2>
 
+              <PersonalInfoBar
+                name={clientName}
+                onNameChange={setClientName}
+                age={clientAge}
+                onAgeChange={setClientAge}
+                ageLabel="Current Age"
+                namePlaceholder="e.g., Ram"
+              />
+
               {/* Regime Toggle */}
               <div className="mb-6">
                 <label className="block text-[13px] font-semibold text-slate-600 mb-2">Tax Regime</label>
@@ -437,7 +449,7 @@ export default function TaxSavingCalculatorPage() {
               {/* PDF + heading */}
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-primary-700">Results</h3>
-                <DownloadPDFButton elementId="calculator-results" title="Tax Saving Calculator" fileName="tax-saving-calculator" />
+                <DownloadPDFButton elementId="calculator-results" title="Tax Saving Calculator" fileName={`tax-saving-calculator${clientName ? `-${clientName.replace(/\s+/g, '-')}` : ''}`} />
               </div>
 
               {/* New Regime Alert */}

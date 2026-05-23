@@ -60,7 +60,7 @@ const resources = [
   },
   {
     title: 'Blog',
-    description: 'Expert articles on SIP strategies, market analysis, tax planning, and fund selection. Written by CFP Ram Shah with real-world advisory experience.',
+    description: 'Expert articles on SIP strategies, market analysis, tax planning, and fund selection. Written by Ram Shah with real-world advisory experience.',
     href: '/blog',
     icon: Newspaper,
     gradient: 'from-blue-500 to-cyan-600',

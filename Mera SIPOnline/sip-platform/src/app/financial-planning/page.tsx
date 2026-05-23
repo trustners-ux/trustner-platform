@@ -67,7 +67,7 @@ const HOW_IT_WORKS = [
     step: 4,
     icon: Mail,
     title: 'Receive Your Report',
-    description: 'A detailed CFP-grade PDF report emailed to you instantly.',
+    description: 'A detailed professional-grade PDF report emailed to you instantly.',
   },
 ];
 
@@ -90,7 +90,7 @@ const TRUST_POINTS = [
   {
     icon: Cpu,
     title: 'Powered by Advanced AI',
-    description: 'CFP-grade analysis algorithms deliver institutional-quality insights.',
+    description: 'Professional-grade analysis algorithms deliver institutional-quality insights.',
   },
 ];
 
@@ -142,12 +142,12 @@ export default function FinancialPlanningPage() {
               </h1>
 
               <p className="text-base lg:text-lg text-slate-300 leading-relaxed max-w-xl mb-3 font-semibold">
-                India&apos;s First Free CFP-Grade Financial Health Assessment
+                India&apos;s First Free Professional-Grade Financial Health Assessment
               </p>
 
               <p className="text-base lg:text-lg text-slate-400 leading-relaxed max-w-xl mb-8">
                 Choose the depth of analysis that matches your needs — from a quick 5-minute health check
-                to a comprehensive financial blueprint rivaling what top CFPs charge &#8377;25,000+ for.
+                to a comprehensive financial blueprint — the kind of analysis that typically costs &#8377;25,000+.
               </p>
 
               {/* Tier Quick-Select */}

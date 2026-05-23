@@ -15,6 +15,9 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      // Default — DENY-locked for everything EXCEPT the PDF proxy below.
+      // Next.js applies header rules in declared order; later entries win
+      // on duplicate keys, so the carve-out below overrides this on its path.
       {
         source: '/(.*)',
         headers: [
@@ -38,6 +41,16 @@ const nextConfig: NextConfig = {
             key: 'Strict-Transport-Security',
             value: 'max-age=31536000; includeSubDomains',
           },
+        ],
+      },
+      // PDF proxy route — must come AFTER the broader rule so it overrides
+      // X-Frame-Options to SAMEORIGIN, letting the admin page's <iframe>
+      // render the PDF preview. Other security headers are preserved.
+      {
+        source: '/api/admin/reports/:id/pdf',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'Content-Security-Policy', value: "frame-ancestors 'self'" },
         ],
       },
     ];

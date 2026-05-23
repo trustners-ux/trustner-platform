@@ -1,35 +1,79 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { list, del } from '@vercel/blob';
-import { verifyToken, COOKIE_NAME } from '@/lib/auth/jwt';
-import { canAccess } from '@/lib/auth/config';
-import { cookies } from 'next/headers';
+import { canAccess, type AdminRole } from '@/lib/auth/config';
 
-// GET — list all gallery images from Vercel Blob
-export async function GET() {
+const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+const METADATA_PATH = 'gallery/metadata.json';
+
+interface GalleryMetadataEntry {
+  caption?: string;
+  category?: string;
+  objectPosition?: string;
+}
+
+function isImagePath(pathname: string): boolean {
+  const lower = pathname.toLowerCase();
+  return IMAGE_EXTENSIONS.some((ext) => lower.endsWith(ext));
+}
+
+/**
+ * Auth guard — trusts the `x-admin-role` header set by middleware after it
+ * validates either the admin-session JWT or the employee-session JWT.
+ *
+ * The previous implementation only checked the admin-session cookie, which
+ * meant editors logged in via the Employee Portal (issuing EMPLOYEE_COOKIE)
+ * were rejected with 401 even though middleware had already authenticated
+ * them.
+ */
+function requireRole(req: NextRequest, minRole: AdminRole): NextResponse | null {
+  const role = req.headers.get('x-admin-role') as AdminRole | null;
+  if (!role) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!canAccess(role, minRole)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+  return null;
+}
+
+// GET — list all gallery images from Vercel Blob (admin view)
+export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get(COOKIE_NAME)?.value;
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    const payload = await verifyToken(token);
-    if (!payload || !canAccess(payload.role, 'editor')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    const guard = requireRole(request, 'editor');
+    if (guard) return guard;
 
     // List blobs with gallery/ prefix
     const { blobs } = await list({ prefix: 'gallery/' });
 
-    const images = blobs.map((blob) => {
-      const filename = blob.pathname.split('/').pop() || blob.pathname;
-      // Extract category from filename pattern: category-timestamp.ext
-      const category = guessCategory(filename);
+    // Fetch metadata.json for caption/category enrichment
+    const metaBlob = blobs.find((b) => b.pathname === METADATA_PATH);
+    let metadata: Record<string, GalleryMetadataEntry> = {};
+    if (metaBlob) {
+      try {
+        const res = await fetch(metaBlob.url, { cache: 'no-store' });
+        if (res.ok) {
+          metadata = (await res.json()) as Record<string, GalleryMetadataEntry>;
+        }
+      } catch {
+        // ignore — fall back to filename-derived caption
+      }
+    }
 
+    const imageBlobs = blobs.filter(
+      (b) => b.pathname !== METADATA_PATH && isImagePath(b.pathname),
+    );
+
+    const images = imageBlobs.map((blob) => {
+      const filename = blob.pathname.split('/').pop() || blob.pathname;
+      const meta = metadata[blob.pathname] || {};
       return {
         filename: blob.pathname,
         src: blob.url,
-        caption: filename.replace(/\.[^.]+$/, '').replace(/[-_]\d+$/, '').replace(/[-_]/g, ' '),
-        category,
+        caption:
+          meta.caption?.trim() ||
+          filename.replace(/\.[^.]+$/, '').replace(/[-_]\d+$/, '').replace(/[-_]/g, ' '),
+        category: meta.category || guessCategory(filename),
+        objectPosition: meta.objectPosition || 'center',
         size: blob.size,
         uploadedAt: blob.uploadedAt.toISOString(),
       };
@@ -46,17 +90,10 @@ export async function GET() {
 }
 
 // DELETE — remove a specific image from Vercel Blob
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get(COOKIE_NAME)?.value;
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    const payload = await verifyToken(token);
-    if (!payload || !canAccess(payload.role, 'editor')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    const guard = requireRole(request, 'editor');
+    if (guard) return guard;
 
     const { url } = await request.json();
     if (!url) {
@@ -74,9 +111,11 @@ export async function DELETE(request: Request) {
 
 function guessCategory(filename: string): string {
   const lower = filename.toLowerCase();
+  if (lower.startsWith('team-moment')) return 'team-moments';
   if (lower.startsWith('team')) return 'team';
   if (lower.startsWith('event')) return 'events';
-  if (lower.startsWith('office')) return 'office';
+  if (lower.startsWith('office')) return 'office-life';
+  if (lower.startsWith('award')) return 'awards';
   if (lower.startsWith('milestone')) return 'milestones';
   return 'team';
 }

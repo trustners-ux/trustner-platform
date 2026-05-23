@@ -107,9 +107,9 @@ export const TIER_CONFIGS: TierDisplayConfig[] = [
   },
   {
     tier: 'comprehensive',
-    name: 'CFP-Grade Financial Blueprint',
+    name: 'Comprehensive Financial Blueprint',
     subtitle: 'Premium',
-    description: 'A complete financial blueprint with 5-year cashflow projection, tax optimization, and detailed family planning — on par with what top CFPs charge ₹25,000+ for.',
+    description: 'A complete financial blueprint with 5-year cashflow projection, tax optimization, and detailed family planning — on par with what top professionals charge ₹25,000+ for.',
     duration: '30 minutes',
     steps: 8,
     fields: 'All fields',
@@ -216,5 +216,5 @@ export const TIER_PDF_PAGES: Record<PlanTier, number> = {
 export const TIER_NARRATIVE_CONFIG: Record<PlanTier, { minWords: number; maxWords: number; tone: string }> = {
   basic: { minWords: 100, maxWords: 150, tone: 'encouraging and brief' },
   standard: { minWords: 250, maxWords: 350, tone: 'professional and thorough, 2nd person POV' },
-  comprehensive: { minWords: 500, maxWords: 700, tone: 'expert CFP-grade analysis, 2nd person POV, structured sections' },
+  comprehensive: { minWords: 500, maxWords: 700, tone: 'expert professional-grade analysis, 2nd person POV, structured sections' },
 };

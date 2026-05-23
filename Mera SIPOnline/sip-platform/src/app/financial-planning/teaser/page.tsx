@@ -11,7 +11,7 @@ import type { PlanTier } from '@/types/financial-planning-v2';
 const TIER_MESSAGE: Record<PlanTier, string> = {
   basic: 'Your Financial Health Check is ready! Here\'s your quick snapshot.',
   standard: 'Your Goal-Based Financial Plan has been submitted for expert review.',
-  comprehensive: 'Your CFP-Grade Financial Blueprint is being prepared by our team.',
+  comprehensive: 'Your Comprehensive Financial Blueprint is being prepared by our team.',
 };
 
 const STORAGE_KEY = 'fp-teaser-data';
@@ -86,7 +86,7 @@ export default function TeaserPage() {
               <div className="w-6 h-6 rounded-full bg-brand-50 flex items-center justify-center flex-shrink-0 mt-0.5">
                 <Clock className="w-3.5 h-3.5 text-brand-600" />
               </div>
-              <p className="text-sm text-slate-600">Our certified financial planners will review your report within 24 hours</p>
+              <p className="text-sm text-slate-600">Our team will review your report within 24 hours</p>
             </div>
             <div className="flex items-start gap-3">
               <div className="w-6 h-6 rounded-full bg-brand-50 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -130,7 +130,7 @@ export default function TeaserPage() {
               <div>
                 <h3 className="text-base font-bold text-amber-700 mb-1">Premium Plan</h3>
                 <p className="text-sm text-slate-600">
-                  You&apos;ve selected our most comprehensive plan. Our CFP team will prepare your full 16-page blueprint.
+                  You&apos;ve selected our most comprehensive plan. Our team will prepare your full 16-page blueprint.
                 </p>
               </div>
             </div>

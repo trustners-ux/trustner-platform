@@ -74,6 +74,7 @@ export const ADMIN_NAV = [
   { label: 'Market Pulse', href: '/admin/market', icon: 'BarChart3', role: 'editor' as AdminRole },
   { label: 'Leads', href: '/admin/leads', icon: 'Users', role: 'editor' as AdminRole },
   { label: 'Reports', href: '/admin/reports', icon: 'FileCheck', role: 'editor' as AdminRole },
+  { label: 'Portfolio Diagnostic', href: '/admin/portfolio-diagnostic', icon: 'ClipboardList', role: 'editor' as AdminRole },
   { label: 'Gallery', href: '/admin/gallery', icon: 'Image', role: 'editor' as AdminRole },
   { label: 'Approvals', href: '/admin/approvals', icon: 'ClipboardCheck', role: 'admin' as AdminRole },
   { label: 'MIS Dashboard', href: '/admin/mis', icon: 'BarChart3', role: 'admin' as AdminRole },

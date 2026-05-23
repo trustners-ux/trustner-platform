@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils/cn';
 import { DISCLAIMER } from '@/lib/constants/company';
 import NumberInput from '@/components/ui/NumberInput';
 import DownloadPDFButton from '@/components/ui/DownloadPDFButton';
+import PersonalInfoBar from '@/components/ui/PersonalInfoBar';
 
 const COLORS = {
   buying: '#0F766E',
@@ -21,6 +22,8 @@ const COLORS = {
 };
 
 export default function RentVsBuyCalculatorPage() {
+  const [clientName, setClientName] = useState('');
+  const [clientAge, setClientAge] = useState<number | null>(35);
   const [propertyPrice, setPropertyPrice] = useState(8000000);
   const [downPaymentPct, setDownPaymentPct] = useState(20);
   const [loanRate, setLoanRate] = useState(8.5);
@@ -219,6 +222,15 @@ export default function RentVsBuyCalculatorPage() {
             <div className="card-base p-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
               <h2 className="font-bold text-primary-700 mb-6 text-lg">Configure Scenario</h2>
 
+              <PersonalInfoBar
+                name={clientName}
+                onNameChange={setClientName}
+                age={clientAge}
+                onAgeChange={setClientAge}
+                ageLabel="Current Age"
+                namePlaceholder="e.g., Ram"
+              />
+
               <div className="space-y-5">
                 <NumberInput label="Property Price" value={propertyPrice} onChange={setPropertyPrice} prefix="₹" step={500000} min={1000000} max={500000000} />
                 <NumberInput label="Down Payment" value={downPaymentPct} onChange={setDownPaymentPct} suffix="%" step={5} min={0} max={100} />
@@ -308,7 +320,7 @@ export default function RentVsBuyCalculatorPage() {
             <div className="space-y-8">
               {/* Download Button */}
               <div className="flex justify-end">
-                <DownloadPDFButton elementId="calculator-results" title="Rent vs Buy Calculator" fileName="rent-vs-buy-calculator" />
+                <DownloadPDFButton elementId="calculator-results" title="Rent vs Buy Calculator" fileName={`rent-vs-buy-calculator${clientName ? `-${clientName.replace(/\s+/g, '-')}` : ''}`} />
               </div>
 
               {/* ── Verdict Banner ── */}

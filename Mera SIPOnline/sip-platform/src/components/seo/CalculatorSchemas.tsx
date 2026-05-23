@@ -78,8 +78,8 @@ export const calculatorSchemas: Record<string, object> = {
     'life-stage',
   ),
   lifeline: buildCalculatorSchema(
-    'Lifeline Financial Planner',
-    'Plan your complete financial lifeline like a CFP. Add SIPs, lump sum investments, SWP withdrawals, and one-time withdrawals at any year of your planning horizon.',
+    'Lifeline Investment Tool',
+    'Plan your complete investment lifeline with this professional-grade tool. Add SIPs, lump sum investments, SWP withdrawals, and one-time withdrawals at any year of your planning horizon.',
     'lifeline',
   ),
   'daily-sip': buildCalculatorSchema(
@@ -157,6 +157,31 @@ export const calculatorSchemas: Record<string, object> = {
     'Calculate your Human Life Value (HLV) based on income, expenses, liabilities, and future goals. Find out exactly how much life insurance coverage you need to protect your family.',
     'human-life-value',
   ),
+  'critical-illness': buildCalculatorSchema(
+    'Critical Illness & Disability Cover Planner',
+    'Size your critical illness cover based on real treatment costs (cancer, heart, kidney, stroke), income disruption during recovery, and existing policies. Get age-based premium estimates and a quantified CI gap analysis.',
+    'critical-illness',
+  ),
+  'mf-vs-ulip': buildCalculatorSchema(
+    'Mutual Fund vs ULIP Calculator',
+    'Compare the same premium going into a typical ULIP vs Term Insurance + Mutual Fund SIP over 20 years. See how allocation, FMC, admin, and mortality charges erode ULIP compounding.',
+    'mf-vs-ulip',
+  ),
+  'ulip-irr': buildCalculatorSchema(
+    'ULIP IRR Analyzer',
+    'Decode your ULIP\'s real IRR after all four charges — allocation, FMC, admin, and mortality. Year-by-year NAV erosion, charges breakdown, surrender value projection, and MF + Term alternative comparison.',
+    'ulip-irr',
+  ),
+  'ppf-vs-elss-vs-nps': buildCalculatorSchema(
+    'PPF vs ELSS vs NPS Calculator',
+    'Honest Section 80C showdown over 15–40 years. Compare PPF (EEE, 7.1%), ELSS (equity 12%, LTCG-taxed), and NPS (60% lump tax-free + 40% annuity). See post-tax corpus, tax savings, and the Smart Mix blend.',
+    'ppf-vs-elss-vs-nps',
+  ),
+  'child-education': buildCalculatorSchema(
+    'Child Education Planner',
+    'Plan your child\'s higher education with real cost projections for IIT, MBBS, MBA, and abroad studies. Calculate the monthly SIP needed, factor in education inflation, and compare flat vs step-up SIP scenarios.',
+    'child-education',
+  ),
   'rent-vs-buy': buildCalculatorSchema(
     'Rent vs Buy Calculator',
     'Compare the total cost of renting vs buying a house over your time horizon. Find the break-even year, factor in appreciation, rent increases, and opportunity cost.',
@@ -191,5 +216,10 @@ export const calculatorSchemas: Record<string, object> = {
     'Term Plan Regular Pay + SIP vs Limited Pay Calculator',
     'Unique calculator proving Regular Pay Term Plan + SIP beats Limited Pay. See how premium savings invested in SIP can fund future premiums and create a bonus corpus at maturity.',
     'term-plan-sip',
+  ),
+  'marriage-planner': buildCalculatorSchema(
+    'Marriage Planner',
+    'Plan a wedding (son or daughter) with gold-inflation-aware projections. Estimate future wedding costs, compare Equity SIP vs Sovereign Gold Bond allocation, and find the monthly SIP needed with fixed-\u20b9 or percentage annual step-up.',
+    'marriage-planner',
   ),
 };

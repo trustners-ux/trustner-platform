@@ -7,17 +7,226 @@ export const blogPosts: BlogPost[] = [
   // ───────────────────────────── POST 79 ────────────────────────────
   {
     id: 'post-079',
-    title: 'Monday Crash to Mid-Week Recovery: Nifty Loses 2.2% as IT Hits 52-Week Lows, Brent Surges to $109',
-    slug: 'weekly-market-brief-issue-11-may-10-16-2026-monday-crash-it-lows-brent-109-fii-outflow-record',
+    title: 'Stop, Redeem, or Increase? What History Teaches Indian SIP Investors About Investing Through a VUCA World',
+    slug: 'vuca-world-investing-stop-redeem-or-increase-what-history-teaches-sip-investors-india',
     excerpt:
-      'Indian equities snapped their two-week winning run with a brutal -2.2% weekly decline. Nifty 50 fell from 24,176.15 to 23,643.50 (-532.65 pts) and Sensex from 77,328 to 75,238 (-2,090 pts / -2.7%). Monday May 12 was the defining session — Sensex crashed 1,500 pts, IT stocks hit 52-week lows on OpenAI\'s $4B deployment venture, and the rupee touched a lifetime low of ~₹95.7. A sharp Wednesday recovery (+789 pts Sensex, +277 pts Nifty) proved the sell-off was sentiment-driven. Brent surged to ~$109/bbl as Trump called the Iran ceasefire "on massive life support". FII YTD outflows hit ₹1.92 lakh crore — eclipsing full 2025 outflows. April SIP flows steady at ₹31,115 crore.',
+      'Monday May 12 was the kind of session that breaks investors. The Sensex crashed roughly 1,500 points, IT stocks plunged to 52-week lows on OpenAI\'s $4 billion enterprise deployment venture, the rupee touched a lifetime low of approximately ₹95.7, and around ₹10-16 lakh crore of investor wealth was wiped in just four trading sessions. By Wednesday, the Sensex had rallied 789 points and the Nifty had recovered +1.18% to 23,689.60. Friday closed the Nifty at 23,643.50 — down only 2.2% for the week. Every WhatsApp group, every newsroom, every Zerodha terminal asked the same three questions in different words: should I STOP my SIP, REDEEM my equity, or INCREASE my contribution? Volatile. Uncertain. Complex. Ambiguous. Welcome to VUCA. Welcome to investing. The honest answer to "stop, redeem, or increase" is the same answer Indian SIP data has given through every crisis since 2003. Here is what 23 years of evidence say, and what your portfolio should actually do this Monday morning.',
+    author: AUTHOR,
+    date: '2026-05-17',
+    category: 'SIP Strategy',
+    readTime: '13 min read',
+    tags: ['VUCA', 'SIP discipline', 'market correction', 'redemption psychology', 'behavioural finance', 'Buffett crashes', '2008 crisis', '2020 COVID', 'past learnings', 'top-up', 'asset allocation', 'flexi-cap', 'small cap', 'long-term investing', 'MFD coaching', 'May 2026', 'Brent crisis', 'Iran ceasefire'],
+    featured: true,
+    coverGradient: 'from-slate-900 to-amber-800',
+    content: [
+      {
+        type: 'paragraph',
+        text: 'If you were watching your terminal at 10:15 AM on Monday May 12, 2026, you saw something close to a financial panic in real time. The Sensex was down roughly 1,500 points. Infosys and TCS were carving fresh 52-week lows after OpenAI announced a $4 billion enterprise deployment venture that markets read — wrongly, in our view, but powerfully — as a structural threat to the entire Indian IT services industry. The rupee touched a lifetime low of approximately ₹95.7. FIIs were dumping. Brent had ticked back above $100. Somewhere between ₹10 lakh crore and ₹16 lakh crore of investor wealth was wiped in just four trading sessions from the prior Friday\'s close. WhatsApp groups lit up. Television anchors switched to red. Retail investors began typing the words "redeem" and "stop SIP" into their broker apps.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Forty-eight hours later, on Wednesday May 14, the same indices put on one of the sharpest single-day recoveries of 2026. The Sensex rallied +789 points. The Nifty closed at 23,689.60, up +277 points (+1.18%). Pharma surged +2.74%, IT itself rebounded +2.2%, and FIIs — yes, the same FIIs who had been selling all week — turned net buyers at ₹187 crore. By Friday close, the Nifty was at 23,643.50, down just 2.2% for the entire week. The headline-screaming-crash and the actual outcome were two very different things.',
+      },
+      {
+        type: 'paragraph',
+        text: 'That gap — between what the headlines made it feel like and what the portfolio actually did — is the gap where most retail wealth is destroyed. Not on the day of the crash. In the days after, when the temptation to "do something" becomes overwhelming and rational long-term investors press buttons they will regret for a decade.',
+      },
+
+      {
+        type: 'callout',
+        variant: 'info',
+        text: 'VUCA stands for Volatile, Uncertain, Complex, Ambiguous. It is a framework coined by the US Army War College in the early 1990s to describe the post-Cold War strategic environment — a world where the old playbooks of Cold War deterrence no longer applied, where threats came from many directions at once, and where leaders had to make decisions without complete information. For investors, VUCA describes exactly what Monday May 12 felt like: prices moving fast (volatile), future direction unknowable (uncertain), multiple simultaneous causes — Iran ceasefire wobbling, oil back above $100, OpenAI threatening IT, FII flows turning, rupee at lifetime low (complex), and market reactions that could be read either as a buying opportunity or the start of something worse (ambiguous). VUCA is not a special condition of 2026. VUCA is the permanent operating environment of equity markets. Once you accept that, the right behavioural response becomes much simpler.',
+      },
+
+      {
+        type: 'heading',
+        text: 'The Question Every SIP Investor Is Asking This Week',
+      },
+      {
+        type: 'paragraph',
+        text: 'In the conversations we have had with Trustner clients across the past five trading days, the question has arrived in three different forms — but they are all the same question. Should I STOP my SIPs and wait out the volatility? Should I REDEEM my equity now and move to safety? Or should I INCREASE my contribution and TOP UP into this dip while units are cheaper? All three feel reasonable in different parts of the brain. The "stop" voice is the protective parent voice — let us not lose what we have built. The "redeem" voice is the trauma voice — let us not feel this pain again. The "increase" voice is the opportunist voice — Buffett said be greedy when others are fearful, so let us be greedy.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Here is the inconvenient truth: history has tested all three responses through every Indian market crisis of the past 23 years. The data is unambiguous about which one builds wealth and which two destroy it. The data is also unambiguous that the answer is not the same for every investor — it depends on your specific situation, not on the Nifty\'s mood. That is the single most important sentence in this article, and we will come back to it.',
+      },
+
+      {
+        type: 'heading',
+        text: 'What Past Indian Crises Actually Did to Disciplined SIP Investors',
+      },
+      {
+        type: 'table',
+        rows: [
+          ['Crisis', 'Nifty Drawdown', 'Months to Recover', '10-Year SIP IRR (from start of crisis)'],
+          ['2008 Global Financial Crisis', '-52%', '24 months', '~14.5% p.a.'],
+          ['2011 EU Debt + India scams', '-28%', '14 months', '~12.8% p.a.'],
+          ['2015-16 Yuan Devaluation', '-22%', '16 months', '~11.4% p.a.'],
+          ['2020 COVID Crash', '-38%', '9 months', '~16.2% p.a.'],
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'Every single one of these crises felt terminal in real time. In October 2008, serious analysts were writing that the Indian growth story was over. In August 2011, "double dip recession" was a daily headline. In February 2016, Yuan devaluation was supposed to break global markets. In March 2020, COVID was being compared to the 1918 Spanish flu and the 1929 Depression simultaneously. And every single one of these rewarded patience. Every single one rewarded the disciplined SIP investor who simply did nothing. That is not survivorship bias. That is the long-term mathematical reality of investing in a 9-11% nominal GDP economy.',
+      },
+
+      {
+        type: 'subheading',
+        text: 'The 2008 Lesson',
+      },
+      {
+        type: 'paragraph',
+        text: 'The Nifty fell from approximately 6,357 in January 2008 to approximately 2,524 by October 2008 — a -60% drawdown peak-to-trough on the index itself. Investors who held their nerve during 2008 are today wealthier than they ever imagined. Investors who stopped their SIPs in October 2008 because "things will get worse before they get better" missed the entire recovery and most of the subsequent decade-long bull run.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Consider the actual math: a ₹10,000/month SIP started in January 2008, continued without interruption through the 2008 crash, the 2009 recovery, and held until December 2017, was worth approximately ₹39 lakh on a cumulative investment of ₹12 lakh — about 3.3x your money. The same ₹10,000/month SIP, started in January 2008 but stopped in October 2008 at the bottom and resumed only in January 2010 once "things looked safe," was worth only approximately ₹24 lakh on the same horizon. The 18-month gap of "waiting for safety" cost roughly 40% of the final corpus. Not because of bad fund selection. Because of behavioural cowardice during exactly the months when units were on sale.',
+      },
+
+      {
+        type: 'subheading',
+        text: 'The 2020 COVID Lesson',
+      },
+      {
+        type: 'paragraph',
+        text: 'The Nifty fell from 12,201 on January 14, 2020 to 7,610 on March 23, 2020 — a -38% crash in nine weeks. There has been no faster equity-market dislocation in modern Indian history. By November 2020, just over seven months later, the Nifty was back above 13,000 and making fresh all-time highs. Investors who panic-redeemed near the March 23 bottom realised approximately a -38% loss on the equity portion of their portfolios. Investors who held — and crucially, continued their SIPs through the crash — saw the entire drawdown reverse in nine months and the corpus grow another 22% over the subsequent 18 months.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The most remarkable data point from that period is buried in AMFI\'s monthly bulletin: SIP registrations hit an all-time high in May 2020, the very month when equity NAVs were at multi-year lows. Millions of disciplined Indians — many of them new investors who had never seen a crash before — understood the assignment. They were not buying the dip with lump sums. They were doing something more powerful: they were starting new SIPs at low NAVs that would compound for decades. Those SIPs registered in May 2020 are today some of the highest-IRR cohorts in the AMFI database.',
+      },
+
+      {
+        type: 'subheading',
+        text: 'What This Week\'s Data Already Shows',
+      },
+      {
+        type: 'paragraph',
+        text: 'Roll the tape forward to May 2026, and the same pattern is already visible in real time. Three data points worth memorising:',
+      },
+      {
+        type: 'list',
+        items: [
+          'April 2026 SIP flows came in at ₹31,115 crore (vs March ₹32,087 Cr) — a near-flat print despite all the volatility of the prior weeks. The structural floor of monthly SIP contribution is INTACT.',
+          'DIIs have absorbed approximately 90% of FII selling YTD — DII inflows of ₹1.7 lakh crore against FII outflows of ₹1.92 lakh crore. The rupee, the oil price, the OpenAI scare — none of it has broken the domestic-flow story.',
+          'Wednesday May 14\'s +1.18% Nifty recovery was driven primarily by DII buying at exactly the moment FIIs were still selling. The "domestic floor" is not a hope or a thesis. It is the observable mechanical reality of how Indian equities are now priced.',
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'If you stopped your SIP last Monday because the headlines scared you, you are not in a position of safety. You are in a position of regret — because you have stepped out of the very flow that is currently absorbing record FII selling and pricing the market.',
+      },
+
+      {
+        type: 'callout',
+        variant: 'tip',
+        text: 'If you stopped your SIP last Monday because the headlines scared you, you sold yourself units of your own future at a discount and gave them to someone more disciplined. That is the entire mechanic of wealth transfer in equity markets — patience always buys panic out. There is no other formula. The Buffetts and Mungers of the world are not smarter than you. They are simply less easily scared.',
+      },
+
+      {
+        type: 'heading',
+        text: 'So — Stop, Redeem, or Increase? The CFP-Grade Answer',
+      },
+      {
+        type: 'table',
+        rows: [
+          ['Action', 'When It Makes Sense', 'When It Destroys Wealth'],
+          ['STOP SIP', 'Only if income has fallen permanently or emergency fund is depleted', 'If you are stopping because of a 2-5% Nifty drop'],
+          ['REDEEM equity', 'Only if goal is < 24 months away or asset allocation is breaking from target', 'If you are redeeming because headlines feel scary'],
+          ['INCREASE/Top up', 'If you have surplus cash that will not be needed for 5+ years AND existing allocation is within target', 'Never if it forces you to dip into emergency fund or take debt'],
+        ],
+      },
+      {
+        type: 'paragraph',
+        text: 'Notice the framing carefully. The right action is determined by YOUR situation — your income, your emergency fund, your asset allocation, your time horizon for each goal — not by the market. This is the single most important sentence in this article. Two investors looking at the same Monday May 12 headline should arrive at different decisions based on whether their emergency fund is full, whether their equity allocation is above or below target, and whether their nearest goal is 6 months or 16 years away. The market is the same for everyone. The right response is personal.',
+      },
+
+      {
+        type: 'subheading',
+        text: 'The Practical Playbook for the Week of May 18, 2026',
+      },
+      {
+        type: 'list',
+        items: [
+          'DO continue every existing flexi-cap, multi-cap, mid-cap, and small-cap SIP without changing the SIP date or amount. Discipline is the entire edge.',
+          'DO check your emergency fund — target 6 months of household expenses parked in liquid funds or short-duration debt. If you are below 6 months, top THAT up first before making any equity decision.',
+          'DO check your asset allocation. If equity is now BELOW your target band — because the -2.7% Sensex drop pushed you below your equity weight — this is a textbook natural rebalancing opportunity. Move money from your debt sleeve to equity until you are back on target.',
+          'DON\'T redeem equity to "wait for clarity." Clarity is always a story we tell ourselves AFTER the recovery has already happened. There is no announcement, no headline, no expert who rings a bell at the bottom.',
+          'DON\'T panic-buy small-cap funds just because they are "down" — small cap is still up significantly from the start of 2026. Match cap exposure to time horizon, not to which segment looks cheap on the screen today.',
+          'DO call your Trustner Relationship Manager if you find yourself reaching for the redemption button. That conversation is what your trail commission is paying for, and it has saved more long-term wealth than any specific scheme recommendation ever has.',
+        ],
+      },
+
+      {
+        type: 'heading',
+        text: 'What MFDs Know That Direct-Plan Investors Often Miss',
+      },
+      {
+        type: 'paragraph',
+        text: 'There is a quietly remarkable behavioural divergence visible in industry data from this week. On the direct-plan platforms — Zerodha Coin, Groww direct, Kuvera and others — redemption requests on Monday May 12 spiked sharply, with several platforms reporting their highest single-day redemption volumes of 2026. On the MFD-distributed regular-plan side, redemption rates were muted. The same underlying schemes. The same NAVs. Two very different investor behaviours.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The difference is not intelligence. Direct-plan investors are typically younger, more digital-native, and often more financially literate on paper. The difference is the phone call. The phone call that the MFD makes — or the email, or the WhatsApp — at exactly the moment the investor is reaching for the redemption button. That call is the trail commission in action. It is, in our experience after watching thousands of clients through three full crisis cycles, worth multiples of its cost for 80%+ of investors. Yes, regular plans carry a slightly higher Total Expense Ratio. They also carry a behavioural-coaching relationship that, on a Monday like May 12, is worth more than any TER difference could ever be.',
+      },
+      {
+        type: 'paragraph',
+        text: 'This is not an argument against direct plans as a concept. They are a legitimate choice for the small minority of investors who are genuinely behavioural-stoic, who do not need a human in the loop, who can watch a 1,500-point crash without flinching. For everyone else — and that is most of us — the trail commission is the cheapest behavioural insurance ever invented. We say that not as a sales pitch but as the honest summary of three crisis cycles of observation.',
+      },
+
+      {
+        type: 'subheading',
+        text: 'A Note on Brent, Rupee, and the Macro Volatility',
+      },
+      {
+        type: 'paragraph',
+        text: 'Yes — Brent back at approximately $109/bbl after Trump\'s "on massive life support" comment on the Iran ceasefire is a real concern. Yes — the rupee at a lifetime low of approximately ₹95.7 is a real concern. These are not made-up worries. They have real transmission to corporate earnings, current account deficit, and RBI policy room. But these are macro variables that swing in BOTH directions. Brent was $126 three weeks ago, $101 last week, $109 this week. Trying to time SIPs to oil prices is a fool\'s errand because oil itself does not know where it is going from week to week.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The only macro variable that genuinely matters for a 10+ year SIP horizon is India\'s nominal GDP growth — which has been 9-11% for two decades, is currently still in that band, and is broadly expected to remain there. Everything else is noise of varying volumes. Once you internalise that, the Monday May 12 panic becomes a kind of background hum rather than a portfolio-altering event.',
+      },
+
+      {
+        type: 'summary',
+        summaryTitle: 'The Five Things to Remember',
+        items: [
+          'VUCA is not new — Indian markets have delivered 12%+ SIP IRR through every major crisis from 2008 to 2020. The pattern is consistent. Volatility is the price you pay for the return.',
+          'The Monday May 12 crash was already 1.18% recovered by Wednesday. Headline panic does not equal portfolio panic. The two clocks run at very different speeds.',
+          'The right action depends on YOUR situation — emergency fund status, asset allocation drift, time horizon for each goal — not on the Nifty\'s mood.',
+          'Stop SIPs only on permanent income loss. Redeem only if your goal is less than 2 years away. Top up only with truly surplus cash AND a 5+ year horizon. Everything else is noise dressed up as conviction.',
+          '₹31,115 crore April SIP is the structural floor that is absorbing nearly all FII selling. You are part of that floor. Keep going. The floor holds because each of us holds.',
+        ],
+      },
+
+      {
+        type: 'cta',
+        text: 'Talking to your Trustner Relationship Manager during a week like this is exactly what your trail commission is paying for. Book a 30-minute portfolio sanity check — emergency fund review, asset allocation drift check, and a calm second opinion before you press any buttons.',
+        buttonText: 'Book a Portfolio Review',
+        buttonHref: '/contact?topic=Portfolio-Sanity-Check',
+      },
+
+      {
+        type: 'disclaimer',
+        text: 'Mutual fund investments are subject to market risks. Read all scheme-related documents carefully before investing. Past performance is not indicative of future returns. The historical drawdown and recovery figures cited in this post are estimates compiled from publicly reported AMFI, BSE, and NSE data and may vary by source and by exact calculation methodology — they are intended to illustrate behavioural patterns over multiple market cycles, not to guarantee any specific outcome. Trustner Asset Services Pvt Ltd is an AMFI-registered Mutual Fund Distributor (ARN-286886) and earns trail commission on regular plans of mutual fund schemes. Tax treatment depends on individual circumstances; consult a qualified tax advisor for personal applicability.',
+      },
+    ],
+  },
+
+  // ───────────────────────────── POST 80 ────────────────────────────
+  {
+    id: 'post-080',
+    title: 'Sensex -1,500 on Monday, Nifty Recovers by Wednesday — Issue 11 Decodes a Brutal Week',
+    slug: 'weekly-market-brief-issue-11-may-10-16-2026-monday-crash-it-meltdown-iran-ceasefire-fragile',
+    excerpt:
+      'Two consecutive weekly gains ended brutally on Monday May 12 with the Sensex crashing roughly 1,500 points, IT stocks hitting 52-week lows on OpenAI\'s $4 billion deployment venture announcement, and the rupee touching a lifetime low of approximately ₹95.7. By Wednesday, the market had recovered most of it — Sensex +789 pts, Nifty +1.18% to 23,689.60 — proving the V-shape pattern that has defined every domestic-flow-driven correction since 2023. Nifty closed the week at 23,643.50 (-2.2% WoW), Sensex at 75,238 (-2.7%). Brent surged to ~$109/bbl as Trump called the Iran ceasefire "on massive life support". FII YTD outflows of ₹1.92 lakh crore now eclipse the full 2025 figure of ₹1.66 lakh crore — yet DIIs absorbed approximately 90% of that selling, and the April SIP print of ₹31,115 crore confirms the structural floor remains intact.',
     author: AUTHOR,
     date: '2026-05-17',
     category: 'Market Analysis',
     readTime: '9 min read',
-    tags: ['weekly market brief', 'Issue 11', 'Nifty 50', 'Sensex', 'Brent crude', 'Iran ceasefire', 'IT 52-week low', 'OpenAI', 'TCS', 'Infosys', 'rupee lifetime low', 'FII outflow record', 'DII inflows', 'Tata Motors Q4', 'SIP flows', 'May 2026'],
+    tags: ['weekly market brief', 'Issue 11', 'Monday crash', 'Sensex 1500 points', 'IT 52-week lows', 'TCS', 'Infosys', 'OpenAI $4 billion', 'Brent $109', 'rupee lifetime low', 'Iran ceasefire', 'FII outflows', 'DII inflows', 'April SIP 31115 crore', 'May 2026'],
     featured: true,
-    coverGradient: 'from-red-900 to-slate-800',
+    coverGradient: 'from-rose-900 to-slate-900',
     content: [
       {
         type: 'paragraph',
@@ -1015,7 +1224,7 @@ export const blogPosts: BlogPost[] = [
 
       {
         type: 'cta',
-        text: 'Trustner Asset Services is empanelled with the leading SIF launching AMCs. If you are an HNI investor exploring whether SIF fits your financial plan — and which strategy makes sense for your tax bracket, time horizon, and existing portfolio — talk to our advisory team.',
+        text: 'Trustner Asset Services is empanelled with the leading SIF launching AMCs. If you are an HNI investor exploring whether SIF fits your financial plan — and which strategy makes sense for your tax bracket, time horizon, and existing portfolio — reach out to the Trustner team for a suitability review.',
         buttonText: 'Schedule an SIF Suitability Review',
         buttonHref: '/contact?topic=SIF-Advisory',
       },

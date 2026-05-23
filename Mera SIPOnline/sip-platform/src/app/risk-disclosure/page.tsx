@@ -139,8 +139,8 @@ export default function RiskDisclosurePage() {
 
           <h2>Distributor Information</h2>
           <p>
-            {COMPANY.mfEntity.name} is an {COMPANY.mfEntity.type} ({COMPANY.mfEntity.amfiArn},
-            EUIN: {COMPANY.mfEntity.euin}). CIN: {COMPANY.mfEntity.cin}.
+            {COMPANY.mfEntity.name} is an {COMPANY.mfEntity.typeExtended} ({COMPANY.mfEntity.amfiArn}).
+            CIN: {COMPANY.mfEntity.cin}.
             Registered Office: {COMPANY.address.full}.
           </p>
           <p>

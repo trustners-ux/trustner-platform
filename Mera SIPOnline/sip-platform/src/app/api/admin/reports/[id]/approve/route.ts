@@ -64,8 +64,8 @@ export async function POST(
           claudeNarrative: entry.editedNarrative,
         };
         pdfBuffer = generateFinancialReport(fullReport, planningData, entry.userName);
-        // Upload new PDF
-        const newPdfUrl = await updateReportPdf(id, pdfBuffer);
+        // Upload new PDF — versioned path to bypass CDN cache on overwrites
+        const newPdfUrl = await updateReportPdf(id, pdfBuffer, `v${entry.narrativeVersion + 1}-approve-${Date.now()}`);
         await updateReportEntry(id, { pdfBlobUrl: newPdfUrl });
         console.log(`[Approve] New PDF uploaded for ${id}`);
       }

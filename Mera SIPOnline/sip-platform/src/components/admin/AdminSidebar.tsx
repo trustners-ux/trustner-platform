@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, TrendingUp, FileText, BarChart3, BarChart2, Users, UsersRound, Settings,
   ChevronLeft, ChevronRight, X, Image as ImageIcon, FileCheck, UserCog,
-  ClipboardCheck, ScrollText, FileSpreadsheet, Percent, GraduationCap,
+  ClipboardCheck, ClipboardList, ScrollText, FileSpreadsheet, Percent, GraduationCap,
   Shield, ShieldCheck, Car,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
@@ -14,7 +14,7 @@ import { canAccess, ADMIN_NAV, type AdminRole } from '@/lib/auth/config';
 
 const ICON_MAP: Record<string, React.ElementType> = {
   LayoutDashboard, TrendingUp, FileText, BarChart3, BarChart2, Users, UsersRound, Settings,
-  Image: ImageIcon, FileCheck, UserCog, ClipboardCheck, ScrollText, FileSpreadsheet, Percent, GraduationCap,
+  Image: ImageIcon, FileCheck, UserCog, ClipboardCheck, ClipboardList, ScrollText, FileSpreadsheet, Percent, GraduationCap,
   Shield, ShieldCheck, Car,
 };
 

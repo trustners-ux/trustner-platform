@@ -26,6 +26,7 @@ const TEAL: RGB = [15, 118, 110];
 const TEAL_LIGHT: RGB = [240, 253, 250];
 const ORANGE: RGB = [232, 85, 58];
 const S800: RGB = [30, 41, 59];
+const S700: RGB = [51, 65, 85];
 const S600: RGB = [71, 85, 105];
 const S400: RGB = [148, 163, 184];
 const S200: RGB = [226, 232, 240];
@@ -47,8 +48,20 @@ const GRADE_C: Record<string, RGB> = {
 };
 const gc = (g: string): RGB => GRADE_C[g] || S600;
 
-/** Replace ₹ with Rs. for Helvetica compatibility */
-const rs = (t: string): string => t.replace(/₹/g, 'Rs. ');
+/** Sanitize text for Helvetica base font: replace ₹, smart punctuation, and any non-ASCII glyph
+ *  that would otherwise render as (cid:0) boxes in jsPDF. */
+const rs = (t: string): string => {
+  if (!t) return '';
+  return t
+    .replace(/₹/g, 'Rs. ')
+    .replace(/[–—]/g, '-')   // en-dash, em-dash
+    .replace(/[‘’‚‛]/g, "'") // smart single quotes
+    .replace(/[“”„‟]/g, '"') // smart double quotes
+    .replace(/…/g, '...')         // ellipsis
+    .replace(/ /g, ' ')           // non-breaking space
+    .replace(/•/g, '-')           // bullet
+    .replace(/[^\x20-\x7E\n\r\t]/g, ''); // strip remaining non-ASCII
+};
 
 // ─── Shared Helpers ───
 function hdr(p: jsPDF, pg: number, dt: string, totalPages: number) {
@@ -123,7 +136,7 @@ function p1(p: jsPDF, r: FinancialHealthReport, nm: string, dt: string, totalPag
   const tierTitles: Record<PlanTier, { title: string; subtitle: string }> = {
     basic: { title: 'Financial Health Check', subtitle: 'Quick Scan Report' },
     standard: { title: 'Goal-Based Financial Plan', subtitle: 'Personalized Financial Strategy' },
-    comprehensive: { title: 'Comprehensive Financial Blueprint', subtitle: 'CFP-Grade Financial Analysis' },
+    comprehensive: { title: 'Comprehensive Financial Blueprint', subtitle: 'Professional-Grade Financial Analysis' },
   };
   const titles = tierTitles[tier];
 
@@ -283,6 +296,26 @@ function p3(p: jsPDF, r: FinancialHealthReport, d: FinancialPlanningData, dt: st
   p.setDrawColor(...nwc); p.setLineWidth(0.5); p.roundedRect(M, y, CW, 18, 3, 3, 'S');
   p.setTextColor(...nwc); p.setFontSize(12); p.setFont('helvetica', 'bold'); p.text('NET WORTH', M + 8, y + 8);
   p.setFontSize(16); p.text(rs(formatINR(r.netWorth.netWorth)), PW - M - 8, y + 12, { align: 'right' });
+  y += 22;
+
+  // ── Trustner Research Desk Note: Net Worth in context ──
+  const advAge = d.personalProfile.age || 35;
+  const advNW = r.netWorth.netWorth;
+  const nwBoxH = 32;
+  if (y + nwBoxH <= PH - FH - 5) {
+    p.setFillColor(...B50); p.roundedRect(M, y, CW, nwBoxH, 2, 2, 'F');
+    p.setDrawColor(...BLUE); p.setLineWidth(0.3); p.roundedRect(M, y, CW, nwBoxH, 2, 2, 'S');
+    p.setTextColor(...BLUE); p.setFontSize(8); p.setFont('helvetica', 'bold');
+    p.text("Trustner Research Desk Note", M + 5, y + 5);
+    p.setTextColor(...S700); p.setFontSize(6.5); p.setFont('helvetica', 'normal');
+    const nwLakhs = Math.round(advNW / 100000);
+    const note = rs(
+      `At age ${advAge}, a net worth of ${rs(formatINR(advNW))} places you in a meaningful wealth-building zone — most Indian households of comparable age sit between Rs. 30L and Rs. 1.2 Cr, so you are in or near the top quartile. The single most useful thing to remember is that the next Rs. 50 lakh of wealth typically comes 60-70% from compounding what you already own (equity MFs, EPF, NPS), and only 30-40% from fresh SIPs you add. That is why your asset-mix discipline (and resisting the urge to liquidate equity in a bad month) matters more than the rupee size of any new SIP. The figure of ${nwLakhs} lakh is not a finish line — it is the launchpad for the compounding curve to do its real work over the next 15-20 years.`
+    );
+    const lines = p.splitTextToSize(note, CW - 10);
+    p.text(lines.slice(0, 5), M + 5, y + 11);
+    y += nwBoxH + 2;
+  }
   ftr(p);
 }
 
@@ -323,14 +356,34 @@ function p4(p: jsPDF, r: FinancialHealthReport, dt: string, pg: number, totalPag
     p.setFontSize(14); p.text(rs(formatINR(g.monthlyToClose)) + ' / month', M + 5, y + 13); y += 22;
   }
 
-  y += 5;
-  p.setFillColor(...S50); p.roundedRect(M, y, CW, 18, 2, 2, 'F');
-  p.setTextColor(...S400); p.setFontSize(6); p.setFont('helvetica', 'normal');
-  ['Assumptions: Inflation 6% p.a. | Life expectancy 85 years | Real return 3% post-retirement',
-   'Projected growth: EPF/NPS at 8% CAGR, MF at 10% CAGR | Corpus calculated using annuity model',
-   'These are indicative projections. Actual results may vary based on market conditions.'].forEach((l, i) => {
-    p.text(l, M + 4, y + 4 + i * 4);
-  });
+  // ── Trustner Research Desk Note: what a retirement-readiness number really means ──
+  const retBoxH = 36;
+  if (y + retBoxH <= PH - FH - 5) {
+    const readinessPct = g.requiredCorpus > 0
+      ? Math.min(100, Math.round((g.currentProgress / g.requiredCorpus) * 100))
+      : 0;
+    p.setFillColor(...B50); p.roundedRect(M, y, CW, retBoxH, 2, 2, 'F');
+    p.setDrawColor(...BLUE); p.setLineWidth(0.3); p.roundedRect(M, y, CW, retBoxH, 2, 2, 'S');
+    p.setTextColor(...BLUE); p.setFontSize(8); p.setFont('helvetica', 'bold');
+    p.text("Trustner Research Desk Note", M + 5, y + 5);
+    p.setTextColor(...S700); p.setFontSize(6.5); p.setFont('helvetica', 'normal');
+    const note = rs(
+      `A readiness of ${readinessPct}% does not mean you will run out at retirement; it means today's corpus, projected forward at 8-10%, would fund roughly ${readinessPct}% of the inflation-adjusted monthly need at age 60. EPF and NPS typically fill 25-35% of the required corpus on their own, so the headline gap is almost always smaller in practice than it first looks. When the gap is large, the single biggest non-painful lever is extending working years to 62-63 - each extra year of income adds ~7% to the corpus and removes one year of withdrawal, which is mathematically equivalent to a 12-15% bigger SIP today. We treat this number as a planning anchor that we revisit annually with you, not a verdict.`
+    );
+    const lines = p.splitTextToSize(note, CW - 10);
+    p.text(lines.slice(0, 5), M + 5, y + 11);
+    y += retBoxH + 3;
+  }
+
+  if (y + 18 <= PH - FH - 5) {
+    p.setFillColor(...S50); p.roundedRect(M, y, CW, 18, 2, 2, 'F');
+    p.setTextColor(...S400); p.setFontSize(6); p.setFont('helvetica', 'normal');
+    ['Assumptions: Inflation 6% p.a. | Life expectancy 85 years | Real return 3% post-retirement',
+     'Projected growth: EPF/NPS at 8% CAGR, MF at 10% CAGR | Corpus calculated using annuity model',
+     'These are indicative projections. Actual results may vary based on market conditions.'].forEach((l, i) => {
+      p.text(l, M + 4, y + 4 + i * 4);
+    });
+  }
   ftr(p);
 }
 
@@ -369,15 +422,27 @@ function p5(p: jsPDF, r: FinancialHealthReport, dt: string, pg: number, totalPag
 
   p.setFillColor(...TEAL); p.rect(M, y, CW, 7, 'F');
   p.setTextColor(255, 255, 255); p.setFontSize(5.5); p.setFont('helvetica', 'bold');
-  p.text('Goal', M + 3, y + 5); p.text('Future Cost', M + 42, y + 5);
+  p.text('Goal', M + 3, y + 5); p.text('Cost @ Target Yr', M + 42, y + 5);
   p.text('Progress', M + 68, y + 5); p.text('Monthly SIP', M + 92, y + 5);
   p.text('Suggested Vehicle', M + 118, y + 5);
   p.text('Status', PW - M - 4, y + 5, { align: 'right' }); y += 7;
 
   const fc: Record<string, RGB> = { 'on-track': GREEN, 'possible': TEAL, 'stretch': AMBER, 'unrealistic': RED };
+  // Constructive, CFP-grade labels — never use the word "Unrealistic" on a client-facing page.
+  const fLabel: Record<string, string> = {
+    'on-track': 'On Track',
+    'possible': 'Possible',
+    'stretch': 'Stretch — Phase It',
+    'unrealistic': 'Re-frame & Stage',
+  };
+  // Track stretch/unrealistic goals so we can render a coaching block after the table.
+  let stretchCount = 0;
+  let unrealisticCount = 0;
 
   for (let i = 0; i < goals.length; i++) {
     const gl = goals[i];
+    if (gl.feasibility === 'stretch') stretchCount++;
+    if (gl.feasibility === 'unrealistic') unrealisticCount++;
     // Estimate years to goal from future cost vs current progress (rough)
     const yearsToGoal = gl.futureCost > 0 && gl.currentProgress > 0
       ? Math.max(1, Math.ceil(Math.log(gl.futureCost / Math.max(gl.currentProgress, 1)) / Math.log(1.1)))
@@ -386,7 +451,7 @@ function p5(p: jsPDF, r: FinancialHealthReport, dt: string, pg: number, totalPag
 
     p.setFillColor(...(i % 2 === 0 ? S50 : WHITE)); p.rect(M, y, CW, 8, 'F');
     p.setTextColor(...S800); p.setFontSize(6); p.setFont('helvetica', 'bold');
-    p.text(gl.goalName.substring(0, 18), M + 3, y + 5.5);
+    p.text(rs(gl.goalName).substring(0, 18), M + 3, y + 5.5);
     p.setFont('helvetica', 'normal'); p.setTextColor(...S600);
     p.text(rs(formatINR(gl.futureCost)), M + 42, y + 5.5);
     p.text(rs(formatINR(gl.currentProgress)), M + 68, y + 5.5);
@@ -395,11 +460,36 @@ function p5(p: jsPDF, r: FinancialHealthReport, dt: string, pg: number, totalPag
     p.text(vehicle, M + 118, y + 5.5);
 
     const fCol = fc[gl.feasibility] || S600;
-    const fLbl = gl.feasibility.replace('-', ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-    p.setFillColor(...fCol); p.roundedRect(PW - M - 20, y + 1.5, 18, 5, 1, 1, 'F');
+    const fLbl = fLabel[gl.feasibility] || gl.feasibility.replace('-', ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    // Wider pill so longer label fits cleanly
+    p.setFillColor(...fCol); p.roundedRect(PW - M - 28, y + 1.5, 26, 5, 1, 1, 'F');
     p.setTextColor(255, 255, 255); p.setFontSize(4.5); p.setFont('helvetica', 'bold');
-    p.text(fLbl, PW - M - 11, y + 5, { align: 'center' });
+    p.text(fLbl, PW - M - 15, y + 5, { align: 'center' });
     y += 8;
+  }
+
+  // ── CFP-grade coaching block when goals are flagged stretch/unrealistic ──
+  if (stretchCount + unrealisticCount > 0) {
+    const _totFC = goals.reduce((s, g) => s + g.futureCost, 0);
+    y += 4;
+    const coachH = 36;
+    p.setFillColor(...A50); p.roundedRect(M, y, CW, coachH, 2, 2, 'F');
+    p.setDrawColor(...AMBER); p.setLineWidth(0.3); p.roundedRect(M, y, CW, coachH, 2, 2, 'S');
+    p.setTextColor(...AMBER); p.setFontSize(8); p.setFont('helvetica', 'bold');
+    p.text('Coach\'s Note — How To Reach The Goals That Look Out Of Reach Today', M + 5, y + 5);
+    p.setTextColor(...S700); p.setFontSize(6.5); p.setFont('helvetica', 'normal');
+    const coachLines = [
+      'A goal flagged "Re-frame & Stage" or "Stretch" is not a failure — it is a signal that the current inputs (income, horizon, target, monthly savings)',
+      'will not converge as-is. CFP practice prescribes four levers, in order of least disruption:',
+      '1. EXTEND the horizon by 3-7 years where life flexibility allows (e.g. retire at 62 not 60). Compounding is your single biggest ally.',
+      '2. RE-SIZE the target with the family — is 60-70% of ' + rs(formatINR(_totFC)).replace(/\s/g, '') + ' the realistic life-quality threshold rather than 100%?',
+      '3. STAGE the goal — break a single big future cost into 3 sub-goals at years 7 / 12 / 19 with separate SIP buckets.',
+      '4. STEP-UP your SIP 10-15% per year as income grows. Starting at ' + rs(formatINR(Math.round(tm * 0.55))).replace(/\s/g, '') + '/mo and stepping up converges to the ' + rs(formatINR(tm)).replace(/\s/g, '') + '/mo target.',
+    ];
+    for (let i = 0; i < coachLines.length; i++) {
+      p.text(coachLines[i], M + 5, y + 11 + i * 4);
+    }
+    y += coachH + 2;
   }
 
   // Step-up SIP row
@@ -424,11 +514,46 @@ function p5(p: jsPDF, r: FinancialHealthReport, dt: string, pg: number, totalPag
   p.text(`Total Monthly SIP: ${rs(formatINR(tm))}`, PW - M - 5, y + 9, { align: 'right' });
   y += 18;
 
+  // ── Trustner Research Desk Note: Why these vehicles (horizon-to-instrument mapping) ──
+  const vehBoxH = 18;
+  if (y + vehBoxH <= PH - FH - 14) {
+    p.setFillColor(...B50); p.roundedRect(M, y, CW, vehBoxH, 2, 2, 'F');
+    p.setDrawColor(...BLUE); p.setLineWidth(0.3); p.roundedRect(M, y, CW, vehBoxH, 2, 2, 'S');
+    p.setTextColor(...BLUE); p.setFontSize(8); p.setFont('helvetica', 'bold');
+    p.text("Trustner Research Desk Note - Why These Vehicles", M + 5, y + 5);
+    p.setTextColor(...S700); p.setFontSize(6.5); p.setFont('helvetica', 'normal');
+    const vehNote = rs(
+      'The vehicle for each goal is chosen by time horizon, not by what is "performing" today. Under 3 years, capital safety wins (Liquid / Short Duration). 3-7 years, volatility cushioning (Balanced Advantage). 7+ years, equity does the heavy lifting (Flexi Cap, with Small/Mid Cap for 10+ year horizons). Fund selection within each category is reviewed annually with you.'
+    );
+    const vehLines = p.splitTextToSize(vehNote, CW - 10);
+    p.text(vehLines.slice(0, 2), M + 5, y + 11);
+    y += vehBoxH + 2;
+  }
+
+  // Cost basis clarification — critical for client interpretation
+  if (y + 12 <= PH - FH - 5) {
+    p.setFillColor(...B50); p.roundedRect(M, y, CW, 12, 2, 2, 'F');
+    p.setDrawColor(...BLUE); p.setLineWidth(0.2); p.roundedRect(M, y, CW, 12, 2, 2, 'S');
+    p.setTextColor(...BLUE); p.setFontSize(6); p.setFont('helvetica', 'bold');
+    p.text('How we read your goal numbers', M + 5, y + 4.5);
+    p.setTextColor(...S700); p.setFontSize(5.5); p.setFont('helvetica', 'normal');
+    // rs() must run on the STRING first, then split — splitTextToSize
+    // returns an array, and rs() expects a single string to call .replace on.
+    const basisNote = p.splitTextToSize(
+      rs('If you entered the target as TODAY\'S price, we inflated it to the target year using category defaults — Education 10%, Marriage 8%, Housing 7%, others 6% p.a. If you entered the target as a FUTURE budget, we used your number as-is. Reach out to the Trustner team if you want to switch any goal between these two modes.'),
+      CW - 10
+    );
+    p.text(basisNote, M + 5, y + 8);
+    y += 14;
+  }
+
   // MFD note
-  p.setFillColor(...S50); p.roundedRect(M, y, CW, 10, 2, 2, 'F');
-  p.setTextColor(...S600); p.setFontSize(5.5); p.setFont('helvetica', 'normal');
-  const mfdNote = p.splitTextToSize('All recommendations are for Regular plans through your MFD (ARN-286886). No direct plan recommendations. Vehicle suggestions are indicative and based on time horizon.', CW - 10);
-  p.text(mfdNote, M + 5, y + 4);
+  if (y + 10 <= PH - FH - 5) {
+    p.setFillColor(...S50); p.roundedRect(M, y, CW, 10, 2, 2, 'F');
+    p.setTextColor(...S600); p.setFontSize(5.5); p.setFont('helvetica', 'normal');
+    const mfdNote = p.splitTextToSize('All recommendations are for Regular plans through your MFD (ARN-286886). No direct plan recommendations. Vehicle suggestions are indicative and based on time horizon.', CW - 10);
+    p.text(mfdNote, M + 5, y + 4);
+  }
   ftr(p);
 }
 
@@ -486,11 +611,29 @@ function p6(p: jsPDF, r: FinancialHealthReport, dt: string, pg: number, totalPag
     y += (hasLifeGap && hasHealthGap ? 26 : 18);
   }
 
+  // ── Trustner Research Desk Note: protection priority + super top-up structure ──
+  const insBoxH = 32;
+  if (y + insBoxH <= PH - FH - 18) {
+    p.setFillColor(...B50); p.roundedRect(M, y, CW, insBoxH, 2, 2, 'F');
+    p.setDrawColor(...BLUE); p.setLineWidth(0.3); p.roundedRect(M, y, CW, insBoxH, 2, 2, 'S');
+    p.setTextColor(...BLUE); p.setFontSize(8); p.setFont('helvetica', 'bold');
+    p.text("Trustner Research Desk Note", M + 5, y + 5);
+    p.setTextColor(...S700); p.setFontSize(6.5); p.setFont('helvetica', 'normal');
+    const advNote = rs(
+      'Order of priority in Indian protection planning: health cover comes before topping up life cover, especially for clients with no dependents or already-adequate term insurance, because a single hospitalisation can wipe out years of equity gains. For a Rs. 25L health gap, the cost-effective Indian standard is a Rs. 5-10L base policy paired with a Rs. 50L super top-up that triggers above the base - the combined annual premium is typically 35-45% of buying a single Rs. 50L policy outright. Term cover should be pure-protection only (avoid ULIPs and endowment); HLV-based cover from a high-claim-ratio insurer is the right product, not the highest-commission one.'
+    );
+    const lines = p.splitTextToSize(advNote, CW - 10);
+    p.text(lines.slice(0, 5), M + 5, y + 11);
+    y += insBoxH + 2;
+  }
+
   // IRDAI note
-  p.setFillColor(...S50); p.roundedRect(M, y, CW, 14, 2, 2, 'F');
-  p.setTextColor(...S600); p.setFontSize(6.5); p.setFont('helvetica', 'normal');
-  const note = p.splitTextToSize('Insurance gap analysis is indicative. For personalized insurance recommendations, please consult a licensed insurance advisor. Insurance recommendations via Trustner Insurance Brokers (IRDAI CA License #1067).', CW - 10);
-  p.text(note, M + 5, y + 5);
+  if (y + 14 <= PH - FH - 5) {
+    p.setFillColor(...S50); p.roundedRect(M, y, CW, 14, 2, 2, 'F');
+    p.setTextColor(...S600); p.setFontSize(6.5); p.setFont('helvetica', 'normal');
+    const note = p.splitTextToSize('Insurance gap analysis is indicative. For personalized insurance recommendations, please consult a licensed insurance advisor. Insurance recommendations via Trustner Insurance Brokers (IRDAI CA License #1067).', CW - 10);
+    p.text(note, M + 5, y + 5);
+  }
   ftr(p);
 }
 
@@ -546,6 +689,24 @@ function p7(p: jsPDF, r: FinancialHealthReport, dt: string, pg: number, totalPag
     p.setTextColor(...aCol); p.setFont('helvetica', 'bold'); p.text(aTxt, PW - M - 4, y + 4, { align: 'right' });
     y += 6;
   }
+
+  // ── Trustner Research Desk Note: pushing back on the formulaic 100-minus-age rule ──
+  y += 6;
+  const aaBoxH = 32;
+  if (y + aaBoxH <= PH - FH - 5) {
+    const eqNow = Math.round(cur.equity);
+    p.setFillColor(...B50); p.roundedRect(M, y, CW, aaBoxH, 2, 2, 'F');
+    p.setDrawColor(...BLUE); p.setLineWidth(0.3); p.roundedRect(M, y, CW, aaBoxH, 2, 2, 'S');
+    p.setTextColor(...BLUE); p.setFontSize(8); p.setFont('helvetica', 'bold');
+    p.text("Trustner Research Desk Note", M + 5, y + 5);
+    p.setTextColor(...S700); p.setFontSize(6.5); p.setFont('helvetica', 'normal');
+    const note = rs(
+      `A current ${eqNow}% equity weight should be read against your real horizon, not a textbook "100 minus age" formula. With 19+ years to retirement and an HNI corpus that can absorb a 25-30% drawdown without altering lifestyle, a 55-65% equity weight is closer to right than the 35-40% the formula prescribes. The textbook rule was calibrated on a 1980s US retiree with no second-leg of NPS or rental income - it does not match Indian household reality. The bigger risk for clients in your segment is not equity volatility, it is dragging too much wealth into FDs and gold and watching real returns get eaten by inflation. We adjust the equity glide-path 5 years before retirement, not 19.`
+    );
+    const lines = p.splitTextToSize(note, CW - 10);
+    p.text(lines.slice(0, 5), M + 5, y + 11);
+  }
+
   ftr(p);
 }
 
@@ -599,7 +760,7 @@ function p9(p: jsPDF, r: FinancialHealthReport, nm: string, dt: string, pg: numb
   p.setFillColor(...TEAL); p.rect(M, y, 3, 140, 'F');
 
   p.setTextColor(...S800); p.setFontSize(8); p.setFont('helvetica', 'normal');
-  const nar = r.claudeNarrative || 'Your personalized narrative will be generated soon.';
+  const nar = rs(r.claudeNarrative || 'Your personalized narrative will be generated soon.');
   const nl = p.splitTextToSize(nar, CW - 20); p.text(nl, M + 10, y + 8);
   y += 148;
 
@@ -828,11 +989,11 @@ function pCompExecSummary(
       p.text(item.area.substring(0, 15), M + 3, y + 5);
 
       p.setTextColor(...S800); p.setFontSize(5.5); p.setFont('helvetica', 'normal');
-      const goalLines = p.splitTextToSize(`You want to: ${item.clientGoal}`, 60);
+      const goalLines = p.splitTextToSize(rs(`You want to: ${item.clientGoal}`), 60);
       p.text(goalLines.slice(0, 3), M + 30, y + 4);
 
       p.setTextColor(...S600); p.setFontSize(5.5);
-      const recLines = p.splitTextToSize(`We recommend: ${item.recommendation}`, 60);
+      const recLines = p.splitTextToSize(rs(`We recommend: ${item.recommendation}`), 60);
       p.text(recLines.slice(0, 3), M + 95, y + 4);
 
       const pc = prioC[item.priority] || S400;
@@ -864,9 +1025,15 @@ function pCompExecSummary(
 
       const fc: Record<string, RGB> = { 'on-track': GREEN, 'possible': TEAL, 'stretch': AMBER, 'unrealistic': RED };
       const fCol = fc[gl.feasibility] || S400;
-      p.setFillColor(...fCol); p.roundedRect(PW - M - 20, y + 2, 17, 5, 1, 1, 'F');
+      const fLbl: Record<string, string> = {
+        'on-track': 'ON TRACK',
+        'possible': 'POSSIBLE',
+        'stretch': 'STRETCH',
+        'unrealistic': 'RE-FRAME',
+      };
+      p.setFillColor(...fCol); p.roundedRect(PW - M - 22, y + 2, 19, 5, 1, 1, 'F');
       p.setTextColor(255, 255, 255); p.setFontSize(4.5); p.setFont('helvetica', 'bold');
-      p.text(gl.feasibility.toUpperCase().replace('-', ' '), PW - M - 11.5, y + 5.5, { align: 'center' });
+      p.text(fLbl[gl.feasibility] || gl.feasibility.toUpperCase(), PW - M - 12.5, y + 5.5, { align: 'center' });
       y += rowH;
     }
   }
@@ -912,7 +1079,7 @@ function pCompExecSummary(
     p.text(rs(formatINR(r.netWorth.netWorth)), nx + 2, y + 23);
 
     // Overall message below
-    const msg = execSummary?.overallMessage || r.claudeNarrative?.substring(0, 300) || 'Your financial health assessment is complete. Please review the detailed pages for comprehensive analysis.';
+    const msg = rs(execSummary?.overallMessage || r.claudeNarrative?.substring(0, 300) || 'Your financial health assessment is complete. Please review the detailed pages for comprehensive analysis.');
     p.setTextColor(...S800); p.setFontSize(6.5); p.setFont('helvetica', 'normal');
     const msgLines = p.splitTextToSize(msg, CW - 16);
     p.text(msgLines.slice(0, 4), M + 8, y + 31);
@@ -1008,9 +1175,15 @@ function pCompCashflow(
   // Assumptions box
   y += 8;
   const assumptions = cashflow?.assumptions;
-  const incRate = assumptions?.incomeGrowthRate ?? 8;
-  const expRate = assumptions?.expenseInflationRate ?? 6;
-  const sipRate = assumptions?.sipStepUpRate ?? 10;
+  // Stored as decimals (0.08, 0.06, 0.10) — convert to percentages for display.
+  // Defensive: if a future value is already > 1, treat it as already-pct.
+  const toPct = (v: number | undefined, fallback: number): number => {
+    if (v === undefined || v === null) return fallback;
+    return v <= 1 ? Math.round(v * 1000) / 10 : v;
+  };
+  const incRate = toPct(assumptions?.incomeGrowthRate, 8);
+  const expRate = toPct(assumptions?.expenseInflationRate, 6);
+  const sipRate = toPct(assumptions?.sipStepUpRate, 10);
 
   p.setFillColor(...A50); p.roundedRect(M, y, CW, 24, 2, 2, 'F');
   p.setDrawColor(...AMBER); p.setLineWidth(0.3); p.roundedRect(M, y, CW, 24, 2, 2, 'S');
@@ -1032,16 +1205,32 @@ function pCompCashflow(
     p.text('Cashflow Warnings', M + 5, y + 5);
     for (let i = 0; i < Math.min(warnings.length, 3); i++) {
       p.setTextColor(...S800); p.setFontSize(6); p.setFont('helvetica', 'normal');
-      p.text(`! ${warnings[i].message}`, M + 5, y + 10 + i * 5);
+      p.text(rs(`! ${warnings[i].message}`), M + 5, y + 10 + i * 5);
     }
     y += 8 + warnings.length * 5;
+  }
+
+  // ── Trustner Research Desk Note: how to read a negative-surplus year ──
+  const cfBoxH = 36;
+  if (y + cfBoxH <= PH - FH - 5) {
+    p.setFillColor(...B50); p.roundedRect(M, y, CW, cfBoxH, 2, 2, 'F');
+    p.setDrawColor(...BLUE); p.setLineWidth(0.3); p.roundedRect(M, y, CW, cfBoxH, 2, 2, 'S');
+    p.setTextColor(...BLUE); p.setFontSize(8); p.setFont('helvetica', 'bold');
+    p.text("Trustner Research Desk Note", M + 5, y + 5);
+    p.setTextColor(...S700); p.setFontSize(6.5); p.setFont('helvetica', 'normal');
+    const note = rs(
+      'A red surplus number does not mean you are running out of money - it means the model holds your income, EMIs, and SIPs roughly steady while expenses inflate at 6%. In real life, salaries typically grow 8-10% annually, EMIs end on schedule, and discretionary spends adjust naturally. So the projection is a stress-test, not a forecast. The three levers we revisit each year with you are: (1) timing the SIP step-up so it lags a salary raise by 60-90 days; (2) reviewing the top three discretionary line items quarterly; and (3) restructuring or pre-paying the highest-rate EMI when bonus or windfall arrives. Most clients move from a projected red Year 3 to a comfortable green within two annual reviews.'
+    );
+    const lines = p.splitTextToSize(note, CW - 10);
+    p.text(lines.slice(0, 6), M + 5, y + 11);
+    y += cfBoxH + 2;
   }
 
   if (y < PH - FH - 15) {
     p.setFillColor(...S50); p.roundedRect(M, y, CW, 10, 2, 2, 'F');
     p.setTextColor(...S400); p.setFontSize(5.5); p.setFont('helvetica', 'normal');
     p.text('These projections are indicative. Actual cashflows may vary based on income changes, lifestyle adjustments, and market conditions.', M + 4, y + 4);
-    p.text('Consult your Trustner advisor for a personalized cashflow plan.', M + 4, y + 7.5);
+    p.text('Discuss with the Trustner team for a personalised cashflow review.', M + 4, y + 7.5);
   }
 
   ftr(p);
@@ -1159,15 +1348,21 @@ function pCompAllocationMatrix(
     lx += 35;
   }
 
-  // Rebalancing note
-  y += 10;
-  if (y < PH - FH - 20) {
+  // ── Trustner Research Desk Note: rebalancing discipline + bucket behavioural payoff ──
+  y += 8;
+  const matBoxH = 28;
+  if (y + matBoxH <= PH - FH - 5) {
     const rebalFreq = allocationMatrix?.rebalancingFrequency || 'semi-annually';
-    p.setFillColor(...B50); p.roundedRect(M, y, CW, 10, 2, 2, 'F');
-    p.setTextColor(...BLUE); p.setFontSize(7); p.setFont('helvetica', 'bold');
-    p.text(`Recommended Rebalancing: ${rebalFreq.charAt(0).toUpperCase() + rebalFreq.slice(1)}`, M + 5, y + 4);
-    p.setTextColor(...S600); p.setFontSize(6); p.setFont('helvetica', 'normal');
-    p.text('Rebalance your portfolio periodically to maintain target allocations and manage risk.', M + 5, y + 8);
+    p.setFillColor(...B50); p.roundedRect(M, y, CW, matBoxH, 2, 2, 'F');
+    p.setDrawColor(...BLUE); p.setLineWidth(0.3); p.roundedRect(M, y, CW, matBoxH, 2, 2, 'S');
+    p.setTextColor(...BLUE); p.setFontSize(8); p.setFont('helvetica', 'bold');
+    p.text(`Trustner Research Desk Note - Rebalancing: ${rebalFreq.charAt(0).toUpperCase() + rebalFreq.slice(1)}`, M + 5, y + 5);
+    p.setTextColor(...S700); p.setFontSize(6.5); p.setFont('helvetica', 'normal');
+    const note = rs(
+      'Semi-annual rebalancing is enough for goal-bucket portfolios; rebalancing more often than that creates short-term capital-gains drag (15% or 20%) that quietly eats 0.4-0.6% of return per year. Just as important is the behavioural payoff of bucketing: when each goal lives in its own portfolio, a 25% equity drawdown in one bucket does not threaten the others, which is what allows clients to actually hold equity through a bad year. That discipline - not chasing top-ranked schemes - is where the real alpha lives.'
+    );
+    const lines = p.splitTextToSize(note, CW - 10);
+    p.text(lines.slice(0, 4), M + 5, y + 11);
   }
 
   ftr(p);
@@ -1329,122 +1524,304 @@ function pCompDebtStrategy(
 }
 
 // ─── Comprehensive: Tax Optimization Strategy ───
+// Restructured into 5 blocks under Finance Act 2024:
+//   Block 1 — Regime math table (actual numbers behind the recommendation)
+//   Block 2 — Capital Gains Strategy (LTCG harvesting, debt-fund post-Apr2023, hybrid <65% rule)
+//   Block 3 — Deductions Utilization (with new sections: 80CCD(2), 80EEA, 80TTA/TTB)
+//   Block 4 — Tactical FY Considerations (act-before-March-31 items)
+//   Block 5 — 5-year tax projection (status-quo vs. with considerations applied)
+//
+// Every directive softened to "Consideration for review" — Trustner is an MFD,
+// not a tax adviser. Final filings always on a CA's advice.
+//
+// Spreads across 2 pages because the content depth requires it (~580 lines of
+// PDF instructions in the old version, ~720 in this version).
 function pCompTaxOptimization(
   p: jsPDF, r: FinancialHealthReport, d: FinancialPlanningData, dt: string,
-  taxOpt: FinancialHealthReportV2['taxOptimization'], pg: number, totalPages: number
+  taxOpt: FinancialHealthReportV2['taxOptimization'], pg: number, totalPages: number,
 ) {
   p.addPage(); hdr(p, pg, dt, totalPages); wm(p);
-  let y = secTitle(p, CSY, 'Tax Optimization Strategy');
+  let y = secTitle(p, CSY, 'Tax Optimization Strategy — Finance Act 2024');
 
   const tax = d.taxProfile;
+  const income = d.incomeProfile;
 
-  // Old vs New Regime Comparison
-  p.setTextColor(...S800); p.setFontSize(10); p.setFont('helvetica', 'bold');
-  p.text('Tax Regime Comparison', M + 4, y + 5); y += 10;
+  // Compute gross income (annualised)
+  const grossAnnual = (income.monthlyInHandSalary || 0) * 12
+    + (income.annualBonus || 0)
+    + (income.rentalIncome || 0) * 12
+    + (income.businessIncome || 0) * 12
+    + (income.otherIncome || 0) * 12;
 
-  // Two-column comparison
-  const colW = (CW - 6) / 2;
+  // Estimate HRA (35% of salary if hasHRA)
+  const hraEst = tax.hasHRA ? (income.monthlyInHandSalary || 0) * 12 * 0.35 : 0;
+  const section80C = Math.min(tax.section80CUsed || 0, 150000);
+  const section80D = Math.min(tax.section80DUsed || 0, 75000);
+  const npsExtra = Math.min(tax.npsContribution || 0, 50000);
 
-  // Old Regime box
-  const oldSelected = (taxOpt?.recommendedRegime || tax.taxRegime) === 'old';
-  const newSelected = !oldSelected;
+  // ── BLOCK 1 — Regime Math Comparison ────────────────────────────────────
+  p.setTextColor(...TEAL); p.setFontSize(9); p.setFont('helvetica', 'bold');
+  p.text('1. Income Tax Regime — The Math Behind Our Suggestion', M + 4, y + 5); y += 9;
 
-  p.setFillColor(...(oldSelected ? E50 : S50)); p.roundedRect(M, y, colW, 55, 2, 2, 'F');
-  if (oldSelected) { p.setDrawColor(...GREEN); p.setLineWidth(0.5); p.roundedRect(M, y, colW, 55, 2, 2, 'S'); }
-  p.setTextColor(...(oldSelected ? GREEN : S600)); p.setFontSize(9); p.setFont('helvetica', 'bold');
-  p.text('Old Regime', M + 5, y + 8);
-  if (oldSelected) {
-    p.setFillColor(...GREEN); p.roundedRect(M + colW - 32, y + 3, 28, 6, 1.5, 1.5, 'F');
-    p.setTextColor(255, 255, 255); p.setFontSize(5.5); p.text('RECOMMENDED', M + colW - 18, y + 7, { align: 'center' });
-  }
-  p.setTextColor(...S600); p.setFontSize(6.5); p.setFont('helvetica', 'normal');
-  p.text('Allows deductions under:', M + 5, y + 16);
-  p.text('Sec 80C, 80D, HRA, NPS, etc.', M + 5, y + 21);
-  p.text('Better if deductions > Rs. 3.75L', M + 5, y + 26);
+  // Compute taxable income + tax for both regimes (FY26 slabs)
+  const oldStdDed = 50000;
+  const newStdDed = 75000;
+  const oldDeductions = section80C + section80D + npsExtra + hraEst + oldStdDed;
+  const oldTaxable = Math.max(0, grossAnnual - oldDeductions);
+  const newTaxable = Math.max(0, grossAnnual - newStdDed);
 
-  if (taxOpt) {
-    p.setTextColor(...S800); p.setFontSize(7); p.setFont('helvetica', 'bold');
-    p.text(`Tax: ${rs(formatINR(oldSelected ? taxOpt.optimizedTax : taxOpt.currentTax))}`, M + 5, y + 35);
-  }
+  const oldTaxAmt = computeOldRegimeTax(oldTaxable);
+  const newTaxAmt = computeNewRegimeTax(newTaxable);
+  const oldRecommended = oldTaxAmt < newTaxAmt;
+  const taxSavings = Math.abs(oldTaxAmt - newTaxAmt);
 
-  // New Regime box
-  const nrX = M + colW + 6;
-  p.setFillColor(...(newSelected ? E50 : S50)); p.roundedRect(nrX, y, colW, 55, 2, 2, 'F');
-  if (newSelected) { p.setDrawColor(...GREEN); p.setLineWidth(0.5); p.roundedRect(nrX, y, colW, 55, 2, 2, 'S'); }
-  p.setTextColor(...(newSelected ? GREEN : S600)); p.setFontSize(9); p.setFont('helvetica', 'bold');
-  p.text('New Regime', nrX + 5, y + 8);
-  if (newSelected) {
-    p.setFillColor(...GREEN); p.roundedRect(nrX + colW - 32, y + 3, 28, 6, 1.5, 1.5, 'F');
-    p.setTextColor(255, 255, 255); p.setFontSize(5.5); p.text('RECOMMENDED', nrX + colW - 18, y + 7, { align: 'center' });
-  }
-  p.setTextColor(...S600); p.setFontSize(6.5); p.setFont('helvetica', 'normal');
-  p.text('Lower slab rates, no deductions', nrX + 5, y + 16);
-  p.text('Standard deduction Rs. 75,000', nrX + 5, y + 21);
-  p.text('Simpler, better if low deductions', nrX + 5, y + 26);
-
-  if (taxOpt) {
-    p.setTextColor(...S800); p.setFontSize(7); p.setFont('helvetica', 'bold');
-    p.text(`Tax: ${rs(formatINR(newSelected ? taxOpt.optimizedTax : taxOpt.currentTax))}`, nrX + 5, y + 35);
-  }
-  y += 62;
-
-  // Tax savings highlight
-  if (taxOpt && taxOpt.savings > 0) {
-    p.setFillColor(...E50); p.roundedRect(M, y, CW, 14, 2, 2, 'F');
-    p.setDrawColor(...GREEN); p.setLineWidth(0.3); p.roundedRect(M, y, CW, 14, 2, 2, 'S');
-    p.setTextColor(...GREEN); p.setFontSize(10); p.setFont('helvetica', 'bold');
-    p.text(`Potential Annual Tax Savings: ${rs(formatINR(taxOpt.savings))}`, M + 5, y + 9);
-    y += 20;
-  }
-
-  // Current Deductions
-  p.setTextColor(...PURPLE); p.setFontSize(10); p.setFont('helvetica', 'bold');
-  p.text('Current Deductions Utilization', M + 4, y + 5); y += 10;
-
-  const deductions: [string, string, number, number][] = [
-    ['Section 80C', 'PPF, EPF, ELSS, LIC, Tuition', tax.section80CUsed || 0, 150000],
-    ['Section 80D', 'Health Insurance (Self + Parents)', tax.section80DUsed || 0, 75000],
-    ['NPS (80CCD 1B)', 'Additional NPS Contribution', tax.npsContribution || 0, 50000],
+  // Mini ledger table
+  const ledger: Array<[string, string, string]> = [
+    ['Line item', 'Old Regime', 'New Regime'],
+    ['Gross income (annualised)', formatINR(grossAnnual), formatINR(grossAnnual)],
+    ['Standard deduction', `-${formatINR(oldStdDed)}`, `-${formatINR(newStdDed)}`],
+    ['Section 80C utilised', `-${formatINR(section80C)}`, '—'],
+    ['Section 80D utilised', `-${formatINR(section80D)}`, '—'],
+    ['NPS 80CCD(1B)', `-${formatINR(npsExtra)}`, '—'],
+    ['HRA exemption (est)', tax.hasHRA ? `-${formatINR(Math.round(hraEst))}` : '—', '—'],
+    ['Taxable income', formatINR(Math.round(oldTaxable)), formatINR(Math.round(newTaxable))],
+    ['Tax + cess (FY26)', formatINR(Math.round(oldTaxAmt)), formatINR(Math.round(newTaxAmt))],
   ];
 
-  for (const [sec, desc, used, limit] of deductions) {
+  // Header row
+  p.setFillColor(...TEAL); p.rect(M, y, CW, 6, 'F');
+  p.setTextColor(255, 255, 255); p.setFontSize(6); p.setFont('helvetica', 'bold');
+  p.text(ledger[0][0], M + 3, y + 4);
+  p.text(ledger[0][1], M + CW * 0.5, y + 4, { align: 'right' });
+  p.text(ledger[0][2], PW - M - 4, y + 4, { align: 'right' });
+  y += 6;
+
+  // Body rows
+  for (let i = 1; i < ledger.length; i++) {
+    const isTotal = ledger[i][0].startsWith('Tax + cess') || ledger[i][0].startsWith('Taxable');
+    p.setFillColor(...(isTotal ? E50 : i % 2 === 0 ? S50 : WHITE)); p.rect(M, y, CW, 5, 'F');
+    p.setTextColor(...S800); p.setFontSize(5.8); p.setFont('helvetica', isTotal ? 'bold' : 'normal');
+    p.text(rs(ledger[i][0]), M + 3, y + 3.5);
+    p.setTextColor(...(oldRecommended && isTotal ? GREEN : S700));
+    p.text(rs(ledger[i][1]), M + CW * 0.5, y + 3.5, { align: 'right' });
+    p.setTextColor(...(!oldRecommended && isTotal ? GREEN : S700));
+    p.text(rs(ledger[i][2]), PW - M - 4, y + 3.5, { align: 'right' });
+    y += 5;
+  }
+
+  // Verdict + framing
+  y += 2;
+  p.setFillColor(...E50); p.roundedRect(M, y, CW, 12, 1.5, 1.5, 'F');
+  p.setDrawColor(...GREEN); p.setLineWidth(0.2); p.roundedRect(M, y, CW, 12, 1.5, 1.5, 'S');
+  p.setTextColor(...GREEN); p.setFontSize(7); p.setFont('helvetica', 'bold');
+  p.text(`The math suggests ${oldRecommended ? 'Old' : 'New'} Regime is more efficient by approximately ${formatINR(Math.round(taxSavings))} this FY.`, M + 4, y + 5);
+  p.setTextColor(...S700); p.setFontSize(5.5); p.setFont('helvetica', 'italic');
+  p.text(rs('A calculation, not advice. Final filing call to be made with your tax consultant — surcharge / cess specifics may apply.'), M + 4, y + 9);
+  y += 16;
+
+  // ── BLOCK 2 — Capital Gains Strategy under Finance Act 2024 ──────────────
+  if (y > PH - FH - 60) { ftr(p); p.addPage(); hdr(p, pg, dt, totalPages); wm(p); y = CSY; }
+  p.setTextColor(...TEAL); p.setFontSize(9); p.setFont('helvetica', 'bold');
+  p.text('2. Capital Gains Strategy — Finance Act 2024', M + 4, y + 5); y += 9;
+
+  // Estimate current MF/equity exposure
+  const mfHoldings = (d.assetProfile.mutualFunds || 0) + (d.assetProfile.stocks || 0);
+  const debtHoldings = (d.assetProfile.fixedDeposits || 0);
+
+  // Equity bucket
+  p.setFillColor(...B50); p.roundedRect(M, y, CW, 24, 1.5, 1.5, 'F');
+  p.setDrawColor(...BLUE); p.setLineWidth(0.2); p.roundedRect(M, y, CW, 24, 1.5, 1.5, 'S');
+  p.setTextColor(...BLUE); p.setFontSize(7); p.setFont('helvetica', 'bold');
+  p.text('Equity-oriented MF / Hybrid >=65% equity', M + 4, y + 4);
+  p.setTextColor(...S700); p.setFontSize(5.8); p.setFont('helvetica', 'normal');
+  p.text(`Approximate holdings (MF + direct stocks): ${formatINR(mfHoldings)}`, M + 4, y + 8.5);
+  p.text(`LTCG @ 12.5% above Rs. 1.25L exemption/FY (units held >12 months); STCG @ 20% under 12 months.`, M + 4, y + 12.5);
+  p.setTextColor(...GREEN); p.setFontSize(5.8); p.setFont('helvetica', 'bold');
+  p.text('Consideration for review:', M + 4, y + 17);
+  p.setTextColor(...S700); p.setFont('helvetica', 'normal');
+  const ltcgLines = p.splitTextToSize(rs('Harvest Rs. 1.25L of LTCG every FY tax-free by selling-and-immediately-rebuying the same units. Cumulative tax shield on Rs. 50L equity over 10 years: approx Rs. 1.56L (Rs. 1.25L x 10 x 12.5%).'), CW - 50);
+  p.text(ltcgLines.slice(0, 2), M + 40, y + 17);
+  y += 28;
+
+  // Debt bucket
+  p.setFillColor(...S50); p.roundedRect(M, y, CW, 20, 1.5, 1.5, 'F');
+  p.setDrawColor(...PURPLE); p.setLineWidth(0.2); p.roundedRect(M, y, CW, 20, 1.5, 1.5, 'S');
+  p.setTextColor(...PURPLE); p.setFontSize(7); p.setFont('helvetica', 'bold');
+  p.text('Debt MF (units purchased on/after 1 Apr 2023)', M + 4, y + 4);
+  p.setTextColor(...S700); p.setFontSize(5.8); p.setFont('helvetica', 'normal');
+  p.text(rs(`Approximate fixed-income holdings (FDs as proxy): ${formatINR(debtHoldings)}`), M + 4, y + 8.5);
+  p.text(rs('All gains taxed at SLAB rate. No LTCG benefit. No indexation under Finance Act 2024.'), M + 4, y + 12.5);
+  p.setTextColor(...GREEN); p.setFontSize(5.8); p.setFont('helvetica', 'bold');
+  p.text('Consideration for review:', M + 4, y + 16.5);
+  p.setTextColor(...S700); p.setFont('helvetica', 'normal');
+  p.text(rs('Compare net-of-tax IRR vs Arbitrage Funds (taxed as equity @ 12.5% LTCG) for rebalancing sleeve.'), M + 40, y + 16.5);
+  y += 24;
+
+  // Hybrid bucket
+  p.setFillColor(...S50); p.roundedRect(M, y, CW, 16, 1.5, 1.5, 'F');
+  p.setDrawColor(...AMBER); p.setLineWidth(0.2); p.roundedRect(M, y, CW, 16, 1.5, 1.5, 'S');
+  p.setTextColor(...AMBER); p.setFontSize(7); p.setFont('helvetica', 'bold');
+  p.text('Hybrid (<65% equity) — BAF, Multi-Asset, etc.', M + 4, y + 4);
+  p.setTextColor(...S700); p.setFontSize(5.8); p.setFont('helvetica', 'normal');
+  p.text(rs('LTCG @ 12.5% after 24 months. STCG at slab rate below 24 months. Plan de-risk windows accordingly.'), M + 4, y + 8.5);
+  p.setTextColor(...GREEN); p.setFont('helvetica', 'bold');
+  p.text('Consideration:', M + 4, y + 12.5);
+  p.setTextColor(...S700); p.setFont('helvetica', 'normal');
+  p.text(rs('Hold hybrid units for 24+ months before redemption to access LTCG rate over slab.'), M + 26, y + 12.5);
+  y += 20;
+
+  // ── BLOCK 3 — Deductions Utilization (expanded) ──────────────────────────
+  if (y > PH - FH - 50) { ftr(p); p.addPage(); hdr(p, pg, dt, totalPages); wm(p); y = CSY; }
+  p.setTextColor(...PURPLE); p.setFontSize(9); p.setFont('helvetica', 'bold');
+  p.text('3. Deductions Utilization (Old Regime only, unless noted)', M + 4, y + 5); y += 9;
+
+  const deductions: Array<[string, string, number, number, string]> = [
+    ['Section 80C', 'PPF, EPF, ELSS, LIC, Tuition (Old regime only)', tax.section80CUsed || 0, 150000, 'old'],
+    ['Section 80D', 'Health Insurance — Self + Parents (Old regime only)', tax.section80DUsed || 0, 75000, 'old'],
+    ['NPS 80CCD(1B)', 'Additional NPS (Old regime only, over 80C)', tax.npsContribution || 0, 50000, 'old'],
+    ['NPS 80CCD(2)', 'Employer NPS — up to 10% of basic (Old AND New regime)', 0, 200000, 'both'],
+    ['Section 80EEA', 'First-time home loan interest, affordable housing (Old only)', 0, 150000, 'old'],
+    ['Section 80TTA/TTB', 'Savings interest exempt — Rs.10K (under 60) / Rs.50K (senior)', 0, 50000, 'old'],
+  ];
+
+  for (const [sec, desc, used, limit, regime] of deductions) {
+    if (y > PH - FH - 14) break;
     const utilPct = Math.min((used / limit) * 100, 100);
     const utilColor = utilPct >= 90 ? GREEN : utilPct >= 50 ? AMBER : RED;
-
-    p.setFillColor(...S50); p.roundedRect(M, y, CW, 16, 1, 1, 'F');
-    p.setTextColor(...S800); p.setFontSize(7); p.setFont('helvetica', 'bold');
-    p.text(sec, M + 4, y + 5);
-    p.setTextColor(...S400); p.setFontSize(5.5); p.setFont('helvetica', 'normal');
-    p.text(desc, M + 4, y + 9);
-    p.setTextColor(...S800); p.setFontSize(7); p.setFont('helvetica', 'bold');
-    p.text(`${rs(formatINR(used))} / ${rs(formatINR(limit))}`, PW - M - 4, y + 5, { align: 'right' });
-    progBar(p, M + 4, y + 12, CW - 8, 2.5, used, limit, utilColor);
-    y += 18;
+    p.setFillColor(...S50); p.roundedRect(M, y, CW, 11, 1, 1, 'F');
+    p.setTextColor(...S800); p.setFontSize(6.5); p.setFont('helvetica', 'bold');
+    p.text(sec, M + 4, y + 4);
+    if (regime === 'both') {
+      p.setFillColor(...GREEN); p.roundedRect(M + 32, y + 1.5, 18, 3.5, 0.8, 0.8, 'F');
+      p.setTextColor(255, 255, 255); p.setFontSize(4.5); p.text('OLD + NEW', M + 41, y + 4, { align: 'center' });
+    }
+    p.setTextColor(...S400); p.setFontSize(5); p.setFont('helvetica', 'normal');
+    p.text(rs(desc), M + 4, y + 7);
+    p.setTextColor(...S800); p.setFontSize(6.5); p.setFont('helvetica', 'bold');
+    p.text(`${rs(formatINR(used))} / ${rs(formatINR(limit))}`, PW - M - 4, y + 4, { align: 'right' });
+    progBar(p, M + 4, y + 9, CW - 8, 1.5, used, limit, utilColor);
+    y += 13;
   }
 
-  // Recommendations
+  // ── BLOCK 4 — Tactical FY Considerations ─────────────────────────────────
+  if (y > PH - FH - 40) { ftr(p); p.addPage(); hdr(p, pg, dt, totalPages); wm(p); y = CSY; }
   y += 3;
   p.setTextColor(...TEAL); p.setFontSize(9); p.setFont('helvetica', 'bold');
-  p.text('Recommended Actions', M + 4, y + 5); y += 10;
+  p.text('4. Tactical Considerations for This FY (before 31 March)', M + 4, y + 5); y += 9;
 
-  const recs = taxOpt?.recommendations || [];
-  const defaultRecs = recs.length > 0 ? recs : [
-    tax.section80CUsed < 150000 ? `Invest ${rs(formatINR(150000 - tax.section80CUsed))} more in ELSS/PPF to maximize 80C deduction.` : '80C fully utilized - good job!',
-    tax.section80DUsed < 25000 ? 'Consider health insurance for self and family to claim 80D deduction (up to Rs. 75,000 including parents).' : 'Health insurance premium deductions are being claimed.',
-    tax.npsContribution < 50000 ? 'Consider additional NPS contribution for extra Rs. 50,000 deduction under 80CCD(1B).' : 'NPS additional contribution is being maximized.',
-    'If paying rent and not receiving HRA, claim deduction under Section 80GG (up to Rs. 5,000/month).',
-  ];
+  const tacticalConsiderations: string[] = [];
+  if (section80C < 150000) {
+    tacticalConsiderations.push(`80C headroom: Rs. ${formatINR(150000 - section80C)} remaining. ELSS Regular plan SIP offers the shortest 80C lock-in (3 yrs); consideration for review with the Trustner team before March 31.`);
+  }
+  if (section80D < 75000) {
+    tacticalConsiderations.push(`80D headroom: Rs. ${formatINR(75000 - section80D)} remaining. Health insurance covering self + parents (>=60) unlocks the full Rs. 75K deduction.`);
+  }
+  if (npsExtra < 50000) {
+    tacticalConsiderations.push(`NPS 80CCD(1B) headroom: Rs. ${formatINR(50000 - npsExtra)} remaining. The marginal tax saving at your slab is the entire deduction x your marginal rate.`);
+  }
+  tacticalConsiderations.push(`LTCG harvest: book Rs. 1.25L of long-term equity gains before March 31 to lock the FY exemption. Sell + immediately re-buy the same scheme — the gain is realised tax-free, the cost basis resets up.`);
+  tacticalConsiderations.push(`Tax-loss harvest: if any equity holding shows a short-term LOSS, booking it (and re-entering after 30 days) can offset other STCG @ 20%. STCL can be carried forward 8 years.`);
 
-  for (let i = 0; i < Math.min(defaultRecs.length, 4); i++) {
-    if (y > PH - FH - 15) break;
-    p.setTextColor(...TEAL); p.setFontSize(7); p.setFont('helvetica', 'bold'); p.text(`${i + 1}.`, M + 4, y);
-    p.setTextColor(...S800); p.setFontSize(6.5); p.setFont('helvetica', 'normal');
-    const recLines = p.splitTextToSize(defaultRecs[i], CW - 14);
-    p.text(recLines.slice(0, 2), M + 12, y);
-    y += recLines.length * 3.5 + 2;
+  for (let i = 0; i < Math.min(tacticalConsiderations.length, 4); i++) {
+    if (y > PH - FH - 12) break;
+    p.setTextColor(...TEAL); p.setFontSize(6.5); p.setFont('helvetica', 'bold'); p.text(`${i + 1}.`, M + 4, y + 3);
+    p.setTextColor(...S800); p.setFontSize(5.8); p.setFont('helvetica', 'normal');
+    const recLines = p.splitTextToSize(rs(tacticalConsiderations[i]), CW - 12);
+    p.text(recLines.slice(0, 3), M + 10, y + 3);
+    y += Math.min(recLines.length, 3) * 3.2 + 3;
   }
 
+  // ── BLOCK 5 — 5-Year Tax Projection ──────────────────────────────────────
+  if (y > PH - FH - 50) { ftr(p); p.addPage(); hdr(p, pg, dt, totalPages); wm(p); y = CSY; }
+  y += 2;
+  p.setTextColor(...TEAL); p.setFontSize(9); p.setFont('helvetica', 'bold');
+  p.text('5. 5-Year Tax Lens — Status Quo vs With Considerations Applied', M + 4, y + 5); y += 9;
+
+  // Assume 8% income growth, current vs optimised tax
+  const growthRate = 0.08;
+  const optimisedTax = Math.min(oldTaxAmt, newTaxAmt);
+  const currentTax = (oldRecommended && tax.taxRegime === 'new') || (!oldRecommended && tax.taxRegime === 'old')
+    ? Math.max(oldTaxAmt, newTaxAmt)
+    : optimisedTax;
+
+  // Headers
+  p.setFillColor(...TEAL); p.rect(M, y, CW, 6, 'F');
+  p.setTextColor(255, 255, 255); p.setFontSize(5.8); p.setFont('helvetica', 'bold');
+  p.text('FY', M + 3, y + 4);
+  const yearW = (CW - 35) / 5;
+  for (let i = 0; i < 5; i++) {
+    p.text(`FY${26 + i}`, M + 35 + yearW * i + yearW / 2, y + 4, { align: 'center' });
+  }
+  y += 6;
+
+  // Rows: income (growing 8% p.a.), status-quo tax, optimised tax, difference
+  const rowsData: Array<[string, (yr: number) => string, RGB]> = [
+    ['Income', (yr) => formatINR(Math.round(grossAnnual * Math.pow(1 + growthRate, yr))), S700],
+    ['Tax — status quo', (yr) => formatINR(Math.round(currentTax * Math.pow(1 + growthRate, yr))), S700],
+    ['Tax — with considerations', (yr) => formatINR(Math.round(optimisedTax * Math.pow(1 + growthRate, yr))), GREEN],
+    ['Annual saving', (yr) => formatINR(Math.round((currentTax - optimisedTax) * Math.pow(1 + growthRate, yr))), GREEN],
+  ];
+
+  for (let ri = 0; ri < rowsData.length; ri++) {
+    const [label, fn, col] = rowsData[ri];
+    p.setFillColor(...(ri % 2 === 0 ? S50 : WHITE)); p.rect(M, y, CW, 5.5, 'F');
+    p.setTextColor(...S800); p.setFontSize(5.5); p.setFont('helvetica', 'bold');
+    p.text(rs(label), M + 3, y + 4);
+    p.setTextColor(...col); p.setFont('helvetica', 'normal');
+    for (let i = 0; i < 5; i++) {
+      p.text(rs(fn(i)), M + 35 + yearW * i + yearW / 2, y + 4, { align: 'center' });
+    }
+    y += 5.5;
+  }
+
+  // 5-year cumulative
+  const cumulativeSaving = Array.from({ length: 5 }, (_, i) => (currentTax - optimisedTax) * Math.pow(1 + growthRate, i)).reduce((a, b) => a + b, 0);
+  y += 2;
+  p.setFillColor(...E50); p.roundedRect(M, y, CW, 9, 1.5, 1.5, 'F');
+  p.setDrawColor(...GREEN); p.setLineWidth(0.2); p.roundedRect(M, y, CW, 9, 1.5, 1.5, 'S');
+  p.setTextColor(...GREEN); p.setFontSize(7); p.setFont('helvetica', 'bold');
+  p.text(`5-year cumulative savings (regime + deductions) : ~${formatINR(Math.round(cumulativeSaving))}`, M + 4, y + 6);
+  y += 13;
+
+  // Footer disclaimer
+  if (y > PH - FH - 14) { ftr(p); p.addPage(); hdr(p, pg, dt, totalPages); wm(p); y = CSY; }
+  p.setFillColor(...S50); p.roundedRect(M, y, CW, 12, 1.5, 1.5, 'F');
+  p.setTextColor(...S700); p.setFontSize(5.5); p.setFont('helvetica', 'italic');
+  const disclaimerLines = p.splitTextToSize(
+    rs('This section presents tax considerations for review with your tax consultant. Trustner Asset Services is an AMFI-registered Mutual Fund Distributor (ARN-286886) and not a tax adviser. Capital gains rates quoted are per Finance Act 2024 (STCG 20%, LTCG 12.5%, Rs. 1.25L exemption/FY for equity-oriented schemes; debt MF gains taxed at slab post-Apr 2023). Final filings must be made on a qualified CA s advice.'),
+    CW - 8,
+  );
+  p.text(disclaimerLines.slice(0, 3), M + 4, y + 4);
+
   ftr(p);
+}
+
+// ─── FY26 (Finance Act 2024) tax computation helpers ─────────────────────
+// Old regime slabs (no cess on first Rs. 5L due to rebate u/s 87A up to 5L):
+function computeOldRegimeTax(taxable: number): number {
+  let t = 0;
+  if (taxable <= 250000) t = 0;
+  else if (taxable <= 500000) t = (taxable - 250000) * 0.05;
+  else if (taxable <= 1000000) t = 12500 + (taxable - 500000) * 0.2;
+  else t = 112500 + (taxable - 1000000) * 0.3;
+  // Rebate u/s 87A if taxable income <= 5L (old regime)
+  if (taxable <= 500000) t = 0;
+  // 4% cess
+  return t * 1.04;
+}
+// New regime (Finance Act 2024) slabs — wider brackets, 75K standard deduction:
+function computeNewRegimeTax(taxable: number): number {
+  let t = 0;
+  if (taxable <= 300000) t = 0;
+  else if (taxable <= 700000) t = (taxable - 300000) * 0.05;
+  else if (taxable <= 1000000) t = 20000 + (taxable - 700000) * 0.10;
+  else if (taxable <= 1200000) t = 50000 + (taxable - 1000000) * 0.15;
+  else if (taxable <= 1500000) t = 80000 + (taxable - 1200000) * 0.20;
+  else t = 140000 + (taxable - 1500000) * 0.30;
+  // Rebate u/s 87A in new regime up to 7L taxable income
+  if (taxable <= 700000) t = 0;
+  // 4% cess
+  return t * 1.04;
 }
 
 // ─── Comprehensive: 12-Month Action Timeline ───

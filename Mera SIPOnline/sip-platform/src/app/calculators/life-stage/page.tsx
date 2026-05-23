@@ -367,7 +367,7 @@ export default function LifeStageCalculatorPage() {
                         Age {investorAge} &rarr; {investorAge + investYears}
                       </div>
                     )}
-                    <DownloadPDFButton elementId="calculator-results" title="Life-Stage Financial Planner" fileName="life-stage-planner" />
+                    <DownloadPDFButton elementId="calculator-results" title="Life-Stage Investment Tool" fileName="life-stage-tool" />
                   </div>
                   <div className="space-y-3">
                     <div>

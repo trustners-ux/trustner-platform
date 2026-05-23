@@ -3,9 +3,9 @@ import type { Metadata } from 'next';
 const BASE_URL = 'https://www.merasip.com';
 
 export const metadata: Metadata = {
-  title: 'SIP & Mutual Fund Blog | Expert Insights by CFP Ram Shah',
+  title: 'SIP & Mutual Fund Blog | Expert Insights by Ram Shah',
   description:
-    'Read expert articles on SIP investing, mutual fund strategies, market analysis, tax planning, and wealth building. Written by Certified Financial Planner Ram Shah with 20+ years of experience. Free actionable advice for Indian investors.',
+    'Read expert articles on SIP investing, mutual fund strategies, market analysis, tax planning, and wealth building. Written by Ram Shah with 20+ years of experience. Free actionable advice for Indian investors.',
   keywords: [
     'SIP blog',
     'mutual fund blog India',
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     'financial planning blog',
     'SIP strategy',
     'mutual fund tax planning',
-    'CFP Ram Shah',
+    'Ram Shah',
     'Trustner blog',
     'Mera SIP Online blog',
     'best SIP advice',
@@ -22,12 +22,12 @@ export const metadata: Metadata = {
     'SIP investment articles',
     'personal finance blog India',
   ],
-  authors: [{ name: 'CFP Ram Shah', url: `${BASE_URL}/about` }],
+  authors: [{ name: 'Ram Shah', url: `${BASE_URL}/about` }],
   openGraph: {
     type: 'website',
-    title: 'SIP & Mutual Fund Blog | CFP Ram Shah | Mera SIP Online',
+    title: 'SIP & Mutual Fund Blog | Ram Shah | Mera SIP Online',
     description:
-      'Expert articles on SIP investing, mutual fund strategies, market analysis, and financial planning by Certified Financial Planner Ram Shah.',
+      'Expert articles on SIP investing, mutual fund strategies, market analysis, and financial planning by Ram Shah.',
     url: `${BASE_URL}/blog`,
     siteName: 'Mera SIP Online by Trustner',
     locale: 'en_IN',
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'SIP & Mutual Fund Blog | Mera SIP Online',
     description:
-      'Expert insights on SIP investing and mutual funds by CFP Ram Shah.',
+      'Expert insights on SIP investing and mutual funds by Ram Shah.',
   },
   alternates: {
     canonical: `${BASE_URL}/blog`,

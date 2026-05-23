@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils/cn';
 import { DISCLAIMER } from '@/lib/constants/company';
 import NumberInput from '@/components/ui/NumberInput';
 import DownloadPDFButton from '@/components/ui/DownloadPDFButton';
+import PersonalInfoBar from '@/components/ui/PersonalInfoBar';
 
 /* ─── Constants ─── */
 
@@ -41,6 +42,8 @@ const DEPENDENT_OPTIONS = [0, 1, 2, 3, 4, 5];
 /* ─── Component ─── */
 
 export default function EmergencyFundCalculatorPage() {
+  const [clientName, setClientName] = useState('');
+  const [clientAge, setClientAge] = useState<number | null>(35);
   const [rent, setRent] = useState(25000);
   const [groceries, setGroceries] = useState(15000);
   const [utilities, setUtilities] = useState(5000);
@@ -152,6 +155,15 @@ export default function EmergencyFundCalculatorPage() {
             {/* ─── Input Panel (Sticky Left) ─── */}
             <div className="card-base p-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
               <h2 className="font-bold text-primary-700 mb-6 text-lg">Configure Your Expenses</h2>
+
+              <PersonalInfoBar
+                name={clientName}
+                onNameChange={setClientName}
+                age={clientAge}
+                onAgeChange={setClientAge}
+                ageLabel="Current Age"
+                namePlaceholder="e.g., Ram"
+              />
 
               <div className="space-y-5">
                 <NumberInput label="Monthly Rent / EMI" value={rent} onChange={setRent} prefix="₹" step={1000} min={0} max={500000} />
@@ -284,7 +296,7 @@ export default function EmergencyFundCalculatorPage() {
               {/* PDF Download */}
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-primary-700">Results</h3>
-                <DownloadPDFButton elementId="calculator-results" title="Emergency Fund Calculator" fileName="emergency-fund-calculator" />
+                <DownloadPDFButton elementId="calculator-results" title="Emergency Fund Calculator" fileName={`emergency-fund-calculator${clientName ? `-${clientName.replace(/\s+/g, '-')}` : ''}`} />
               </div>
 
               {/* Expense Breakdown Pie Chart */}

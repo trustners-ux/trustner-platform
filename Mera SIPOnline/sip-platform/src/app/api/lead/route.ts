@@ -1,6 +1,16 @@
 import { NextResponse } from 'next/server';
 import { addLead, updateLeadByPhone } from '@/lib/admin/leads-store';
 
+/** Escape user-supplied strings before interpolating into HTML email bodies */
+function esc(s: unknown): string {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -13,6 +23,8 @@ export async function POST(request: Request) {
       riskScore,
       riskAnswers,
       preferredCallTime,
+      remarks,
+      phoneVerified,
       step,
       source = 'lead-modal',
     } = body;
@@ -49,6 +61,8 @@ export async function POST(request: Request) {
     if (typeof riskScore === 'number') leadData.riskScore = riskScore;
     if (riskAnswers && Object.keys(riskAnswers).length > 0) leadData.riskAnswers = riskAnswers;
     if (preferredCallTime) leadData.preferredCallTime = preferredCallTime;
+    if (remarks) leadData.remarks = remarks;
+    if (typeof phoneVerified === 'boolean') leadData.phoneVerified = phoneVerified;
     if (typeof step === 'number') leadData.step = step;
 
     // Send notification email via Resend — only for complete submissions (step 4 or legacy)
@@ -57,14 +71,14 @@ export async function POST(request: Request) {
       if (RESEND_API_KEY) {
         try {
           const riskInfo = riskProfile
-            ? `<tr><td style="padding: 8px 0; color: #64748b;">Risk Profile:</td><td style="padding: 8px 0; font-weight: bold;">${riskProfile} (Score: ${riskScore ?? 'N/A'})</td></tr>`
+            ? `<tr><td style="padding: 8px 0; color: #64748b;">Risk Profile:</td><td style="padding: 8px 0; font-weight: bold;">${esc(riskProfile)} (Score: ${esc(riskScore ?? 'N/A')})</td></tr>`
             : '';
           const timeInfo = preferredCallTime
-            ? `<tr><td style="padding: 8px 0; color: #64748b;">Preferred Time:</td><td style="padding: 8px 0;">${preferredCallTime}</td></tr>`
+            ? `<tr><td style="padding: 8px 0; color: #64748b;">Preferred Time:</td><td style="padding: 8px 0;">${esc(preferredCallTime)}</td></tr>`
             : '';
           const riskDetail = riskAnswers
             ? `<tr><td style="padding: 8px 0; color: #64748b; vertical-align: top;">Risk Answers:</td><td style="padding: 8px 0; font-size: 12px;">${Object.entries(riskAnswers as Record<string, string>)
-                .map(([k, v]) => `${k}: ${v}`)
+                .map(([k, v]) => `${esc(k)}: ${esc(v)}`)
                 .join('<br/>')}</td></tr>`
             : '';
 
@@ -77,7 +91,7 @@ export async function POST(request: Request) {
             body: JSON.stringify({
               from: 'Mera SIP Online <leads@merasip.com>',
               to: 'wecare@merasip.com',
-              subject: `New Lead: ${name} - ${goal || 'General Inquiry'}${riskProfile ? ` [${riskProfile}]` : ''}`,
+              subject: `New Lead: ${name} - ${goal || source || 'General Inquiry'}${phoneVerified ? ' ✓' : ''}${riskProfile ? ` [${riskProfile}]` : ''}`,
               html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                   <div style="background: #0F766E; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
@@ -85,10 +99,12 @@ export async function POST(request: Request) {
                   </div>
                   <div style="padding: 24px; border: 1px solid #e2e8f0; border-top: 0; border-radius: 0 0 8px 8px;">
                     <table style="width: 100%; border-collapse: collapse;">
-                      <tr><td style="padding: 8px 0; color: #64748b; width: 140px;">Name:</td><td style="padding: 8px 0; font-weight: bold;">${name}</td></tr>
-                      <tr><td style="padding: 8px 0; color: #64748b;">Phone:</td><td style="padding: 8px 0; font-weight: bold;">${phone}</td></tr>
-                      ${email ? `<tr><td style="padding: 8px 0; color: #64748b;">Email:</td><td style="padding: 8px 0;">${email}</td></tr>` : ''}
-                      <tr><td style="padding: 8px 0; color: #64748b;">Goal:</td><td style="padding: 8px 0;">${goal || 'Not specified'}</td></tr>
+                      <tr><td style="padding: 8px 0; color: #64748b; width: 140px;">Name:</td><td style="padding: 8px 0; font-weight: bold;">${esc(name)}</td></tr>
+                      <tr><td style="padding: 8px 0; color: #64748b;">Phone:</td><td style="padding: 8px 0; font-weight: bold;">${esc(phone)}</td></tr>
+                      ${email ? `<tr><td style="padding: 8px 0; color: #64748b;">Email:</td><td style="padding: 8px 0;">${esc(email)}</td></tr>` : ''}
+                      ${goal ? `<tr><td style="padding: 8px 0; color: #64748b;">Goal:</td><td style="padding: 8px 0;">${esc(goal)}</td></tr>` : ''}
+                      ${remarks ? `<tr><td style="padding: 8px 0; color: #64748b;">Remarks:</td><td style="padding: 8px 0;">${esc(remarks)}</td></tr>` : ''}
+                      <tr><td style="padding: 8px 0; color: #64748b;">Phone Verified:</td><td style="padding: 8px 0; font-weight: bold; color: ${phoneVerified ? '#16a34a' : '#dc2626'};">${phoneVerified ? '✓ Yes' : '✗ No'}</td></tr>
                       ${riskInfo}
                       ${timeInfo}
                       ${riskDetail}

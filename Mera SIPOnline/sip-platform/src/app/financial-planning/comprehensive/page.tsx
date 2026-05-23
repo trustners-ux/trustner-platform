@@ -179,6 +179,7 @@ export default function ComprehensivePlanPage() {
   // ── Validation ──
   const validateStep = useCallback((stepIndex: number): string | null => {
     const p = planData.personalProfile;
+    const c = planData.careerProfile;
     const i = planData.incomeProfile;
     switch (stepIndex) {
       case 0: {
@@ -193,7 +194,18 @@ export default function ComprehensivePlanPage() {
         return null;
       }
       case 1: {
-        if (!i.monthlyInHandSalary || i.monthlyInHandSalary <= 0) return 'Please enter your monthly salary.';
+        // Career & Income: validation depends on employment type
+        const empType = c.employmentType;
+        if (empType === 'salaried') {
+          if (!i.monthlyInHandSalary || i.monthlyInHandSalary <= 0) {
+            return 'Please enter your monthly in-hand salary.';
+          }
+        } else if (empType === 'self-employed' || empType === 'business') {
+          if (!i.businessIncome || i.businessIncome <= 0) {
+            return 'Please enter your monthly business income.';
+          }
+        }
+        // For 'retired' / 'homemaker', no hard income requirement
         return null;
       }
       default: return null;
@@ -283,7 +295,7 @@ export default function ComprehensivePlanPage() {
         <div className="max-w-md w-full">
           <div className="text-center mb-6">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 mb-3">
-              <Crown className="w-3.5 h-3.5" /> COMPREHENSIVE • CFP-GRADE
+              <Crown className="w-3.5 h-3.5" /> COMPREHENSIVE • PROFESSIONAL-GRADE
             </span>
             <h1 className="text-2xl font-bold text-primary-700">Comprehensive Financial Blueprint</h1>
             <p className="text-sm text-slate-500 mt-1">A complete financial plan with 5-year cashflow projection, asset allocation matrix, and personalized recommendations</p>

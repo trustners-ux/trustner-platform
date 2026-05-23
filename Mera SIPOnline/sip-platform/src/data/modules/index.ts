@@ -10,18 +10,48 @@ import { distributionRoleModule } from './distribution-role';
 import { investorServicesModule } from './investor-services';
 import { riskReturnPerformanceModule } from './risk-return-performance';
 import { schemeSelectionPlanningModule } from './scheme-selection-planning';
-import { LearningModule, Section } from '@/types/learning';
+// New foundation modules for the seven-track Learn architecture
+import { sifFoundationModule } from './sif-foundation';
+import { pmsFoundationModule } from './pms-foundation';
+import { aifFoundationModule } from './aif-foundation';
+import { giftCityFoundationModule } from './gift-city-foundation';
+import { internationalFoundationModule } from './international-foundation';
+import { insuranceFoundationModule } from './insurance-foundation';
+// Phase 2 expansion — Deep Dive (intermediate) and Advanced (practitioner) modules
+import { sifStrategiesDeepModule } from './sif-strategies-deep';
+import { sifOperationsTaxModule } from './sif-operations-tax';
+import { sifAdvancedModule } from './sif-advanced';
+import { pmsStrategiesModule } from './pms-strategies';
+import { pmsTaxOperationsModule } from './pms-tax-operations';
+import { pmsAdvancedModule } from './pms-advanced';
+import { aifCategoriesDeepModule } from './aif-categories-deep';
+import { aifAdvancedModule } from './aif-advanced';
+import { giftProductsDeepModule } from './gift-products-deep';
+import { giftAdvancedModule } from './gift-advanced';
+import { internationalDeepModule } from './international-deep';
+import { internationalAdvancedModule } from './international-advanced';
+import { insuranceDeepModule } from './insurance-deep';
+import { insuranceAdvancedModule } from './insurance-advanced';
+import { LearningModule, Section, LearnTrack } from '@/types/learning';
 
 /**
- * All 12 NISM VA-aligned learning modules.
- * Ordered: Foundation (beginner) → Intermediate → Advanced
+ * All learning modules across seven tracks.
+ * Each module declares a `track` field; defaults to 'mutual-funds' if absent.
+ *
+ * Tracks:
+ *   mutual-funds   — flagship MF curriculum (12 modules: NISM V-A aligned)
+ *   sif            — Specialized Investment Funds Foundation
+ *   pms            — Portfolio Management Services Foundation
+ *   aif            — Alternative Investment Funds Foundation
+ *   gift-city      — GIFT IFSC Foundation
+ *   international  — International Funds Foundation
+ *   insurance      — Insurance Foundation
  */
 export const ALL_MODULES: LearningModule[] = [
-  // ─── Foundation (Beginner) ───
+  // ─── Mutual Funds (Foundation → Intermediate → Advanced) ───
   investmentLandscapeModule,
   whatIsMutualFundModule,
   sipMasteryModule,
-  // ─── Intermediate ───
   schemeTypesModule,
   fundStructureModule,
   legalRegulatoryModule,
@@ -29,10 +59,51 @@ export const ALL_MODULES: LearningModule[] = [
   taxationModule,
   distributionRoleModule,
   investorServicesModule,
-  // ─── Advanced ───
   riskReturnPerformanceModule,
   schemeSelectionPlanningModule,
+  // ─── New Foundation Tracks ───
+  sifFoundationModule,
+  pmsFoundationModule,
+  aifFoundationModule,
+  giftCityFoundationModule,
+  internationalFoundationModule,
+  insuranceFoundationModule,
+  // ─── SIF Phase 2 (Deep Dive + Advanced) ───
+  sifStrategiesDeepModule,
+  sifOperationsTaxModule,
+  sifAdvancedModule,
+  // ─── PMS Phase 2 ───
+  pmsStrategiesModule,
+  pmsTaxOperationsModule,
+  pmsAdvancedModule,
+  // ─── AIF Phase 2 ───
+  aifCategoriesDeepModule,
+  aifAdvancedModule,
+  // ─── GIFT City Phase 2 ───
+  giftProductsDeepModule,
+  giftAdvancedModule,
+  // ─── International Phase 2 ───
+  internationalDeepModule,
+  internationalAdvancedModule,
+  // ─── Insurance Phase 2 ───
+  insuranceDeepModule,
+  insuranceAdvancedModule,
 ];
+
+/** Default track for legacy modules that don't declare one. */
+export function getModuleTrack(module: LearningModule): LearnTrack {
+  return module.track ?? 'mutual-funds';
+}
+
+/** All modules belonging to a given track. */
+export function getModulesByTrack(track: LearnTrack): LearningModule[] {
+  return ALL_MODULES.filter((m) => getModuleTrack(m) === track);
+}
+
+/** Module count per track. */
+export function getModuleCountByTrack(track: LearnTrack): number {
+  return getModulesByTrack(track).length;
+}
 
 export function getAllModules(): LearningModule[] {
   return ALL_MODULES;

@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils/cn';
 import { DISCLAIMER } from '@/lib/constants/company';
 import NumberInput from '@/components/ui/NumberInput';
 import DownloadPDFButton from '@/components/ui/DownloadPDFButton';
+import PersonalInfoBar from '@/components/ui/PersonalInfoBar';
 
 const COLORS = {
   accumulation: '#059669',
@@ -30,6 +31,8 @@ const FIRE_TYPES: { key: FireType; label: string; multiplier: number; descriptio
 ];
 
 export default function FIRECalculatorPage() {
+  const [clientName, setClientName] = useState('');
+  const [clientAge, setClientAge] = useState<number | null>(30);
   const [currentAge, setCurrentAge] = useState(30);
   const [targetRetireAge, setTargetRetireAge] = useState(45);
   const [monthlyIncome, setMonthlyIncome] = useState(150000);
@@ -196,6 +199,15 @@ export default function FIRECalculatorPage() {
             <div className="card-base p-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
               <h2 className="font-bold text-primary-700 mb-6 text-lg">Your FIRE Profile</h2>
 
+              <PersonalInfoBar
+                name={clientName}
+                onNameChange={setClientName}
+                age={clientAge}
+                onAgeChange={setClientAge}
+                ageLabel="Current Age"
+                namePlaceholder="e.g., Ram"
+              />
+
               {/* FIRE Type Toggle */}
               <div className="mb-6">
                 <label className="text-xs font-medium text-slate-600 mb-2 block">FIRE Type</label>
@@ -264,7 +276,7 @@ export default function FIRECalculatorPage() {
                         </div>
                       </div>
                     </div>
-                    <DownloadPDFButton elementId="calculator-results" title="FIRE Calculator" fileName="fire-calculator" />
+                    <DownloadPDFButton elementId="calculator-results" title="FIRE Calculator" fileName={`fire-calculator${clientName ? `-${clientName.replace(/\s+/g, '-')}` : ''}`} />
                   </div>
                   <div className="text-3xl sm:text-4xl font-extrabold text-amber-700 mt-2">{formatINR(results.fireNumber)}</div>
                   <p className="text-xs text-slate-500 mt-1">

@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils/cn';
 import { DISCLAIMER } from '@/lib/constants/company';
 import NumberInput from '@/components/ui/NumberInput';
 import DownloadPDFButton from '@/components/ui/DownloadPDFButton';
+import PersonalInfoBar from '@/components/ui/PersonalInfoBar';
 
 const COLORS = {
   invested: '#0F766E',
@@ -22,6 +23,8 @@ const COLORS = {
 };
 
 export default function DailySIPCalculatorPage() {
+  const [clientName, setClientName] = useState('');
+  const [clientAge, setClientAge] = useState<number | null>(35);
   const [dailyAmount, setDailyAmount] = useState(500);
   const [returnRate, setReturnRate] = useState(12);
   const [years, setYears] = useState(10);
@@ -31,6 +34,7 @@ export default function DailySIPCalculatorPage() {
   const [stepUpEnabled, setStepUpEnabled] = useState(false);
   const [stepUpType, setStepUpType] = useState<'percentage' | 'amount'>('percentage');
   const [stepUpValue, setStepUpValue] = useState(10);
+  const [stepUpFrequency, setStepUpFrequency] = useState<'monthly' | 'yearly'>('monthly');
 
   // Hybrid mode state
   const [hybridEnabled, setHybridEnabled] = useState(false);
@@ -53,16 +57,16 @@ export default function DailySIPCalculatorPage() {
   const activeStepUpType = stepUpEnabled ? stepUpType : 'percentage';
 
   // Standard mode calculations
-  const standardResult = useMemo(() => calculateDailySIP(dailyAmount, returnRate, years, mode, activeStepUp, activeStepUpType), [dailyAmount, returnRate, years, mode, activeStepUp, activeStepUpType]);
-  const standardBreakdown = useMemo(() => calculateDailySIPBreakdown(dailyAmount, returnRate, years, mode, activeStepUp, activeStepUpType), [dailyAmount, returnRate, years, mode, activeStepUp, activeStepUpType]);
+  const standardResult = useMemo(() => calculateDailySIP(dailyAmount, returnRate, years, mode, activeStepUp, activeStepUpType, stepUpFrequency), [dailyAmount, returnRate, years, mode, activeStepUp, activeStepUpType, stepUpFrequency]);
+  const standardBreakdown = useMemo(() => calculateDailySIPBreakdown(dailyAmount, returnRate, years, mode, activeStepUp, activeStepUpType, stepUpFrequency), [dailyAmount, returnRate, years, mode, activeStepUp, activeStepUpType, stepUpFrequency]);
 
   // Flat result (no step-up) for comparison
   const flatResult = useMemo(() => stepUpEnabled ? calculateDailySIP(dailyAmount, returnRate, hybridEnabled ? totalYears : years, mode) : null, [stepUpEnabled, dailyAmount, returnRate, years, totalYears, hybridEnabled, mode]);
 
   // Hybrid mode calculations
   const hybridData = useMemo(
-    () => calculateDailySIPWithGrowth(dailyAmount, returnRate, sipYears, totalYears, mode, activeStepUp, activeStepUpType),
-    [dailyAmount, returnRate, sipYears, totalYears, mode, activeStepUp, activeStepUpType]
+    () => calculateDailySIPWithGrowth(dailyAmount, returnRate, sipYears, totalYears, mode, activeStepUp, activeStepUpType, stepUpFrequency),
+    [dailyAmount, returnRate, sipYears, totalYears, mode, activeStepUp, activeStepUpType, stepUpFrequency]
   );
 
   const result = hybridEnabled ? hybridData.result : standardResult;
@@ -112,6 +116,15 @@ export default function DailySIPCalculatorPage() {
             <div className="card-base p-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
               <h2 className="font-bold text-primary-700 mb-6 text-lg">Configure Your Daily SIP</h2>
 
+              <PersonalInfoBar
+                name={clientName}
+                onNameChange={setClientName}
+                age={clientAge}
+                onAgeChange={setClientAge}
+                ageLabel="Current Age"
+                namePlaceholder="e.g., Ram"
+              />
+
               <div className="space-y-6">
                 {/* Mode Toggle */}
                 <div>
@@ -154,12 +167,12 @@ export default function DailySIPCalculatorPage() {
 
                 {/* Step-Up Toggle */}
                 <div className="border border-surface-300 rounded-xl p-4 bg-surface-50"
-                  data-pdf-stepup={stepUpEnabled ? `Annual Step-Up (${stepUpType === 'percentage' ? 'Percentage' : 'Amount'}): ${stepUpType === 'amount' ? '₹' : ''}${stepUpValue}${stepUpType === 'percentage' ? '%' : ''}` : undefined}
+                  data-pdf-stepup={stepUpEnabled ? `${stepUpFrequency === 'monthly' ? 'Monthly' : 'Annual'} Step-Up (${stepUpType === 'percentage' ? 'Percentage' : 'Amount'}): ${stepUpType === 'amount' ? '₹' : ''}${stepUpValue}${stepUpType === 'percentage' ? '%' : ''} per ${stepUpFrequency === 'monthly' ? 'month' : 'year'}` : undefined}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <TrendingUp className="w-4 h-4 text-emerald-600" />
-                      <span className="text-sm font-semibold text-slate-700">Annual Step-Up</span>
+                      <span className="text-sm font-semibold text-slate-700">Step-Up Daily SIP</span>
                     </div>
                     <button
                       type="button"
@@ -180,47 +193,100 @@ export default function DailySIPCalculatorPage() {
                     </button>
                   </div>
                   <p className="text-[11px] text-slate-500 mt-1.5">
-                    Increase your daily SIP amount every year
+                    Increase your daily SIP amount on a chosen cadence
                   </p>
 
                   {stepUpEnabled && (
                     <div className="mt-4 space-y-3 pt-4 border-t border-surface-300">
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setStepUpType('percentage')}
-                          className={cn(
-                            'flex-1 text-[11px] font-semibold py-1.5 rounded-lg border transition-colors',
-                            stepUpType === 'percentage'
-                              ? 'bg-emerald-500 text-white border-emerald-500'
-                              : 'bg-white text-slate-600 border-slate-300'
-                          )}
-                        >
-                          +%
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setStepUpType('amount')}
-                          className={cn(
-                            'flex-1 text-[11px] font-semibold py-1.5 rounded-lg border transition-colors',
-                            stepUpType === 'amount'
-                              ? 'bg-emerald-500 text-white border-emerald-500'
-                              : 'bg-white text-slate-600 border-slate-300'
-                          )}
-                        >
-                          +₹
-                        </button>
+                      {/* Frequency selector */}
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Step-Up Frequency</label>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setStepUpFrequency('monthly')}
+                            className={cn(
+                              'flex-1 text-[11px] font-semibold py-1.5 rounded-lg border transition-colors',
+                              stepUpFrequency === 'monthly'
+                                ? 'bg-emerald-500 text-white border-emerald-500'
+                                : 'bg-white text-slate-600 border-slate-300'
+                            )}
+                          >
+                            Monthly
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setStepUpFrequency('yearly')}
+                            className={cn(
+                              'flex-1 text-[11px] font-semibold py-1.5 rounded-lg border transition-colors',
+                              stepUpFrequency === 'yearly'
+                                ? 'bg-emerald-500 text-white border-emerald-500'
+                                : 'bg-white text-slate-600 border-slate-300'
+                            )}
+                          >
+                            Yearly
+                          </button>
+                        </div>
+                      </div>
+                      {/* Type selector */}
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Step-Up Type</label>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setStepUpType('percentage')}
+                            className={cn(
+                              'flex-1 text-[11px] font-semibold py-1.5 rounded-lg border transition-colors',
+                              stepUpType === 'percentage'
+                                ? 'bg-emerald-500 text-white border-emerald-500'
+                                : 'bg-white text-slate-600 border-slate-300'
+                            )}
+                          >
+                            +%
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setStepUpType('amount')}
+                            className={cn(
+                              'flex-1 text-[11px] font-semibold py-1.5 rounded-lg border transition-colors',
+                              stepUpType === 'amount'
+                                ? 'bg-emerald-500 text-white border-emerald-500'
+                                : 'bg-white text-slate-600 border-slate-300'
+                            )}
+                          >
+                            +₹
+                          </button>
+                        </div>
                       </div>
                       <NumberInput
-                        label={stepUpType === 'percentage' ? 'Annual Increase' : 'Annual Increase Amount'}
+                        label={
+                          stepUpType === 'percentage'
+                            ? `${stepUpFrequency === 'monthly' ? 'Monthly' : 'Annual'} Increase (%)`
+                            : `${stepUpFrequency === 'monthly' ? 'Monthly' : 'Annual'} Increase to Daily SIP (₹)`
+                        }
                         value={stepUpValue}
                         onChange={setStepUpValue}
                         prefix={stepUpType === 'amount' ? '₹' : undefined}
                         suffix={stepUpType === 'percentage' ? '%' : undefined}
-                        step={stepUpType === 'percentage' ? 1 : 500}
-                        min={stepUpType === 'percentage' ? 1 : 500}
+                        step={stepUpType === 'percentage' ? 1 : 100}
+                        min={stepUpType === 'percentage' ? 1 : 50}
                         max={stepUpType === 'percentage' ? 50 : 50000}
                       />
+                      <p className="text-[11px] text-slate-500 leading-snug">
+                        {stepUpType === 'amount' ? (
+                          <>
+                            Each {stepUpFrequency === 'monthly' ? 'month' : 'year'}, daily SIP rises by ₹{stepUpValue.toLocaleString('en-IN')}.
+                            E.g. ₹{dailyAmount.toLocaleString('en-IN')} → ₹{(dailyAmount + stepUpValue).toLocaleString('en-IN')} → ₹{(dailyAmount + 2 * stepUpValue).toLocaleString('en-IN')} …
+                          </>
+                        ) : (
+                          <>
+                            Each {stepUpFrequency === 'monthly' ? 'month' : 'year'}, daily SIP rises by {stepUpValue}%.
+                            {stepUpFrequency === 'monthly' && stepUpValue >= 5 && (
+                              <span className="text-amber-700"> Note: high monthly % compounds aggressively — consider 1-3% or switch to amount/yearly.</span>
+                            )}
+                          </>
+                        )}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -338,7 +404,7 @@ export default function DailySIPCalculatorPage() {
                       {formatINR(result.totalValue - flatResult.totalValue)}
                     </div>
                     <div className="text-[11px] text-emerald-600 mt-1">
-                      Extra wealth from {stepUpValue}{stepUpType === 'percentage' ? '%' : '₹'} annual step-up vs flat SIP
+                      Extra wealth from {stepUpType === 'amount' ? '₹' : ''}{stepUpValue}{stepUpType === 'percentage' ? '%' : ''} {stepUpFrequency} step-up vs flat SIP
                     </div>
                   </div>
                 )}
@@ -351,7 +417,7 @@ export default function DailySIPCalculatorPage() {
               <div className="card-base p-6" data-pdf-keep-together>
                 <div className="flex items-center justify-between mb-1">
                   <h3 className="font-bold text-primary-700">Growth Over Time</h3>
-                  <DownloadPDFButton elementId="calculator-results" title="Daily SIP Calculator" fileName="daily-sip-calculator" />
+                  <DownloadPDFButton elementId="calculator-results" title="Daily SIP Calculator" fileName={`daily-sip-calculator${clientName ? `-${clientName.replace(/\s+/g, '-')}` : ''}`} />
                 </div>
                 <p className="text-sm text-slate-500 mb-6">
                   {hybridEnabled

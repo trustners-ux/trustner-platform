@@ -24,12 +24,13 @@ function formatRupee(val: number | null | undefined): string {
   return `\u20B9${new Intl.NumberFormat('en-IN').format(val)}`;
 }
 
-/** Format return with color info */
+/** Format return with color info. Input is decimal CAGR (e.g. 0.1349) — convert to percent. */
 function formatReturn(val: number | null): { text: string; isPositive: boolean; isNull: boolean } {
   if (val === null || val === undefined) return { text: '--', isPositive: false, isNull: true };
+  const pct = val * 100;
   return {
-    text: `${val >= 0 ? '+' : ''}${val.toFixed(2)}%`,
-    isPositive: val >= 0,
+    text: `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%`,
+    isPositive: pct >= 0,
     isNull: false,
   };
 }

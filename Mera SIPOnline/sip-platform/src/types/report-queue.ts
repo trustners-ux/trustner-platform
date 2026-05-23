@@ -50,6 +50,12 @@ export interface ReportQueueEntry {
   editedNarrative: string | null;
   narrativeVersion: number;
 
+  // V2: Bespoke executive summary (comprehensive tier only). Persisted so PDF
+  // re-renders without a Claude call still get the personalised per-goal table.
+  // Type imported lazily as `unknown` to avoid circular dep on the V2 types;
+  // the PDF renderer narrows it via FinancialHealthReportV2.
+  executiveSummary?: unknown;
+
   // Blob references
   pdfBlobUrl: string;
   dataBlobUrl: string;

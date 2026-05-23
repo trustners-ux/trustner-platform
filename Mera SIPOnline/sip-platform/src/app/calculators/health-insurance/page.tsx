@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, HeartPulse, ShieldCheck, TrendingUp, AlertTriangle, Users, Building2, Stethoscope, Lightbulb } from 'lucide-react';
 import {
@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils/cn';
 import { DISCLAIMER } from '@/lib/constants/company';
 import NumberInput from '@/components/ui/NumberInput';
 import DownloadPDFButton from '@/components/ui/DownloadPDFButton';
+import PersonalInfoBar from '@/components/ui/PersonalInfoBar';
 
 /* ─── Constants ─── */
 
@@ -84,6 +85,8 @@ function roundToLakh(value: number): number {
 /* ─── Component ─── */
 
 export default function HealthInsuranceCalculatorPage() {
+  const [clientName, setClientName] = useState('');
+  const [clientAge, setClientAge] = useState<number | null>(40);
   const [cityTier, setCityTier] = useState<CityTier>('tier1');
   const [familySize, setFamilySize] = useState<FamilySize>('couple');
   const [eldestAge, setEldestAge] = useState(35);
@@ -92,6 +95,12 @@ export default function HealthInsuranceCalculatorPage() {
   const [planningHorizon, setPlanningHorizon] = useState(15);
   const [preExisting, setPreExisting] = useState(false);
   const [existingCover, setExistingCover] = useState(500000);
+
+  // Clamp horizon to (100 - age) when age changes so projections never run past age 100
+  useEffect(() => {
+    const cap = Math.max(1, 100 - eldestAge);
+    if (planningHorizon > cap) setPlanningHorizon(cap);
+  }, [eldestAge, planningHorizon]);
 
   const result = useMemo(() => {
     const cityData = CITY_TIERS.find((c) => c.key === cityTier)!;
@@ -188,6 +197,15 @@ export default function HealthInsuranceCalculatorPage() {
             <div className="card-base p-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
               <h2 className="font-bold text-primary-700 mb-6 text-lg">Configure Coverage</h2>
 
+              <PersonalInfoBar
+                name={clientName}
+                onNameChange={setClientName}
+                age={clientAge}
+                onAgeChange={setClientAge}
+                namePlaceholder="e.g., Ram"
+                showAge={false}
+              />
+
               {/* City Tier */}
               <div className="mb-5">
                 <label className="block text-[13px] font-semibold text-slate-600 mb-2">City Tier</label>
@@ -279,10 +297,19 @@ export default function HealthInsuranceCalculatorPage() {
 
               {/* Numeric Inputs */}
               <div className="space-y-5">
-                <NumberInput label="Eldest Member Age" value={eldestAge} onChange={setEldestAge} suffix="Years" step={1} min={18} max={80} />
+                <NumberInput label="Eldest Member Age" value={eldestAge} onChange={setEldestAge} suffix="Years" step={1} min={18} max={99} />
                 <NumberInput label="Medical Inflation Rate" value={inflationRate} onChange={setInflationRate} suffix="% p.a." step={1} min={8} max={18} />
-                <NumberInput label="Planning Horizon" value={planningHorizon} onChange={setPlanningHorizon} suffix="Years" step={5} min={5} max={30} />
-                <NumberInput label="Existing Health Cover" value={existingCover} onChange={setExistingCover} prefix="₹" step={500000} min={0} max={10000000} />
+                <NumberInput
+                  label="Planning Horizon"
+                  value={planningHorizon}
+                  onChange={setPlanningHorizon}
+                  suffix="Years"
+                  step={1}
+                  min={1}
+                  max={Math.max(1, 100 - eldestAge)}
+                  hint={`Up to ${Math.max(1, 100 - eldestAge)} years (age 100 minus eldest member's age ${eldestAge})`}
+                />
+                <NumberInput label="Existing Health Cover" value={existingCover} onChange={setExistingCover} prefix="₹" step={100000} min={0} max={100000000} hint="Up to ₹10 Cr" />
               </div>
 
               {/* Summary Cards */}
@@ -345,7 +372,7 @@ export default function HealthInsuranceCalculatorPage() {
               {/* PDF Download */}
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-primary-700">Results</h3>
-                <DownloadPDFButton elementId="calculator-results" title="Health Insurance Calculator" fileName="health-insurance-calculator" />
+                <DownloadPDFButton elementId="calculator-results" title="Health Insurance Calculator" fileName={`health-insurance-calculator${clientName ? `-${clientName.replace(/\s+/g, '-')}` : ''}`} />
               </div>
 
               {/* Projection Metric Cards */}

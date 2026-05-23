@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils/cn';
 import { DISCLAIMER } from '@/lib/constants/company';
 import NumberInput from '@/components/ui/NumberInput';
 import DownloadPDFButton from '@/components/ui/DownloadPDFButton';
+import PersonalInfoBar from '@/components/ui/PersonalInfoBar';
 
 const COLORS = {
   principal: '#0F766E',
@@ -28,10 +29,17 @@ const LOAN_PRESETS = [
 ];
 
 export default function EMICalculatorPage() {
+  const [clientName, setClientName] = useState('');
+  const [clientAge, setClientAge] = useState<number | null>(35);
   const [loanAmount, setLoanAmount] = useState(5000000);
   const [interestRate, setInterestRate] = useState(8.5);
   const [tenure, setTenure] = useState(20);
   const [activePreset, setActivePreset] = useState(0);
+  // Processing fee — many lenders charge a one-time fee at disbursal
+  const [hasProcessingFee, setHasProcessingFee] = useState(false);
+  const [feeMode, setFeeMode] = useState<'percent' | 'fixed'>('percent');
+  const [feePercent, setFeePercent] = useState(1); // % of loan (typical 0.5% – 2.5%)
+  const [feeFixed, setFeeFixed] = useState(10000); // flat ₹
 
   const applyPreset = (index: number) => {
     const preset = LOAN_PRESETS[index];
@@ -53,6 +61,20 @@ export default function EMICalculatorPage() {
     const totalPayment = emi * n;
     const totalInterest = totalPayment - P;
     const interestToRatio = P > 0 ? ((totalInterest / P) * 100) : 0;
+
+    // Processing fee (one-time, deducted upfront — typically not part of EMI).
+    // Included in total-cost computation; a rough effective APR is computed below.
+    const processingFee = hasProcessingFee
+      ? (feeMode === 'percent' ? P * (feePercent / 100) : feeFixed)
+      : 0;
+    const totalCostWithFee = totalPayment + processingFee;
+
+    // Effective APR (with processing fee): treat fee as extra interest amortised over tenure.
+    // A proper computation would solve for IRR on the cashflow series (net disbursal − EMI×n).
+    // We approximate as: (totalInterest + processingFee) / loanAmount / tenure × 100.
+    const effectiveAPR = P > 0 && tenure > 0
+      ? ((totalInterest + processingFee) / P / tenure) * 100
+      : annualRate;
 
     // Year-by-year amortization
     const yearlyData: {
@@ -97,9 +119,12 @@ export default function EMICalculatorPage() {
       totalPayment: Math.round(totalPayment),
       totalInterest: Math.round(totalInterest),
       interestToRatio: interestToRatio.toFixed(1),
+      processingFee: Math.round(processingFee),
+      totalCostWithFee: Math.round(totalCostWithFee),
+      effectiveAPR: effectiveAPR.toFixed(2),
       yearlyData,
     };
-  }, [loanAmount, interestRate, tenure]);
+  }, [loanAmount, interestRate, tenure, hasProcessingFee, feeMode, feePercent, feeFixed]);
 
   const chartData = result.yearlyData.map((row) => ({
     year: `Yr ${row.year}`,
@@ -139,6 +164,15 @@ export default function EMICalculatorPage() {
             <div className="card-base p-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
               <h2 className="font-bold text-primary-700 mb-6 text-lg">Configure EMI</h2>
 
+              <PersonalInfoBar
+                name={clientName}
+                onNameChange={setClientName}
+                age={clientAge}
+                onAgeChange={setClientAge}
+                ageLabel="Current Age"
+                namePlaceholder="e.g., Ram"
+              />
+
               {/* Loan Type Presets */}
               <div className="mb-6">
                 <label className="block text-[13px] font-semibold text-slate-600 mb-2">Loan Type</label>
@@ -162,9 +196,86 @@ export default function EMICalculatorPage() {
               </div>
 
               <div className="space-y-6">
-                <NumberInput label="Loan Amount" value={loanAmount} onChange={setLoanAmount} prefix="₹" step={50000} min={100000} max={100000000} />
-                <NumberInput label="Interest Rate" value={interestRate} onChange={setInterestRate} suffix="% p.a." step={0.1} min={1} max={25} />
+                <NumberInput label="Loan Amount" value={loanAmount} onChange={setLoanAmount} prefix="₹" step={10000} min={10000} max={100000000} hint="₹10,000 to ₹10 Crore" />
+                <NumberInput label="Interest Rate" value={interestRate} onChange={setInterestRate} suffix="% p.a." step={0.1} min={1} max={50} hint="1% to 50% — covers everything from home loans to unsecured credit-card / money-lender rates" />
                 <NumberInput label="Loan Tenure" value={tenure} onChange={setTenure} suffix="Years" step={1} min={1} max={30} />
+              </div>
+
+              {/* Processing Fee block */}
+              <div className="mt-6 p-4 rounded-xl border border-amber-200/60 bg-amber-50/40">
+                <div
+                  className="flex items-center justify-between cursor-pointer"
+                  onClick={() => setHasProcessingFee(!hasProcessingFee)}
+                  role="switch"
+                  aria-checked={hasProcessingFee}
+                  tabIndex={0}
+                >
+                  <div>
+                    <div className="text-[13px] font-semibold text-slate-700">Processing Fee?</div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">Lenders typically charge 0.25% – 2.5% upfront</div>
+                  </div>
+                  <div className={cn('relative w-11 h-6 rounded-full transition-colors', hasProcessingFee ? 'bg-amber-500' : 'bg-slate-300')}>
+                    <div className={cn('absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform', hasProcessingFee ? 'translate-x-5' : 'translate-x-0.5')} />
+                  </div>
+                </div>
+
+                {hasProcessingFee && (
+                  <div className="mt-4 space-y-3">
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setFeeMode('percent')}
+                        className={cn(
+                          'flex-1 py-2 text-xs font-semibold rounded-lg border transition-all',
+                          feeMode === 'percent' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-slate-600 border-slate-300',
+                        )}
+                      >
+                        % of Loan
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFeeMode('fixed')}
+                        className={cn(
+                          'flex-1 py-2 text-xs font-semibold rounded-lg border transition-all',
+                          feeMode === 'fixed' ? 'bg-amber-600 text-white border-amber-600' : 'bg-white text-slate-600 border-slate-300',
+                        )}
+                      >
+                        Fixed ₹
+                      </button>
+                    </div>
+                    {feeMode === 'percent' ? (
+                      <NumberInput
+                        label="Processing Fee Rate"
+                        value={feePercent}
+                        onChange={setFeePercent}
+                        suffix="%"
+                        step={0.05}
+                        min={0}
+                        max={5}
+                        hint="Typical range 0.25% – 2.5% of loan amount"
+                      />
+                    ) : (
+                      <NumberInput
+                        label="Processing Fee Amount"
+                        value={feeFixed}
+                        onChange={setFeeFixed}
+                        prefix="₹"
+                        step={500}
+                        min={0}
+                        max={1000000}
+                      />
+                    )}
+                    <div className="flex items-center justify-between text-[11px] bg-white border border-amber-200/50 rounded-lg px-3 py-2">
+                      <span className="text-slate-500">Total processing fee</span>
+                      <span className="font-bold text-amber-700">{formatINR(result.processingFee)}</span>
+                    </div>
+                    {result.processingFee > 0 && (
+                      <div className="text-[10px] text-slate-500 leading-relaxed">
+                        Effective APR (incl. fee): <strong className="text-amber-700">{result.effectiveAPR}%</strong> — a rough comparison against the stated {interestRate}% rate.
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Summary Cards */}
@@ -190,10 +301,29 @@ export default function EMICalculatorPage() {
                 <div className="flex items-center justify-between p-3 rounded-lg bg-surface-100">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="w-4 h-4 text-purple-600" />
-                    <span className="text-[11px] text-slate-500 font-medium">Total Amount</span>
+                    <span className="text-[11px] text-slate-500 font-medium">Total Amount (EMIs)</span>
                   </div>
                   <span className="text-sm font-bold text-purple-700">{formatINR(result.totalPayment)}</span>
                 </div>
+
+                {hasProcessingFee && result.processingFee > 0 && (
+                  <>
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-amber-50 border border-amber-200/50">
+                      <div className="flex items-center gap-2">
+                        <Percent className="w-4 h-4 text-amber-600" />
+                        <span className="text-[11px] text-slate-500 font-medium">Processing Fee (one-time)</span>
+                      </div>
+                      <span className="text-sm font-bold text-amber-700">{formatINR(result.processingFee)}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-red-50 to-orange-50 border border-red-200/50">
+                      <div className="flex items-center gap-2">
+                        <IndianRupee className="w-4 h-4 text-red-600" />
+                        <span className="text-[11px] text-slate-500 font-medium">Total Cost (EMIs + Fee)</span>
+                      </div>
+                      <span className="text-sm font-bold text-red-700">{formatINR(result.totalCostWithFee)}</span>
+                    </div>
+                  </>
+                )}
 
                 <div className="flex items-center justify-between p-3 rounded-lg bg-surface-100">
                   <div className="flex items-center gap-2">
@@ -210,7 +340,7 @@ export default function EMICalculatorPage() {
               {/* PDF Download Button */}
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-primary-700">Results</h3>
-                <DownloadPDFButton elementId="calculator-results" title="EMI Calculator" fileName="emi-calculator" />
+                <DownloadPDFButton elementId="calculator-results" title="EMI Calculator" fileName={`emi-calculator${clientName ? `-${clientName.replace(/\s+/g, '-')}` : ''}`} />
               </div>
 
               {/* Principal vs Interest Area Chart */}

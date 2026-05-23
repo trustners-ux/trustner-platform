@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   TrendingUp, Wallet, BarChart3, LineChart, Target, Crosshair,
   Shield, Users, Briefcase, IndianRupee, Award, Milestone, ChevronRight,
@@ -17,6 +17,8 @@ import {
 import { MFD_CONSTANTS, MFD_COLORS, MFD_DISCLAIMER, MFD_TABS, CLIENT_PRESETS } from '@/lib/constants/trail-commission';
 import { formatINR, formatNumber } from '@/lib/utils/formatters';
 import { cn } from '@/lib/utils/cn';
+import SharedNumberInput from '@/components/ui/NumberInput';
+import DownloadPDFButton from '@/components/ui/DownloadPDFButton';
 
 // ── Tab Icons Map ────────────────────────────────────────
 const TAB_ICONS: Record<string, typeof TrendingUp> = {
@@ -25,57 +27,9 @@ const TAB_ICONS: Record<string, typeof TrendingUp> = {
   'insurance-vs-mf': Shield, 'sub-broker': Users,
 };
 
-// ── Number Input Component (Type-in) ─────────────────────
-function NumberInput({
-  label, value, onChange, prefix, suffix, step = 1, min, max, hint,
-}: {
-  label: string; value: number; onChange: (v: number) => void;
-  prefix?: string; suffix?: string; step?: number; min?: number; max?: number; hint?: string;
-}) {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/,/g, '');
-    const num = parseFloat(raw);
-    if (!isNaN(num)) {
-      let clamped = num;
-      if (min !== undefined) clamped = Math.max(min, clamped);
-      if (max !== undefined) clamped = Math.min(max, clamped);
-      onChange(clamped);
-    } else if (raw === '' || raw === '-') {
-      onChange(min ?? 0);
-    }
-  };
-
-  const increment = () => {
-    const next = value + step;
-    onChange(max !== undefined ? Math.min(max, next) : next);
-  };
-  const decrement = () => {
-    const next = value - step;
-    onChange(min !== undefined ? Math.max(min, next) : next);
-  };
-
-  return (
-    <div>
-      <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">{label}</label>
-      <div className="flex items-center border border-surface-300 rounded-xl bg-white overflow-hidden focus-within:ring-2 focus-within:ring-amber-300 focus-within:border-amber-400 transition-all">
-        {prefix && <span className="pl-3 pr-1 text-sm text-slate-400 select-none">{prefix}</span>}
-        <input
-          type="text"
-          inputMode="decimal"
-          value={formatNumber(value)}
-          onChange={handleChange}
-          className="flex-1 py-2.5 px-2 text-sm font-semibold text-primary-700 bg-transparent outline-none min-w-0"
-        />
-        {suffix && <span className="pr-2 text-sm text-slate-400 select-none whitespace-nowrap">{suffix}</span>}
-        <div className="flex flex-col border-l border-surface-300">
-          <button onClick={increment} className="px-2 py-0.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors text-xs leading-none">▲</button>
-          <button onClick={decrement} className="px-2 py-0.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors text-xs leading-none border-t border-surface-200">▼</button>
-        </div>
-      </div>
-      {hint && <p className="text-[10px] text-slate-400 mt-1">{hint}</p>}
-    </div>
-  );
-}
+// ── Number Input — use the shared one (raw-text edit mode, blur-clamp) ──
+// Wraps SharedNumberInput to match the prior local signature so calls below compile unchanged.
+const NumberInput = SharedNumberInput;
 
 // ── Summary Stat Card ────────────────────────────────────
 function StatCard({ icon: Icon, label, value, color, sub }: {
@@ -210,6 +164,24 @@ function TrailTable({
 export default function MFDTrailCalculatorPage() {
   const [activeTab, setActiveTab] = useState('new-sip');
 
+  // Personalisation — shown on screen + baked into the PDF filename/header
+  const [subBrokerName, setSubBrokerName] = useState('');
+  const [firmName, setFirmName] = useState('');
+  const [arn, setArn] = useState('');
+
+  // Deep-link support: /mfd/trail-calculator?tab=lumpsum loads that tab on arrival.
+  // Reads window.location directly to avoid the useSearchParams Suspense requirement.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const t = new URLSearchParams(window.location.search).get('tab');
+    if (t && MFD_TABS.some((tab) => tab.id === t)) setActiveTab(t);
+  }, []);
+
+  // Dynamic PDF filename per active tab + sub-broker
+  const activeTabLabel = MFD_TABS.find((t) => t.id === activeTab)?.label ?? 'Trail';
+  const pdfFileName = `MFD-${activeTabLabel.replace(/\s+/g, '-')}${subBrokerName ? `-${subBrokerName.replace(/\s+/g, '-')}` : ''}`;
+  const today = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
   // ── Shared Parameters ──────────────────────────────────
   const [trailPercent, setTrailPercent] = useState(0.8);
   const [expectedReturn, setExpectedReturn] = useState(12);
@@ -283,7 +255,7 @@ export default function MFDTrailCalculatorPage() {
     if (!tab1) return null;
     return (
       <div className="grid lg:grid-cols-[420px_1fr] gap-8">
-        <div className="space-y-6 lg:sticky lg:top-36 lg:self-start">
+        <div className="space-y-6 lg:sticky lg:top-36 lg:self-start lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto lg:pr-2">
           <div className="bg-white rounded-xl p-6 border border-surface-300 shadow-sm space-y-5">
             <div>
               <h2 className="font-bold text-primary-700 text-lg">New SIP Trail Income</h2>
@@ -312,7 +284,7 @@ export default function MFDTrailCalculatorPage() {
     if (!tab2) return null;
     return (
       <div className="grid lg:grid-cols-[420px_1fr] gap-8">
-        <div className="space-y-6 lg:sticky lg:top-36 lg:self-start">
+        <div className="space-y-6 lg:sticky lg:top-36 lg:self-start lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto lg:pr-2">
           <div className="bg-white rounded-xl p-6 border border-surface-300 shadow-sm space-y-5">
             <div>
               <h2 className="font-bold text-primary-700 text-lg">Lump Sum Trail Income</h2>
@@ -339,7 +311,7 @@ export default function MFDTrailCalculatorPage() {
     if (!tab3) return null;
     return (
       <div className="grid lg:grid-cols-[420px_1fr] gap-8">
-        <div className="space-y-6 lg:sticky lg:top-36 lg:self-start">
+        <div className="space-y-6 lg:sticky lg:top-36 lg:self-start lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto lg:pr-2">
           <div className="bg-white rounded-xl p-6 border border-surface-300 shadow-sm space-y-5">
             <div>
               <h2 className="font-bold text-primary-700 text-lg">SIP Book Growth</h2>
@@ -369,7 +341,7 @@ export default function MFDTrailCalculatorPage() {
     if (!tab4) return null;
     return (
       <div className="grid lg:grid-cols-[420px_1fr] gap-8">
-        <div className="space-y-6 lg:sticky lg:top-36 lg:self-start">
+        <div className="space-y-6 lg:sticky lg:top-36 lg:self-start lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto lg:pr-2">
           <div className="bg-white rounded-xl p-6 border border-surface-300 shadow-sm space-y-5">
             <div>
               <h2 className="font-bold text-primary-700 text-lg">AUM Growth — No New Business</h2>
@@ -407,7 +379,7 @@ export default function MFDTrailCalculatorPage() {
 
     return (
       <div className="grid lg:grid-cols-[440px_1fr] gap-8">
-        <div className="space-y-6 lg:sticky lg:top-36 lg:self-start">
+        <div className="space-y-6 lg:sticky lg:top-36 lg:self-start lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto lg:pr-2">
           <div className="bg-white rounded-xl p-6 border border-surface-300 shadow-sm space-y-5">
             <div>
               <h2 className="font-bold text-primary-700 text-lg">Full Income Projection</h2>
@@ -454,7 +426,7 @@ export default function MFDTrailCalculatorPage() {
     if (!tab6) return null;
     return (
       <div className="grid lg:grid-cols-[420px_1fr] gap-8">
-        <div className="space-y-6 lg:sticky lg:top-36 lg:self-start">
+        <div className="space-y-6 lg:sticky lg:top-36 lg:self-start lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto lg:pr-2">
           <div className="bg-white rounded-xl p-6 border border-surface-300 shadow-sm space-y-5">
             <div>
               <h2 className="font-bold text-primary-700 text-lg">Target Income Calculator</h2>
@@ -527,7 +499,7 @@ export default function MFDTrailCalculatorPage() {
     const { data, crossoverYear } = tab7;
     return (
       <div className="grid lg:grid-cols-[420px_1fr] gap-8">
-        <div className="space-y-6 lg:sticky lg:top-36 lg:self-start">
+        <div className="space-y-6 lg:sticky lg:top-36 lg:self-start lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto lg:pr-2">
           <div className="bg-white rounded-xl p-6 border border-surface-300 shadow-sm space-y-5">
             <div>
               <h2 className="font-bold text-primary-700 text-lg">Insurance vs Mutual Fund</h2>
@@ -626,7 +598,7 @@ export default function MFDTrailCalculatorPage() {
     if (!tab8 || !tab8Multi) return null;
     return (
       <div className="grid lg:grid-cols-[420px_1fr] gap-8">
-        <div className="space-y-6 lg:sticky lg:top-36 lg:self-start">
+        <div className="space-y-6 lg:sticky lg:top-36 lg:self-start lg:max-h-[calc(100vh-10rem)] lg:overflow-y-auto lg:pr-2">
           <div className="bg-white rounded-xl p-6 border border-surface-300 shadow-sm space-y-5">
             <div>
               <h2 className="font-bold text-primary-700 text-lg">Sub-Broker Scale Projection</h2>
@@ -760,9 +732,83 @@ export default function MFDTrailCalculatorPage() {
         </div>
       </div>
 
+      {/* ── Sub-Broker / Firm Info Bar + PDF Download ──── */}
+      <section className="py-6 bg-amber-50/40 border-b border-amber-200/50" data-pdf-hide>
+        <div className="container-custom">
+          <div className="flex flex-col lg:flex-row lg:items-end gap-4">
+            <div className="flex-1 grid sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">
+                  Sub-Broker / MFD Name
+                </label>
+                <input
+                  type="text"
+                  value={subBrokerName}
+                  onChange={(e) => setSubBrokerName(e.target.value)}
+                  placeholder="e.g., Rajesh Kumar"
+                  className="w-full py-2.5 px-3 text-sm font-semibold text-primary-700 bg-white border border-amber-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-400 transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">
+                  Firm Name <span className="text-slate-400 font-normal normal-case">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={firmName}
+                  onChange={(e) => setFirmName(e.target.value)}
+                  placeholder="e.g., Kumar Financial Services"
+                  className="w-full py-2.5 px-3 text-sm font-semibold text-primary-700 bg-white border border-amber-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-400 transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1.5 uppercase tracking-wider">
+                  ARN <span className="text-slate-400 font-normal normal-case">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={arn}
+                  onChange={(e) => setArn(e.target.value)}
+                  placeholder="e.g., ARN-123456"
+                  className="w-full py-2.5 px-3 text-sm font-semibold text-primary-700 bg-white border border-amber-200 rounded-lg outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-400 transition-all"
+                />
+              </div>
+            </div>
+            <div className="lg:shrink-0">
+              <DownloadPDFButton
+                elementId="mfd-trail-results"
+                title={`MFD Trail Projection — ${activeTabLabel}`}
+                fileName={pdfFileName}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── Tab Content ─────────────────────────────────── */}
       <section className="section-padding bg-surface-100 min-h-[60vh]">
-        <div className="container-custom">
+        <div id="mfd-trail-results" className="container-custom">
+          {/* Branding header — visible in PDF so the downloaded document is client-ready */}
+          {(subBrokerName || firmName || arn) && (
+            <div className="mb-6 p-4 rounded-xl border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50">
+              <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                {subBrokerName && (
+                  <span className="text-lg font-bold text-primary-700">{subBrokerName}</span>
+                )}
+                {firmName && (
+                  <span className="text-sm text-slate-600">· {firmName}</span>
+                )}
+                {arn && (
+                  <span className="text-xs font-mono text-amber-700 bg-white px-2 py-0.5 rounded border border-amber-200">
+                    {arn}
+                  </span>
+                )}
+                <span className="text-xs text-slate-500 ml-auto">
+                  Projection Report · {activeTabLabel} · {today}
+                </span>
+              </div>
+            </div>
+          )}
           {renderers[activeTab]?.()}
         </div>
       </section>

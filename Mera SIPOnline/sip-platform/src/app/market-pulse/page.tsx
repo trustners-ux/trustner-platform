@@ -40,8 +40,11 @@ import {
   getPreviousCommentaries,
   getAllInsights,
   sipTimingInsights,
+  getLatestNewsletter,
+  getArchivedNewsletters,
 } from '@/data/market';
 import type { MarketIndicator } from '@/types/market';
+import { FileText, Download, Eye, Mail } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
 /*  Icon resolver                                                      */
@@ -125,6 +128,8 @@ export default function MarketPulsePage() {
   const latestCommentary = getLatestCommentary();
   const previousCommentaries = getPreviousCommentaries();
   const allInsights = getAllInsights();
+  const latestNewsletter = getLatestNewsletter();
+  const archivedNewsletters = getArchivedNewsletters();
 
   const [expandedCommentary, setExpandedCommentary] = useState<string | null>(null);
   const [expandedInsights, setExpandedInsights] = useState<Set<string>>(new Set());
@@ -459,6 +464,157 @@ export default function MarketPulsePage() {
           </div>
         </section>
       )}
+
+      {/* ============================================================ */}
+      {/*  4b. Weekly Market Brief — PDF Newsletter                     */}
+      {/* ============================================================ */}
+      <section className="section-padding bg-gradient-to-br from-primary-700 via-primary-800 to-brand-900 text-white">
+        <div className="container-custom">
+          <div className="max-w-5xl mx-auto">
+            {/* Section header */}
+            <div className="text-center mb-10">
+              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-1.5 text-xs font-medium mb-4 border border-white/20">
+                <FileText className="w-3.5 h-3.5 text-accent" />
+                Weekly Market Brief · PDF Newsletter
+              </div>
+              <h2 className="text-display-sm mb-3">Trustner Weekly Market Brief</h2>
+              <p className="text-sm text-slate-300 max-w-2xl mx-auto leading-relaxed">
+                Our flagship 3-page magazine covering 14 market sections — Indian equities, global
+                markets, commodities, FII/DII flows, RBI policy, mutual funds, IPOs, and more.
+                Published every Sunday.
+              </p>
+            </div>
+
+            {/* Featured (latest) newsletter card */}
+            <div className="rounded-2xl bg-white text-primary-700 shadow-2xl overflow-hidden mb-10">
+              <div className="md:flex">
+                {/* Left: preview block */}
+                <div className="md:w-2/5 bg-gradient-to-br from-brand-50 to-accent-50 p-8 flex flex-col justify-between border-b md:border-b-0 md:border-r border-surface-200">
+                  <div>
+                    <div className="inline-flex items-center gap-2 bg-brand text-white rounded-full px-3 py-1 text-[10px] font-bold mb-4">
+                      <span>LATEST</span>
+                      <span>·</span>
+                      <span>ISSUE {latestNewsletter.issueNumber} · VOL {latestNewsletter.volume}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-slate-500 mb-3">
+                      <Calendar className="w-3.5 h-3.5" />
+                      {latestNewsletter.weekRange}
+                    </div>
+                    <h3 className="text-xl font-bold text-primary-700 leading-snug mb-4">
+                      {latestNewsletter.title}
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-500 pt-4 border-t border-surface-200">
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>PDF · {latestNewsletter.fileSize} · 3 pages</span>
+                  </div>
+                </div>
+
+                {/* Right: content */}
+                <div className="md:w-3/5 p-8">
+                  <p className="text-sm text-slate-600 leading-relaxed mb-6">
+                    {latestNewsletter.summary}
+                  </p>
+
+                  {/* Highlights */}
+                  <div className="space-y-2 mb-6">
+                    {latestNewsletter.highlights.map((h, i) => (
+                      <div key={i} className="flex items-start gap-3 text-xs text-slate-600 leading-relaxed">
+                        <div className="w-4 h-4 rounded-full bg-brand/10 flex items-center justify-center shrink-0 mt-0.5">
+                          <span className="text-[9px] font-bold text-brand">{i + 1}</span>
+                        </div>
+                        {h}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* CTAs */}
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <a
+                      href={latestNewsletter.pdfPath}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-2 bg-brand hover:bg-brand-700 text-white rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors"
+                    >
+                      <Eye className="w-4 h-4" />
+                      View Brief
+                    </a>
+                    <a
+                      href={latestNewsletter.pdfPath}
+                      download
+                      className="inline-flex items-center justify-center gap-2 border border-brand text-brand hover:bg-brand/5 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download PDF
+                    </a>
+                    <a
+                      href="https://wa.me/916003903737?text=Hi%20Trustner%2C%20I%20want%20to%20subscribe%20to%20the%20Weekly%20Market%20Brief%20via%20WhatsApp."
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-2 text-slate-500 hover:text-brand rounded-lg px-3 py-2.5 text-xs font-medium transition-colors"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      Subscribe on WhatsApp
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Archive grid */}
+            {archivedNewsletters.length > 0 && (
+              <div>
+                <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-accent" />
+                  Previous Issues
+                </h3>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {archivedNewsletters.map((n) => (
+                    <div
+                      key={n.id}
+                      className="rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-5 hover:bg-white/10 transition-colors flex flex-col"
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-[10px] font-bold text-accent bg-accent/10 rounded-full px-2 py-0.5">
+                          ISSUE {n.issueNumber} · VOL {n.volume}
+                        </span>
+                        <span className="text-[10px] text-slate-400">{n.fileSize}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[11px] text-slate-300 mb-2">
+                        <Calendar className="w-3 h-3" />
+                        {n.weekRange}
+                      </div>
+                      <h4 className="text-sm font-semibold text-white leading-snug mb-3 flex-1">
+                        {n.title}
+                      </h4>
+                      <div className="flex gap-2 pt-3 border-t border-white/10">
+                        <a
+                          href={n.pdfPath}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 text-[11px] font-semibold text-white hover:text-accent transition-colors"
+                        >
+                          <Eye className="w-3 h-3" />
+                          View
+                        </a>
+                        <span className="w-px bg-white/10" />
+                        <a
+                          href={n.pdfPath}
+                          download
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 text-[11px] font-semibold text-white hover:text-accent transition-colors"
+                        >
+                          <Download className="w-3 h-3" />
+                          PDF
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
 
       {/* ============================================================ */}
       {/*  5. Market Insights Grid                                      */}

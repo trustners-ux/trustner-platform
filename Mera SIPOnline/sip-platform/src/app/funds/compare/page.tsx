@@ -169,7 +169,7 @@ function FundSelector({ onSelect }: { onSelect: (ids: string[]) => void }) {
         </div>
 
         {/* Compare button */}
-        <div className="mt-6 text-center">
+        <div className="mt-6 text-center flex items-center justify-center gap-3 flex-wrap">
           <button
             onClick={() => selected.length >= 2 && onSelect(selected)}
             disabled={selected.length < 2}
@@ -181,6 +181,12 @@ function FundSelector({ onSelect }: { onSelect: (ids: string[]) => void }) {
             <Layers className="w-4 h-4" />
             Compare {selected.length} Fund{selected.length !== 1 ? 's' : ''}
           </button>
+          <Link
+            href="/funds/portfolio-builder"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-rose-700 px-4 py-2 rounded-lg border border-rose-200 hover:bg-rose-50 transition-colors"
+          >
+            <Zap className="w-4 h-4" /> Build Portfolio Instead
+          </Link>
         </div>
       </div>
     </section>

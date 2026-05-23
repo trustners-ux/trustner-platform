@@ -112,7 +112,7 @@ export default function FundSelectionPage() {
   const searchRef = useRef<HTMLInputElement>(null);
 
   // Live NAV data — auto-fetched, merged with static data
-  const { navMap, updatedAt: navUpdatedAt, hasData: hasLiveNav, isLoading: navLoading } = useLiveNavData();
+  const { navMap, latestNavDateFormatted, hasData: hasLiveNav, isLoading: navLoading } = useLiveNavData();
 
   const totalFunds = getTotalFundCount();
   const totalCategories = getCategoryCount();
@@ -208,12 +208,12 @@ export default function FundSelectionPage() {
 
             {/* NAV date — MF NAVs are published post-market (~11pm) by AMFI, not live like ETFs */}
             <div className="mt-5 flex flex-wrap gap-3">
-              {hasLiveNav && navUpdatedAt && (
+              {hasLiveNav && latestNavDateFormatted && (
                 <div className="inline-flex items-center gap-2 bg-emerald-500/15 print:bg-emerald-50 rounded-lg px-4 py-2 border border-emerald-400/20 print:border-emerald-200 animate-in">
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
                   <span className="text-xs text-emerald-200 print:text-emerald-700">
                     NAV as on: <strong className="text-white print:text-emerald-800">
-                      {new Date(navUpdatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      {latestNavDateFormatted}
                     </strong>
                   </span>
                 </div>

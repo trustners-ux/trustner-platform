@@ -121,15 +121,16 @@ export function ExitIntentPopup() {
             <FileText className="w-8 h-8 text-white" />
           </div>
           <h2 className="text-xl font-bold text-white leading-tight">
-            Free SIP Starter Guide
+            Get Your Personalized SIP Roadmap
           </h2>
+          <p className="text-sm text-white/70 mt-1">Sent instantly to your inbox</p>
         </div>
 
         {/* Content Area */}
         <div className="px-6 pt-5 pb-6">
           <p className="text-sm text-slate-500 leading-relaxed mb-5">
-            Download our comprehensive guide to starting your SIP journey. Covers SIP basics,
-            fund selection, goal planning, and common mistakes to avoid.
+            Receive a free SIP starter guide with fund selection tips, goal-based planning
+            strategies, and common mistakes to avoid — curated by our team with 10+ years of experience.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-3">
@@ -165,7 +166,7 @@ export function ExitIntentPopup() {
               ) : (
                 <>
                   <Download className="w-4 h-4" />
-                  Get Free Guide
+                  Send Me the Free Guide
                 </>
               )}
             </button>

@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils/cn';
 import { DISCLAIMER } from '@/lib/constants/company';
 import NumberInput from '@/components/ui/NumberInput';
 import DownloadPDFButton from '@/components/ui/DownloadPDFButton';
+import PersonalInfoBar from '@/components/ui/PersonalInfoBar';
 
 const COLORS = {
   comfortable: '#10B981',
@@ -25,6 +26,8 @@ const COLORS = {
 const SENSITIVITY_RATES = [7, 8, 9, 10, 11];
 
 export default function HomeAffordabilityCalculatorPage() {
+  const [clientName, setClientName] = useState('');
+  const [clientAge, setClientAge] = useState<number | null>(35);
   const [monthlyIncome, setMonthlyIncome] = useState(100000);
   const [existingEMIs, setExistingEMIs] = useState(0);
   const [interestRate, setInterestRate] = useState(8.5);
@@ -146,6 +149,15 @@ export default function HomeAffordabilityCalculatorPage() {
             <div className="card-base p-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
               <h2 className="font-bold text-primary-700 mb-6 text-lg">Your Financial Profile</h2>
 
+              <PersonalInfoBar
+                name={clientName}
+                onNameChange={setClientName}
+                age={clientAge}
+                onAgeChange={setClientAge}
+                ageLabel="Current Age"
+                namePlaceholder="e.g., Ram"
+              />
+
               <div className="space-y-5 mb-6">
                 <NumberInput
                   label="Monthly Gross Income"
@@ -220,7 +232,7 @@ export default function HomeAffordabilityCalculatorPage() {
                 <DownloadPDFButton
                   elementId="calculator-results"
                   title="Home Loan Affordability Calculator"
-                  fileName="home-affordability"
+                  fileName={`home-affordability${clientName ? `-${clientName.replace(/\s+/g, '-')}` : ''}`}
                 />
               </div>
 

@@ -50,7 +50,7 @@ const bucketFeatures = [
   {
     icon: BarChart3,
     title: 'Product Recommendations',
-    desc: 'Get CFP-grade fund recommendations for each bucket — from Liquid Funds to Multi Cap Funds.',
+    desc: 'Get professional-grade fund recommendations for each bucket — from Liquid Funds to Multi Cap Funds.',
   },
 ];
 

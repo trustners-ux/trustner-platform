@@ -4,7 +4,7 @@ import { generateSEOMetadata, generateBreadcrumbSchema } from '@/lib/seo';
 export const metadata: Metadata = generateSEOMetadata({
   title: 'Mutual Fund Taxation Guide 2025-26 | LTCG, STCG, TDS Rules | MeraSIP',
   description:
-    'Complete guide to mutual fund taxation in India — equity, debt, hybrid, and international fund tax rules. LTCG, STCG, TDS, indexation, grandfathering, and tax-saving strategies explained by CFP Ram Shah.',
+    'Complete guide to mutual fund taxation in India — equity, debt, hybrid, and international fund tax rules. LTCG, STCG, TDS, indexation, grandfathering, and tax-saving strategies explained by Ram Shah.',
   path: '/resources/taxation',
   keywords: [
     'mutual fund taxation India',

@@ -7,14 +7,14 @@ export function ComplianceBanner() {
   return (
     <section className="bg-primary-700 text-white py-6">
       <div className="container-custom">
-        {/* SEBI / AMFI Regulatory Strip */}
+        {/* SEBI / AMFI / IRDAI Regulatory Strip */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
               <Shield className="w-5 h-5 text-accent" />
             </div>
             <div>
-              <div className="text-sm font-semibold">{COMPANY.mfEntity.type}</div>
+              <div className="text-sm font-semibold">{COMPANY.mfEntity.typeExtended}</div>
               <div className="text-xs text-slate-400">{COMPANY.mfEntity.amfiArn} | CIN: {COMPANY.mfEntity.cin}</div>
             </div>
           </div>
@@ -31,6 +31,10 @@ export function ComplianceBanner() {
               className="inline-flex items-center gap-1.5 text-xs bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full transition-colors">
               SCORES <ExternalLink className="w-3 h-3" />
             </a>
+            <a href="https://www.irdai.gov.in" target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-full transition-colors">
+              IRDAI <ExternalLink className="w-3 h-3" />
+            </a>
           </div>
         </div>
 
@@ -46,6 +50,13 @@ export function ComplianceBanner() {
               <strong className="text-slate-300">KYC:</strong> {DISCLAIMER.kyc}
             </p>
           </div>
+        </div>
+
+        {/* IRDAI Disclaimer */}
+        <div className="mt-3 bg-white/5 rounded-lg p-3">
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            <strong className="text-slate-300">Insurance:</strong> Insurance is the subject matter of solicitation. IRDAI does not involve itself in any approval or disapproval of the insurance products. | {COMPANY.insuranceEntity.name} | IRDAI License No. {COMPANY.insuranceEntity.irdaiLicense} | {COMPANY.insuranceEntity.type} | Category: {COMPANY.insuranceEntity.services}
+          </p>
         </div>
 
         <div className="mt-3 bg-white/5 rounded-lg p-3">

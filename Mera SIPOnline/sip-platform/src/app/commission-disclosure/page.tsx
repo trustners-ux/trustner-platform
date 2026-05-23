@@ -175,8 +175,8 @@ export default function CommissionDisclosurePage() {
 
           <h2>Regulatory Information</h2>
           <p>
-            {COMPANY.mfEntity.name} | {COMPANY.mfEntity.type} | {COMPANY.mfEntity.amfiArn} |
-            EUIN: {COMPANY.mfEntity.euin} | CIN: {COMPANY.mfEntity.cin}
+            {COMPANY.mfEntity.name} | {COMPANY.mfEntity.typeExtended} | {COMPANY.mfEntity.amfiArn} |
+            CIN: {COMPANY.mfEntity.cin}
           </p>
 
           <div className="mt-8 p-4 bg-surface-200 rounded-lg">

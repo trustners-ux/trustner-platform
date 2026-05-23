@@ -4,7 +4,7 @@ import { getPostBySlug, getAllPosts } from '@/data/blog';
 const BASE_URL = 'https://www.merasip.com';
 
 // Author constants for structured data
-const AUTHOR_NAME = 'CFP Ram Shah';
+const AUTHOR_NAME = 'Ram Shah';
 const AUTHOR_URL = `${BASE_URL}/about`;
 const ORG_NAME = 'Trustner Asset Services Pvt. Ltd.';
 
@@ -137,7 +137,7 @@ async function BlogPostStructuredData({
       '@type': 'Person',
       name: AUTHOR_NAME,
       url: AUTHOR_URL,
-      jobTitle: 'Certified Financial Planner',
+      jobTitle: 'Founder & CEO',
       worksFor: {
         '@type': 'Organization',
         name: ORG_NAME,

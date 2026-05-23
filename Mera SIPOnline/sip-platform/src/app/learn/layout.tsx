@@ -4,7 +4,7 @@ import { generateSEOMetadata, generateBreadcrumbSchema } from '@/lib/seo';
 export const metadata: Metadata = generateSEOMetadata({
   title: 'Learn SIP & Mutual Fund Investing | Free Learning Academy | MeraSIP',
   description:
-    'Structured, academy-style learning covering SIP fundamentals to advanced strategies. 12 modules, 100+ topics, MCQs, real-life examples, and formulas. NISM VA-aligned curriculum by CFP Ram Shah.',
+    'Structured, academy-style learning covering SIP fundamentals to advanced strategies. 12 modules, 100+ topics, MCQs, real-life examples, and formulas. NISM VA-aligned curriculum by Ram Shah.',
   path: '/learn',
   keywords: [
     'learn SIP investing',

@@ -26,11 +26,12 @@ function truncateName(name: string, max = 20): string {
 export function ReturnsBarChart({ funds }: ReturnsBarChartProps) {
   if (funds.length === 0) return null;
 
-  // Build data for grouped bar chart
+  // calculatedReturns / enriched.returns are decimals; convert to percentage for display.
+  const toPct = (v: number | null | undefined) => (v === null || v === undefined ? null : v * 100);
   const periods = [
-    { key: '1Y', accessor: (f: LiveFundDetail) => f.calculatedReturns.oneYear ?? f.enriched?.returns?.oneYear ?? null },
-    { key: '3Y', accessor: (f: LiveFundDetail) => f.calculatedReturns.threeYear ?? f.enriched?.returns?.threeYear ?? null },
-    { key: '5Y', accessor: (f: LiveFundDetail) => f.calculatedReturns.fiveYear ?? f.enriched?.returns?.fiveYear ?? null },
+    { key: '1Y', accessor: (f: LiveFundDetail) => toPct(f.calculatedReturns.oneYear ?? f.enriched?.returns?.oneYear) },
+    { key: '3Y', accessor: (f: LiveFundDetail) => toPct(f.calculatedReturns.threeYear ?? f.enriched?.returns?.threeYear) },
+    { key: '5Y', accessor: (f: LiveFundDetail) => toPct(f.calculatedReturns.fiveYear ?? f.enriched?.returns?.fiveYear) },
   ];
 
   const data = periods.map(({ key, accessor }) => {

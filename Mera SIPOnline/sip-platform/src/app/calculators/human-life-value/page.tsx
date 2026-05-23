@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils/cn';
 import { DISCLAIMER } from '@/lib/constants/company';
 import NumberInput from '@/components/ui/NumberInput';
 import DownloadPDFButton from '@/components/ui/DownloadPDFButton';
+import PersonalInfoBar from '@/components/ui/PersonalInfoBar';
 
 const COLORS = {
   income: '#0F766E',
@@ -25,6 +26,8 @@ const COLORS = {
 const PIE_COLORS = ['#0F766E', '#E8553A', '#7C3AED', '#F59E0B'];
 
 export default function HumanLifeValueCalculatorPage() {
+  const [clientName, setClientName] = useState('');
+  const [clientAge, setClientAge] = useState<number | null>(35);
   // Personal details
   const [currentAge, setCurrentAge] = useState(30);
   const [retirementAge, setRetirementAge] = useState(60);
@@ -200,6 +203,15 @@ export default function HumanLifeValueCalculatorPage() {
             <div className="card-base p-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
               <h2 className="font-bold text-primary-700 mb-6 text-lg">Your Details</h2>
 
+              <PersonalInfoBar
+                name={clientName}
+                onNameChange={setClientName}
+                age={clientAge}
+                onAgeChange={setClientAge}
+                namePlaceholder="e.g., Ram"
+                showAge={false}
+              />
+
               <div className="space-y-5">
                 {/* Personal Details */}
                 <div>
@@ -330,7 +342,7 @@ export default function HumanLifeValueCalculatorPage() {
               {/* PDF Download */}
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-primary-700">Results</h3>
-                <DownloadPDFButton elementId="calculator-results" title="Human Life Value Calculator" fileName="hlv-calculator" />
+                <DownloadPDFButton elementId="calculator-results" title="Human Life Value Calculator" fileName={`hlv-calculator${clientName ? `-${clientName.replace(/\s+/g, '-')}` : ''}`} />
               </div>
 
               {/* Coverage Adequacy Gauge */}

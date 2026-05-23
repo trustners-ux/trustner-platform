@@ -153,9 +153,9 @@ export default async function LifePlanDetailPage({
     url: `https://www.merasip.com/life-plans/${profile.slug}`,
     author: {
       '@type': 'Person',
-      name: 'CFP Ram Shah',
+      name: 'Ram Shah',
       url: 'https://www.merasip.com/about',
-      jobTitle: 'Certified Financial Planner',
+      jobTitle: 'Founder & CEO',
     },
     publisher: {
       '@type': 'Organization',
@@ -560,7 +560,7 @@ export default async function LifePlanDetailPage({
                 className="inline-flex items-center gap-3 bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5"
               >
                 <MessageCircle className="w-5 h-5" />
-                Talk to a Certified Financial Planner
+                Talk to Trustner Team
               </a>
 
               <p className="text-white/50 text-sm mt-6">

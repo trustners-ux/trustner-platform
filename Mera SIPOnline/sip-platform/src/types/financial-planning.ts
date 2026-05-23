@@ -91,6 +91,24 @@ export interface FinancialGoal {
   targetYear: number;
   priority: 'critical' | 'important' | 'nice-to-have';
   currentSavingsForGoal: number;
+  /**
+   * Whether `targetAmount` is the cost in TODAY's terms (we will inflate it
+   * to year `targetYear`) or already a FUTURE/inflated cost (use as-is).
+   *
+   * Default for legacy data is 'present' to preserve existing behaviour.
+   *
+   * UX note: many clients enter "I want ₹90 lakh for child's education"
+   * already meaning the future budget — applying education inflation on top
+   * over-states the goal by 2-3x. The wizard now asks this question
+   * explicitly to avoid that confusion.
+   */
+  costType?: 'present' | 'future';
+  /**
+   * Optional client-specified inflation override (in % p.a.). Only used when
+   * `costType === 'present'`. If omitted, the system uses the default
+   * category inflation (education 10%, marriage 8%, housing 7%, general 6%).
+   */
+  customInflationRate?: number;
 }
 
 export interface RiskProfile {

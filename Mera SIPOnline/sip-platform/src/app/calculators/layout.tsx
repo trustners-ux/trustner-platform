@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import { generateSEOMetadata } from '@/lib/seo';
+import { CalculatorCTA } from '@/components/sections/CalculatorCTA';
 
 export const metadata: Metadata = generateSEOMetadata({
-  title: '30 Financial Calculators | SIP, Tax, Insurance, Loan & Life Planning Tools',
+  title: '52 Financial Calculators | SIP, Tax, Insurance, Retirement, NRI & Life Planning | Trustner',
   description:
-    'Access 30 free financial calculators — SIP, EMI, tax, insurance, retirement, FIRE, net worth, and more. Plan every financial decision with interactive charts and real-time projections.',
+    'Access 52 free financial calculators — SIP, EMI, income tax, LTCG, retirement, FIRE, child education, marriage, SSY, NRE/NRO/FCNR, insurance IRR, PSU benefits, senior citizen income and more. Plan every financial decision with CFP-grade math and real-time charts.',
   path: '/calculators',
   keywords: [
     'financial calculators India',
@@ -25,5 +26,10 @@ export default function CalculatorsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return (
+    <>
+      {children}
+      <CalculatorCTA />
+    </>
+  );
 }

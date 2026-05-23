@@ -167,7 +167,14 @@ export async function getReportEntry(
     const result = await list({ prefix: `reports/queue/${id}.json`, limit: 1 });
     if (result.blobs.length === 0) return null;
 
-    const res = await fetch(result.blobs[0].url);
+    // CRITICAL: cache: 'no-store' + cache-buster to bypass both the platform
+    // fetch cache and the Vercel Blob CDN edge cache. Without this, after
+    // updateReportEntry writes new JSON to the same path, the next fetch
+    // returns the previously-cached JSON for up to 1 year — silently
+    // serving the OLD pdfBlobUrl and OLD totalScore even though the entry
+    // was correctly updated server-side.
+    const bust = `?t=${Date.now()}`;
+    const res = await fetch(result.blobs[0].url + bust, { cache: 'no-store' });
     if (!res.ok) return null;
     return (await res.json()) as ReportQueueEntry;
   } catch {
@@ -186,11 +193,15 @@ export async function updateReportEntry(
 
   const updated: ReportQueueEntry = { ...entry, ...updates, id: entry.id };
 
+  // cacheControlMaxAge: 30 → CDN re-validates every 30s instead of
+  // holding the JSON for the 1-year default. Combined with the
+  // no-store/cache-buster on reads, this gives near-immediate consistency.
   await put(`reports/queue/${id}.json`, JSON.stringify(updated), {
     access: 'public',
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: 'application/json',
+    cacheControlMaxAge: 30,
   });
 
   return updated;
@@ -204,7 +215,12 @@ export async function getReportPlanningData(
     const result = await list({ prefix: `reports/data/${id}.json`, limit: 1 });
     if (result.blobs.length === 0) return null;
 
-    const res = await fetch(result.blobs[0].url);
+    // Cache-buster + no-store to bypass BOTH the platform fetch cache and
+    // the Vercel Blob CDN edge cache. The blob URL stays the same across
+    // overwrites (no random suffix), so without this the read returns
+    // pre-Apply JSON for hours, silently ignoring the scenario override.
+    const bust = `?t=${Date.now()}`;
+    const res = await fetch(result.blobs[0].url + bust, { cache: 'no-store' });
     if (!res.ok) return null;
     return (await res.json()) as FinancialPlanningData;
   } catch {
@@ -213,13 +229,39 @@ export async function getReportPlanningData(
   }
 }
 
+// ─── Update Planning Data (for what-if scenario editing) ───
+export async function saveReportPlanningData(
+  id: string,
+  data: FinancialPlanningData
+): Promise<void> {
+  await put(`reports/data/${id}.json`, JSON.stringify(data), {
+    access: 'public',
+    addRandomSuffix: false,
+    allowOverwrite: true,
+    contentType: 'application/json',
+    cacheControlMaxAge: 30,
+  });
+}
+
 // ─── Get PDF Buffer ───
+//
+// Returns the LATEST PDF for this report. Versioned PDFs are stored at
+// `reports/pdfs/<id>-v<N>-<timestamp>.pdf`, and the original (pre-versioning)
+// is at `reports/pdfs/<id>.pdf`. We list everything under the `<id>` prefix
+// and pick the newest by `uploadedAt`. The fetch uses `cache: 'no-store'`
+// + a cache-buster to bypass the Vercel Blob CDN edge cache.
 export async function getReportPdf(id: string): Promise<Buffer | null> {
   try {
-    const result = await list({ prefix: `reports/pdfs/${id}.pdf`, limit: 1 });
-    if (result.blobs.length === 0) return null;
+    const result = await list({ prefix: `reports/pdfs/${id}`, limit: 50 });
+    // Keep only .pdf files (in case anything else slipped under the prefix)
+    const pdfs = result.blobs.filter((b) => b.pathname.endsWith('.pdf'));
+    if (pdfs.length === 0) return null;
+    // Newest first
+    pdfs.sort((a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime());
+    const latest = pdfs[0];
 
-    const res = await fetch(result.blobs[0].url);
+    const bust = `?t=${Date.now()}`;
+    const res = await fetch(latest.url + bust, { cache: 'no-store' });
     if (!res.ok) return null;
     const arrayBuffer = await res.arrayBuffer();
     return Buffer.from(arrayBuffer);
@@ -230,15 +272,30 @@ export async function getReportPdf(id: string): Promise<Buffer | null> {
 }
 
 // ─── Update PDF in Blob ───
+//
+// IMPORTANT: We write each regenerated PDF to a VERSIONED path
+// (`reports/pdfs/<id>-v<N>-<ts>.pdf`) instead of overwriting the same
+// `<id>.pdf`. Reason: Vercel Blob serves public files with a long-lived
+// CDN cache, and even with `allowOverwrite: true` the CDN can keep
+// returning the previously-cached bytes for hours. Versioning the path
+// guarantees a brand-new URL on every regenerate, so the admin (and the
+// client, once shared) ALWAYS see the freshly rendered PDF.
+//
+// We also set `cacheControlMaxAge: 60` so even the new URL refreshes
+// quickly if it ever gets overwritten by an in-flight retry.
 export async function updateReportPdf(
   id: string,
-  pdfBuffer: Buffer
+  pdfBuffer: Buffer,
+  versionTag?: string,
 ): Promise<string> {
-  const blob = await put(`reports/pdfs/${id}.pdf`, pdfBuffer, {
+  const tag = versionTag || `v${Date.now()}`;
+  const path = `reports/pdfs/${id}-${tag}.pdf`;
+  const blob = await put(path, pdfBuffer, {
     access: 'public',
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: 'application/pdf',
+    cacheControlMaxAge: 60,
   });
   return blob.url;
 }

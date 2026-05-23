@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils/cn';
 import { getModuleBySlug, getSectionBySlug, resolveTopicPath } from '@/data/modules';
 import type { MCQ, FAQ } from '@/types/learning';
 import { useLearningProgress } from '@/lib/hooks/useLearningProgress';
+import { PostLearnCTA } from '@/components/sections/PostLearnCTA';
 
 /* ═══════════════════════════════════════════════════════
    SUB-COMPONENTS
@@ -807,6 +808,11 @@ export default function SectionPage() {
                   )}
                 </div>
               </div>
+
+              {/* ═══════════════════════════════════════
+                  POST-LEARN CTA
+                  ═══════════════════════════════════════ */}
+              <PostLearnCTA moduleTitle={learningModule.title} />
             </div>
           </div>
         </div>

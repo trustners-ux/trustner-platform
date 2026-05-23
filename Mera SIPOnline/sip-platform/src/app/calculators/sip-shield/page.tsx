@@ -4,15 +4,21 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft, Shield, Plus, Trash2, TrendingUp, ChevronDown, ChevronUp,
-  Zap, PiggyBank, IndianRupee, ArrowRight,
+  Zap, PiggyBank, IndianRupee, ArrowRight, Landmark, Wallet,
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
-import { calculateSIPShield, COST_TYPE_LABELS } from '@/lib/utils/sip-shield-calc';
+import {
+  calculateSIPShield,
+  INVESTMENT_TYPE_LABELS,
+  INVESTMENT_DEFAULT_RETURN,
+  REGULAR_INCOME_TYPE_LABELS,
+} from '@/lib/utils/sip-shield-calc';
 import type {
   SIPShieldInputs, SIPShieldResult, YearlyDetail, LumpsumEvent, RecurringCost,
   CostType, PaymentFrequency, SIPFrequency, StepUpType, SWPFrequency,
+  ExistingInvestment, RegularIncome, InvestmentType, RegularIncomeType,
 } from '@/lib/utils/sip-shield-calc';
 import { formatNumber } from '@/lib/utils/formatters';
 import { cn } from '@/lib/utils/cn';
@@ -42,6 +48,26 @@ const FREQUENCY_OPTIONS: { key: PaymentFrequency; label: string }[] = [
 ];
 
 const INSURANCE_TYPES: CostType[] = ['term_plan', 'endowment', 'health_insurance'];
+
+const INVESTMENT_TYPE_OPTIONS: { key: InvestmentType; label: string }[] = [
+  { key: 'mutual_fund', label: 'Mutual Fund' },
+  { key: 'fixed_deposit', label: 'Fixed Deposit' },
+  { key: 'ppf', label: 'PPF' },
+  { key: 'epf', label: 'EPF' },
+  { key: 'nps', label: 'NPS' },
+  { key: 'stocks', label: 'Stocks / Equity' },
+  { key: 'gold', label: 'Gold' },
+  { key: 'real_estate', label: 'Real Estate' },
+  { key: 'other', label: 'Other' },
+];
+
+const REGULAR_INCOME_TYPE_OPTIONS: { key: RegularIncomeType; label: string }[] = [
+  { key: 'pension', label: 'Pension' },
+  { key: 'rental', label: 'Rental Income' },
+  { key: 'freelance', label: 'Freelance / Consulting' },
+  { key: 'business', label: 'Business Income' },
+  { key: 'other', label: 'Other Income' },
+];
 
 const INSIGHT_STYLES: Record<string, { bg: string; border: string; text: string }> = {
   positive: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-800' },
@@ -162,6 +188,14 @@ export default function SIPShieldPage() {
   const [lumpsumEvents, setLumpsumEvents] = useState<LumpsumEvent[]>([]);
   const [nextLumpsumId, setNextLumpsumId] = useState(1);
 
+  // Section 5: Existing Investments (toggle + list)
+  const [existingInvestmentsEnabled, setExistingInvestmentsEnabled] = useState(false);
+  const [existingInvestments, setExistingInvestments] = useState<ExistingInvestment[]>([]);
+
+  // Section 6: Post-Retirement Regular Income (toggle + list)
+  const [regularIncomeEnabled, setRegularIncomeEnabled] = useState(false);
+  const [regularIncomes, setRegularIncomes] = useState<RegularIncome[]>([]);
+
   // UI State
   const [showYearlyTable, setShowYearlyTable] = useState(false);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
@@ -205,6 +239,61 @@ export default function SIPShieldPage() {
     setNextLumpsumId(p => p + 1);
   };
 
+  // ── Existing Investment helpers ──
+  const addInvestment = () => {
+    const id = `inv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    setExistingInvestments(prev => [...prev, {
+      id,
+      type: 'mutual_fund',
+      label: INVESTMENT_TYPE_LABELS['mutual_fund'],
+      currentValue: 500000,
+      expectedReturn: INVESTMENT_DEFAULT_RETURN['mutual_fund'],
+      monthlyAddition: 0,
+    }]);
+  };
+
+  const removeInvestment = (id: string) => {
+    setExistingInvestments(prev => prev.filter(i => i.id !== id));
+  };
+
+  const updateInvestment = (id: string, patch: Partial<ExistingInvestment>) => {
+    setExistingInvestments(prev => prev.map(i => i.id === id ? { ...i, ...patch } : i));
+  };
+
+  const handleInvestmentTypeChange = (id: string, type: InvestmentType) => {
+    const label = INVESTMENT_TYPE_LABELS[type];
+    const expectedReturn = INVESTMENT_DEFAULT_RETURN[type];
+    updateInvestment(id, { type, label, expectedReturn });
+  };
+
+  // ── Regular Income helpers ──
+  const addIncome = () => {
+    const id = `inc_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const defaultStartYear = sipDuration + (growthPhaseEnabled ? growthPeriod : 0) + 1;
+    setRegularIncomes(prev => [...prev, {
+      id,
+      type: 'pension',
+      label: REGULAR_INCOME_TYPE_LABELS['pension'],
+      monthlyAmount: 25000,
+      startYear: Math.max(1, defaultStartYear),
+      endYear: null,
+      annualGrowth: 0,
+    }]);
+  };
+
+  const removeIncome = (id: string) => {
+    setRegularIncomes(prev => prev.filter(i => i.id !== id));
+  };
+
+  const updateIncome = (id: string, patch: Partial<RegularIncome>) => {
+    setRegularIncomes(prev => prev.map(i => i.id === id ? { ...i, ...patch } : i));
+  };
+
+  const handleIncomeTypeChange = (id: string, type: RegularIncomeType) => {
+    const label = REGULAR_INCOME_TYPE_LABELS[type];
+    updateIncome(id, { type, label });
+  };
+
   // ── Computation ──
 
   const result = useMemo<SIPShieldResult>(() => {
@@ -230,6 +319,8 @@ export default function SIPShieldPage() {
       swpInflationAdjusted: swpEnabled ? swpInflationAdjusted : false,
       swpInflationRate: 5,
       lumpsumEvents,
+      existingInvestments: existingInvestmentsEnabled ? existingInvestments : [],
+      regularIncomes: regularIncomeEnabled ? regularIncomes : [],
     };
     return calculateSIPShield(inputs);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -237,19 +328,30 @@ export default function SIPShieldPage() {
     clientName, currentAge, costInflation, monthlySIP, sipFrequency, sipDuration, sipReturn,
     stepUpEnabled, stepUpType, stepUpValue, growthPhaseEnabled, growthPeriod, growthReturn,
     withdrawalReturn, swpEnabled, swpAmount, swpFrequency, swpStartYear, swpInflationAdjusted,
+    existingInvestmentsEnabled, regularIncomeEnabled,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     JSON.stringify(costs),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     JSON.stringify(lumpsumEvents),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    JSON.stringify(existingInvestments),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    JSON.stringify(regularIncomes),
   ]);
 
   const chartData = result.yearlyDetails.map((row: YearlyDetail) => ({
     year: row.year,
     age: row.age,
     corpus: Math.round(row.yearEndCorpus),
+    existing: Math.round(row.existingInvestmentsValue),
+    totalWealth: Math.round(row.yearEndCorpus + row.existingInvestmentsValue),
     costFromCorpus: Math.round(row.costPaidFromCorpus),
+    regularIncome: Math.round(row.regularIncomeThisYear),
     phase: row.phase,
   }));
+
+  const showInvestmentsLayer = existingInvestmentsEnabled && existingInvestments.length > 0;
+  const showIncomeLayer = regularIncomeEnabled && regularIncomes.length > 0;
 
   const phaseLabel = (p: string) =>
     p === 'SIP' ? 'SIP Phase' : p === 'Growth' ? 'Growth Phase' : 'Shield Active';
@@ -308,7 +410,11 @@ export default function SIPShieldPage() {
                 <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><IndianRupee className="w-4 h-4 text-red-500" /> Your Recurring Costs</h3>
                 <div className="space-y-4">
                   {costs.map((cost, idx) => (
-                    <div key={cost.id} className="rounded-lg border border-slate-200 bg-slate-50/50 p-3 space-y-3 relative">
+                    <div
+                      key={cost.id}
+                      data-pdf-cost-card={`Cost ${idx + 1}`}
+                      className="rounded-lg border border-slate-200 bg-slate-50/50 p-3 space-y-3 relative"
+                    >
                       {/* Card header with index & delete */}
                       <div className="flex items-center justify-between">
                         <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Cost {idx + 1}</span>
@@ -425,7 +531,7 @@ export default function SIPShieldPage() {
                     <p className="text-[10px] text-slate-400 mt-1">{swpEnabled ? 'Withdraw additional monthly income from corpus' : 'No additional withdrawals beyond recurring costs'}</p>
                     {swpEnabled && (
                       <div className="mt-3 space-y-2">
-                        <NumberInput label="SWP Amount" value={swpAmount} onChange={setSwpAmount} prefix="Rs." step={1000} min={1000} max={500000} />
+                        <NumberInput label="SWP Amount" value={swpAmount} onChange={setSwpAmount} prefix="Rs." step={1000} min={1000} max={5000000} />
                         <div>
                           <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">SWP Frequency</label>
                           <div className="grid grid-cols-2 gap-1.5" data-pdf-hide>
@@ -461,13 +567,125 @@ export default function SIPShieldPage() {
                       <div className="flex-1 space-y-2">
                         <span className={cn('inline-block px-2 py-0.5 text-[10px] font-bold rounded-full uppercase', ev.type === 'investment' ? 'bg-emerald-200 text-emerald-800' : 'bg-red-200 text-red-800')}>{ev.type}</span>
                         <input type="text" value={ev.label} onChange={e => setLumpsumEvents(prev => prev.map(l => l.id === ev.id ? { ...l, label: e.target.value } : l))} className="w-full px-2 py-1.5 text-xs border border-slate-200 rounded-md bg-white text-slate-600" placeholder="Label" />
-                        <NumberInput label="Amount" value={ev.amount} onChange={v => setLumpsumEvents(prev => prev.map(l => l.id === ev.id ? { ...l, amount: v } : l))} prefix="Rs." step={10000} min={0} max={10000000} />
+                        <NumberInput label="Amount" value={ev.amount} onChange={v => setLumpsumEvents(prev => prev.map(l => l.id === ev.id ? { ...l, amount: v } : l))} prefix="Rs." step={10000} min={0} max={50000000} />
                         <NumberInput label="At Year" value={ev.atYear} onChange={v => setLumpsumEvents(prev => prev.map(l => l.id === ev.id ? { ...l, atYear: v } : l))} suffix="" step={1} min={1} max={maxRemainingTenure} />
                       </div>
                       <button onClick={() => setLumpsumEvents(prev => prev.filter(l => l.id !== ev.id))} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors mt-1" data-pdf-hide><Trash2 className="w-4 h-4" /></button>
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Section 5: Existing Investments */}
+              <div className="border-t-4 border-emerald-500 rounded-xl bg-white p-4">
+                <h3 className="font-bold text-slate-800 mb-1 flex items-center gap-2"><Landmark className="w-4 h-4 text-emerald-600" /> Your Existing Investments</h3>
+                <p className="text-[11px] text-slate-400 mb-3">Track MFs, FDs, PPF, EPF, NPS, stocks & more alongside your SIP</p>
+                <Toggle enabled={existingInvestmentsEnabled} onChange={setExistingInvestmentsEnabled} label="Include Existing Investments" />
+
+                {existingInvestmentsEnabled && (
+                  <div className="mt-4 space-y-4">
+                    {existingInvestments.map((inv, idx) => (
+                      <div
+                        key={inv.id}
+                        data-pdf-investment-card={`Investment ${idx + 1}`}
+                        className="rounded-lg border border-emerald-200 bg-emerald-50/40 p-3 space-y-3 relative"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600">Investment {idx + 1}</span>
+                          <button type="button" onClick={() => removeInvestment(inv.id)} className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" data-pdf-hide>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        <div>
+                          <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Investment Type</label>
+                          <select value={inv.type} onChange={e => handleInvestmentTypeChange(inv.id, e.target.value as InvestmentType)} className="w-full px-3 py-2.5 text-sm font-semibold rounded-lg border border-surface-300 bg-white text-slate-700 focus:ring-2 focus:ring-emerald-300 focus:border-emerald-400 outline-none transition-all" data-pdf-hide>
+                            {INVESTMENT_TYPE_OPTIONS.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Label</label>
+                          <input type="text" value={inv.label} onChange={e => updateInvestment(inv.id, { label: e.target.value })} className="w-full px-3 py-2.5 text-sm font-medium text-primary-700 bg-surface-50 border border-surface-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-300 focus:border-emerald-400 transition-all" />
+                        </div>
+
+                        <NumberInput label="Current Value" value={inv.currentValue} onChange={v => updateInvestment(inv.id, { currentValue: v })} prefix="Rs." step={10000} min={0} max={500000000} />
+                        <NumberInput label="Expected Annual Return" value={inv.expectedReturn} onChange={v => updateInvestment(inv.id, { expectedReturn: v })} suffix="% p.a." step={0.25} min={0} max={25} />
+                        <NumberInput label="Monthly Addition (optional)" value={inv.monthlyAddition} onChange={v => updateInvestment(inv.id, { monthlyAddition: v })} prefix="Rs." step={500} min={0} max={1000000} hint="Will you keep adding to this? Set to 0 if not." />
+                      </div>
+                    ))}
+
+                    <button type="button" onClick={addInvestment} className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-semibold text-emerald-700 border border-emerald-300 border-dashed rounded-lg hover:bg-emerald-50 transition-colors" data-pdf-hide>
+                      <Plus className="w-3.5 h-3.5" /> Add Investment
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Section 6: Post-Retirement Regular Income */}
+              <div className="border-t-4 border-teal-500 rounded-xl bg-white p-4">
+                <h3 className="font-bold text-slate-800 mb-1 flex items-center gap-2"><Wallet className="w-4 h-4 text-teal-600" /> Post-Retirement Regular Income</h3>
+                <p className="text-[11px] text-slate-400 mb-3">Pension, rental, freelance & other recurring inflows — reduces corpus drawdown</p>
+                <Toggle enabled={regularIncomeEnabled} onChange={setRegularIncomeEnabled} label="Include Regular Income" />
+
+                {regularIncomeEnabled && (
+                  <div className="mt-4 space-y-4">
+                    {regularIncomes.map((inc, idx) => (
+                      <div
+                        key={inc.id}
+                        data-pdf-income-card={`Income ${idx + 1}`}
+                        className="rounded-lg border border-teal-200 bg-teal-50/40 p-3 space-y-3 relative"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-teal-600">Income {idx + 1}</span>
+                          <button type="button" onClick={() => removeIncome(inc.id)} className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" data-pdf-hide>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        <div>
+                          <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Income Type</label>
+                          <select value={inc.type} onChange={e => handleIncomeTypeChange(inc.id, e.target.value as RegularIncomeType)} className="w-full px-3 py-2.5 text-sm font-semibold rounded-lg border border-surface-300 bg-white text-slate-700 focus:ring-2 focus:ring-teal-300 focus:border-teal-400 outline-none transition-all" data-pdf-hide>
+                            {REGULAR_INCOME_TYPE_OPTIONS.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Label</label>
+                          <input type="text" value={inc.label} onChange={e => updateIncome(inc.id, { label: e.target.value })} className="w-full px-3 py-2.5 text-sm font-medium text-primary-700 bg-surface-50 border border-surface-300 rounded-lg outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all" />
+                        </div>
+
+                        <NumberInput label="Monthly Amount" value={inc.monthlyAmount} onChange={v => updateIncome(inc.id, { monthlyAmount: v })} prefix="Rs." step={1000} min={0} max={2000000} />
+                        <NumberInput label="Starting Year" value={inc.startYear} onChange={v => updateIncome(inc.id, { startYear: v })} suffix="" step={1} min={1} max={50} hint="Year N of the plan when this income begins" />
+
+                        <div>
+                          <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">Ending Year (optional)</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              value={inc.endYear ?? ''}
+                              onChange={e => {
+                                const v = e.target.value;
+                                updateIncome(inc.id, { endYear: v === '' ? null : Math.max(inc.startYear, parseInt(v, 10) || inc.startYear) });
+                              }}
+                              placeholder="Plan end"
+                              className="flex-1 px-3 py-2.5 text-sm font-medium text-primary-700 bg-surface-50 border border-surface-300 rounded-lg outline-none focus:ring-2 focus:ring-teal-300 focus:border-teal-400 transition-all placeholder:text-slate-300"
+                              data-pdf-hide
+                            />
+                            <button type="button" onClick={() => updateIncome(inc.id, { endYear: null })} className="px-2 py-2 text-[11px] font-semibold text-teal-700 border border-teal-200 rounded-lg hover:bg-teal-50 transition-colors" data-pdf-hide>Clear</button>
+                          </div>
+                          <p className="text-[10px] text-slate-400 mt-1">Leave empty for income that runs until plan end</p>
+                        </div>
+
+                        <NumberInput label="Annual Growth Rate" value={inc.annualGrowth} onChange={v => updateIncome(inc.id, { annualGrowth: v })} suffix="% p.a." step={0.5} min={0} max={15} hint="For DA on pension, rental escalation, etc." />
+                      </div>
+                    ))}
+
+                    <button type="button" onClick={addIncome} className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-semibold text-teal-700 border border-teal-300 border-dashed rounded-lg hover:bg-teal-50 transition-colors" data-pdf-hide>
+                      <Plus className="w-3.5 h-3.5" /> Add Income Source
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -481,6 +699,42 @@ export default function SIPShieldPage() {
                 <SummaryCard icon={<IndianRupee className="w-4 h-4" />} label="Net Benefit" value={`Rs. ${fmtLakhs(result.netBenefit)}`} color={result.netBenefit >= 0 ? 'green' : 'red'} />
                 <SummaryCard icon={<Zap className="w-4 h-4" />} label="Benefit Multiple" value={`${result.benefitMultiple.toFixed(2)}x`} color="amber" />
               </div>
+
+              {/* Row 1b: Wealth + Income summary (only when new sections active) */}
+              {(showInvestmentsLayer || showIncomeLayer) && (
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+                  {showInvestmentsLayer && (
+                    <SummaryCard icon={<Landmark className="w-4 h-4" />} label="Existing Investments (Final)" value={`Rs. ${fmtLakhs(result.existingInvestmentsFinal)}`} color="emerald" />
+                  )}
+                  <SummaryCard icon={<PiggyBank className="w-4 h-4" />} label="Total Wealth at Plan End" value={`Rs. ${fmtLakhs(result.totalWealthAtEnd)}`} color="green" />
+                  {showIncomeLayer && (
+                    <SummaryCard icon={<Wallet className="w-4 h-4" />} label="Regular Income Offset" value={`${result.regularIncomeCoveragePct.toFixed(1)}% covered`} color="teal" />
+                  )}
+                </div>
+              )}
+
+              {/* Row 1c: Regular Income callout */}
+              {showIncomeLayer && result.totalRegularIncomeReceived > 0 && (
+                <div className={cn('card-base p-4 border-l-4', result.regularIncomeCoveragePct >= 100 ? 'border-emerald-500 bg-emerald-50' : 'border-teal-500 bg-teal-50')}>
+                  <div className="flex items-start gap-3">
+                    <Wallet className={cn('w-5 h-5 mt-0.5', result.regularIncomeCoveragePct >= 100 ? 'text-emerald-600' : 'text-teal-600')} />
+                    <div>
+                      <div className={cn('text-sm font-bold mb-1', result.regularIncomeCoveragePct >= 100 ? 'text-emerald-800' : 'text-teal-800')}>
+                        Regular Income Offset
+                      </div>
+                      <div className={cn('text-xs leading-relaxed', result.regularIncomeCoveragePct >= 100 ? 'text-emerald-700' : 'text-teal-700')}>
+                        Over the plan lifecycle, your post-retirement regular income of{' '}
+                        <strong>Rs. {fmtLakhs(result.totalRegularIncomeReceived)}</strong>{' '}
+                        {result.regularIncomeCoveragePct >= 100 ? (
+                          <>fully covers your corpus-funded outflows of Rs. {fmtLakhs(result.totalCorpusOutflowNeeded)}. Your corpus grows untouched.</>
+                        ) : (
+                          <>covers {result.regularIncomeCoveragePct.toFixed(1)}% of your corpus-funded outflows (Rs. {fmtLakhs(result.totalCorpusOutflowNeeded)}), extending corpus longevity.</>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Row 2: 3-Phase Timeline */}
               <div className="card-base p-5">
@@ -526,7 +780,7 @@ export default function SIPShieldPage() {
 
               {/* Row 3: Corpus Growth Chart */}
               <div className="card-base p-5">
-                <h3 className="text-sm font-bold text-slate-800 mb-4">Corpus Growth Over Time</h3>
+                <h3 className="text-sm font-bold text-slate-800 mb-4">{showInvestmentsLayer ? 'Total Wealth Over Time' : 'Corpus Growth Over Time'}</h3>
                 <div className="h-72" data-pdf-hide>
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -535,16 +789,29 @@ export default function SIPShieldPage() {
                           <stop offset="5%" stopColor="#0F766E" stopOpacity={0.3} />
                           <stop offset="95%" stopColor="#0F766E" stopOpacity={0.05} />
                         </linearGradient>
+                        <linearGradient id="existingGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10B981" stopOpacity={0.35} />
+                          <stop offset="95%" stopColor="#10B981" stopOpacity={0.05} />
+                        </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
                       <XAxis dataKey="age" tick={{ fontSize: 11 }} label={{ value: 'Age', position: 'insideBottom', offset: -2, fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => fmtLakhs(v)} />
                       <Tooltip formatter={(v: number) => [`Rs. ${formatNumber(Math.round(v))}`, '']} labelFormatter={(l: number) => `Age ${l}`} />
-                      <Area type="monotone" dataKey="corpus" stroke="#0F766E" strokeWidth={2} fill="url(#corpusGrad)" name="Corpus" />
+                      <Area type="monotone" dataKey="corpus" stackId="wealth" stroke="#0F766E" strokeWidth={2} fill="url(#corpusGrad)" name="SIP Corpus" />
+                      {showInvestmentsLayer && (
+                        <Area type="monotone" dataKey="existing" stackId="wealth" stroke="#10B981" strokeWidth={2} fill="url(#existingGrad)" name="Existing Investments" />
+                      )}
                       <Area type="monotone" dataKey="costFromCorpus" stroke="#EF4444" strokeWidth={1.5} strokeDasharray="5 5" fill="none" name="Cost Paid (Corpus)" />
+                      {showIncomeLayer && (
+                        <Area type="monotone" dataKey="regularIncome" stroke="#14B8A6" strokeWidth={1.5} strokeDasharray="3 3" fill="none" name="Regular Income" />
+                      )}
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
+                {showInvestmentsLayer && (
+                  <p className="text-[10px] text-slate-400 mt-2">Teal = SIP corpus. Green = existing investments (MF, FD, PPF, etc.). Stack represents Total Wealth.</p>
+                )}
               </div>
 
               {/* Row 4: Money Flow Summary */}
@@ -651,10 +918,10 @@ export default function SIPShieldPage() {
                 )}
               </div>
 
-              {/* Row 6: CFP Insights */}
+              {/* Row 6: Expert Insights */}
               {result.insights.length > 0 && (
                 <div className="card-base p-5">
-                  <h3 className="text-sm font-bold text-slate-800 mb-4">CFP Insights</h3>
+                  <h3 className="text-sm font-bold text-slate-800 mb-4">Expert Insights</h3>
                   <div className="grid gap-3 sm:grid-cols-2">
                     {result.insights.map((ins, i) => {
                       const s = INSIGHT_STYLES[ins.type];

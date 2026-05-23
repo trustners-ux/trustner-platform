@@ -1268,8 +1268,8 @@ export default function NRITaxationGuidePage() {
                   investing. Past performance is not indicative of future results.
                 </p>
                 <p>
-                  <strong>Trustner Asset Services Pvt. Ltd.</strong> | AMFI Registered Mutual Fund Distributor |
-                  ARN-286886 | EUIN: E092119
+                  <strong>Trustner Asset Services Pvt. Ltd.</strong> | AMFI Registered Mutual Fund Distributor and SIF Distributor;
+                  APMI Registered PMS Distributor | ARN-286886
                 </p>
               </div>
             </div>

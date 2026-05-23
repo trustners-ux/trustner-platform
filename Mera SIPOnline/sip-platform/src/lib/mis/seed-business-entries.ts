@@ -49,7 +49,7 @@ export const SEED_BUSINESS_ENTRIES: MonthlyBusinessEntry[] = [
   entry(4, 17, 180000, 36000, { clientName: 'XYZ Group', insurer: 'ICICI Lombard', policyNumber: 'ICL-GPA-2026-05', productCreditPct: 20, tierMultiplier: 50, status: 'submitted', transactionDate: '2026-04-04' }),
   entry(4, 8, 95000, 71250, { clientName: 'Fleet Motors', insurer: 'Bajaj Allianz', policyNumber: 'BAL-MV-2026-33', tierMultiplier: 75, status: 'draft', transactionDate: '2026-04-08' }),
 
-  // ─── Tamanna Somani (HNI Division, Target: ₹4.5L) ───
+  // ─── Tamanna Kejriwal (HNI Division, Target: ₹4.5L) ───
   entry(6, 13, 50000, 25000, { clientName: 'HNI SIPs', productCreditPct: 100, tierMultiplier: 50, status: 'approved', transactionDate: '2026-04-01' }),
   entry(6, 14, 500000, 25000, { clientName: 'Dr. Sharma', productCreditPct: 10, tierMultiplier: 50, status: 'approved', transactionDate: '2026-04-02' }),
   entry(6, 2, 75000, 75000, { clientName: 'Amit Agarwal Family', insurer: 'Niva Bupa', policyNumber: 'NB-2026-099', status: 'submitted', transactionDate: '2026-04-06', isCrossSale: true }),

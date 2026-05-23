@@ -13,6 +13,7 @@ import {
 import { cn } from '@/lib/utils/cn';
 import type { ReportQueueEntry, PlanTierLabel } from '@/types/report-queue';
 import type { FinancialPlanningData, LoanDetail } from '@/types/financial-planning';
+import ScenarioEditor from '@/components/admin/ScenarioEditor';
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -369,7 +370,7 @@ export default function ReportDetailPage() {
   const fetchReport = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/admin/reports/${id}`);
+      const res = await fetch(`/api/admin/reports/${id}`, { cache: 'no-store' });
       const data = await res.json();
       if (data.report) {
         setReport(data.report);
@@ -610,6 +611,15 @@ export default function ReportDetailPage() {
           {/* Client Questionnaire Data */}
           {planningData && <QuestionnaireDataPanel data={planningData} />}
 
+          {/* What-If Scenario Editor — admin can revise inputs and regenerate without re-wizard */}
+          {planningData && report?.status !== 'sent' && (
+            <ScenarioEditor
+              reportId={id}
+              planningData={planningData}
+              onApplied={() => fetchReport()}
+            />
+          )}
+
           {/* Score + Pillars */}
           <div className="card-base p-5">
             <div className="flex items-center justify-between mb-4">
@@ -682,20 +692,41 @@ export default function ReportDetailPage() {
               <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
                 <FileText className="w-4 h-4 text-slate-400" />
                 PDF Report
+                {report.narrativeVersion > 1 && (
+                  <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">
+                    v{report.narrativeVersion}
+                  </span>
+                )}
               </h3>
-              <a
-                href={report.pdfBlobUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
-              >
-                <Download className="w-3 h-3" />
-                Download
-              </a>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => fetchReport()}
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-brand transition-colors"
+                  title="Re-fetch the latest PDF (in case it was just regenerated)"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  Refresh
+                </button>
+                <a
+                  href={`/api/admin/reports/${id}/pdf?v=${report.narrativeVersion}-${encodeURIComponent(report.reviewedAt || report.createdAt)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
+                >
+                  <Download className="w-3 h-3" />
+                  Download
+                </a>
+              </div>
             </div>
             <div className="aspect-[3/4] bg-slate-50">
+              {/* Served via our /api/admin/reports/[id]/pdf proxy route which
+                  sets Cache-Control: no-store so the iframe always loads the
+                  latest bytes after a scenario regeneration. The version-based
+                  query param plus the React key force a remount on update. */}
               <iframe
-                src={report.pdfBlobUrl}
+                key={`pdf-${report.narrativeVersion}-${report.reviewedAt || report.createdAt}`}
+                src={`/api/admin/reports/${id}/pdf?v=${report.narrativeVersion}-${encodeURIComponent(report.reviewedAt || report.createdAt)}#view=FitH`}
                 className="w-full h-full"
                 title="PDF Preview"
               />
@@ -826,11 +857,11 @@ export default function ReportDetailPage() {
               value={adminNotes}
               onChange={(e) => setAdminNotes(e.target.value)}
               rows={4}
-              placeholder="Add review comments or a personalized note for the user. Notes will be included in the report email as a message from the advisor..."
+              placeholder="Add review comments or a personalized note for the user. Notes will be included in the report email as a message from your Relationship Manager..."
               className="w-full p-3 text-sm text-slate-700 border border-surface-200 rounded-xl focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none resize-y"
             />
             <p className="text-xs text-slate-400 mt-1">
-              These notes will appear in the email sent to the user under &quot;A note from your advisor&quot;.
+              These notes will appear in the email sent to the user under &quot;A note from your Relationship Manager&quot;.
             </p>
           </div>
         ) : (

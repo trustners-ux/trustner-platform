@@ -140,10 +140,20 @@ function scrapePlanSummary(element: HTMLElement): {
     });
   } else {
     // Generic fallback: scrape all NumberInput labels & values from the input panel
-    // This works for SWP, SIP, Lumpsum, Retirement, and all other simple calculators
+    // This works for SWP, SIP, Lumpsum, Retirement, and all other simple calculators.
+    // We skip any labels that live inside a [data-pdf-cost-card] or [data-pdf-event-card]
+    // so that cost cards don't pollute the Base Settings list.
     const allLabelEls = inputPanel.querySelectorAll('label');
     const seenLabels = new Set<string>();
     allLabelEls.forEach((lbl) => {
+      // Skip labels that are inside a card that's already been handled as an event
+      if (
+        lbl.closest('[data-pdf-cost-card]') ||
+        lbl.closest('[data-pdf-event-card]') ||
+        lbl.closest('[data-pdf-investment-card]') ||
+        lbl.closest('[data-pdf-income-card]')
+      ) return;
+
       const labelText = lbl.textContent?.trim() || '';
       // Skip name/age fields (already captured), empty labels, and toggle labels
       if (!labelText || seenLabels.has(labelText)) return;
@@ -180,11 +190,183 @@ function scrapePlanSummary(element: HTMLElement): {
 
   // Extract events
   const events: { type: string; color: 'green' | 'amber'; details: string[] }[] = [];
+
+  // ── SIP Shield-style cost cards (data-pdf-cost-card="Cost 1" etc.) ──
+  // These appear BEFORE generic event scraping so each cost gets captured separately.
+  const costCards = inputPanel.querySelectorAll('[data-pdf-cost-card]');
+  const costCardNodes = new Set<Element>();
+  costCards.forEach((card) => {
+    const el = card as HTMLElement;
+    costCardNodes.add(el);
+    // Mark all descendants so the generic fallback can skip them
+    el.querySelectorAll('*').forEach((d) => costCardNodes.add(d));
+
+    const cardLabel = el.getAttribute('data-pdf-cost-card') || 'Cost';
+    const details: string[] = [];
+
+    // Cost type from <select>
+    const typeSelect = el.querySelector('select');
+    if (typeSelect) {
+      const opt = typeSelect.options[typeSelect.selectedIndex];
+      if (opt?.text) details.push(`Type: ${opt.text}`);
+    }
+
+    // Label input (first text input that is not decimal)
+    const txtInputs = el.querySelectorAll('input[type="text"]');
+    txtInputs.forEach((inp) => {
+      const htmlInp = inp as HTMLInputElement;
+      if (htmlInp.getAttribute('inputMode') !== 'decimal' && htmlInp.value) {
+        if (!details.find((d) => d.startsWith('Name:'))) {
+          details.push(`Name: ${htmlInp.value}`);
+        }
+      }
+    });
+
+    // All NumberInput labels + values inside this card
+    const nLabels = el.querySelectorAll('label.block');
+    nLabels.forEach((nl) => {
+      const text = nl.textContent?.trim() || '';
+      if (!text) return;
+      const parent = nl.closest('div');
+      if (!parent) return;
+      const inp = parent.querySelector('input[type="text"]') as HTMLInputElement | null;
+      if (inp && inp.value) {
+        const prefix = parent.querySelector('.pl-3.pr-1')?.textContent || '';
+        const suffix = parent.querySelector('.pr-2.text-sm')?.textContent || '';
+        details.push(`${text}: ${prefix}${inp.value}${suffix ? ' ' + suffix : ''}`);
+      }
+    });
+
+    // Selected frequency pill
+    el.querySelectorAll('button').forEach((b) => {
+      const btn = b as HTMLButtonElement;
+      const txt = btn.textContent?.trim() || '';
+      if (btn.classList.contains('bg-brand') && ['Monthly', 'Quarterly', 'Half-Yearly', 'Yearly'].includes(txt)) {
+        details.push(`Frequency: ${txt}`);
+      }
+    });
+
+    events.push({
+      type: cardLabel,
+      color: 'amber', // costs shown in amber
+      details,
+    });
+  });
+
+  // ── SIP Shield-style existing-investment cards (data-pdf-investment-card="Investment 1") ──
+  const investmentCards = inputPanel.querySelectorAll('[data-pdf-investment-card]');
+  investmentCards.forEach((card) => {
+    const el = card as HTMLElement;
+    costCardNodes.add(el);
+    el.querySelectorAll('*').forEach((d) => costCardNodes.add(d));
+
+    const cardLabel = el.getAttribute('data-pdf-investment-card') || 'Investment';
+    const details: string[] = [];
+
+    const typeSelect = el.querySelector('select');
+    if (typeSelect) {
+      const opt = typeSelect.options[typeSelect.selectedIndex];
+      if (opt?.text) details.push(`Type: ${opt.text}`);
+    }
+
+    const txtInputs = el.querySelectorAll('input[type="text"]');
+    txtInputs.forEach((inp) => {
+      const htmlInp = inp as HTMLInputElement;
+      if (htmlInp.getAttribute('inputMode') !== 'decimal' && htmlInp.value) {
+        if (!details.find((d) => d.startsWith('Name:'))) {
+          details.push(`Name: ${htmlInp.value}`);
+        }
+      }
+    });
+
+    const nLabels = el.querySelectorAll('label.block');
+    nLabels.forEach((nl) => {
+      const text = nl.textContent?.trim() || '';
+      if (!text) return;
+      const parent = nl.closest('div');
+      if (!parent) return;
+      const inp = parent.querySelector('input[type="text"]') as HTMLInputElement | null;
+      if (inp && inp.value) {
+        const prefix = parent.querySelector('.pl-3.pr-1')?.textContent || '';
+        const suffix = parent.querySelector('.pr-2.text-sm')?.textContent || '';
+        details.push(`${text}: ${prefix}${inp.value}${suffix ? ' ' + suffix : ''}`);
+      }
+    });
+
+    events.push({
+      type: cardLabel,
+      color: 'green', // investments shown in green
+      details,
+    });
+  });
+
+  // ── SIP Shield-style post-retirement income cards (data-pdf-income-card="Income 1") ──
+  const incomeCards = inputPanel.querySelectorAll('[data-pdf-income-card]');
+  incomeCards.forEach((card) => {
+    const el = card as HTMLElement;
+    costCardNodes.add(el);
+    el.querySelectorAll('*').forEach((d) => costCardNodes.add(d));
+
+    const cardLabel = el.getAttribute('data-pdf-income-card') || 'Income';
+    const details: string[] = [];
+
+    const typeSelect = el.querySelector('select');
+    if (typeSelect) {
+      const opt = typeSelect.options[typeSelect.selectedIndex];
+      if (opt?.text) details.push(`Type: ${opt.text}`);
+    }
+
+    const txtInputs = el.querySelectorAll('input[type="text"]');
+    txtInputs.forEach((inp) => {
+      const htmlInp = inp as HTMLInputElement;
+      if (htmlInp.getAttribute('inputMode') !== 'decimal' && htmlInp.value) {
+        if (!details.find((d) => d.startsWith('Name:'))) {
+          details.push(`Name: ${htmlInp.value}`);
+        }
+      }
+    });
+
+    const nLabels = el.querySelectorAll('label.block');
+    nLabels.forEach((nl) => {
+      const text = nl.textContent?.trim() || '';
+      if (!text) return;
+      const parent = nl.closest('div');
+      if (!parent) return;
+      const inp = parent.querySelector('input[type="text"]') as HTMLInputElement | null;
+      if (inp && inp.value) {
+        const prefix = parent.querySelector('.pl-3.pr-1')?.textContent || '';
+        const suffix = parent.querySelector('.pr-2.text-sm')?.textContent || '';
+        details.push(`${text}: ${prefix}${inp.value}${suffix ? ' ' + suffix : ''}`);
+      }
+    });
+
+    // Ending year may be plain number input
+    const numInputs = el.querySelectorAll('input[type="number"]');
+    numInputs.forEach((inp) => {
+      const htmlInp = inp as HTMLInputElement;
+      if (htmlInp.value) {
+        details.push(`Ending Year: ${htmlInp.value}`);
+      }
+    });
+
+    events.push({
+      type: cardLabel,
+      color: 'green', // regular income shown in green
+      details,
+    });
+  });
+
   const eventCards = inputPanel.querySelectorAll('.rounded-xl.border.p-3, .rounded-xl.border.p-4');
   eventCards.forEach((card) => {
     const el = card as HTMLElement;
     // Skip the base settings section
     if (el.classList.contains('bg-slate-50')) return;
+    // Skip cards that were already scraped as cost / investment / income cards
+    if (
+      el.hasAttribute('data-pdf-cost-card') || el.closest('[data-pdf-cost-card]') ||
+      el.hasAttribute('data-pdf-investment-card') || el.closest('[data-pdf-investment-card]') ||
+      el.hasAttribute('data-pdf-income-card') || el.closest('[data-pdf-income-card]')
+    ) return;
 
     const badge = el.querySelector('.rounded-full.text-\\[10px\\]');
     if (!badge) return;
@@ -883,6 +1065,13 @@ export async function generateCalculatorPDF({ elementId, title, fileName }: PDFO
     // Draw events in a compact 2-column grid
     const eventColWidth = (contentWidth - 4) / 2;
 
+    // Row spacing uses the TALLEST event so shorter events in the next row
+    // don't overlap taller boxes above (e.g. SIP with step-up detail line).
+    const rowPitch = planSummary.events.reduce(
+      (max, ev) => Math.max(max, 10 + ev.details.length * 4),
+      0
+    ) + 3;
+
     for (let i = 0; i < planSummary.events.length; i++) {
       const ev = planSummary.events[i];
       const col = i % 2;
@@ -893,7 +1082,7 @@ export async function generateCalculatorPDF({ elementId, title, fileName }: PDFO
       const evBoxH = 10 + detailLines * 4;
 
       const ex = margin + col * (eventColWidth + 4);
-      const ey = y + row * (evBoxH + 3);
+      const ey = y + row * rowPitch;
 
       // Check if we need a new page
       if (ey + evBoxH > pageHeight - footerHeight - 5) break;

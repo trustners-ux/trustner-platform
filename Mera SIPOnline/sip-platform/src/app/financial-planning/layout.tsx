@@ -3,7 +3,7 @@ import { generateSEOMetadata, generateBreadcrumbSchema } from '@/lib/seo';
 export const metadata = generateSEOMetadata({
   title: 'Free Financial Planning | Basic, Standard & Comprehensive Plans | MeraSIP',
   description:
-    'Get your personalized Financial Health Score (0-900) with CFP-grade analysis. Free comprehensive assessment covering retirement, insurance, investments, and goals. Powered by Trustner AI.',
+    'Get your personalized Financial Health Score (0-900) with professional-grade analysis. Free comprehensive assessment covering retirement, insurance, investments, and goals. Powered by Trustner AI.',
   path: '/financial-planning',
   keywords: [
     'financial planning',
@@ -12,7 +12,7 @@ export const metadata = generateSEOMetadata({
     'insurance gap',
     'investment planning',
     'free financial assessment',
-    'CFP',
+    'financial health score',
     'Trustner',
     'goal based financial plan',
     'financial plan online free',
@@ -29,7 +29,7 @@ const serviceSchema = {
   '@type': 'FinancialProduct',
   name: 'Personalized Financial Planning',
   description:
-    'Free personalized financial planning service with 3 tiers — Basic (5-min health check), Standard (goal-based plan), and Comprehensive (CFP-grade blueprint).',
+    'Free personalized financial assessment with 3 tiers — Basic (5-min health check), Standard (goal-based plan), and Comprehensive (professional-grade blueprint).',
   url: 'https://www.merasip.com/financial-planning',
   provider: {
     '@type': 'Organization',

@@ -84,8 +84,8 @@ export function Footer() {
             <div className="grid md:grid-cols-2 gap-3 mb-3">
               <div className="text-xs text-slate-400 leading-relaxed">
                 <strong className="text-slate-300">{COMPANY.mfEntity.name}</strong><br />
-                {COMPANY.mfEntity.type}<br />
-                {COMPANY.mfEntity.amfiArn} | EUIN: {COMPANY.mfEntity.euin} | CIN: {COMPANY.mfEntity.cin}<br />
+                {COMPANY.mfEntity.typeExtended}<br />
+                {COMPANY.mfEntity.amfiArn} | CIN: {COMPANY.mfEntity.cin}<br />
                 Registered Office: {COMPANY.address.full}<br />
                 Grievance Redressal: <a href={`mailto:${COMPANY.contact.grievanceEmail}`} className="text-brand-300 hover:text-white transition-colors">{COMPANY.contact.grievanceEmail}</a>
               </div>
@@ -154,6 +154,15 @@ export function Footer() {
               <p className="mt-1">&copy; {currentYear} {COMPANY.mfEntity.name}. All rights reserved.</p>
             </div>
             <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => {
+                  import('@/lib/consent').then(({ clearConsent }) => clearConsent());
+                }}
+                className="text-xs text-slate-400 hover:text-white transition-colors"
+              >
+                Manage Cookies
+              </button>
               <a
                 href={COMPANY.urls.mainSite}
                 target="_blank"

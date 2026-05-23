@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils/cn';
 import { DISCLAIMER } from '@/lib/constants/company';
 import NumberInput from '@/components/ui/NumberInput';
 import DownloadPDFButton from '@/components/ui/DownloadPDFButton';
+import PersonalInfoBar from '@/components/ui/PersonalInfoBar';
 
 /* ─── Constants ─── */
 
@@ -71,6 +72,8 @@ const TAX_TIPS = [
 /* ─── Component ─── */
 
 export default function CapitalGainsTaxCalculatorPage() {
+  const [clientName, setClientName] = useState('');
+  const [clientAge, setClientAge] = useState<number | null>(35);
   const [assetType, setAssetType] = useState<AssetType>('equity_shares');
   const [purchasePrice, setPurchasePrice] = useState(500000);
   const [salePrice, setSalePrice] = useState(800000);
@@ -317,6 +320,15 @@ export default function CapitalGainsTaxCalculatorPage() {
             <div className="card-base p-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
               <h2 className="font-bold text-primary-700 mb-6 text-lg">Configure Tax Calculation</h2>
 
+              <PersonalInfoBar
+                name={clientName}
+                onNameChange={setClientName}
+                age={clientAge}
+                onAgeChange={setClientAge}
+                ageLabel="Current Age"
+                namePlaceholder="e.g., Ram"
+              />
+
               {/* Asset Type Tabs */}
               <div className="mb-6">
                 <label className="block text-[13px] font-semibold text-slate-600 mb-2">Asset Type</label>
@@ -500,7 +512,7 @@ export default function CapitalGainsTaxCalculatorPage() {
               {/* PDF Download */}
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-primary-700">Results</h3>
-                <DownloadPDFButton elementId="calculator-results" title="Capital Gains Tax Calculator" fileName="capital-gains-tax" />
+                <DownloadPDFButton elementId="calculator-results" title="Capital Gains Tax Calculator" fileName={`capital-gains-tax${clientName ? `-${clientName.replace(/\s+/g, '-')}` : ''}`} />
               </div>
 
               {/* Classification Card */}

@@ -4,6 +4,7 @@ import './globals.css';
 import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
 import { PageTracker } from '@/components/analytics/PageTracker';
 import { ConditionalShell } from '@/components/layout/ConditionalShell';
+import { ConsentBanner } from '@/components/consent/ConsentBanner';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -36,7 +37,7 @@ export const metadata: Metadata = {
     'Trustner',
     'Mera SIP Online',
   ],
-  authors: [{ name: 'CFP Ram Shah', url: 'https://www.merasip.com/about' }],
+  authors: [{ name: 'Ram Shah', url: 'https://www.merasip.com/about' }],
   creator: 'Trustner',
   publisher: 'Trustner Asset Services Pvt. Ltd.',
   robots: 'index, follow',
@@ -105,7 +106,7 @@ export default function RootLayout({
               founder: {
                 '@type': 'Person',
                 name: 'Ram Shah',
-                jobTitle: 'Certified Financial Planner',
+                jobTitle: 'Founder & CEO',
                 url: 'https://www.merasip.com/about',
               },
               telephone: '+91-6003903737',
@@ -142,6 +143,7 @@ export default function RootLayout({
         <ConditionalShell>
           {children}
         </ConditionalShell>
+        <ConsentBanner />
       </body>
     </html>
   );

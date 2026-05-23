@@ -146,13 +146,24 @@ export default function CareerIncomeStep({
   const isSalaried = data.employmentType === 'salaried';
   const isSelfEmployedOrBusiness =
     data.employmentType === 'self-employed' || data.employmentType === 'business';
+  const isRetiredOrHomemaker =
+    data.employmentType === 'retired' || data.employmentType === 'homemaker';
   const isMarried = maritalStatus === 'married';
 
   // ---------- Savings Summary ----------
   const summary = useMemo(() => {
+    // Always sum every income source the user has actually filled — this lets
+    // retired / homemaker users (who may have rental + other income but no salary)
+    // see a non-zero income summary, and prevents accidental double-counting if
+    // someone enters a salary then later flips employment type.
     const monthlyIncome =
       (isSalaried ? data.monthlyInHandSalary : 0) +
       (isSelfEmployedOrBusiness ? data.businessIncome : 0) +
+      (isRetiredOrHomemaker
+        ? // Retired / homemaker: count business income too (e.g. retired professionals
+          // who do consulting on the side) plus rental + other
+          data.businessIncome
+        : 0) +
       data.rentalIncome +
       data.otherIncome +
       data.annualBonus / 12;
@@ -183,6 +194,7 @@ export default function CareerIncomeStep({
     data.annualDiscretionary,
     isSalaried,
     isSelfEmployedOrBusiness,
+    isRetiredOrHomemaker,
   ]);
 
   const savingsRateColor =
@@ -346,18 +358,28 @@ export default function CareerIncomeStep({
         helpText="Include all bonuses, commissions, and variable pay per year"
       />
 
-      {/* 10. Monthly Business Income — only if self-employed / business */}
+      {/* 10. Monthly Business / Consulting Income — for self-employed, business, or retired */}
       <div
         className={`transition-all duration-300 overflow-hidden ${
-          isSelfEmployedOrBusiness ? 'max-h-[200px] opacity-100' : 'max-h-0 opacity-0'
+          isSelfEmployedOrBusiness || data.employmentType === 'retired'
+            ? 'max-h-[200px] opacity-100'
+            : 'max-h-0 opacity-0'
         }`}
       >
-        {isSelfEmployedOrBusiness && (
+        {(isSelfEmployedOrBusiness || data.employmentType === 'retired') && (
           <CurrencyInput
-            label="Monthly Business Income"
+            label={
+              data.employmentType === 'retired'
+                ? 'Monthly Pension / Consulting Income'
+                : 'Monthly Business Income'
+            }
             value={data.businessIncome}
             onChange={(val) => onUpdate({ businessIncome: val })}
-            helpText="Average monthly take-home from your business"
+            helpText={
+              data.employmentType === 'retired'
+                ? 'Pension, annuity payouts, or any active consulting / advisory income'
+                : 'Average monthly take-home from your business'
+            }
           />
         )}
       </div>

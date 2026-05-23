@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils/cn';
 import { DISCLAIMER } from '@/lib/constants/company';
 import NumberInput from '@/components/ui/NumberInput';
 import DownloadPDFButton from '@/components/ui/DownloadPDFButton';
+import PersonalInfoBar from '@/components/ui/PersonalInfoBar';
 
 const COLORS = {
   oldTax: '#E8553A',
@@ -23,6 +24,8 @@ const COLORS = {
 };
 
 export default function IncomeTaxCalculatorPage() {
+  const [clientName, setClientName] = useState('');
+  const [clientAge, setClientAge] = useState<number | null>(35);
   const [grossSalary, setGrossSalary] = useState(1200000);
   const [hraReceived, setHraReceived] = useState(120000);
   const [rentPaid, setRentPaid] = useState(240000);
@@ -205,6 +208,15 @@ export default function IncomeTaxCalculatorPage() {
             <div className="card-base p-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
               <h2 className="font-bold text-primary-700 mb-6 text-lg">Income &amp; Deductions</h2>
 
+              <PersonalInfoBar
+                name={clientName}
+                onNameChange={setClientName}
+                age={clientAge}
+                onAgeChange={setClientAge}
+                ageLabel="Current Age"
+                namePlaceholder="e.g., Ram"
+              />
+
               <div className="space-y-5">
                 <NumberInput label="Gross Annual Salary" value={grossSalary} onChange={setGrossSalary} prefix="₹" step={50000} min={300000} max={10000000} />
                 <NumberInput label="HRA Received (per year)" value={hraReceived} onChange={setHraReceived} prefix="₹" step={5000} min={0} max={1000000} />
@@ -298,7 +310,7 @@ export default function IncomeTaxCalculatorPage() {
               {/* PDF Download */}
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-primary-700">Results &mdash; FY 2026-27</h3>
-                <DownloadPDFButton elementId="calculator-results" title="Income Tax Calculator" fileName="income-tax-calculator" />
+                <DownloadPDFButton elementId="calculator-results" title="Income Tax Calculator" fileName={`income-tax-calculator${clientName ? `-${clientName.replace(/\s+/g, '-')}` : ''}`} />
               </div>
 
               {/* ── Verdict Banner ── */}

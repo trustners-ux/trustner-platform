@@ -5,7 +5,7 @@ import { calculatorSchemas } from '@/components/seo/CalculatorSchemas';
 export const metadata: Metadata = generateSEOMetadata({
   title: 'Retirement Bucket Strategy Calculator | Optimize Your Retirement Income',
   description:
-    'Plan your retirement income using the 5-bucket strategy. Allocate your corpus across emergency, short-term, medium-term, growth, and equity buckets for maximum safety and returns. Free CFP-grade calculator.',
+    'Plan your retirement income using the 5-bucket strategy. Allocate your corpus across emergency, short-term, medium-term, growth, and equity buckets for maximum safety and returns. Free professional-grade calculator.',
   path: '/calculators/bucket-strategy',
   keywords: [
     'bucket strategy calculator',
@@ -19,7 +19,7 @@ export const metadata: Metadata = generateSEOMetadata({
     'SWP vs bucket strategy',
     'pension planning calculator',
     'retirement planning India',
-    'CFP retirement strategy',
+    'professional retirement strategy',
   ],
 });
 

@@ -114,10 +114,10 @@ export default function SWPCalculatorPage() {
 
               <div className="space-y-6">
                 {/* Corpus */}
-                <NumberInput label="Total Corpus" value={corpus} onChange={setCorpus} prefix="₹" step={500000} min={500000} max={100000000} />
+                <NumberInput label="Total Corpus" value={corpus} onChange={setCorpus} prefix="₹" step={10000} min={10000} max={100000000} hint="₹10K to ₹10 Cr" />
 
                 {/* Monthly Withdrawal */}
-                <NumberInput label="Monthly Withdrawal" value={monthlyWithdrawal} onChange={setMonthlyWithdrawal} prefix="₹" step={5000} min={5000} max={500000} />
+                <NumberInput label="Monthly Withdrawal" value={monthlyWithdrawal} onChange={setMonthlyWithdrawal} prefix="₹" step={5000} min={5000} max={5000000} />
 
                 {/* Return Rate */}
                 <NumberInput label="Expected Annual Return" value={returnRate} onChange={setReturnRate} suffix="% p.a." step={0.5} min={1} max={20} />

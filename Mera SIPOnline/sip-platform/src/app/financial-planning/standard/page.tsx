@@ -303,6 +303,7 @@ export default function StandardPlanPage() {
   // ── Step Validation ──
   const validateStep = useCallback((stepIndex: number): string | null => {
     const p = planData.personalProfile;
+    const c = planData.careerProfile;
     const i = planData.incomeProfile;
 
     switch (stepIndex) {
@@ -324,9 +325,21 @@ export default function StandardPlanPage() {
         return null;
       }
       case 1: {
-        // Career & Income: monthly salary required
-        if (!i.monthlyInHandSalary && i.monthlyInHandSalary !== 0) return 'Please enter your monthly in-hand salary.';
-        if (i.monthlyInHandSalary <= 0) return 'Monthly salary must be greater than zero.';
+        // Career & Income: validation depends on employment type
+        // Salaried users must enter monthly in-hand salary
+        // Business / self-employed users must enter business income
+        // Retired / homemaker users have no hard income requirement (corpus / spouse income)
+        const empType = c.employmentType;
+        if (empType === 'salaried') {
+          if (!i.monthlyInHandSalary || i.monthlyInHandSalary <= 0) {
+            return 'Please enter your monthly in-hand salary.';
+          }
+        } else if (empType === 'self-employed' || empType === 'business') {
+          if (!i.businessIncome || i.businessIncome <= 0) {
+            return 'Please enter your monthly business income.';
+          }
+        }
+        // For 'retired' / 'homemaker', no hard income requirement
         return null;
       }
       // Steps 2-7 have reasonable defaults, no strict validation needed

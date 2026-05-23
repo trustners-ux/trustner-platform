@@ -2,12 +2,20 @@ import { marketIndicators } from './indicators';
 import { marketCommentaries } from './commentaries';
 import { marketInsights } from './insights';
 import { sipTimingInsights } from './sip-timing';
+import { newsletters } from './newsletters';
 import { MarketCommentary, MarketInsight } from '@/types/market';
 
 export { marketIndicators } from './indicators';
 export { marketCommentaries } from './commentaries';
 export { marketInsights } from './insights';
 export { sipTimingInsights } from './sip-timing';
+export {
+  newsletters,
+  getLatestNewsletter,
+  getArchivedNewsletters,
+  getAllNewsletters,
+} from './newsletters';
+export type { NewsletterIssue } from './newsletters';
 
 /**
  * Returns the most recent weekly market commentary.
@@ -57,5 +65,6 @@ export function getMarketContentStats() {
     commentaries: marketCommentaries.length,
     insights: marketInsights.length,
     sipTimingInsights: sipTimingInsights.length,
+    newsletters: newsletters.length,
   };
 }

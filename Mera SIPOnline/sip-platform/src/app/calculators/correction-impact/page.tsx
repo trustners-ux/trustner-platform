@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils/cn';
 import { DISCLAIMER } from '@/lib/constants/company';
 import NumberInput from '@/components/ui/NumberInput';
 import DownloadPDFButton from '@/components/ui/DownloadPDFButton';
+import PersonalInfoBar from '@/components/ui/PersonalInfoBar';
 
 const COLORS = {
   normal: '#E8553A',
@@ -22,6 +23,8 @@ const COLORS = {
 };
 
 export default function CorrectionImpactCalculatorPage() {
+  const [clientName, setClientName] = useState('');
+  const [clientAge, setClientAge] = useState<number | null>(35);
   const [monthly, setMonthly] = useState(10000);
   const [returnRate, setReturnRate] = useState(12);
   const [years, setYears] = useState(20);
@@ -112,6 +115,15 @@ export default function CorrectionImpactCalculatorPage() {
             <div className="card-base p-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
               <h2 className="font-bold text-primary-700 mb-6 text-lg">Configure Simulation</h2>
 
+              <PersonalInfoBar
+                name={clientName}
+                onNameChange={setClientName}
+                age={clientAge}
+                onAgeChange={setClientAge}
+                ageLabel="Current Age"
+                namePlaceholder="e.g., Ram"
+              />
+
               <div className="space-y-5">
                 {/* Monthly Amount */}
                 <NumberInput label="Monthly SIP Amount" value={monthly} onChange={setMonthly} prefix="₹" step={500} min={500} max={500000} />
@@ -178,7 +190,7 @@ export default function CorrectionImpactCalculatorPage() {
               <div className="card-base p-6">
                 <div className="flex items-center justify-between mb-1">
                   <h3 className="font-bold text-primary-700">Normal vs Corrected Portfolio</h3>
-                  <DownloadPDFButton elementId="calculator-results" title="Market Correction Impact Calculator" fileName="correction-impact-calculator" />
+                  <DownloadPDFButton elementId="calculator-results" title="Market Correction Impact Calculator" fileName={`correction-impact-calculator${clientName ? `-${clientName.replace(/\s+/g, '-')}` : ''}`} />
                 </div>
                 <p className="text-sm text-slate-500 mb-6">
                   {correctionPercent}% correction in Year {correctionYear} with {recoveryYears}-year recovery

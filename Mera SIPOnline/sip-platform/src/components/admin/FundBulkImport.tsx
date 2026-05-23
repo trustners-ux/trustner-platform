@@ -57,23 +57,55 @@ const EXPECTED_COLUMNS: ColumnMapping[] = [
 
 // ─── Auto-detection patterns ───
 
+// Header patterns expanded to handle the actual Trustner Excel format:
+// "Age (yrs)", "AUM Cr.", "St. Dev.", "% of AUM ( Skin in Game)", "1Y" (no space), etc.
 const HEADER_PATTERNS: Record<keyof MappableFields, RegExp> = {
-  name: /^(name|fund\s*name|scheme\s*name)$/i,
-  fundManager: /^(fund\s*manager|manager|fm)$/i,
-  ageOfFund: /^(age|age\s*of\s*fund|fund\s*age|vintage)$/i,
-  aumCr: /^(aum|aum\s*\(in\s*cr\.?\)|aum\s*cr|corpus)$/i,
-  ter: /^(ter|expense\s*ratio|total\s*expense\s*ratio)$/i,
-  standardDeviation: /^(sd|std\s*dev|standard\s*deviation|sd\s*\(std\s*dev\))$/i,
-  sharpeRatio: /^(sharpe|sharpe\s*ratio)$/i,
-  mtd: /^(mtd|month\s*to\s*date)$/i,
-  ytd: /^(ytd|year\s*to\s*date)$/i,
-  oneYear: /^(1\s*year|1y|1\s*yr|one\s*year)$/i,
-  twoYear: /^(2\s*year|2y|2\s*yr|two\s*year)$/i,
-  threeYear: /^(3\s*year|3y|3\s*yr|three\s*year)$/i,
-  fiveYear: /^(5\s*year|5y|5\s*yr|five\s*year)$/i,
-  numberOfHoldings: /^(no\.?\s*of\s*holdings|holdings|num\s*holdings|#\s*holdings)$/i,
-  skinAmountCr: /^(skin\s*in\s*the\s*game\s*amt|skin\s*amt|sitg\s*amt|skin\s*in\s*the\s*game\s*amt\s*\(in\s*cr\.?\))$/i,
-  skinPercentOfAum: /^(skin\s*%\s*of\s*aum|skin\s*%|sitg\s*%|skin\s*percent)$/i,
+  name: /^\s*(name|fund\s*name|scheme\s*name)\s*$/i,
+  fundManager: /^\s*(fund\s*manager|manager|fm)\s*$/i,
+  ageOfFund: /^\s*(age|age\s*of\s*fund|fund\s*age|vintage|age\s*\(\s*yrs?\s*\))\s*$/i,
+  aumCr: /^\s*(aum|aum\s*cr\.?|aum\s*\(in\s*cr\.?\)|corpus)\s*$/i,
+  ter: /^\s*(ter|expense\s*ratio|total\s*expense\s*ratio)\s*$/i,
+  standardDeviation: /^\s*(sd|std\s*dev|st\.?\s*dev\.?|standard\s*deviation|sd\s*\(std\s*dev\))\s*$/i,
+  sharpeRatio: /^\s*(sharpe|sharpe\s*ratio)\s*$/i,
+  mtd: /^\s*(mtd|month\s*to\s*date)\s*$/i,
+  ytd: /^\s*(ytd|year\s*to\s*date)\s*$/i,
+  oneYear: /^\s*(1\s*y(ear|r)?|one\s*year)\s*$/i,
+  twoYear: /^\s*(2\s*y(ear|r)?|two\s*year)\s*$/i,
+  threeYear: /^\s*(3\s*y(ear|r)?|three\s*year)\s*$/i,
+  fiveYear: /^\s*(5\s*y(ear|r)?|five\s*year)\s*$/i,
+  numberOfHoldings: /^\s*(no\.?\s*of\s*holdings|holdings|num\s*holdings|#\s*holdings)\s*$/i,
+  skinAmountCr: /^\s*(skin\s*in\s*the\s*game\s*amt|skin\s*amt|sitg\s*amt|skin\s*in\s*the\s*game\s*amt\s*\(in\s*cr\.?\))\s*$/i,
+  skinPercentOfAum: /^\s*(%\s*of\s*aum\s*\(?\s*skin\s*in\s*game\s*\)?|skin\s*%\s*of\s*aum|skin\s*%|sitg\s*%|skin\s*percent)\s*$/i,
+};
+
+// Headers we expect but intentionally don't map (silently ignored — no warning)
+const IGNORED_HEADER_PATTERNS = [
+  /^\s*$/,                            // empty leading column
+  /^\s*cagr\s*$/i,                    // CAGR — not in our schema
+  /^\s*ranking\s*$/i,                 // Ranking — handled separately as rank
+  /^\s*rank\s*$/i,
+  /^\s*s\.?\s*no\.?\s*$/i,            // Serial number
+  /^\s*sr\.?\s*no\.?\s*$/i,
+];
+
+// Section header patterns — recognise category names typed as section dividers in the Excel.
+// Partial Record because not every FundCategory appears in the Trustner master sheet.
+const CATEGORY_SECTION_PATTERNS: Partial<Record<FundCategory, RegExp>> = {
+  'Large Cap':            /^\s*large\s*cap\s*(fund)?\s*$/i,
+  'Large & Mid Cap':      /^\s*large\s*(and|&)\s*mid\s*cap\s*(fund)?\s*$/i,
+  'Mid Cap':              /^\s*mid\s*cap\s*(fund)?\s*$/i,
+  'Small Cap':            /^\s*small\s*cap\s*(fund)?\s*$/i,
+  'Flexi Cap':            /^\s*flexi\s*-?\s*cap\s*(fund)?\s*$/i,
+  'Multi Cap':            /^\s*multi\s*cap\s*(fund)?\s*$/i,
+  'Value':                /^\s*value\s*(fund)?\s*$/i,
+  'Contra':               /^\s*contra\s*(fund)?\s*$/i,
+  'Multi Asset':          /^\s*multi\s*asset\s*(fund)?\s*$/i,
+  'Balanced Advantage':   /^\s*(balance|balanced)\s*advantage\s*(fund)?\s*$/i,
+  'Aggressive Hybrid':    /^\s*aggressive\s*hybrid\s*(fund)?\s*$/i,
+  'Equity Savings':       /^\s*equity\s*savings\s*(fund)?\s*$/i,
+  'Conservative Hybrid':  /^\s*conservative\s*hybrid\s*(fund)?\s*$/i,
+  'Gold & Silver':        /^\s*gold\s*(and|&)\s*silver\s*(fund)?\s*$/i,
+  'Fund of Fund':         /^\s*fund\s*of\s*fund\s*(s)?\s*$/i,
 };
 
 // ─── Utility functions ───
@@ -89,12 +121,20 @@ function slugify(name: string): string {
 
 function parsePercentage(value: string): number {
   if (!value || value.trim() === '' || value.trim() === '-' || value.trim() === 'NA') return 0;
-  const cleaned = value.replace(/%/g, '').replace(/,/g, '').trim();
+  const trimmed = value.trim();
+  const hadPercentSign = trimmed.includes('%');
+  const cleaned = trimmed.replace(/%/g, '').replace(/,/g, '').trim();
   const num = parseFloat(cleaned);
   if (isNaN(num)) return 0;
-  // If the value contained a % sign or looks like a percentage (e.g. "14.8"),
-  // convert to decimal form
-  return num / 100;
+  // Detect format intelligently:
+  //  - "14.8%" or "14.8"  → percentage, divide by 100 → 0.148
+  //  - "0.148"            → already decimal, keep as-is
+  //  - "-0.075"           → already decimal, keep as-is
+  // Heuristic: if the absolute value is ≤ 2 (i.e., 200%), assume already decimal.
+  // If > 2 OR had explicit % sign, treat as a percentage and divide by 100.
+  if (hadPercentSign) return num / 100;
+  if (Math.abs(num) > 2) return num / 100;
+  return num;
 }
 
 function parseNumber(value: string): number {
@@ -134,6 +174,14 @@ export function FundBulkImport({ onImport, defaultCategory }: FundBulkImportProp
   const [selectedCategory, setSelectedCategory] = useState<FundCategory>(defaultCategory || 'Large Cap');
   const [inputMode, setInputMode] = useState<'paste' | 'file'>('paste');
   const [fileName, setFileName] = useState<string | null>(null);
+  // Multi-section state — when an Excel file contains multiple category sections
+  const [multiSectionInfo, setMultiSectionInfo] = useState<{
+    totalSections: number;
+    currentSection: FundCategory;
+    allSections: FundCategory[];
+    allRowsRaw: string[][];
+    sectionRowIndices: number[];
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const ALL_CATEGORIES: FundCategory[] = [
@@ -159,69 +207,199 @@ export function FundBulkImport({ onImport, defaultCategory }: FundBulkImportProp
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
 
         // Convert to array of arrays (each row is an array of cell values)
-        const rows: string[][] = XLSX.utils.sheet_to_json(firstSheet, {
+        const rawRows: (string | number | null)[][] = XLSX.utils.sheet_to_json(firstSheet, {
           header: 1,
           defval: '',
           raw: false,
-        }) as string[][];
+        }) as (string | number | null)[][];
 
-        if (rows.length < 2) {
+        if (rawRows.length < 2) {
           setErrors([{ row: 0, field: '', message: 'File must have at least a header row and one data row' }]);
           return;
         }
 
-        // Convert to tab-separated text for the existing parse pipeline
-        const tsvText = rows
-          .filter(row => row.some(cell => cell && String(cell).trim() !== ''))
-          .map(row => row.map(cell => String(cell).trim()).join('\t'))
-          .join('\n');
+        // ── Strip leading empty columns (Trustner Excel uses col A as spacer) ──
+        let leadingEmpty = 0;
+        const colCount = Math.max(...rawRows.map(r => r.length));
+        outer: for (let c = 0; c < colCount; c++) {
+          for (const r of rawRows) {
+            if (r[c] !== null && r[c] !== undefined && String(r[c]).trim() !== '') {
+              break outer;
+            }
+          }
+          leadingEmpty++;
+        }
+        const rows = rawRows.map(r => r.slice(leadingEmpty).map(c => c == null ? '' : String(c).trim()));
 
-        setRawText(tsvText);
-
-        // Auto-parse
-        const lines = tsvText.split('\n').map((line) => line.split('\t'));
-        const headerRow = lines[0].map((h) => h.trim());
-        setHeaders(headerRow);
-
-        // Auto-detect column mapping
-        const autoMap: Record<number, keyof MappableFields | ''> = {};
-        headerRow.forEach((header, colIdx) => {
-          for (const [field, pattern] of Object.entries(HEADER_PATTERNS)) {
-            if (pattern.test(header.trim())) {
-              autoMap[colIdx] = field as keyof MappableFields;
+        // ── Detect if this is a multi-category sheet ──
+        // Heuristic: count how many rows have a SINGLE non-empty cell that matches a category name.
+        const sectionRows: { idx: number; category: FundCategory }[] = [];
+        rows.forEach((row, idx) => {
+          const nonEmpty = row.filter(c => c.length > 0);
+          if (nonEmpty.length !== 1) return;
+          const text = nonEmpty[0];
+          for (const [cat, pattern] of Object.entries(CATEGORY_SECTION_PATTERNS)) {
+            if (pattern.test(text)) {
+              sectionRows.push({ idx, category: cat as FundCategory });
               break;
             }
           }
-          if (!autoMap[colIdx]) autoMap[colIdx] = '';
         });
-        setColumnMap(autoMap);
 
-        // Parse data rows
-        const parsed: ParsedRow[] = [];
-        for (let i = 1; i < lines.length; i++) {
-          const cells = lines[i];
-          if (cells.length === 1 && cells[0].trim() === '') continue;
-          const rowData = {} as Record<keyof MappableFields, string>;
-          for (const col of EXPECTED_COLUMNS) rowData[col.field] = '';
-          cells.forEach((cell, colIdx) => {
-            const mappedField = autoMap[colIdx];
-            if (mappedField) rowData[mappedField] = cell.trim();
+        if (sectionRows.length >= 2) {
+          // ── MULTI-CATEGORY MODE ──
+          // The user uploaded a master sheet with multiple category sections.
+          // We pick the FIRST section to populate the standard mapper UI, but show an info
+          // banner so they know they can repeat for other categories OR commit all at once.
+          const firstSec = sectionRows[0];
+          const nextSec = sectionRows[1];
+          const sectionEnd = nextSec.idx;
+
+          // Find the header row inside the first section
+          let firstHeaderIdx = -1;
+          for (let i = firstSec.idx + 1; i < sectionEnd; i++) {
+            const joined = rows[i].join(' | ').toLowerCase();
+            if (joined.includes('fund name') && joined.includes('fund manager')) {
+              firstHeaderIdx = i;
+              break;
+            }
+          }
+
+          if (firstHeaderIdx < 0) {
+            setErrors([{ row: 0, field: '', message: 'Detected multi-category sheet but could not find header row inside the first section.' }]);
+            return;
+          }
+
+          const headerRow = rows[firstHeaderIdx];
+          const dataRows = rows.slice(firstHeaderIdx + 1, sectionEnd).filter(r => r.some(c => c.length > 0));
+
+          // Pre-select the FIRST category and tell user about others
+          setSelectedCategory(firstSec.category);
+          setMultiSectionInfo({
+            totalSections: sectionRows.length,
+            currentSection: firstSec.category,
+            allSections: sectionRows.map(s => s.category),
+            allRowsRaw: rows,
+            sectionRowIndices: sectionRows.map(s => s.idx),
           });
-          parsed.push({ data: rowData, rowIndex: i });
-        }
 
-        setParsedRows(parsed);
-        setErrors([]);
-        setStep('map');
+          const tsvText = [headerRow, ...dataRows].map(r => r.join('\t')).join('\n');
+          setRawText(tsvText);
+          setHeaders(headerRow);
+          setColumnMap(buildAutoMap(headerRow));
+          setParsedRows(parseDataRows(dataRows, buildAutoMap(headerRow)));
+          setErrors([]);
+          setStep('map');
+        } else {
+          // ── SINGLE-CATEGORY MODE (original flow) ──
+          setMultiSectionInfo(null);
+          // Find the header row anywhere in the sheet (skip preamble rows)
+          let headerIdx = -1;
+          for (let i = 0; i < rows.length; i++) {
+            const joined = rows[i].join(' | ').toLowerCase();
+            if (joined.includes('fund name') && joined.includes('fund manager')) {
+              headerIdx = i;
+              break;
+            }
+          }
+          if (headerIdx < 0) headerIdx = 0;
+
+          const headerRow = rows[headerIdx];
+          const dataRows = rows.slice(headerIdx + 1).filter(r => r.some(c => c.length > 0));
+
+          const tsvText = [headerRow, ...dataRows].map(r => r.join('\t')).join('\n');
+          setRawText(tsvText);
+          setHeaders(headerRow);
+          setColumnMap(buildAutoMap(headerRow));
+          setParsedRows(parseDataRows(dataRows, buildAutoMap(headerRow)));
+          setErrors([]);
+          setStep('map');
+        }
       } catch (err) {
         setErrors([{ row: 0, field: '', message: `Failed to parse file: ${err instanceof Error ? err.message : 'Unknown error'}` }]);
       }
     };
 
     reader.readAsArrayBuffer(file);
-    // Reset input so same file can be re-selected
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, []);
+
+  // Helper: build auto-map from header row, skipping ignored headers silently
+  function buildAutoMap(headerRow: string[]): Record<number, keyof MappableFields | ''> {
+    const map: Record<number, keyof MappableFields | ''> = {};
+    headerRow.forEach((header, colIdx) => {
+      const trimmed = header.trim();
+      if (IGNORED_HEADER_PATTERNS.some(p => p.test(trimmed))) {
+        map[colIdx] = '';
+        return;
+      }
+      for (const [field, pattern] of Object.entries(HEADER_PATTERNS)) {
+        if (pattern.test(trimmed)) {
+          map[colIdx] = field as keyof MappableFields;
+          return;
+        }
+      }
+      map[colIdx] = '';
+    });
+    return map;
+  }
+
+  // Helper: extract data rows using a column map
+  function parseDataRows(dataRows: string[][], colMap: Record<number, keyof MappableFields | ''>): ParsedRow[] {
+    const out: ParsedRow[] = [];
+    dataRows.forEach((cells, idx) => {
+      if (cells.length === 0 || cells.every(c => c.trim() === '')) return;
+      const data = {} as Record<keyof MappableFields, string>;
+      for (const col of EXPECTED_COLUMNS) data[col.field] = '';
+      cells.forEach((cell, colIdx) => {
+        const mappedField = colMap[colIdx];
+        if (mappedField) data[mappedField] = cell.trim();
+      });
+      out.push({ data, rowIndex: idx + 1 });
+    });
+    return out;
+  }
+
+  // Helper: switch to a different category section in a multi-section sheet
+  // (no re-upload needed — just slices the cached rows)
+  function switchToSection(category: FundCategory) {
+    if (!multiSectionInfo) return;
+    const { allSections, sectionRowIndices, allRowsRaw } = multiSectionInfo;
+    const targetIdx = allSections.indexOf(category);
+    if (targetIdx < 0) return;
+
+    const sectionStart = sectionRowIndices[targetIdx];
+    const sectionEnd = targetIdx + 1 < sectionRowIndices.length
+      ? sectionRowIndices[targetIdx + 1]
+      : allRowsRaw.length;
+
+    // Find header row inside this section
+    let headerIdx = -1;
+    for (let i = sectionStart + 1; i < sectionEnd; i++) {
+      const joined = allRowsRaw[i].join(' | ').toLowerCase();
+      if (joined.includes('fund name') && joined.includes('fund manager')) {
+        headerIdx = i;
+        break;
+      }
+    }
+    if (headerIdx < 0) {
+      setErrors([{ row: 0, field: '', message: `Could not find header row inside ${category} section.` }]);
+      return;
+    }
+
+    const headerRow = allRowsRaw[headerIdx];
+    const dataRows = allRowsRaw.slice(headerIdx + 1, sectionEnd).filter(r => r.some(c => c.length > 0));
+    const tsvText = [headerRow, ...dataRows].map(r => r.join('\t')).join('\n');
+
+    setRawText(tsvText);
+    setHeaders(headerRow);
+    const autoMap = buildAutoMap(headerRow);
+    setColumnMap(autoMap);
+    setParsedRows(parseDataRows(dataRows, autoMap));
+    setSelectedCategory(category);
+    setMultiSectionInfo({ ...multiSectionInfo, currentSection: category });
+    setErrors([]);
+  }
 
   // ── Parse pasted text ──
 
@@ -570,6 +748,42 @@ export function FundBulkImport({ onImport, defaultCategory }: FundBulkImportProp
       {/* ── Step 2: Column Mapping ── */}
       {step === 'map' && (
         <div className="space-y-4">
+          {/* Multi-section detection banner */}
+          {multiSectionInfo && (
+            <div className="card-base p-4 bg-blue-50 border-blue-200">
+              <div className="flex items-start gap-3">
+                <Table2 className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="text-sm font-bold text-blue-900 mb-1">
+                    Multi-Category Sheet Detected ({multiSectionInfo.totalSections} categories)
+                  </h3>
+                  <p className="text-xs text-blue-800 leading-relaxed mb-2">
+                    Showing rows from <strong>{multiSectionInfo.currentSection}</strong>. Use the section picker
+                    below to switch to other categories. Import each one individually — once committed, you can
+                    return to switch sections without re-uploading the file.
+                  </p>
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {multiSectionInfo.allSections.map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => switchToSection(cat)}
+                        className={cn(
+                          'text-[11px] font-semibold px-2.5 py-1 rounded-md transition-colors',
+                          cat === multiSectionInfo.currentSection
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white text-blue-700 border border-blue-300 hover:bg-blue-100',
+                        )}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Category selection */}
           <div className="card-base p-5">
             <h3 className="text-sm font-bold text-primary-700 mb-3">Target Category</h3>

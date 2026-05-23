@@ -244,19 +244,19 @@ export default function LifePlansPage() {
               Don&apos;t See Your Profession?
             </h2>
             <p className="text-lg text-white/80 mb-8 leading-relaxed">
-              Every financial journey is unique. Talk to a Certified Financial
-              Planner who will understand your specific situation and create a
-              plan that works for you.
+              Every investment journey is unique. Talk to our team who will
+              understand your specific situation and create an investment
+              roadmap that works for you.
             </p>
 
             <a
-              href="https://wa.me/916003903737?text=Hi%20Trustner%2C%20I%20visited%20the%20Life%20Plans%20page%20on%20MeraSIP%20and%20would%20like%20to%20discuss%20a%20financial%20plan%20for%20my%20profession.%20Please%20connect%20me%20with%20a%20CFP."
+              href="https://wa.me/916003903737?text=Hi%20Trustner%2C%20I%20visited%20the%20Life%20Plans%20page%20on%20MeraSIP%20and%20would%20like%20to%20discuss%20an%20investment%20plan%20for%20my%20profession.%20Please%20guide%20me."
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-3 bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5"
             >
               <MessageCircle className="w-5 h-5" />
-              Talk to a Certified Financial Planner
+              Talk to Trustner Team
             </a>
 
             <p className="text-white/50 text-sm mt-6">

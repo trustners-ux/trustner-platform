@@ -17,7 +17,7 @@ export const EMPLOYEES: Employee[] = [
   { id: 5, employeeCode: 'TIB004', name: 'Rafiquddin Ahmed', doj: '1988-01-01', designation: 'Consultant — GI Team', department: 'Sales - GI', grossSalary: 80000, entity: 'TIB', annualCTC: 960000, tenureYears: 38, levelCode: 'L3', segment: 'Direct Sales', targetMultiplier: 6, monthlyTarget: 480000, annualTarget: 5760000, costRecoveryMin: 128000, isActive: true },
 
   // L4 — Area Manager / Branch Head
-  { id: 6, employeeCode: 'TAS002', name: 'Tamanna Somani', doj: '2021-07-01', designation: 'Head HNI Division', department: 'Sales - MF', grossSalary: 75000, entity: 'TAS', annualCTC: 900000, tenureYears: 4.7, levelCode: 'L4', segment: 'Direct Sales', targetMultiplier: 6, monthlyTarget: 450000, annualTarget: 5400000, costRecoveryMin: 120000, isActive: true },
+  { id: 6, employeeCode: 'TAS002', name: 'Tamanna Kejriwal', doj: '2021-07-01', designation: 'Head HNI Division', department: 'Sales - MF', grossSalary: 75000, entity: 'TAS', annualCTC: 900000, tenureYears: 4.7, levelCode: 'L4', segment: 'Direct Sales', targetMultiplier: 6, monthlyTarget: 450000, annualTarget: 5400000, costRecoveryMin: 120000, isActive: true },
   { id: 7, employeeCode: 'TIB005', name: 'Raju Chakraborty', doj: '2001-05-01', designation: 'Regional Manager North East', department: 'Sales - CDM', grossSalary: 50000, entity: 'TIB', annualCTC: 600000, tenureYears: 25, levelCode: 'L4', segment: 'CDM/POSP RM', targetMultiplier: 20, monthlyTarget: 1000000, annualTarget: 12000000, costRecoveryMin: 80000, isActive: true },
 
   // L5 — Sr. RM / Team Leader

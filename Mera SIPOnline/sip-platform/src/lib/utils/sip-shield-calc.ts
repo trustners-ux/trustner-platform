@@ -15,6 +15,29 @@ export type StepUpType = 'percentage' | 'fixed';
 
 export type SWPFrequency = 'monthly' | 'yearly';
 
+export type InvestmentType = 'mutual_fund' | 'fixed_deposit' | 'ppf' | 'epf' | 'nps' | 'stocks' | 'gold' | 'real_estate' | 'other';
+
+export type RegularIncomeType = 'pension' | 'rental' | 'freelance' | 'business' | 'other';
+
+export interface ExistingInvestment {
+  id: string;
+  type: InvestmentType;
+  label: string;
+  currentValue: number;
+  expectedReturn: number; // % p.a.
+  monthlyAddition: number; // 0 if not contributing
+}
+
+export interface RegularIncome {
+  id: string;
+  type: RegularIncomeType;
+  label: string;
+  monthlyAmount: number;
+  startYear: number;
+  endYear: number | null; // null = plan end
+  annualGrowth: number; // %
+}
+
 export interface RecurringCost {
   id: string;
   type: CostType;
@@ -66,6 +89,12 @@ export interface SIPShieldInputs {
   swpInflationRate: number; // default 5%
 
   lumpsumEvents: LumpsumEvent[];
+
+  /** Optional: Parallel existing investments (MF, FD, PPF, EPF, NPS, etc.). */
+  existingInvestments?: ExistingInvestment[];
+
+  /** Optional: Post-retirement regular incomes (pension, rental, freelance, etc.). */
+  regularIncomes?: RegularIncome[];
 }
 
 export interface YearlyDetail {
@@ -79,6 +108,10 @@ export interface YearlyDetail {
   returnEarned: number;
   lumpsumEvent?: string;
   yearEndCorpus: number;
+  /** Year-end total value of ALL existing investments (parallel corpus). */
+  existingInvestmentsValue: number;
+  /** Total regular income received this year (offsets corpus drawdown). */
+  regularIncomeThisYear: number;
 }
 
 export interface SIPShieldInsight {
@@ -117,9 +150,53 @@ export interface SIPShieldResult {
   yearlyDetails: YearlyDetail[];
   insights: SIPShieldInsight[];
   costBreakdown: CostBreakdownItem[];
+  /** Final value of all existing investments at plan end. */
+  existingInvestmentsFinal: number;
+  /** Total contributions made to existing investments over the plan. */
+  totalExistingInvestmentsContributed: number;
+  /** Combined wealth at plan end (SIP corpus + existing investments). */
+  totalWealthAtEnd: number;
+  /** Total regular income received across the plan. */
+  totalRegularIncomeReceived: number;
+  /** Total "outflow" that corpus had to service (cost during withdrawal + SWP). */
+  totalCorpusOutflowNeeded: number;
+  /** % of that outflow that regular income covered (0-100). */
+  regularIncomeCoveragePct: number;
 }
 
 // ── Constants ───────────────────────────────────────────────────────────────
+
+export const INVESTMENT_TYPE_LABELS: Record<InvestmentType, string> = {
+  mutual_fund: 'Mutual Fund',
+  fixed_deposit: 'Fixed Deposit',
+  ppf: 'PPF',
+  epf: 'EPF',
+  nps: 'NPS',
+  stocks: 'Stocks / Equity',
+  gold: 'Gold',
+  real_estate: 'Real Estate',
+  other: 'Other',
+};
+
+export const INVESTMENT_DEFAULT_RETURN: Record<InvestmentType, number> = {
+  mutual_fund: 12,
+  fixed_deposit: 6.5,
+  ppf: 7.1,
+  epf: 8.25,
+  nps: 10,
+  stocks: 12,
+  gold: 8,
+  real_estate: 6,
+  other: 8,
+};
+
+export const REGULAR_INCOME_TYPE_LABELS: Record<RegularIncomeType, string> = {
+  pension: 'Pension',
+  rental: 'Rental Income',
+  freelance: 'Freelance / Consulting',
+  business: 'Business Income',
+  other: 'Other Income',
+};
 
 export const COST_TYPE_LABELS: Record<CostType, string> = {
   term_plan: 'Term Insurance Premium',
@@ -253,6 +330,19 @@ export function calculateSIPShield(inputs: SIPShieldInputs): SIPShieldResult {
   let isSustainable = true;
   let depletionYear: number | undefined;
 
+  // ── Existing Investments: track per-investment running value ──
+  const existingInvestments = inputs.existingInvestments ?? [];
+  const existingValues = new Map<string, number>();
+  for (const inv of existingInvestments) {
+    existingValues.set(inv.id, Math.max(0, inv.currentValue || 0));
+  }
+  let totalExistingInvestmentsContributed = 0;
+
+  // ── Regular Incomes tracking ──
+  const regularIncomes = inputs.regularIncomes ?? [];
+  let totalRegularIncomeReceived = 0;
+  let totalCorpusOutflowNeeded = 0;
+
   for (let yr = 1; yr <= totalYears; yr++) {
     const age = inputs.currentAge + yr;
     let phase: 'SIP' | 'Growth' | 'Withdrawal';
@@ -320,22 +410,64 @@ export function calculateSIPShield(inputs: SIPShieldInputs): SIPShieldResult {
     corpus += returnEarned;
     totalReturnEarned += returnEarned;
 
+    // ── Existing Investments: grow + add contributions in parallel ──
+    for (const inv of existingInvestments) {
+      let val = existingValues.get(inv.id) ?? 0;
+      const annualAddition = (inv.monthlyAddition || 0) * 12;
+      // Grow existing value, then add contributions (contributions assumed spread through year)
+      val = val * (1 + (inv.expectedReturn || 0) / 100);
+      val += annualAddition;
+      totalExistingInvestmentsContributed += annualAddition;
+      existingValues.set(inv.id, Math.max(0, val));
+    }
+
+    // ── Regular Income for this year (used to offset corpus drawdown) ──
+    let regularIncomeThisYear = 0;
+    for (const inc of regularIncomes) {
+      const incStart = inc.startYear;
+      const incEnd = inc.endYear ?? totalYears;
+      if (yr < incStart || yr > incEnd) continue;
+      const yearsSinceStart = yr - incStart;
+      const baseAnnual = (inc.monthlyAmount || 0) * 12;
+      const grown = baseAnnual * Math.pow(1 + (inc.annualGrowth || 0) / 100, yearsSinceStart);
+      regularIncomeThisYear += grown;
+    }
+    totalRegularIncomeReceived += regularIncomeThisYear;
+
+    // Apply regular income to offset corpus-funded outflows (withdrawal phase only).
+    // Logic: income first covers recurring costs drawn from corpus, then SWP. Any surplus is not
+    // reinvested (conservative — user keeps it as liquid cash outside the modelled corpus).
+    const originalCostFromCorpus = costFromCorpus;
+    let incomeRemaining = regularIncomeThisYear;
+    if (phase === 'Withdrawal' && incomeRemaining > 0 && costFromCorpus > 0) {
+      const offset = Math.min(incomeRemaining, costFromCorpus);
+      costFromCorpus -= offset;
+      incomeRemaining -= offset;
+    }
+
+    // Track total outflow the corpus had to "face" (pre-income); used for coverage metric.
+    if (phase === 'Withdrawal') {
+      totalCorpusOutflowNeeded += originalCostFromCorpus;
+    }
+
     // Withdraw from corpus for cost payment
     if (costFromCorpus > 0) {
+      // Per-cost scaling ratio: costs reduced by income cover fewer rupees from each cost proportionally.
+      const incomeScale = originalCostFromCorpus > 0 ? costFromCorpus / originalCostFromCorpus : 1;
       if (corpus >= costFromCorpus) {
         corpus -= costFromCorpus;
         totalCostPaidFromCorpus += costFromCorpus;
-        // Track per-cost corpus proportionally
+        // Track per-cost corpus proportionally (scaled by incomeScale)
         for (const c of costs) {
-          const amt = singleCostAnnualForYear(c, inflationRate, yr);
+          const amt = singleCostAnnualForYear(c, inflationRate, yr) * incomeScale;
           costCorpusMap.set(c.id, (costCorpusMap.get(c.id) ?? 0) + amt);
         }
       } else {
         totalCostPaidFromCorpus += Math.max(0, corpus);
-        // partial per-cost tracking (proportional)
+        // partial per-cost tracking (proportional to corpus available AND incomeScale)
         const ratio = costFromCorpus > 0 ? Math.max(0, corpus) / costFromCorpus : 0;
         for (const c of costs) {
-          const amt = singleCostAnnualForYear(c, inflationRate, yr);
+          const amt = singleCostAnnualForYear(c, inflationRate, yr) * incomeScale;
           costCorpusMap.set(c.id, (costCorpusMap.get(c.id) ?? 0) + amt * ratio);
         }
         costFromCorpus = Math.max(0, corpus);
@@ -347,20 +479,35 @@ export function calculateSIPShield(inputs: SIPShieldInputs): SIPShieldResult {
       }
     }
 
-    // SWP withdrawal (additional to cost)
+    // SWP withdrawal (additional to cost) — regular income left over also offsets SWP
     if (swpThisYear > 0 && phase === 'Withdrawal') {
-      if (corpus >= swpThisYear) {
-        corpus -= swpThisYear;
-        totalSWPWithdrawn += swpThisYear;
-      } else {
-        totalSWPWithdrawn += Math.max(0, corpus);
-        swpThisYear = Math.max(0, corpus);
-        corpus = 0;
-        if (isSustainable) {
-          isSustainable = false;
-          depletionYear = yr;
+      const originalSWP = swpThisYear;
+      if (incomeRemaining > 0) {
+        const offset = Math.min(incomeRemaining, swpThisYear);
+        swpThisYear -= offset;
+        incomeRemaining -= offset;
+      }
+      totalCorpusOutflowNeeded += originalSWP;
+      if (swpThisYear > 0) {
+        if (corpus >= swpThisYear) {
+          corpus -= swpThisYear;
+          totalSWPWithdrawn += swpThisYear;
+        } else {
+          totalSWPWithdrawn += Math.max(0, corpus);
+          swpThisYear = Math.max(0, corpus);
+          corpus = 0;
+          if (isSustainable) {
+            isSustainable = false;
+            depletionYear = yr;
+          }
         }
       }
+    }
+
+    // Compute total existing investments value at year end
+    let existingInvestmentsValue = 0;
+    for (const inv of existingInvestments) {
+      existingInvestmentsValue += existingValues.get(inv.id) ?? 0;
     }
 
     // Snapshot end-of-phase corpus
@@ -378,8 +525,17 @@ export function calculateSIPShield(inputs: SIPShieldInputs): SIPShieldResult {
       returnEarned: round2(returnEarned),
       lumpsumEvent: lumpsumLabel,
       yearEndCorpus: round2(corpus),
+      existingInvestmentsValue: round2(existingInvestmentsValue),
+      regularIncomeThisYear: round2(regularIncomeThisYear),
     });
   }
+
+  // Final existing investment aggregate
+  let existingInvestmentsFinal = 0;
+  for (const inv of existingInvestments) {
+    existingInvestmentsFinal += existingValues.get(inv.id) ?? 0;
+  }
+  existingInvestmentsFinal = round2(existingInvestmentsFinal);
 
   if (growthPhaseYears === 0) corpusAtEndOfGrowth = corpusAtEndOfSIP;
 
@@ -517,6 +673,48 @@ export function calculateSIPShield(inputs: SIPShieldInputs): SIPShieldResult {
     });
   }
 
+  // ── Derived totals for Existing Investments + Regular Income ──
+  const totalWealthAtEnd = round2(finalCorpus + existingInvestmentsFinal);
+  const regularIncomeCoveragePct = totalCorpusOutflowNeeded > 0
+    ? Math.min(100, round2((totalRegularIncomeReceived / totalCorpusOutflowNeeded) * 100))
+    : 0;
+
+  // 12. Existing Investments contribution
+  if (existingInvestmentsFinal > 0) {
+    const pct = totalWealthAtEnd > 0 ? round2((existingInvestmentsFinal / totalWealthAtEnd) * 100) : 0;
+    insights.push({
+      type: 'positive',
+      title: 'Existing Investments at Work',
+      description: `Your existing investments grow to ${formatRs(existingInvestmentsFinal)} at plan end — ${pct}% of your total wealth of ${formatRs(totalWealthAtEnd)}. Review allocations with your Relationship Manager.`,
+    });
+  }
+
+  // 13. Regular Income Coverage
+  if (totalRegularIncomeReceived > 0 && withdrawalPhaseYears > 0) {
+    if (regularIncomeCoveragePct >= 100) {
+      insights.push({
+        type: 'positive',
+        title: 'Post-Retirement Income Fully Covers Outflows',
+        description: `Congratulations — your post-retirement regular income of ${formatRs(totalRegularIncomeReceived)} fully covers your recurring outflows (${formatRs(totalCorpusOutflowNeeded)}). Your corpus grows untouched and compounds for legacy or future needs.`,
+      });
+    } else {
+      insights.push({
+        type: 'positive',
+        title: 'Regular Income Offsets Corpus Drawdown',
+        description: `Post-retirement regular income of ${formatRs(totalRegularIncomeReceived)} covers ${regularIncomeCoveragePct.toFixed(1)}% of your total outflows (${formatRs(totalCorpusOutflowNeeded)}). Your corpus lasts longer as a result.`,
+      });
+    }
+  }
+
+  // 14. Total Wealth insight
+  if (existingInvestmentsFinal > 0 || totalRegularIncomeReceived > 0) {
+    insights.push({
+      type: 'tip',
+      title: 'Total Wealth at Plan End',
+      description: `Combining your SIP corpus (${formatRs(finalCorpus)}) with existing investments (${formatRs(existingInvestmentsFinal)}) gives ${formatRs(totalWealthAtEnd)} in total wealth. Your Relationship Manager can help rebalance across these holdings.`,
+    });
+  }
+
   return {
     clientName: inputs.clientName,
     costLabel,
@@ -540,5 +738,11 @@ export function calculateSIPShield(inputs: SIPShieldInputs): SIPShieldResult {
     yearlyDetails,
     insights,
     costBreakdown,
+    existingInvestmentsFinal,
+    totalExistingInvestmentsContributed: round2(totalExistingInvestmentsContributed),
+    totalWealthAtEnd,
+    totalRegularIncomeReceived: round2(totalRegularIncomeReceived),
+    totalCorpusOutflowNeeded: round2(totalCorpusOutflowNeeded),
+    regularIncomeCoveragePct,
   };
 }

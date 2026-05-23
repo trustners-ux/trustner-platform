@@ -230,7 +230,7 @@ export default function BucketStrategyPage() {
               <Droplets className="w-7 h-7 text-accent" />
             </div>
             <div>
-              <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-1">CFP-Grade Planner</p>
+              <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-1">Professional-Grade Tool</p>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold">Bucket Strategy Planner</h1>
               <p className="text-slate-300 mt-1 text-sm sm:text-base">Segment your retirement corpus into 5 time-based buckets for sustainable income.</p>
             </div>
@@ -587,7 +587,7 @@ export default function BucketStrategyPage() {
 
               {result.insights.length > 0 && (
                 <div className="card-base p-5">
-                  <h3 className="font-bold text-slate-800 mb-4">CFP Insights</h3>
+                  <h3 className="font-bold text-slate-800 mb-4">Expert Insights</h3>
                   <div className="grid gap-3 sm:grid-cols-2">
                     {result.insights.map((insight: BucketInsight, idx: number) => { const s = INSIGHT_STYLES[insight.type]; return (
                       <div key={idx} className={cn('rounded-xl border p-4', s.bg, s.border)}>

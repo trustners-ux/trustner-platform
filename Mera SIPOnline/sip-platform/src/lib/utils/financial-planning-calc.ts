@@ -86,9 +86,10 @@ function getGoalInflationRate(goalType: GoalType): number {
   switch (goalType) {
     case 'child-education':
       return 0.10;
-    // medical-related goals would use 12%, but GoalType doesn't have a medical type
     case 'child-marriage':
+      return 0.08;
     case 'house-purchase':
+      return 0.07;
     case 'car-purchase':
     case 'vacation':
     case 'emergency-fund':
@@ -373,6 +374,48 @@ export function calculateInvestmentScore(data: FinancialPlanningData): PillarSco
   };
 }
 
+// ---------------------------------------------------------------------------
+// Goal Realism Bonus — adds 0-100 points to the headline score when goals are
+// realistically reachable. This is the lever that makes the score actually
+// MOVE in the scenario editor when:
+//   • Today's Prices → Future Cost (no more inflated futureCost)
+//   • Horizon extended (more years to compound)
+//   • Target reduced (smaller gap)
+//   • Saved-so-far increased (smaller gap)
+//
+// We sum points PER GOAL (not average) so re-framing multiple goals
+// compounds the score gain — re-framing one goal nudges, re-framing all
+// three gives a big visible jump.
+// ---------------------------------------------------------------------------
+export function calculateGoalRealismBonus(data: FinancialPlanningData): number {
+  if (!data.goals || data.goals.length === 0) return 0;
+  let gaps;
+  try {
+    gaps = calculateGoalGaps(data);
+  } catch {
+    return 0;
+  }
+  if (!gaps || gaps.length === 0) return 0;
+
+  // Per-goal points. The user expects a big visible move when ambitious
+  // goals are re-framed to be achievable — so the spread between buckets
+  // is intentionally wide.
+  const pts = (f: string): number => {
+    switch (f) {
+      case 'on-track':    return 35;
+      case 'possible':    return 25;
+      case 'stretch':     return 12;
+      case 'unrealistic': return 2;
+      default:            return 12;
+    }
+  };
+
+  const total = gaps.reduce((s, g) => s + pts(g.feasibility), 0);
+  // Cap at 100 so an investor with many goals doesn't run away with bonus
+  // points — meaningful but bounded.
+  return Math.min(100, total);
+}
+
 // =========================================================================
 // 4. DEBT PILLAR
 // =========================================================================
@@ -643,7 +686,15 @@ export function calculateGoalGaps(data: FinancialPlanningData): GoalGapResult[] 
 
   return data.goals.map((goal) => {
     const yearsToGoal = Math.max(0, goal.targetYear - currentYear);
-    const inflationRate = getGoalInflationRate(goal.type);
+    // Treat targetAmount as future cost when explicitly marked, otherwise
+    // assume present cost and apply the inflation rate. The customInflationRate
+    // (if provided) overrides the category default.
+    const costType = goal.costType ?? 'present';
+    const inflationRate = costType === 'future'
+      ? 0
+      : (typeof goal.customInflationRate === 'number' && goal.customInflationRate >= 0)
+        ? goal.customInflationRate / 100
+        : getGoalInflationRate(goal.type);
     const futureCost = goal.targetAmount * Math.pow(1 + inflationRate, yearsToGoal);
 
     const returnRate = getReturnForHorizon(yearsToGoal, risk);
@@ -1011,12 +1062,19 @@ export function calculateFinancialHealthScore(data: FinancialPlanningData): Fina
   const debt = calculateDebtScore(data);
   const retirementReadiness = calculateRetirementReadinessScore(data);
 
-  const totalScore =
+  // Goal Realism Bonus moves the headline score by 0-50 points so the score
+  // actually responds when goals are re-targeted via the scenario editor.
+  const goalRealism = calculateGoalRealismBonus(data);
+
+  const totalScore = Math.min(
+    900,
     cashflow.score +
-    protection.score +
-    investments.score +
-    debt.score +
-    retirementReadiness.score;
+      protection.score +
+      investments.score +
+      debt.score +
+      retirementReadiness.score +
+      goalRealism,
+  );
 
   // Max possible = 5 × 180 = 900
   let grade: string;

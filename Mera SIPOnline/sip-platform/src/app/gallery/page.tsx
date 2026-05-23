@@ -10,6 +10,7 @@ interface GalleryImage {
   src: string;
   caption: string;
   category: string;
+  objectPosition?: string;
 }
 
 export default function GalleryPage() {
@@ -189,6 +190,7 @@ export default function GalleryPage() {
                       alt={image.caption}
                       fill
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      style={{ objectPosition: image.objectPosition || 'center' }}
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       unoptimized={image.src.startsWith('http')}
                     />

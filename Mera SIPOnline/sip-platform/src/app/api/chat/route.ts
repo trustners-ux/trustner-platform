@@ -357,7 +357,7 @@ const KNOWLEDGE_BASE: ResponseEntry[] = [
       '   • Set up bank auto-debit (OTM/NACH)\n\n' +
       '5️⃣ Stay invested & review annually\n' +
       '   • Don\'t stop during market falls\n' +
-      '   • Review and rebalance with your advisor\n\n' +
+      '   • Review and rebalance with the Trustner team\n\n' +
       '→ Sign up at trustner.investwell.app to start your investing journey!',
   },
 
@@ -607,7 +607,7 @@ const KNOWLEDGE_BASE: ResponseEntry[] = [
       '• ARN: 286886\n' +
       '• CIN: U66301AS2023PTC025505\n\n' +
       '🌟 What we offer:\n' +
-      '• India\'s first FREE AI-powered CFP-grade Financial Planning tool\n' +
+      '• India\'s first FREE AI-powered Professional-Grade Financial Assessment tool\n' +
       '• 30+ smart calculators for every life decision\n' +
       '• 12-module NISM-aligned Learning Academy\n' +
       '• Curated Fund Selection based on 200+ parameters\n' +
@@ -630,7 +630,7 @@ const KNOWLEDGE_BASE: ResponseEntry[] = [
       '• Emergency fund sufficiency\n' +
       '• Debt-to-income analysis\n' +
       '• Goal planning recommendations\n\n' +
-      '🤖 Powered by AI — like having a CFP at your fingertips!\n' +
+      '🤖 Powered by AI — professional-grade analysis at your fingertips!\n' +
       '✅ Completely FREE | No login required | Instant report\n\n' +
       '→ Take the assessment now at /financial-planning',
   },

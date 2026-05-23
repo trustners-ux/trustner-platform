@@ -273,14 +273,14 @@ export default function AboutPage() {
           <LeadershipCarousel
             members={[
               { name: 'Ram Shah', role: 'CEO & Founder', experience: '23 Years', initials: 'RS', photo: '/team/ram-shah.jpeg', color: 'from-brand-400 to-brand-600' },
-              { name: 'Sangeeta Shah', role: 'Co-Founder & COO', experience: '23 Years', initials: 'SS', color: 'from-teal-400 to-teal-600' },
-              { name: 'Ajanta Saikia', role: 'Director & Principal Officer', experience: '23 Years', initials: 'AS', color: 'from-purple-400 to-purple-600' },
-              { name: 'Abir Das', role: 'Addl. Director & CDO', experience: '23 Years', initials: 'AD', color: 'from-sky-400 to-sky-600' },
-              { name: 'Bhola Singh', role: 'Leading GI Team', experience: '22 Years', initials: 'BS', color: 'from-amber-400 to-amber-600' },
-              { name: 'Subhasish Kar', role: 'Institutional Sales', experience: '30 Years', initials: 'SK', color: 'from-emerald-400 to-emerald-600' },
-              { name: 'Rafiquddin Ahmed', role: 'Consultant — GI Team', experience: '38 Years', initials: 'RA', color: 'from-rose-400 to-rose-600' },
-              { name: 'Tamanna Somani', role: 'Head HNI Division', experience: '21 Years', initials: 'TS', color: 'from-violet-400 to-violet-600' },
-              { name: 'Raju Chakraborty', role: 'Regional Manager North East', experience: '25 Years', initials: 'RC', color: 'from-cyan-400 to-cyan-600' },
+              { name: 'Sangeeta Shah', role: 'Co-Founder & COO', experience: '23 Years', initials: 'SS', photo: '/team/sangeeta-shah.jpeg', color: 'from-teal-400 to-teal-600' },
+              { name: 'Ajanta Saikia', role: 'Director & Principal Officer', experience: '23 Years', initials: 'AS', photo: '/team/ajanta-saikia.jpeg', color: 'from-purple-400 to-purple-600' },
+              { name: 'Abir Das', role: 'Addl. Director & CDO', experience: '23 Years', initials: 'AD', photo: '/team/abir-das.jpeg', color: 'from-sky-400 to-sky-600' },
+              { name: 'Bhola Singh', role: 'Leading GI Team', experience: '22 Years', initials: 'BS', photo: '/team/bhola-singh.jpeg', color: 'from-amber-400 to-amber-600' },
+              { name: 'Subhasish Kar', role: 'Institutional Sales', experience: '30 Years', initials: 'SK', photo: '/team/subhasish-kar.jpeg', color: 'from-emerald-400 to-emerald-600' },
+              { name: 'Rafiquddin Ahmed', role: 'Consultant — GI Team', experience: '38 Years', initials: 'RA', photo: '/team/rafiquddin-ahmed.jpeg', color: 'from-rose-400 to-rose-600' },
+              { name: 'Tamanna Kejriwal', role: 'Head HNI Division', experience: '21 Years', initials: 'TK', photo: '/team/tamanna-kejriwal.jpeg', color: 'from-violet-400 to-violet-600' },
+              { name: 'Raju Chakraborty', role: 'Regional Manager North East', experience: '25 Years', initials: 'RC', photo: '/team/raju-chakraborty.jpeg', color: 'from-cyan-400 to-cyan-600' },
             ]}
             visibleCount={4}
             interval={3500}

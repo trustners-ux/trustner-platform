@@ -446,7 +446,7 @@ export default function WhatIsSIPPage() {
               className="inline-flex items-center gap-2 bg-white text-primary-700 px-8 py-3.5 rounded-lg font-bold hover:bg-slate-50 transition-colors shadow-lg text-sm"
             >
               <MessageCircle className="w-5 h-5" />
-              Talk to Advisor
+              Talk to Us
             </a>
           </div>
         </div>

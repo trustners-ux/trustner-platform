@@ -44,7 +44,7 @@ const faqs = [
   {
     question: "Should I invest in child-specific mutual fund plans?",
     answer:
-      "Child-specific mutual fund schemes (like children's gift plans) exist but are not necessarily better than regular diversified equity funds. They often have lock-in periods of 5 years or until the child turns 18. Regular SIPs in well-chosen diversified equity funds often offer better flexibility, lower expense ratios, and similar or better returns. Consult your advisor for a personalized recommendation.",
+      "Child-specific mutual fund schemes (like children's gift plans) exist but are not necessarily better than regular diversified equity funds. They often have lock-in periods of 5 years or until the child turns 18. Regular SIPs in well-chosen diversified equity funds often offer better flexibility, lower expense ratios, and similar or better returns. Reach out to the Trustner team for considerations tailored to your situation.",
   },
   {
     question: "What if I cannot afford a large SIP for education planning?",
@@ -554,7 +554,7 @@ export default function SIPForChildEducationPage() {
               className="inline-flex items-center gap-2 bg-white text-primary-700 px-8 py-3.5 rounded-lg font-bold hover:bg-slate-50 transition-colors shadow-lg text-sm"
             >
               <MessageCircle className="w-5 h-5" />
-              Talk to Advisor
+              Talk to Us
             </a>
           </div>
         </div>

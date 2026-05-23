@@ -227,14 +227,93 @@ function GoalCard({
             />
           </div>
 
+          {/* Target Amount Type — Present vs Future cost */}
+          <div>
+            <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
+              Is your target amount in today&apos;s prices, or already a future budget?
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {([
+                { value: 'present', title: 'Today\'s Prices', sub: 'We will inflate it to your target year', icon: '🪙' },
+                { value: 'future', title: 'Future Cost', sub: 'Already adjusted by you — we use as-is', icon: '🎯' },
+              ] as const).map((opt) => {
+                const isActive = (goal.costType ?? 'present') === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => onUpdate({ costType: opt.value })}
+                    className={`text-left rounded-xl border-2 px-3 py-2.5 transition-all ${
+                      isActive
+                        ? 'border-brand-500 bg-brand-50/60'
+                        : 'border-surface-300 bg-white hover:border-slate-400'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-lg">{opt.icon}</span>
+                      <span className={`text-sm font-bold ${isActive ? 'text-brand-700' : 'text-slate-700'}`}>
+                        {opt.title}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 leading-snug">{opt.sub}</p>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[11px] text-slate-400 mt-1.5">
+              Most clients enter today&apos;s prices for goals like education or marriage, and a future budget when they have a hard cap (e.g. &ldquo;I want exactly ₹2 Cr at 60 for retirement&rdquo;).
+            </p>
+          </div>
+
           {/* Target Amount */}
           <CurrencyInput
-            label="Target Amount (Today's Value)"
+            label={
+              (goal.costType ?? 'present') === 'future'
+                ? 'Target Amount (already a future budget)'
+                : 'Target Amount (today\'s prices)'
+            }
             value={goal.targetAmount}
             onChange={(v) => onUpdate({ targetAmount: v })}
             min={0}
-            helpText="How much you'd need if you were spending today"
+            helpText={
+              (goal.costType ?? 'present') === 'future'
+                ? 'We will not apply any inflation. Use as-is.'
+                : 'How much it would cost today. We will adjust for inflation.'
+            }
           />
+
+          {/* Inflation override — only when present cost */}
+          {(goal.costType ?? 'present') === 'present' && (
+            <div>
+              <label className="block text-[13px] font-semibold text-slate-600 mb-1.5">
+                Expected Inflation for This Goal (optional)
+              </label>
+              <div className="flex items-stretch rounded-xl border border-surface-300 bg-white overflow-hidden focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500">
+                <input
+                  type="number"
+                  step={0.5}
+                  min={0}
+                  max={20}
+                  value={goal.customInflationRate ?? ''}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    onUpdate({ customInflationRate: v === '' ? undefined : Math.max(0, Math.min(20, Number(v))) });
+                  }}
+                  placeholder={
+                    goal.type === 'child-education' ? '10'
+                    : goal.type === 'child-marriage' ? '8'
+                    : goal.type === 'house-purchase' ? '7'
+                    : '6'
+                  }
+                  className="flex-1 px-3 py-2 text-sm font-semibold text-slate-700 outline-none bg-transparent tabular-nums"
+                />
+                <span className="px-3 py-2 bg-slate-50 text-slate-500 text-xs border-l border-slate-200 flex items-center">% p.a.</span>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1">
+                Leave blank to use category default — Education 10%, Marriage 8%, Housing 7%, others 6%.
+              </p>
+            </div>
+          )}
 
           {/* Target Year */}
           <div>
@@ -308,6 +387,32 @@ function GoalCard({
             min={0}
             helpText="How much have you already saved specifically for this goal?"
           />
+
+          {/* Live preview — Future cost when in present mode */}
+          {(goal.costType ?? 'present') === 'present' && goal.targetAmount > 0 && goal.targetYear > currentYear && (() => {
+            const yrs = goal.targetYear - currentYear;
+            const rate =
+              typeof goal.customInflationRate === 'number'
+                ? goal.customInflationRate / 100
+                : goal.type === 'child-education' ? 0.10
+                : goal.type === 'child-marriage' ? 0.08
+                : goal.type === 'house-purchase' ? 0.07
+                : 0.06;
+            const future = goal.targetAmount * Math.pow(1 + rate, yrs);
+            return (
+              <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-[12px] text-slate-700">
+                <div className="font-semibold text-amber-700 mb-0.5">Future cost preview</div>
+                <div>
+                  At <span className="font-semibold">{(rate * 100).toFixed(1)}% p.a.</span> inflation over {yrs} years,
+                  {' '}<span className="font-semibold">{formatIndian(goal.targetAmount)}</span> today
+                  {' '}≈ <span className="font-extrabold text-amber-800">{formatIndian(Math.round(future))}</span> in {goal.targetYear}.
+                </div>
+                <div className="text-[10.5px] text-slate-500 mt-1">
+                  If this looks too high, switch to <strong>Future Cost</strong> mode and enter the budget you actually want — we will not inflate it further.
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>

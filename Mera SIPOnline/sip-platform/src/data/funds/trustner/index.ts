@@ -1,8 +1,9 @@
 import { MARCH_2026_FUND_LIST } from './march-2026';
+import { MAY_2026_FUND_LIST } from './may-2026';
 import { TrustnerFundList, TrustnerCuratedFund, FundCategory } from '@/types/funds';
 
 // Current active fund list — update this when publishing a new month
-export const CURRENT_TRUSTNER_LIST: TrustnerFundList = MARCH_2026_FUND_LIST;
+export const CURRENT_TRUSTNER_LIST: TrustnerFundList = MAY_2026_FUND_LIST;
 
 // Utility functions
 export function getTotalFundCount(list: TrustnerFundList = CURRENT_TRUSTNER_LIST): number {

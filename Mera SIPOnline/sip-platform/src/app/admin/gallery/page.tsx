@@ -16,10 +16,16 @@ interface GalleryImageItem {
   uploadedAt: string;
 }
 
+// Categories must match the values actually persisted in gallery/metadata.json
+// and supported by the public /api/gallery endpoint. Keeping these in sync
+// with src/data/gallery.ts so the filter chips, upload dropdown, and the
+// public Gallery page all agree on the same set of labels.
 const CATEGORIES = [
+  { id: 'office-life', label: 'Office Life' },
+  { id: 'awards', label: 'Awards' },
   { id: 'team', label: 'Our Team' },
+  { id: 'team-moments', label: 'Team Moments' },
   { id: 'events', label: 'Events' },
-  { id: 'office', label: 'Our Offices' },
   { id: 'milestones', label: 'Milestones' },
 ];
 

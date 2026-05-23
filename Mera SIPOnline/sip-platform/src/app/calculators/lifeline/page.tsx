@@ -111,9 +111,9 @@ export default function LifelineCalculatorPage() {
               <Activity className="w-7 h-7 text-accent" />
             </div>
             <div>
-              <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-1">CFP-Style Planner</p>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold">Lifeline Financial Planner</h1>
-              <p className="text-slate-300 mt-1 text-sm sm:text-base">Plan your complete financial lifeline &mdash; add SIPs, lump sums, withdrawals at any year. Like a CFP does.</p>
+              <p className="text-xs font-semibold tracking-widest uppercase text-accent mb-1">Professional-Grade Tool</p>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold">Lifeline Investment Tool</h1>
+              <p className="text-slate-300 mt-1 text-sm sm:text-base">Plan your complete investment lifeline &mdash; add SIPs, lump sums, withdrawals at any year.</p>
             </div>
           </div>
         </div>
@@ -137,7 +137,7 @@ export default function LifelineCalculatorPage() {
               <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 mb-5">
                 <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Base Settings</div>
                 <div className="space-y-4">
-                  <NumberInput label="Starting Corpus" value={startingCorpus} onChange={setStartingCorpus} prefix="₹" step={100000} min={0} max={10000000} hint="Existing investments (optional)" />
+                  <NumberInput label="Starting Corpus" value={startingCorpus} onChange={setStartingCorpus} prefix="₹" step={100000} min={0} max={50000000} hint="Existing investments (optional)" />
                   <NumberInput label="Expected Return Rate" value={returnRate} onChange={setReturnRate} suffix="% p.a." step={0.5} min={1} max={25} />
                   <NumberInput label="Planning Horizon" value={planningHorizon} onChange={setPlanningHorizon} suffix="Years" step={1} min={1} max={60} />
                 </div>
@@ -246,7 +246,7 @@ export default function LifelineCalculatorPage() {
 
                         {/* ── Lump Sum Invest Fields ── */}
                         {ev.type === 'lumpsum_invest' && (
-                          <NumberInput label="Investment Amount" value={ev.amount ?? 500000} onChange={(v) => updateEvent(ev.id, { amount: v })} prefix="₹" step={50000} min={10000} max={10000000} />
+                          <NumberInput label="Investment Amount" value={ev.amount ?? 500000} onChange={(v) => updateEvent(ev.id, { amount: v })} prefix="₹" step={50000} min={10000} max={50000000} />
                         )}
 
                         {/* ── SWP Fields ── */}
@@ -292,7 +292,7 @@ export default function LifelineCalculatorPage() {
 
                         {/* ── Lump Sum Withdraw Fields ── */}
                         {ev.type === 'lumpsum_withdraw' && (
-                          <NumberInput label="Withdrawal Amount" value={ev.amount ?? 500000} onChange={(v) => updateEvent(ev.id, { amount: v })} prefix="₹" step={50000} min={10000} max={10000000} />
+                          <NumberInput label="Withdrawal Amount" value={ev.amount ?? 500000} onChange={(v) => updateEvent(ev.id, { amount: v })} prefix="₹" step={50000} min={10000} max={50000000} />
                         )}
                       </div>
                     );
@@ -377,7 +377,7 @@ export default function LifelineCalculatorPage() {
                   {result.effectiveReturn > 0 && (
                     <div className="text-[10px] text-slate-400 mt-1">CAGR: {result.effectiveReturn}%</div>
                   )}
-                  <DownloadPDFButton elementId="calculator-results" title="Lifeline Financial Planner" fileName="lifeline-planner" />
+                  <DownloadPDFButton elementId="calculator-results" title="Lifeline Investment Tool" fileName="lifeline-tool" />
                 </div>
               </div>
 

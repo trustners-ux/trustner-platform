@@ -1203,34 +1203,48 @@ export function calculateLifeline(
 }
 
 // ── Daily SIP Calculator ─────────────────────────
+//
+// Step-up semantics (clarified May 2026):
+//   • stepUpFrequency 'monthly' (default) → applied at the start of every month after month 1.
+//   • stepUpFrequency 'yearly'           → applied at the start of every year after year 1.
+//   • stepUpType 'amount'                → the increment is added DIRECTLY to the daily SIP value.
+//                                          Eg. ₹5000 daily + ₹500 monthly amount step-up → month 1 ₹5000/d,
+//                                          month 2 ₹5500/d, month 3 ₹6000/d, ...
+//   • stepUpType 'percentage'            → daily SIP multiplied by (1 + stepUp/100) at each boundary.
+//
 export function calculateDailySIP(
   dailyAmount: number,
   annualReturn: number,
   years: number,
   mode: 'calendar' | 'working',
-  annualStepUp = 0,
-  stepUpType: 'percentage' | 'amount' = 'percentage'
+  stepUpValue = 0,
+  stepUpType: 'percentage' | 'amount' = 'percentage',
+  stepUpFrequency: 'monthly' | 'yearly' = 'monthly'
 ): { totalInvested: number; estimatedReturns: number; totalValue: number; daysPerMonth: number; monthlyEquivalent: number } {
   const daysPerMonth = mode === 'calendar' ? 30 : 22;
-  const daysPerYear = mode === 'calendar' ? 365 : 264;
+  const daysPerYear = daysPerMonth * 12;
   const dailyRate = annualReturn / 100 / daysPerYear;
+  const totalMonths = years * 12;
 
   let corpus = 0;
   let currentDaily = dailyAmount;
   let totalInvested = 0;
 
-  for (let y = 1; y <= years; y++) {
-    if (y > 1 && annualStepUp > 0) {
-      if (stepUpType === 'percentage') {
-        currentDaily *= (1 + annualStepUp / 100);
-      } else {
-        currentDaily += annualStepUp / (daysPerMonth * 12);
+  for (let m = 1; m <= totalMonths; m++) {
+    if (m > 1 && stepUpValue > 0) {
+      const isBoundary = stepUpFrequency === 'monthly' || (m - 1) % 12 === 0;
+      if (isBoundary) {
+        if (stepUpType === 'percentage') {
+          currentDaily *= (1 + stepUpValue / 100);
+        } else {
+          currentDaily += stepUpValue;
+        }
       }
     }
-    for (let d = 0; d < daysPerYear; d++) {
+    for (let d = 0; d < daysPerMonth; d++) {
       corpus = (corpus + currentDaily) * (1 + dailyRate);
     }
-    totalInvested += currentDaily * daysPerMonth * 12;
+    totalInvested += currentDaily * daysPerMonth;
   }
 
   return {
@@ -1247,11 +1261,12 @@ export function calculateDailySIPBreakdown(
   annualReturn: number,
   years: number,
   mode: 'calendar' | 'working',
-  annualStepUp = 0,
-  stepUpType: 'percentage' | 'amount' = 'percentage'
+  stepUpValue = 0,
+  stepUpType: 'percentage' | 'amount' = 'percentage',
+  stepUpFrequency: 'monthly' | 'yearly' = 'monthly'
 ): { year: number; invested: number; value: number; returns: number; growthPercent: number; dailyAmount: number }[] {
-  const daysPerYear = mode === 'calendar' ? 365 : 264;
   const daysPerMonth = mode === 'calendar' ? 30 : 22;
+  const daysPerYear = daysPerMonth * 12;
   const dailyRate = annualReturn / 100 / daysPerYear;
   const breakdown: { year: number; invested: number; value: number; returns: number; growthPercent: number; dailyAmount: number }[] = [];
 
@@ -1260,17 +1275,23 @@ export function calculateDailySIPBreakdown(
   let cumulativeInvested = 0;
 
   for (let y = 1; y <= years; y++) {
-    if (y > 1 && annualStepUp > 0) {
-      if (stepUpType === 'percentage') {
-        currentDaily *= (1 + annualStepUp / 100);
-      } else {
-        currentDaily += annualStepUp / (daysPerMonth * 12);
+    for (let mInYear = 1; mInYear <= 12; mInYear++) {
+      const m = (y - 1) * 12 + mInYear;
+      if (m > 1 && stepUpValue > 0) {
+        const isBoundary = stepUpFrequency === 'monthly' || (m - 1) % 12 === 0;
+        if (isBoundary) {
+          if (stepUpType === 'percentage') {
+            currentDaily *= (1 + stepUpValue / 100);
+          } else {
+            currentDaily += stepUpValue;
+          }
+        }
       }
+      for (let d = 0; d < daysPerMonth; d++) {
+        corpus = (corpus + currentDaily) * (1 + dailyRate);
+      }
+      cumulativeInvested += currentDaily * daysPerMonth;
     }
-    for (let d = 0; d < daysPerYear; d++) {
-      corpus = (corpus + currentDaily) * (1 + dailyRate);
-    }
-    cumulativeInvested += currentDaily * daysPerMonth * 12;
     breakdown.push({
       year: y,
       invested: Math.round(cumulativeInvested),
@@ -1387,11 +1408,12 @@ export function calculateDailySIPWithGrowth(
   sipYears: number,
   totalYears: number,
   mode: 'calendar' | 'working',
-  annualStepUp = 0,
-  stepUpType: 'percentage' | 'amount' = 'percentage'
+  stepUpValue = 0,
+  stepUpType: 'percentage' | 'amount' = 'percentage',
+  stepUpFrequency: 'monthly' | 'yearly' = 'monthly'
 ): { result: { totalInvested: number; estimatedReturns: number; totalValue: number; daysPerMonth: number; monthlyEquivalent: number }; breakdown: { year: number; invested: number; value: number; returns: number; growthPercent: number; phase: 'SIP' | 'Growth'; dailyAmount: number }[] } {
-  const daysPerYear = mode === 'calendar' ? 365 : 264;
   const daysPerMonth = mode === 'calendar' ? 30 : 22;
+  const daysPerYear = daysPerMonth * 12;
   const dailyRate = annualReturn / 100 / daysPerYear;
   const breakdown: { year: number; invested: number; value: number; returns: number; growthPercent: number; phase: 'SIP' | 'Growth'; dailyAmount: number }[] = [];
 
@@ -1399,19 +1421,25 @@ export function calculateDailySIPWithGrowth(
   let currentDaily = dailyAmount;
   let totalInvested = 0;
 
-  // Phase 1: Active SIP
+  // Phase 1: Active SIP — month-by-month with step-up boundary applied per stepUpFrequency
   for (let y = 1; y <= sipYears; y++) {
-    if (y > 1 && annualStepUp > 0) {
-      if (stepUpType === 'percentage') {
-        currentDaily *= (1 + annualStepUp / 100);
-      } else {
-        currentDaily += annualStepUp / (daysPerMonth * 12);
+    for (let mInYear = 1; mInYear <= 12; mInYear++) {
+      const m = (y - 1) * 12 + mInYear;
+      if (m > 1 && stepUpValue > 0) {
+        const isBoundary = stepUpFrequency === 'monthly' || (m - 1) % 12 === 0;
+        if (isBoundary) {
+          if (stepUpType === 'percentage') {
+            currentDaily *= (1 + stepUpValue / 100);
+          } else {
+            currentDaily += stepUpValue;
+          }
+        }
       }
+      for (let d = 0; d < daysPerMonth; d++) {
+        corpus = (corpus + currentDaily) * (1 + dailyRate);
+      }
+      totalInvested += currentDaily * daysPerMonth;
     }
-    for (let d = 0; d < daysPerYear; d++) {
-      corpus = (corpus + currentDaily) * (1 + dailyRate);
-    }
-    totalInvested += currentDaily * daysPerMonth * 12;
     breakdown.push({
       year: y, invested: Math.round(totalInvested), value: Math.round(corpus),
       returns: Math.round(corpus - totalInvested),
@@ -1642,3 +1670,128 @@ export function calculateTermPlanSIP(
     verdict,
   };
 }
+
+// ── SWP + SIP Combo Calculator (Lumpsum in BAF → SWP withdrawn monthly → SIP into Aggressive fund) ──
+//
+// The Trustner-popular strategy: park lumpsum in a Balanced Advantage Fund, set up an SWP at a chosen
+// annual rate (typically 7-10%) that withdraws monthly from BAF, and route those SWP receipts as a
+// monthly SIP into an aggressive fund (typically Small Cap or Mid Cap). Lumpsum stays roughly stable
+// (or grows) because BAF return ≥ SWP rate over the long run; SIP corpus compounds independently.
+// Net effect: 'safety bhi, return bhi'.
+//
+// SWP basis options:
+//   'fixed'           → monthly SWP = (annualSwpRate / 12) × initialLumpsum (stays constant in ₹)
+//   'current'         → monthly SWP = (annualSwpRate / 12) × current BAF balance (grows/shrinks with corpus)
+//
+// All compounding is monthly. SWP is withdrawn at start of month; BAF growth applied to remaining balance;
+// SIP installment is invested at start of next month into the aggressive fund.
+
+export interface SwpSipComboYearRow {
+  year: number;
+  bafOpening: number;
+  swpWithdrawn: number;       // total SWP withdrawn during the year
+  bafGrowth: number;          // growth in BAF during the year (after SWP)
+  bafClosing: number;
+  sipInvested: number;        // total invested into aggressive fund during the year (= swpWithdrawn)
+  sipClosing: number;         // closing value of aggressive sleeve
+  sipGrowth: number;          // growth in aggressive sleeve during the year
+  totalWealth: number;        // bafClosing + sipClosing
+  monthlySwp: number;         // representative monthly SWP for the year (last month, for display)
+}
+
+export interface SwpSipComboResult {
+  yearlyData: SwpSipComboYearRow[];
+  initialLumpsum: number;
+  finalBafValue: number;
+  finalSipValue: number;
+  totalWealth: number;
+  totalSwpWithdrawn: number;  // = totalSipInvested
+  bafBalanceMultiplier: number;   // finalBafValue / initialLumpsum
+  totalWealthMultiplier: number;  // totalWealth / initialLumpsum
+  effectiveCAGR: number;          // CAGR on totalWealth vs initialLumpsum
+}
+
+export function calculateSwpSipCombo(
+  initialLumpsum: number,
+  bafReturn: number,         // annual %, e.g. 11
+  annualSwpRate: number,     // annual %, e.g. 9
+  sipReturn: number,         // annual %, e.g. 14
+  years: number,
+  swpBasis: 'fixed' | 'current' = 'fixed'
+): SwpSipComboResult {
+  const monthlyBafRate = bafReturn / 100 / 12;
+  const monthlySipRate = sipReturn / 100 / 12;
+  const monthlySwpRateFraction = annualSwpRate / 100 / 12;
+
+  let baf = initialLumpsum;
+  let sip = 0;
+  let totalSwpWithdrawn = 0;
+  const yearlyData: SwpSipComboYearRow[] = [];
+
+  for (let y = 1; y <= years; y++) {
+    const bafOpening = baf;
+    const sipOpening = sip;
+    let yearSwp = 0;
+    let lastMonthlySwp = 0;
+    for (let m = 0; m < 12; m++) {
+      // Compute monthly SWP
+      let monthlySwp =
+        swpBasis === 'fixed'
+          ? initialLumpsum * monthlySwpRateFraction
+          : baf * monthlySwpRateFraction;
+      // Cannot withdraw more than BAF balance
+      if (monthlySwp > baf) monthlySwp = Math.max(0, baf);
+      lastMonthlySwp = monthlySwp;
+
+      // Withdraw from BAF
+      baf = baf - monthlySwp;
+      // BAF grows on remaining balance
+      baf = baf * (1 + monthlyBafRate);
+
+      // Invest withdrawn amount into SIP at start of period; compound for this month
+      sip = (sip + monthlySwp) * (1 + monthlySipRate);
+
+      yearSwp += monthlySwp;
+      totalSwpWithdrawn += monthlySwp;
+    }
+    const bafClosing = baf;
+    const sipClosing = sip;
+    yearlyData.push({
+      year: y,
+      bafOpening: Math.round(bafOpening),
+      swpWithdrawn: Math.round(yearSwp),
+      bafGrowth: Math.round(bafClosing - bafOpening + yearSwp),
+      bafClosing: Math.round(bafClosing),
+      sipInvested: Math.round(yearSwp),
+      sipClosing: Math.round(sipClosing),
+      sipGrowth: Math.round(sipClosing - sipOpening - yearSwp),
+      totalWealth: Math.round(bafClosing + sipClosing),
+      monthlySwp: Math.round(lastMonthlySwp),
+    });
+  }
+
+  const finalBafValue = Math.round(baf);
+  const finalSipValue = Math.round(sip);
+  const totalWealth = finalBafValue + finalSipValue;
+  const bafBalanceMultiplier =
+    initialLumpsum > 0 ? finalBafValue / initialLumpsum : 0;
+  const totalWealthMultiplier =
+    initialLumpsum > 0 ? totalWealth / initialLumpsum : 0;
+  const effectiveCAGR =
+    initialLumpsum > 0 && totalWealth > 0 && years > 0
+      ? (Math.pow(totalWealth / initialLumpsum, 1 / years) - 1) * 100
+      : 0;
+
+  return {
+    yearlyData,
+    initialLumpsum: Math.round(initialLumpsum),
+    finalBafValue,
+    finalSipValue,
+    totalWealth,
+    totalSwpWithdrawn: Math.round(totalSwpWithdrawn),
+    bafBalanceMultiplier: Math.round(bafBalanceMultiplier * 100) / 100,
+    totalWealthMultiplier: Math.round(totalWealthMultiplier * 100) / 100,
+    effectiveCAGR: Math.round(effectiveCAGR * 10) / 10,
+  };
+}
+
