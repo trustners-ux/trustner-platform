@@ -76,8 +76,10 @@ export async function POST(request: NextRequest) {
           family_code: familyCode,
           family_name: body.family.familyName,
           primary_contact_name: body.family.primaryContactName,
-          primary_contact_email: body.family.primaryContactEmail,
-          primary_contact_mobile: body.family.primaryContactMobile,
+          // Either email or mobile is required (not both). Pass null when blank
+          // so the column stores NULL instead of an empty string.
+          primary_contact_email: body.family.primaryContactEmail?.trim() || null,
+          primary_contact_mobile: body.family.primaryContactMobile?.trim() || null,
           primary_contact_pan_encrypted: body.family.primaryContactPan, // TODO: encrypt before storage
           segment: body.family.segment,
           notes: body.family.notes,

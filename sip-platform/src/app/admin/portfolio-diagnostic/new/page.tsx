@@ -202,13 +202,28 @@ export default function NewDiagnosticPage() {
   }
 
   // ── Validation ─────────────────────────────────────────────
+  // Email is OPTIONAL — many real clients don't have an email on file.
+  // Phone is sufficient as a contact identifier.
   const isFamilyValid = Boolean(
     family.familyName.trim() &&
       family.primaryContactName.trim() &&
-      family.primaryContactEmail.trim()
+      (family.primaryContactEmail.trim() || family.primaryContactMobile?.trim())
   );
+  // SIPs are OPTIONAL — clients with only lump-sum investments are common.
+  // The diagnostic just needs SOMETHING (holdings OR sips).
   const hasData = holdings.length > 0 || sips.length > 0;
   const canSubmit = isFamilyValid && hasData;
+
+  // Specific blocker reason (for UI hint)
+  const blockerReason: string | null = !family.familyName.trim()
+    ? 'Family name required (Tab 1)'
+    : !family.primaryContactName.trim()
+    ? 'Primary contact name required (Tab 1)'
+    : !family.primaryContactEmail.trim() && !family.primaryContactMobile?.trim()
+    ? 'Either email or mobile required for primary contact (Tab 1)'
+    : !hasData
+    ? 'Add at least one holding (Tab 2) — SIPs are optional'
+    : null;
 
   return (
     <div className="space-y-6">
@@ -230,11 +245,12 @@ export default function NewDiagnosticPage() {
             Step through the 3 tabs below. Auto-saves locally every 30s.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col items-end gap-1">
           <button
             onClick={handleSaveDraft}
             disabled={!canSubmit || saving}
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
+            title={blockerReason ?? 'Save the diagnostic draft'}
           >
             {saving ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -243,6 +259,11 @@ export default function NewDiagnosticPage() {
             )}
             Save Draft
           </button>
+          {blockerReason && (
+            <p className="text-xs text-amber-600 max-w-[280px] text-right">
+              {blockerReason}
+            </p>
+          )}
         </div>
       </div>
 
@@ -479,22 +500,22 @@ function FamilyTab({ family, onChange, onNext }: FamilyTabProps) {
             />
           </FormField>
 
-          <FormField label="Email *" required>
+          <FormField label="Email" hint="Either email or mobile is required">
             <input
               type="email"
               value={family.primaryContactEmail}
               onChange={(e) => onChange({ ...family, primaryContactEmail: e.target.value })}
-              placeholder="rohit@example.com"
+              placeholder="rohit@example.com (optional if mobile filled)"
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
             />
           </FormField>
 
-          <FormField label="Mobile *" required>
+          <FormField label="Mobile" hint="Either email or mobile is required">
             <input
               type="tel"
               value={family.primaryContactMobile}
               onChange={(e) => onChange({ ...family, primaryContactMobile: e.target.value })}
-              placeholder="+91 9876543210"
+              placeholder="+91 9876543210 (optional if email filled)"
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
             />
           </FormField>
@@ -529,10 +550,12 @@ function FamilyTab({ family, onChange, onNext }: FamilyTabProps) {
 function FormField({
   label,
   required,
+  hint,
   children,
 }: {
   label: string;
   required?: boolean;
+  hint?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -542,6 +565,9 @@ function FormField({
         {required && <span className="text-rose-500 ml-0.5">*</span>}
       </span>
       {children}
+      {hint && (
+        <span className="text-[10px] text-slate-500 mt-1 block">{hint}</span>
+      )}
     </label>
   );
 }
@@ -862,6 +888,16 @@ function SipsTab({ sips, onChange }: SipsTabProps) {
 
   return (
     <div className="space-y-4">
+      {/* Optional notice */}
+      <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 flex items-start gap-2">
+        <span className="font-bold text-emerald-900">Optional:</span>
+        <span>
+          SIPs are not required to save the diagnostic. Skip this tab if the
+          client has only lump-sum holdings — click <strong>Save Draft</strong>{' '}
+          at the top right to proceed.
+        </span>
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold text-slate-900">Active SIPs</h3>
