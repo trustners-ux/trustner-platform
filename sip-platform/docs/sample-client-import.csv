@@ -1,0 +1,4 @@
+Family Name,Primary Contact Name,Mobile,Email,PAN,Segment,Family Code,Notes
+Test Family A,Test Contact A,9999999991,testa@example.com,,Mass,TST-001,Sample import row 1
+Test Family B,Test Contact B,9999999992,testb@example.com,,Retail,TST-002,Sample import row 2
+Test Family C,Test Contact C,9999999993,testc@example.com,,HNI,TST-003,Sample import row 3
