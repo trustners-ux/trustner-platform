@@ -33,6 +33,8 @@ import {
   Star,
   FileText,
   ClipboardCheck,
+  FileSpreadsheet,
+  Presentation,
 } from 'lucide-react';
 import type {
   Verdict,
@@ -344,31 +346,67 @@ export default function ReviewPage() {
           </div>
         </div>
 
-        {/* Client-facing report downloads — available after the diagnostic has scored holdings */}
+        {/* Client-facing deliverables — six formats covering every meeting context */}
         {diagnostic.holdings.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-slate-200 flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-semibold text-slate-600 mr-2">CLIENT REPORTS:</span>
-            <a
-              href={`/api/admin/portfolio-diagnostic/${id}/report?type=full`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-800"
-            >
-              <FileText className="h-3.5 w-3.5" />
-              Full Portfolio Review (PDF)
-            </a>
-            <a
-              href={`/api/admin/portfolio-diagnostic/${id}/report?type=action`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-800"
-            >
-              <ClipboardCheck className="h-3.5 w-3.5" />
-              Action Sheet (PDF)
-            </a>
-            <span className="text-xs text-slate-500 ml-2">
-              Opens print view → Cmd+P → Save as PDF
-            </span>
+          <div className="mt-4 pt-4 border-t border-slate-200">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-slate-600">CLIENT DELIVERABLES (6 formats):</span>
+              <span className="text-xs text-slate-500">
+                HTML opens print view → Cmd+P → Save as PDF · XLSX / PPTX download directly
+              </span>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              <a
+                href={`/api/admin/portfolio-diagnostic/${id}/report?type=one-pager`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-teal-700 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-800"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                One-Pager Snapshot
+              </a>
+              <a
+                href={`/api/admin/portfolio-diagnostic/${id}/report?type=full`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary-700 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-800"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                Full Portfolio Review (2-page)
+              </a>
+              <a
+                href={`/api/admin/portfolio-diagnostic/${id}/report?type=three-pager`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-teal-900 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-950"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                Three-Pager Report
+              </a>
+              <a
+                href={`/api/admin/portfolio-diagnostic/${id}/report?type=action`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-amber-700 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-800"
+              >
+                <ClipboardCheck className="h-3.5 w-3.5" />
+                Action Sheet
+              </a>
+              <a
+                href={`/api/admin/portfolio-diagnostic/${id}/report?type=xlsx`}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800"
+              >
+                <FileSpreadsheet className="h-3.5 w-3.5" />
+                Wealth Math Tracker (.xlsx)
+              </a>
+              <a
+                href={`/api/admin/portfolio-diagnostic/${id}/report?type=pptx`}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-orange-700 px-3 py-2 text-xs font-semibold text-white hover:bg-orange-800"
+              >
+                <Presentation className="h-3.5 w-3.5" />
+                Family Meeting Deck (.pptx)
+              </a>
+            </div>
           </div>
         )}
 

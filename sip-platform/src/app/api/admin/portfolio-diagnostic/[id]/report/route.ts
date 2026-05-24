@@ -1,14 +1,16 @@
 /**
  * Portfolio Diagnostic — Client-Facing Reports
  *
- * GET /api/admin/portfolio-diagnostic/[id]/report?type=full|action
+ * GET /api/admin/portfolio-diagnostic/[id]/report
+ *   ?type=full       → Full Portfolio Review (2-page HTML)
+ *   ?type=action     → Action Sheet (HTML)
+ *   ?type=one-pager  → One-Pager Snapshot (1-page HTML)
+ *   ?type=three-pager→ Three-Page Diagnostic Report (HTML)
+ *   ?type=xlsx       → Wealth Math Tracker (.xlsx download)
+ *   ?type=pptx       → Family Meeting Deck (.pptx download)
  *
- * Returns a fully-styled, print-ready HTML document for the requested
- * report type. The user opens this in a new tab and uses the browser's
- * Print → Save as PDF dialog to produce the final PDF.
- *
- * This is the same workflow that produced the Rohit Jain Family
- * reference reports — server-rendered HTML + browser PDF.
+ * HTML formats are print-ready (Cmd+P → Save as PDF in browser).
+ * XLSX/PPTX formats return native files for direct download.
  *
  * @owner Trustner Asset Services Pvt. Ltd. | ARN-286886
  */
@@ -20,6 +22,17 @@ import { verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 import { loadReportData } from '@/lib/portfolio-diagnostic/report-data';
 import { renderFullPortfolioReviewHtml } from '@/lib/portfolio-diagnostic/reports/full-portfolio-review';
 import { renderActionSheetHtml } from '@/lib/portfolio-diagnostic/reports/action-sheet';
+import { renderOnePagerHtml } from '@/lib/portfolio-diagnostic/reports/one-pager';
+import { renderThreePagerHtml } from '@/lib/portfolio-diagnostic/reports/three-pager';
+import { buildWealthTrackerXlsx } from '@/lib/portfolio-diagnostic/reports/xlsx-tracker';
+import { buildFamilyMeetingDeckPptx } from '@/lib/portfolio-diagnostic/reports/pptx-deck';
+
+// XLSX and PPTX generation can be CPU-heavy; allow up to 60s
+export const maxDuration = 60;
+
+type ReportType = 'full' | 'action' | 'one-pager' | 'three-pager' | 'xlsx' | 'pptx';
+
+const VALID_TYPES: ReportType[] = ['full', 'action', 'one-pager', 'three-pager', 'xlsx', 'pptx'];
 
 export async function GET(
   req: NextRequest,
@@ -37,10 +50,10 @@ export async function GET(
   }
 
   const url = new URL(req.url);
-  const type = (url.searchParams.get('type') ?? 'full').toLowerCase();
-  if (type !== 'full' && type !== 'action') {
+  const type = (url.searchParams.get('type') ?? 'full').toLowerCase() as ReportType;
+  if (!VALID_TYPES.includes(type)) {
     return NextResponse.json(
-      { error: `Unknown report type: ${type}. Use ?type=full or ?type=action.` },
+      { error: `Unknown report type: ${type}. Use ?type=full|action|one-pager|three-pager|xlsx|pptx.` },
       { status: 400 }
     );
   }
@@ -53,19 +66,52 @@ export async function GET(
     );
   }
 
-  const html =
-    type === 'action'
-      ? renderActionSheetHtml(data, { showPrintBar: true })
-      : renderFullPortfolioReviewHtml(data, { showPrintBar: true });
+  // ── HTML formats ──
+  if (type === 'full' || type === 'action' || type === 'one-pager' || type === 'three-pager') {
+    let html: string;
+    if (type === 'full') html = renderFullPortfolioReviewHtml(data, { showPrintBar: true });
+    else if (type === 'action') html = renderActionSheetHtml(data, { showPrintBar: true });
+    else if (type === 'one-pager') html = renderOnePagerHtml(data, { showPrintBar: true });
+    else html = renderThreePagerHtml(data, { showPrintBar: true });
 
-  return new NextResponse(html, {
-    status: 200,
-    headers: {
-      'Content-Type': 'text/html; charset=utf-8',
-      // Always re-render — diagnostics may be re-scored
-      'Cache-Control': 'no-store, max-age=0',
-    },
-  });
+    return new NextResponse(html, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-store, max-age=0',
+      },
+    });
+  }
+
+  // ── XLSX format ──
+  if (type === 'xlsx') {
+    const buf = await buildWealthTrackerXlsx(data);
+    const filename = `${data.familyName.replace(/[^\w\-]+/g, '_')}_Wealth_Tracker_${data.reportDateIso}.xlsx`;
+    return new NextResponse(new Uint8Array(buf), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Cache-Control': 'no-store, max-age=0',
+      },
+    });
+  }
+
+  // ── PPTX format ──
+  if (type === 'pptx') {
+    const buf = await buildFamilyMeetingDeckPptx(data);
+    const filename = `${data.familyName.replace(/[^\w\-]+/g, '_')}_Meeting_Deck_${data.reportDateIso}.pptx`;
+    return new NextResponse(new Uint8Array(buf), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Cache-Control': 'no-store, max-age=0',
+      },
+    });
+  }
+
+  return NextResponse.json({ error: 'Unhandled type' }, { status: 500 });
 }
 
 async function resolveEmployeeEmail(): Promise<string | null> {
