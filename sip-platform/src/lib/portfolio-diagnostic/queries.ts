@@ -29,7 +29,8 @@ export interface DashboardCounts {
 }
 
 export async function getDashboardCounts(
-  employeeId: number
+  employeeId: number,
+  opts?: { showAllTeam?: boolean }
 ): Promise<DashboardCounts> {
   const supabase = getSupabaseAdmin();
   if (!supabase) {
@@ -46,13 +47,17 @@ export async function getDashboardCounts(
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
 
+  // My drafts — for principals (showAllTeam=true), count ALL team drafts
+  let draftsQuery = supabase
+    .from('pd_diagnostic_runs')
+    .select('id', { count: 'exact', head: true })
+    .in('status', ['DRAFT', 'CHANGES_REQUESTED']);
+  if (!opts?.showAllTeam) {
+    draftsQuery = draftsQuery.eq('uploaded_by_employee_id', employeeId);
+  }
+
   const [drafts, awaiting, approved, published, total] = await Promise.all([
-    // My drafts
-    supabase
-      .from('pd_diagnostic_runs')
-      .select('id', { count: 'exact', head: true })
-      .eq('uploaded_by_employee_id', employeeId)
-      .in('status', ['DRAFT', 'CHANGES_REQUESTED']),
+    draftsQuery,
 
     // Awaiting my review
     supabase
@@ -133,16 +138,25 @@ const DIAGNOSTIC_SELECT_COLS = `
 
 export async function getMyDrafts(
   employeeId: number,
-  limit = 20
+  limit = 20,
+  opts?: { showAllTeam?: boolean }
 ): Promise<DiagnosticListItem[]> {
   const supabase = getSupabaseAdmin();
   if (!supabase) return [];
 
-  const { data, error } = await supabase
+  // For firm principals (Ram + Sangeeta), showAllTeam=true returns ALL
+  // team drafts regardless of who uploaded them. This prevents the
+  // "Sangeeta saved a draft but Ram can't see it" gap when both
+  // act on the same portfolios.
+  let query = supabase
     .from('pd_diagnostic_runs')
     .select(DIAGNOSTIC_SELECT_COLS)
-    .eq('uploaded_by_employee_id', employeeId)
-    .in('status', ['DRAFT', 'CHANGES_REQUESTED'])
+    .in('status', ['DRAFT', 'CHANGES_REQUESTED']);
+  if (!opts?.showAllTeam) {
+    query = query.eq('uploaded_by_employee_id', employeeId);
+  }
+
+  const { data, error } = await query
     .order('updated_at', { ascending: false, nullsFirst: false })
     .limit(limit);
 

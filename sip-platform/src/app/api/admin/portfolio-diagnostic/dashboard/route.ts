@@ -107,9 +107,15 @@ export async function GET() {
   }
 
   // ── Load queues in parallel ─────────────────────────────────
+  // Principals (Ram + Sangeeta) see ALL team drafts in their "My Drafts"
+  // section — this prevents the "Sangeeta uploaded a draft but Ram
+  // doesn't see it" gap when both work on the same family portfolios.
+  const showAllTeamDrafts = approver;
   const [counts, myDrafts, awaiting, approvedPending, recent] = await Promise.all([
-    getDashboardCounts(employeeId),
-    employee.role.canEditDraft ? getMyDrafts(employeeId) : Promise.resolve([]),
+    getDashboardCounts(employeeId, { showAllTeam: showAllTeamDrafts }),
+    employee.role.canEditDraft
+      ? getMyDrafts(employeeId, 20, { showAllTeam: showAllTeamDrafts })
+      : Promise.resolve([]),
     employee.role.canReview ? getAwaitingMyReview(employeeId) : Promise.resolve([]),
     employee.role.canPublish ? getMyApprovedAwaitingPublish(employeeId) : Promise.resolve([]),
     getRecentlyPublished(20),
