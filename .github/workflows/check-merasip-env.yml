@@ -1,0 +1,52 @@
+name: Check merasip env vars
+
+# Runs on every push to main + can be triggered manually.
+# Pulls the merasip production env list from Vercel and confirms all
+# critical vars are set (and not malformed). Fails the build if any
+# critical var is missing.
+#
+# REQUIRED secret: VERCEL_TOKEN — a Vercel personal access token
+# scoped to the merasip project. Without it the workflow gracefully
+# skips so a fresh fork does not break.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'sip-platform/src/lib/config/required-env.ts'
+      - 'sip-platform/scripts/check-prod-env.sh'
+      - 'sip-platform/src/app/api/admin/portfolio-diagnostic/**'
+      - '.github/workflows/check-merasip-env.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '17 4 * * 1'
+
+jobs:
+  check-env:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Skip if no Vercel token configured
+        if: ${{ env.VERCEL_TOKEN == '' }}
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          echo "::warning::VERCEL_TOKEN secret not configured — skipping env check."
+          exit 0
+
+      - name: Run check-prod-env.sh against merasip
+        if: ${{ env.VERCEL_TOKEN != '' }}
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        working-directory: sip-platform
+        run: |
+          chmod +x scripts/check-prod-env.sh
+          ./scripts/check-prod-env.sh merasip
+
