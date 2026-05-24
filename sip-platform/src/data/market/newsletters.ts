@@ -21,6 +21,25 @@ export interface NewsletterIssue {
 
 export const newsletters: NewsletterIssue[] = [
   {
+    id: 'week-2026-05-23',
+    issueNumber: 12,
+    volume: 1,
+    title: 'Rupee Hits Lifetime Low ₹96.90 Before RBI Burns $8 Bn — Nifty Holds Flat at 23,719, Bank Nifty -2.9%',
+    weekRange: 'May 17 - May 23, 2026',
+    publishDate: '2026-05-24',
+    summary:
+      'Indian equities ended a tumultuous week broadly flat on the headline but with rupee fireworks underneath. Nifty 50 closed at 23,719.30 (+0.32% WoW from 23,643.50) and Sensex at 75,415.35 (+0.24% WoW from 75,238). The defining story was the rupee: on Tuesday May 20 it broke to a fresh all-time low of ₹96.90/USD, prompting heavy RBI dollar selling that drained $8 billion from forex reserves but pulled the currency back to ₹95.59 by Friday close. Brent crude remained elevated at $103.94/bbl (+1.33% on Friday), keeping the imported-inflation channel hot. Bank Nifty was the week\'s weakest segment at 53,710 (-2.89% WoW) even though private banks rallied Friday. FIIs sold ₹4,440 Cr in cash on Friday alone, taking YTD outflows to ₹1.92 lakh crore (already > full 2025); DIIs absorbed with ₹6,003 Cr Friday buying, pushing YTD inflows to ₹1.7 lakh crore. Tech Mahindra (+4.85% on May 18), Infosys, Bharti Airtel, Trent, and Wipro led; Tata Steel (-3.15%), Power Grid (-2.93%), NTPC (-2.62%), SBI (-2.53%) lagged. Sectoral: Energy (+1.48%) and metals led Friday; Media (-1.45%) and FMCG (-0.71%) lagged.',
+    pdfPath: '/newsletters/Trustner-Weekly-Market-Brief-May-23-2026.pdf',
+    fileSize: '297 KB',
+    highlights: [
+      'Nifty 23,719.30 (+0.32% WoW) · Sensex 75,415.35 (+0.24%) — flat on top, turbulent underneath',
+      'Rupee fireworks: All-time low ₹96.90 on Tuesday → RBI burned $8 bn forex → bounced to ₹95.59 Friday',
+      'Bank Nifty -2.89% WoW to 53,710 — worst-performing major segment despite Friday rally in private banks',
+      'FII YTD outflow ₹1.92 lakh Cr (now > full 2025) · DII YTD inflow ₹1.7 lakh Cr absorbing ~90% via SIPs',
+    ],
+    featured: true,
+  },
+  {
     id: 'week-2026-05-16',
     issueNumber: 11,
     volume: 1,
@@ -37,7 +56,6 @@ export const newsletters: NewsletterIssue[] = [
       'Brent surges to ~$109/bbl · Rupee at lifetime low ~₹95.7 · Trump: Iran ceasefire "on life support"',
       'FII YTD outflow ₹1.92 lakh crore (eclipses full 2025) · DII YTD inflow ₹1.7 lakh crore absorbing ~90%',
     ],
-    featured: true,
   },
   {
     id: 'week-2026-05-09',

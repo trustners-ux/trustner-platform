@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trustner Group - Comprehensive Incentive & Performance Management Framework</title>
+<style>
+  :root {
+    --primary: #1a365d;
+    --secondary: #2b6cb0;
+    --accent: #38a169;
+    --warning: #d69e2e;
+    --danger: #e53e3e;
+    --bg: #f7fafc;
+    --card: #ffffff;
+    --text: #2d3748;
+    --muted: #718096;
+    --border: #e2e8f0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+  .header { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 30px 40px; text-align: center; }
+  .header h1 { font-size: 28px; margin-bottom: 5px; }
+  .header p { opacity: 0.9; font-size: 14px; }
+  .confidential { background: var(--danger); color: white; text-align: center; padding: 6px; font-size: 12px; font-weight: bold; letter-spacing: 1px; }
+  .nav { background: var(--primary); display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; padding: 4px; position: sticky; top: 0; z-index: 100; }
+  .nav button { background: transparent; color: rgba(255,255,255,0.8); border: none; padding: 10px 16px; cursor: pointer; font-size: 13px; border-radius: 4px; transition: all 0.2s; }
+  .nav button:hover, .nav button.active { background: rgba(255,255,255,0.2); color: white; }
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+  .section { display: none; }
+  .section.active { display: block; }
+  .card { background: var(--card); border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 24px; margin-bottom: 20px; border: 1px solid var(--border); }
+  .card h2 { color: var(--primary); margin-bottom: 16px; font-size: 20px; border-bottom: 2px solid var(--secondary); padding-bottom: 8px; }
+  .card h3 { color: var(--secondary); margin: 16px 0 10px; font-size: 16px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+  th { background: var(--primary); color: white; padding: 10px 12px; text-align: left; font-weight: 600; }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  tr:nth-child(even) { background: #f8fafc; }
+  tr:hover { background: #edf2f7; }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 13px; color: var(--primary); }
+  .form-group input, .form-group select { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; }
+  .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+  .btn { padding: 10px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s; }
+  .btn-primary { background: var(--secondary); color: white; }
+  .btn-primary:hover { background: var(--primary); }
+  .btn-success { background: var(--accent); color: white; }
+  .btn-success:hover { background: #2f855a; }
+  .btn-danger { background: var(--danger); color: white; }
+  .result-box { background: linear-gradient(135deg, #ebf8ff, #e6fffa); border: 2px solid var(--secondary); border-radius: 10px; padding: 20px; margin: 16px 0; }
+  .result-box h3 { color: var(--primary); margin-bottom: 12px; }
+  .metric { display: inline-block; background: var(--primary); color: white; padding: 8px 16px; border-radius: 20px; margin: 4px; font-size: 13px; }
+  .metric.green { background: var(--accent); }
+  .metric.yellow { background: var(--warning); color: var(--text); }
+  .metric.red { background: var(--danger); }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .highlight { background: #fffbeb; border-left: 4px solid var(--warning); padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; font-size: 13px; }
+  .success-highlight { background: #f0fff4; border-left: 4px solid var(--accent); padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; }
+  .danger-highlight { background: #fff5f5; border-left: 4px solid var(--danger); padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; }
+  .tag { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .tag-green { background: #c6f6d5; color: #22543d; }
+  .tag-yellow { background: #fefcbf; color: #744210; }
+  .tag-red { background: #fed7d7; color: #742a2a; }
+  .tag-blue { background: #bee3f8; color: #2a4365; }
+  .progress-bar { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-top: 4px; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+  .tabs { display: flex; gap: 2px; margin-bottom: 16px; background: #edf2f7; border-radius: 8px; padding: 4px; }
+  .tabs button { flex: 1; padding: 8px; border: none; background: transparent; cursor: pointer; border-radius: 6px; font-size: 13px; font-weight: 500; }
+  .tabs button.active { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); color: var(--primary); }
+  .badge { position: relative; }
+  .badge::after { content: attr(data-badge); position: absolute; top: -8px; right: -8px; background: var(--danger); color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; }
+  @media (max-width: 768px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    .nav { flex-direction: column; }
+  }
+  .print-only { display: none; }
+  @media print {
+    .nav, .btn, .no-print { display: none !important; }
+    .section { display: block !important; page-break-before: always; }
+    .print-only { display: block; }
+    .confidential { position: fixed; top: 0; width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="confidential">CONFIDENTIAL - TRUSTNER GROUP - FOR INTERNAL USE ONLY - AUTHORIZED PERSONNEL: RAM SHAH & SANGITA SHAH</div>
+
+<div class="header">
+  <h1>TRUSTNER GROUP</h1>
+  <p>Comprehensive Incentive, Compensation & Performance Management Framework</p>
+  <p style="font-size:12px; margin-top:8px;">TIB (Trustner Insurance Brokers) | TAS (Trustner Asset Services) | FY 2026-27</p>
+</div>
+
+<div class="nav">
+  <button class="active" onclick="showSection('overview')">Overview & Philosophy</button>
+  <button onclick="showSection('hierarchy')">Hierarchy & Roles</button>
+  <button onclick="showSection('sales-incentive')">Sales Incentive Calculator</button>
+  <button onclick="showSection('trail')">Trail Income Model</button>
+  <button onclick="showSection('profit-center')">Profit Center</button>
+  <button onclick="showSection('support')">Support & Ops Bonus</button>
+  <button onclick="showSection('hiring-roi')">Hiring ROI</button>
+  <button onclick="showSection('promotion')">Promotion & Career</button>
+  <button onclick="showSection('dashboard')">Performance Dashboard</button>
+  <button onclick="showSection('admin')">Admin Controls</button>
+</div>
+
+<div class="container">
+
+<!-- ==================== SECTION 1: OVERVIEW ==================== -->
+<div id="overview" class="section active">
+  <div class="card">
+    <h2>Incentive Design Philosophy</h2>
+    <p>This framework is designed following best practices from global Fortune 500 financial services firms including HDFC Group, ICICI Group, Bajaj Finserv, AIA Group, Prudential Financial, and Charles Schwab. The model is built for a company preparing for public listing and ensures transparency, meritocracy, and shareholder accountability.</p>
+
+    <div class="grid-3" style="margin-top:20px;">
+      <div style="text-align:center; padding:20px; background:#ebf8ff; border-radius:8px;">
+        <div style="font-size:32px; font-weight:bold; color:var(--secondary);">Meritocratic</div>
+        <p style="font-size:13px; margin-top:8px;">Top performers earn 3-5x more in variable pay. Non-performers face structured consequences.</p>
+      </div>
+      <div style="text-align:center; padding:20px; background:#f0fff4; border-radius:8px;">
+        <div style="font-size:32px; font-weight:bold; color:var(--accent);">Profitable</div>
+        <p style="font-size:13px; margin-top:8px;">Every incentive payout is tied to actual revenue. No payout without profit contribution.</p>
+      </div>
+      <div style="text-align:center; padding:20px; background:#fffbeb; border-radius:8px;">
+        <div style="font-size:32px; font-weight:bold; color:var(--warning);">Transparent</div>
+        <p style="font-size:13px; margin-top:8px;">Every employee knows their earning potential from Day 1. System-driven, no manual overrides.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Key Principles (Global Best Practices Applied)</h2>
+    <table>
+      <tr><th style="width:30%">Principle</th><th>Description</th><th style="width:25%">Benchmark Reference</th></tr>
+      <tr><td><strong>Cost-to-Revenue Ratio</strong></td><td>Total employee cost (fixed + variable) must not exceed 35-40% of gross revenue for sales roles and 15-20% for support roles. This is the golden ratio used by profitable financial distribution firms globally.</td><td>HDFC Life, Bajaj Finserv, AIA Group</td></tr>
+      <tr><td><strong>Threshold-Based Payout</strong></td><td>Incentives kick in only after achieving minimum 80% of target. Below 80% = zero incentive. This eliminates "participation trophy" culture.</td><td>Prudential, MetLife, Charles Schwab</td></tr>
+      <tr><td><strong>Accelerator Slabs</strong></td><td>101-110% = 1x multiplier, 111-130% = 1.15x, 131-150% = 1.25x, 150%+ = 1.5x. Super-performers get disproportionately rewarded.</td><td>Tata AIA (your reference), ICICI Prudential</td></tr>
+      <tr><td><strong>Trail Income = Incremental Only</strong></td><td>Trail sharing only on new/incremental business post assignment. No trail on legacy/inherited book unless fresh business is generated.</td><td>Industry standard - NJ Wealth, IIFL Wealth</td></tr>
+      <tr><td><strong>Profit Center Accountability</strong></td><td>Senior managers are evaluated as profit centers. Their incentive = f(vertical profit after ALL costs including attrition cost).</td><td>Goldman Sachs, JP Morgan Wealth Mgmt</td></tr>
+      <tr><td><strong>Hiring Cost Attribution</strong></td><td>Cost of hires who leave within 6 months is attributed to the hiring manager's P&L. This discourages reckless hiring.</td><td>McKinsey, Deloitte Financial Advisory</td></tr>
+      <tr><td><strong>System-Driven Calculation</strong></td><td>All incentive calculations are automatic. Only Super Admin (Ram Shah, Sangita Shah) can override. Deviation requires written approval from Directors.</td><td>Listed company compliance requirement</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Compensation Structure Overview</h2>
+    <table>
+      <tr><th>Component</th><th>Description</th><th>% of Total Comp</th><th>Frequency</th></tr>
+      <tr><td>Fixed Salary (CTC)</td><td>Basic + HRA + Allowances + PF + ESI</td><td>60-70% (junior), 40-50% (senior)</td><td>Monthly</td></tr>
+      <tr><td>Performance Incentive</td><td>Target-linked variable pay on new business</td><td>20-40%</td><td>Quarterly</td></tr>
+      <tr><td>Trail Income Share</td><td>Share of renewal/trail commissions on incremental AUM/premium</td><td>5-15%</td><td>Monthly/Quarterly</td></tr>
+      <tr><td>Profit-Sharing Bonus</td><td>For senior management based on profit center performance</td><td>10-20%</td><td>Half-yearly</td></tr>
+      <tr><td>Retention Bonus</td><td>For top performers with 2+ year tenure, vested over time</td><td>5-10%</td><td>Annual</td></tr>
+      <tr><td>ESOP (Future)</td><td>Equity participation post-listing for key leadership</td><td>As approved</td><td>Vesting schedule</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Current Organization Cost Summary (from Salary Data Feb'26)</h2>
+    <div class="grid-2">
+      <div>
+        <table id="costSummaryTable">
+          <tr><th>Parameter</th><th>Value</th></tr>
+          <tr><td>Total Regular Staff (Active Payroll)</td><td>77 employees</td></tr>
+          <tr><td>Total Monthly Gross Salary</td><td>&#8377; 33,54,397</td></tr>
+          <tr><td>Annual Fixed Cost (approx)</td><td>&#8377; 4.03 Cr</td></tr>
+          <tr><td>Sales Team Count</td><td>~45 employees</td></tr>
+          <tr><td>Support/Ops Team Count</td><td>~32 employees</td></tr>
+          <tr><td>Highest CTC (CDO - Abir Das)</td><td>&#8377; 3,00,000/month</td></tr>
+          <tr><td>Average Sales RM CTC</td><td>&#8377; 35,000-45,000/month</td></tr>
+          <tr><td>Average Back Office CTC</td><td>&#8377; 15,000-22,000/month</td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="highlight"><strong>Critical Insight:</strong> For 4 Cr annual fixed cost, the organization needs minimum &#8377;12-15 Cr annual revenue to maintain healthy 25-35% cost-to-income ratio (financial services benchmark).</div>
+        <div class="success-highlight"><strong>Target Revenue Formula:</strong><br>Minimum Revenue = Fixed Cost / 0.30 = &#8377;4.03 Cr / 0.30 = <strong>&#8377;13.4 Cr/year</strong><br>With variable costs = <strong>&#8377;16-18 Cr/year target</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 2: HIERARCHY ==================== -->
+<div id="hierarchy" class="section">
+  <div class="card">
+    <h2>Organizational Hierarchy & Role Definitions</h2>
+    <table>
+      <tr><th>Level</th><th>Designation</th><th>Entity</th><th>Salary Range (Monthly)</th><th>Target Multiple</th><th>Incentive Type</th></tr>
+      <tr style="background:#ebf8ff;"><td colspan="6"><strong>LEADERSHIP TIER (Profit Center Heads)</strong></td></tr>
+      <tr><td>L1</td><td>Director / Promoter</td><td>Group</td><td>As per Board</td><td>-</td><td>Profit Share + Dividend</td></tr>
+      <tr><td>L2</td><td>CDO / President</td><td>TIB/TAS</td><td>&#8377;1,50,000 - 3,00,000</td><td>Company P&L</td><td>Profit Center Bonus (8-12% of vertical profit)</td></tr>
+      <tr><td>L3</td><td>VP / Regional Manager</td><td>TIB/TAS</td><td>&#8377;80,000 - 1,56,000</td><td>Regional P&L</td><td>Profit Center Bonus (5-8% of regional profit)</td></tr>
+      <tr style="background:#f0fff4;"><td colspan="6"><strong>MIDDLE MANAGEMENT TIER (Team Leaders)</strong></td></tr>
+      <tr><td>L4</td><td>Sales Head / Branch Head</td><td>TIB/TAS</td><td>&#8377;60,000 - 1,00,000</td><td>6x CTC/year</td><td>Team Override (2-4%) + Personal Incentive</td></tr>
+      <tr><td>L5</td><td>Area Manager / Regional Team Expansion Mgr</td><td>TIB</td><td>&#8377;50,000 - 1,03,500</td><td>5x CTC/year</td><td>Team Override (1.5-3%) + Personal Incentive</td></tr>
+      <tr><td>L6</td><td>Channel Development Manager</td><td>TIB/TAS</td><td>&#8377;52,000 - 67,000</td><td>2.5x CTC/month</td><td>Channel Revenue % + POSP Activation Bonus</td></tr>
+      <tr style="background:#fffbeb;"><td colspan="6"><strong>FRONTLINE SALES TIER</strong></td></tr>
+      <tr><td>L7</td><td>Sales Manager</td><td>TIB/TAS</td><td>&#8377;35,000 - 45,000</td><td>2.5x CTC/month</td><td>Direct Sales Incentive + Trail Share</td></tr>
+      <tr><td>L8</td><td>Sr. Relationship Manager</td><td>TIB/TAS</td><td>&#8377;28,000 - 43,000</td><td>2.5x CTC/month</td><td>Direct Sales Incentive + Trail Share</td></tr>
+      <tr><td>L9</td><td>Relationship Manager</td><td>TIB/TAS</td><td>&#8377;18,000 - 43,000</td><td>2.5x CTC/month</td><td>Direct Sales Incentive + Trail Share</td></tr>
+      <tr><td>L10</td><td>Executive / Outbound TL</td><td>TIB</td><td>&#8377;22,000 - 48,000</td><td>2x CTC/month</td><td>Volume-based Incentive</td></tr>
+      <tr style="background:#fff5f5;"><td colspan="6"><strong>SUPPORT & OPERATIONS TIER</strong></td></tr>
+      <tr><td>S1</td><td>Operations & Customer Service Mgr</td><td>Group</td><td>&#8377;30,000 - 47,000</td><td>Efficiency KPIs</td><td>Quarterly Efficiency Bonus</td></tr>
+      <tr><td>S2</td><td>HR Manager / Account Manager</td><td>Group</td><td>&#8377;32,000 - 54,000</td><td>Functional KPIs</td><td>Quarterly Performance Bonus</td></tr>
+      <tr><td>S3</td><td>Back Office Executive</td><td>Group</td><td>&#8377;9,800 - 23,200</td><td>Accuracy + TAT</td><td>Efficiency Bonus (&#8377;1,000-5,000/month)</td></tr>
+      <tr><td>S4</td><td>MIS Executive</td><td>Group</td><td>&#8377;17,000 - 32,000</td><td>Report Accuracy</td><td>Quarterly Bonus</td></tr>
+      <tr><td>S5</td><td>Digital Marketing / Designer</td><td>Group</td><td>&#8377;6,000 - 28,000</td><td>Lead Generation KPIs</td><td>Lead Conversion Bonus</td></tr>
+      <tr><td>T1</td><td>Trainer / Mentor</td><td>Group</td><td>&#8377;28,000 - 30,000</td><td>Activation Rate</td><td>POSP/Agent Activation Bonus</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Department-wise Vertical Structure</h2>
+    <div class="grid-2">
+      <div>
+        <h3>TIB - Trustner Insurance Brokers</h3>
+        <table>
+          <tr><th>Vertical</th><th>Head Count</th><th>Monthly Cost</th></tr>
+          <tr><td>Life Insurance</td><td>3</td><td>&#8377;1,81,651</td></tr>
+          <tr><td>Health Insurance</td><td>8</td><td>&#8377;3,37,593</td></tr>
+          <tr><td>General Insurance</td><td>4</td><td>&#8377;1,84,054</td></tr>
+          <tr><td>POSP Channel</td><td>12</td><td>&#8377;6,67,284</td></tr>
+          <tr><td>Operations (TIB)</td><td>6</td><td>&#8377;2,51,331</td></tr>
+        </table>
+      </div>
+      <div>
+        <h3>TAS - Trustner Asset Services</h3>
+        <table>
+          <tr><th>Vertical</th><th>Head Count</th><th>Monthly Cost</th></tr>
+          <tr><td>Financial Planning (MF, LI, HI)</td><td>10</td><td>&#8377;3,52,224</td></tr>
+          <tr><td>Demat / Capital Markets</td><td>1</td><td>&#8377;27,008</td></tr>
+          <tr><td>Operations (TAS)</td><td>8</td><td>&#8377;1,58,709</td></tr>
+          <tr><td>Admin & Accounts</td><td>5</td><td>&#8377;1,80,636</td></tr>
+          <tr><td>Digital & IT</td><td>3</td><td>&#8377;47,486</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 3: SALES INCENTIVE CALCULATOR ==================== -->
+<div id="sales-incentive" class="section">
+  <div class="card">
+    <h2>Sales Incentive Calculator</h2>
+    <p style="margin-bottom:16px;">This calculator uses the target structure from your March Target data. Base target = salary x multiplier. Incentive triggers only when minimum threshold (80%) is achieved.</p>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Employee Name</label>
+        <input type="text" id="empName" placeholder="e.g., Laxman Sharma">
+      </div>
+      <div class="form-group">
+        <label>Monthly Gross Salary (&#8377;)</label>
+        <input type="number" id="empSalary" value="43700" placeholder="Monthly CTC">
+      </div>
+      <div class="form-group">
+        <label>Role / Segment</label>
+        <select id="empRole">
+          <option value="direct-rm">RM - Direct Sales (TAS/TIB)</option>
+          <option value="posp-rm">RM - POSP/Agency Channel</option>
+          <option value="cdm">Channel Development Manager</option>
+          <option value="sales-head">Sales Head / Branch Head</option>
+          <option value="area-mgr">Area Manager / Regional Mgr</option>
+          <option value="outbound-tl">Outbound Team Leader</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Department</label>
+        <select id="empDept">
+          <option value="life">Life Insurance</option>
+          <option value="health">Health Insurance</option>
+          <option value="gi">General Insurance</option>
+          <option value="fp">Financial Planning (MF + Insurance)</option>
+          <option value="posp">POSP Channel</option>
+          <option value="mixed">Mixed / Cross-sell</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Actual Monthly Business Generated (&#8377;)</label>
+        <input type="number" id="empBusiness" value="300000" placeholder="Total premium/revenue">
+      </div>
+      <div class="form-group">
+        <label>POSP/Agency Business (if applicable) (&#8377;)</label>
+        <input type="number" id="empPospBiz" value="0" placeholder="Business via POSP/Sub-brokers">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>New Clients Acquired (#)</label>
+        <input type="number" id="empNewClients" value="5">
+      </div>
+      <div class="form-group">
+        <label>POSP/Agents Activated (#)</label>
+        <input type="number" id="empPospActivated" value="0">
+      </div>
+      <div class="form-group">
+        <label>Self-Sourced Business? (%)</label>
+        <input type="number" id="empSelfSourced" value="100" min="0" max="100">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="calculateIncentive()">Calculate Incentive</button>
+
+    <div id="incentiveResult" style="display:none;" class="result-box">
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Incentive Slab Structure (Applied Across All Sales Roles)</h2>
+    <div class="grid-2">
+      <div>
+        <h3>Monthly Target Calculation Formula</h3>
+        <table>
+          <tr><th>Parameter</th><th>Direct RM</th><th>POSP RM</th><th>CDM</th><th>Sales Head</th></tr>
+          <tr><td>Base Target</td><td>Salary x 6 (annual)</td><td>Salary x 6 (annual)</td><td>Team Salary x 2.5</td><td>Team Target x 1.2</td></tr>
+          <tr><td>Monthly Base</td><td>Annual / 12</td><td>Annual / 12</td><td>Monthly</td><td>Monthly</td></tr>
+          <tr><td>POSP/Agency Target</td><td>Base x 3</td><td>Base x 3</td><td>Team x 3</td><td>-</td></tr>
+          <tr><td>Minimum Threshold</td><td>80%</td><td>80%</td><td>80%</td><td>85%</td></tr>
+        </table>
+        <div class="highlight"><strong>Note:</strong> From your March Target data, current formula is: Base = Salary x 6 (annual), monthly = Base/12. POSP target = Base x 3. This gives realistic targets tied to cost recovery.</div>
+      </div>
+      <div>
+        <h3>Incentive Accelerator Slabs</h3>
+        <table>
+          <tr><th>Achievement %</th><th>Incentive Rate</th><th>Multiplier</th><th>Example (on &#8377;1L target)</th></tr>
+          <tr><td><span class="tag tag-red">Below 80%</span></td><td>No incentive</td><td>0x</td><td>&#8377;0</td></tr>
+          <tr><td><span class="tag tag-yellow">80% - 100%</span></td><td>4% of achieved amount</td><td>1.0x</td><td>&#8377;4,000</td></tr>
+          <tr><td><span class="tag tag-green">101% - 110%</span></td><td>Same rate, full amount</td><td>1.0x</td><td>&#8377;4,400</td></tr>
+          <tr><td><span class="tag tag-green">111% - 130%</span></td><td>Enhanced rate</td><td>1.15x</td><td>&#8377;5,980</td></tr>
+          <tr><td><span class="tag tag-blue">131% - 150%</span></td><td>Super rate</td><td>1.25x</td><td>&#8377;7,500</td></tr>
+          <tr><td><span class="tag tag-blue">150%+</span></td><td>Champion rate</td><td>1.50x</td><td>&#8377;9,000+</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Product-wise Credit Rules (Insurance)</h2>
+    <table>
+      <tr><th>Product Type</th><th>Credit %</th><th>Rationale</th></tr>
+      <tr><td>Life Insurance - 10 Pay & Above (Regular Premium)</td><td>125%</td><td>Higher persistency value, long trail income</td></tr>
+      <tr><td>Life Insurance - Below 10 Pay (Regular Premium)</td><td>100%</td><td>Standard credit</td></tr>
+      <tr><td>Life Insurance - ULIP Regular Pay</td><td>25%</td><td>Lower commission, market-linked risk</td></tr>
+      <tr><td>Life Insurance - Single Premium</td><td>10%</td><td>One-time commission only, no trail</td></tr>
+      <tr><td>Health Insurance (All types)</td><td>100%</td><td>Full credit - renewal trail valuable</td></tr>
+      <tr><td>General Insurance (Motor, Fire, etc.)</td><td>50%</td><td>Lower margin product, volume-driven</td></tr>
+      <tr><td>Mutual Fund - SIP (Monthly commitment x 12)</td><td>50%</td><td>Long-term AUM builder</td></tr>
+      <tr><td>Mutual Fund - Lumpsum</td><td>100%</td><td>Immediate AUM, one-time trail setup</td></tr>
+      <tr><td>Loan / LS Products</td><td>5%</td><td>Processing fee-based, low margin</td></tr>
+      <tr><td>Business sourced by Ram/Sangita Shah (credit to RM)</td><td>30%</td><td>Walk-in/office business, partial credit to handling RM</td></tr>
+    </table>
+    <div class="highlight"><strong>Important Rule - Direct Team SIP Cap:</strong> Direct team members can attribute a maximum of 25% of their SIP targets from their own mutual fund SIP book. Rest must come from insurance & other products. This ensures diversified revenue.</div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 4: TRAIL INCOME MODEL ==================== -->
+<div id="trail" class="section">
+  <div class="card">
+    <h2>Trail Income Sharing Model</h2>
+    <p>The trail model applies to Mutual Fund AUM, Insurance Renewals, and other recurring commission products. This follows the NJ Wealth / IIFL Wealth model adapted for Trustner.</p>
+
+    <div class="danger-highlight"><strong>CRITICAL RULE:</strong> Trail sharing is ONLY on incremental business post-assignment. Legacy/inherited clients generate trail for the company, NOT the RM. If an RM is assigned existing clients and brings ZERO new business from them, trail share = 0%.</div>
+
+    <div class="grid-2" style="margin-top:20px;">
+      <div>
+        <h3>Trail Sharing Rates</h3>
+        <table>
+          <tr><th>Scenario</th><th>Trail Share to RM</th><th>To Management</th><th>Company Retention</th></tr>
+          <tr><td><strong>Self-Sourced Business</strong><br>(RM brought the client themselves)</td><td><span class="tag tag-green">25%</span></td><td>15-20%</td><td>55-60%</td></tr>
+          <tr><td><strong>Assigned Client - New Business</strong><br>(Client assigned, RM brings fresh biz)</td><td><span class="tag tag-yellow">10-15%</span></td><td>10%</td><td>75-80%</td></tr>
+          <tr><td><strong>Assigned Client - No New Business</strong><br>(Just maintaining existing)</td><td><span class="tag tag-red">0%</span></td><td>5%</td><td>95%</td></tr>
+          <tr><td><strong>Office/Walk-in Business</strong><br>(Sourced by promoters/office)</td><td><span class="tag tag-yellow">10%</span></td><td>10%</td><td>80%</td></tr>
+        </table>
+      </div>
+      <div>
+        <h3>Trail Calculator</h3>
+        <div class="form-group">
+          <label>Total AUM/Premium Book (&#8377;)</label>
+          <input type="number" id="trailAum" value="5000000">
+        </div>
+        <div class="form-group">
+          <label>Annual Trail Commission Rate (%)</label>
+          <input type="number" id="trailRate" value="0.5" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Business Source Type</label>
+          <select id="trailSource">
+            <option value="self">Self-Sourced (25% share)</option>
+            <option value="assigned-new">Assigned + New Business (15% share)</option>
+            <option value="assigned-none">Assigned + No New Business (0%)</option>
+            <option value="office">Office/Walk-in (10% share)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Incremental New Business Added (&#8377;)</label>
+          <input type="number" id="trailIncremental" value="1000000">
+        </div>
+        <button class="btn btn-success" onclick="calculateTrail()">Calculate Trail Income</button>
+        <div id="trailResult" style="display:none;" class="result-box"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Trail Income - Product-wise Rates</h2>
+    <table>
+      <tr><th>Product</th><th>Trail Rate (Annual)</th><th>Trail Payment Frequency</th><th>Minimum Holding Period</th></tr>
+      <tr><td>Mutual Fund - Equity (Direct Plan)</td><td>0.30% - 0.50% of AUM</td><td>Quarterly</td><td>1 year</td></tr>
+      <tr><td>Mutual Fund - Equity (Regular Plan)</td><td>0.50% - 1.00% of AUM</td><td>Quarterly</td><td>1 year</td></tr>
+      <tr><td>Mutual Fund - Debt</td><td>0.10% - 0.30% of AUM</td><td>Quarterly</td><td>6 months</td></tr>
+      <tr><td>Life Insurance Renewals</td><td>2% - 5% of renewal premium</td><td>On receipt</td><td>2nd year onwards</td></tr>
+      <tr><td>Health Insurance Renewals</td><td>5% - 10% of renewal premium</td><td>On receipt</td><td>2nd year onwards</td></tr>
+      <tr><td>General Insurance Renewals</td><td>5% - 15% of renewal premium</td><td>On receipt</td><td>Annual renewal</td></tr>
+    </table>
+    <div class="success-highlight"><strong>Freeze Clause:</strong> If an RM receives assigned clients and fails to generate any incremental business within 2 quarters, the trail entitlement is frozen. Clients are reassigned. This prevents "rent-seeking" behavior on inherited books.</div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 5: PROFIT CENTER ==================== -->
+<div id="profit-center" class="section">
+  <div class="card">
+    <h2>Profit Center Model for Senior Management</h2>
+    <p>Every vertical head (L2-L5) is treated as a profit center. Their incentive is a percentage of the actual profit their vertical generates after deducting ALL costs.</p>
+
+    <h3>Profit Center Calculator</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Vertical / Region Name</label>
+        <input type="text" id="pcName" value="POSP Channel - West Bengal">
+      </div>
+      <div class="form-group">
+        <label>Manager Name</label>
+        <input type="text" id="pcManager" value="">
+      </div>
+      <div class="form-group">
+        <label>Manager Designation Level</label>
+        <select id="pcLevel">
+          <option value="l2">L2 - CDO/President (8-12% of profit)</option>
+          <option value="l3">L3 - VP/Regional Manager (5-8% of profit)</option>
+          <option value="l4">L4 - Sales Head/Branch Head (3-5% of profit)</option>
+          <option value="l5">L5 - Area Manager (2-4% of profit)</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Monthly Gross Revenue of Vertical (&#8377;)</label>
+        <input type="number" id="pcRevenue" value="2500000">
+      </div>
+      <div class="form-group">
+        <label>Manager's Monthly Salary (&#8377;)</label>
+        <input type="number" id="pcMgrSalary" value="112008">
+      </div>
+      <div class="form-group">
+        <label>Team's Total Monthly Salary (&#8377;)</label>
+        <input type="number" id="pcTeamSalary" value="400000">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Team Incentives Paid (&#8377;/month)</label>
+        <input type="number" id="pcTeamIncentive" value="80000">
+      </div>
+      <div class="form-group">
+        <label>Other Variable Costs (travel, marketing, etc.) (&#8377;/month)</label>
+        <input type="number" id="pcOtherCost" value="50000">
+      </div>
+      <div class="form-group">
+        <label>Attrition Cost (employees who joined & left) (&#8377;)</label>
+        <input type="number" id="pcAttritionCost" value="0">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="calculateProfitCenter()">Calculate Profit Center P&L</button>
+
+    <div id="pcResult" style="display:none;" class="result-box"></div>
+  </div>
+
+  <div class="card">
+    <h2>Profit Center Benchmarks</h2>
+    <table>
+      <tr><th>Metric</th><th>Healthy</th><th>Warning</th><th>Critical</th></tr>
+      <tr><td>Cost-to-Income Ratio</td><td><span class="tag tag-green">&lt; 40%</span></td><td><span class="tag tag-yellow">40-60%</span></td><td><span class="tag tag-red">&gt; 60%</span></td></tr>
+      <tr><td>Revenue per Employee</td><td><span class="tag tag-green">&gt; &#8377;5L/month</span></td><td><span class="tag tag-yellow">&#8377;2.5-5L/month</span></td><td><span class="tag tag-red">&lt; &#8377;2.5L/month</span></td></tr>
+      <tr><td>Team Retention Rate</td><td><span class="tag tag-green">&gt; 80%</span></td><td><span class="tag tag-yellow">60-80%</span></td><td><span class="tag tag-red">&lt; 60%</span></td></tr>
+      <tr><td>Manager ROI (Revenue / Manager CTC)</td><td><span class="tag tag-green">&gt; 8x</span></td><td><span class="tag tag-yellow">4-8x</span></td><td><span class="tag tag-red">&lt; 4x</span></td></tr>
+      <tr><td>Breakeven Timeline (New Vertical)</td><td><span class="tag tag-green">&lt; 6 months</span></td><td><span class="tag tag-yellow">6-12 months</span></td><td><span class="tag tag-red">&gt; 12 months</span></td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== SECTION 6: SUPPORT & OPS BONUS ==================== -->
+<div id="support" class="section">
+  <div class="card">
+    <h2>Support & Operations Team Incentive Structure</h2>
+    <p>Support teams don't generate direct revenue but their efficiency directly impacts profitability. Their bonus is linked to measurable KPIs following Bajaj Finserv and HDFC operations model.</p>
+
+    <h3>Back Office Team</h3>
+    <table>
+      <tr><th>KPI</th><th>Weight</th><th>Target</th><th>Measurement</th><th>Bonus Range</th></tr>
+      <tr><td>Policy Issuance TAT</td><td>30%</td><td>&lt; 24 hours from receipt</td><td>System timestamp</td><td>&#8377;500 - &#8377;2,000/month</td></tr>
+      <tr><td>Data Accuracy Rate</td><td>25%</td><td>&gt; 99% accuracy</td><td>Error audit (random 10%)</td><td>&#8377;500 - &#8377;1,500/month</td></tr>
+      <tr><td>Volume Processed</td><td>20%</td><td>Benchmark per role</td><td>System count</td><td>&#8377;300 - &#8377;1,000/month</td></tr>
+      <tr><td>Customer Complaint Resolution</td><td>15%</td><td>&lt; 48 hour resolution</td><td>CRM tracking</td><td>&#8377;300 - &#8377;1,000/month</td></tr>
+      <tr><td>Attendance & Punctuality</td><td>10%</td><td>&lt; 2 fine hours/month</td><td>HRMS system</td><td>&#8377;200 - &#8377;500/month</td></tr>
+    </table>
+    <div class="highlight"><strong>Max Monthly Bonus:</strong> Back Office Executive = &#8377;5,000 | Operations Manager = &#8377;10,000 | Sr. Executive = &#8377;7,500</div>
+
+    <h3>Training Team - POSP/Agent Activation Bonus</h3>
+    <table>
+      <tr><th>KPI</th><th>Target</th><th>Bonus</th></tr>
+      <tr><td>New POSP Onboarded & Exam Cleared</td><td>20/month</td><td>&#8377;200 per activated POSP</td></tr>
+      <tr><td>POSP First Policy within 30 days</td><td>50% of new POSPs</td><td>&#8377;500 per productive POSP</td></tr>
+      <tr><td>Training Session Conducted</td><td>8/month (min 10 attendees)</td><td>&#8377;300 per session</td></tr>
+      <tr><td>Agent Retention (6-month survival rate)</td><td>&gt; 60%</td><td>&#8377;5,000 quarterly bonus if achieved</td></tr>
+    </table>
+
+    <h3>HR Team</h3>
+    <table>
+      <tr><th>KPI</th><th>Target</th><th>Bonus</th></tr>
+      <tr><td>Time-to-Hire (avg days to fill position)</td><td>&lt; 21 days</td><td>&#8377;2,000/month if achieved</td></tr>
+      <tr><td>New Hire 90-day Retention</td><td>&gt; 80%</td><td>&#8377;3,000 quarterly</td></tr>
+      <tr><td>Payroll Accuracy</td><td>100%</td><td>&#8377;1,000/month</td></tr>
+      <tr><td>Compliance & Documentation</td><td>Zero audit findings</td><td>&#8377;2,000 quarterly</td></tr>
+    </table>
+
+    <h3>Operations Team Efficiency Bonus</h3>
+    <table>
+      <tr><th>KPI</th><th>Target</th><th>Bonus</th></tr>
+      <tr><td>Claims Settlement TAT (Health)</td><td>&lt; 7 days</td><td>&#8377;200 per claim settled under TAT</td></tr>
+      <tr><td>Renewal Follow-up Rate</td><td>&gt; 95% contacted before expiry</td><td>&#8377;3,000/month if achieved</td></tr>
+      <tr><td>Endorsement Processing</td><td>&lt; 48 hours</td><td>&#8377;1,000/month if achieved</td></tr>
+      <tr><td>Customer NPS Score</td><td>&gt; 8/10</td><td>&#8377;2,000 quarterly</td></tr>
+    </table>
+
+    <h3>Digital Marketing & IT Team</h3>
+    <table>
+      <tr><th>KPI</th><th>Target</th><th>Bonus</th></tr>
+      <tr><td>Qualified Leads Generated</td><td>100/month</td><td>&#8377;50 per qualified lead above target</td></tr>
+      <tr><td>Lead-to-Conversion Rate</td><td>&gt; 5%</td><td>&#8377;3,000/month if achieved</td></tr>
+      <tr><td>Social Media Engagement Growth</td><td>&gt; 10% MoM</td><td>&#8377;1,500/month</td></tr>
+      <tr><td>Website Uptime & Performance</td><td>&gt; 99.5%</td><td>&#8377;1,000/month</td></tr>
+    </table>
+
+    <h3>Accounts Team</h3>
+    <table>
+      <tr><th>KPI</th><th>Target</th><th>Bonus</th></tr>
+      <tr><td>Monthly Books Closure TAT</td><td>By 5th of next month</td><td>&#8377;2,000/month if achieved</td></tr>
+      <tr><td>Commission Reconciliation Accuracy</td><td>&gt; 99%</td><td>&#8377;1,500/month</td></tr>
+      <tr><td>GST/TDS Filing Timeliness</td><td>Before due date</td><td>&#8377;1,000/month</td></tr>
+      <tr><td>Audit Readiness Score</td><td>No material findings</td><td>&#8377;5,000 quarterly</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== SECTION 7: HIRING ROI ==================== -->
+<div id="hiring-roi" class="section">
+  <div class="card">
+    <h2>Hiring ROI & Cost Recovery Calculator</h2>
+    <p>Before hiring any senior person or team, this calculator helps determine breakeven timeline and expected ROI. Follows the principle: every hire must have a business case.</p>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Candidate / Team Name</label>
+        <input type="text" id="hireName" value="New Kolkata Branch Head">
+      </div>
+      <div class="form-group">
+        <label>Location</label>
+        <input type="text" id="hireLocation" value="Kolkata">
+      </div>
+      <div class="form-group">
+        <label>Leader's Monthly Salary (&#8377;)</label>
+        <input type="number" id="hireLeaderSalary" value="100000">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Team Size (number of people)</label>
+        <input type="number" id="hireTeamSize" value="5">
+      </div>
+      <div class="form-group">
+        <label>Average Team Member Salary (&#8377;/month)</label>
+        <input type="number" id="hireTeamAvgSalary" value="30000">
+      </div>
+      <div class="form-group">
+        <label>Setup/Infrastructure Cost (one-time) (&#8377;)</label>
+        <input type="number" id="hireSetupCost" value="200000">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Grace Period (months before expecting returns)</label>
+        <input type="number" id="hireGracePeriod" value="3" min="1" max="12">
+      </div>
+      <div class="form-group">
+        <label>Expected Monthly Revenue After Ramp-up (&#8377;)</label>
+        <input type="number" id="hireExpectedRevenue" value="800000">
+      </div>
+      <div class="form-group">
+        <label>Commission/Revenue Share to Company (%)</label>
+        <input type="number" id="hireRevenueShare" value="20" min="1" max="100">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="calculateHiringROI()">Calculate ROI & Breakeven</button>
+
+    <div id="hiringResult" style="display:none;" class="result-box"></div>
+  </div>
+
+  <div class="card">
+    <h2>Attrition Cost Attribution Rules</h2>
+    <table>
+      <tr><th>Scenario</th><th>Cost Attribution</th><th>Impact on Manager's P&L</th></tr>
+      <tr><td>Employee leaves within 3 months</td><td>100% of salary paid attributed to hiring manager</td><td>Full deduction from profit center</td></tr>
+      <tr><td>Employee leaves within 3-6 months</td><td>50% of salary paid attributed to hiring manager</td><td>Half deduction from profit center</td></tr>
+      <tr><td>Employee leaves after 6 months (performing)</td><td>No attribution - normal attrition</td><td>No impact</td></tr>
+      <tr><td>Employee leaves after 6 months (non-performing)</td><td>25% attributed if target achievement &lt; 50%</td><td>Partial deduction</td></tr>
+    </table>
+    <div class="danger-highlight"><strong>Quarterly Review Impact:</strong> When reviewing Q1/Q2/H1/Annual results, the attrition cost for each vertical is explicitly shown. If Vertical B recruited 10 people and 6 left within 6 months, the cost of those 6 salaries is added to Vertical B's cost. This creates pressure on managers to hire wisely and retain well.</div>
+  </div>
+
+  <div class="card">
+    <h2>Example: Your Kolkata Scenario</h2>
+    <div class="highlight">
+      <strong>Scenario:</strong> Senior person at &#8377;1-3 lakh/month + team cost &#8377;5 lakh/month = &#8377;7 lakh/month total<br><br>
+      <strong>6-Month Investment:</strong> &#8377;7L x 6 = &#8377;42 lakhs<br>
+      <strong>12-Month Investment:</strong> &#8377;7L x 12 = &#8377;84 lakhs<br><br>
+      <strong>Breakeven Requirement:</strong><br>
+      If average commission to company = 15-20% of business generated:<br>
+      - To recover &#8377;42L in 6 months post grace = need &#8377;7L/month net revenue = <strong>&#8377;35-47L/month gross business</strong><br>
+      - To recover &#8377;84L in 12 months post grace = need &#8377;7L/month net revenue = <strong>&#8377;35-47L/month gross business</strong><br><br>
+      <strong>This person's team must collectively generate &#8377;35-50 lakh/month in premium/AUM to justify the cost.</strong>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 8: PROMOTION & CAREER ==================== -->
+<div id="promotion" class="section">
+  <div class="card">
+    <h2>Career Roadmap & Promotion Criteria</h2>
+    <p>Every employee receives this career roadmap on Day 1 of joining. Clear, transparent, no ambiguity.</p>
+
+    <h3>Sales Career Ladder</h3>
+    <table>
+      <tr><th>Current Level</th><th>Next Level</th><th>Min Tenure</th><th>Performance Criteria</th><th>Additional Requirements</th><th>Salary Jump</th></tr>
+      <tr><td>Executive (L10)</td><td>Relationship Manager (L9)</td><td>6 months</td><td>3 consecutive months at 100%+ target</td><td>Product certification, 5+ clients</td><td>15-25%</td></tr>
+      <tr><td>Relationship Manager (L9)</td><td>Sr. Relationship Manager (L8)</td><td>12 months</td><td>4 out of 6 months at 100%+ target</td><td>Cross-sell 2+ products, 20+ active clients</td><td>15-20%</td></tr>
+      <tr><td>Sr. RM (L8)</td><td>Sales Manager (L7)</td><td>18 months</td><td>Annual target 110%+, mentored 2+ juniors</td><td>Team handling capability demonstrated</td><td>20-30%</td></tr>
+      <tr><td>Sales Manager (L7)</td><td>Asst. Branch Manager (L6)</td><td>12 months</td><td>Team target 100%+, personal 120%+</td><td>Team of 3+ reporting, POSP activation</td><td>20-25%</td></tr>
+      <tr><td>CDM / ABM (L6)</td><td>Area Manager (L5)</td><td>18 months</td><td>Branch/Channel profitable for 2 quarters</td><td>5+ active POSPs/agents, zero compliance issues</td><td>25-35%</td></tr>
+      <tr><td>Area Manager (L5)</td><td>Sales Head / Branch Head (L4)</td><td>24 months</td><td>Region profitable for 4 quarters</td><td>10+ team members, revenue &gt; &#8377;50L/month</td><td>30-40%</td></tr>
+      <tr><td>Sales Head (L4)</td><td>Regional Manager / VP (L3)</td><td>24 months</td><td>Vertical profitable for 1 year</td><td>Strategic planning, P&L management proven</td><td>40-60%</td></tr>
+    </table>
+
+    <h3>Support Career Ladder</h3>
+    <table>
+      <tr><th>Current Level</th><th>Next Level</th><th>Min Tenure</th><th>Performance Criteria</th><th>Salary Jump</th></tr>
+      <tr><td>Intern</td><td>Executive</td><td>3-6 months</td><td>Satisfactory performance, skill demonstration</td><td>50-100%</td></tr>
+      <tr><td>Back Office Executive</td><td>Sr. Executive</td><td>12 months</td><td>99%+ accuracy, zero escalations for 6 months</td><td>15-25%</td></tr>
+      <tr><td>Sr. Executive</td><td>Team Lead / Asst. Manager</td><td>18 months</td><td>Process improvement contribution, team training</td><td>20-30%</td></tr>
+      <tr><td>Team Lead</td><td>Manager</td><td>24 months</td><td>Team efficiency &gt; benchmark, zero audit findings</td><td>25-35%</td></tr>
+    </table>
+
+    <div class="success-highlight">
+      <strong>Day 1 Career Roadmap Document:</strong> Each new joiner receives a personalized document showing:<br>
+      1. Current CTC and take-home<br>
+      2. Monthly/Quarterly target with incentive calculation<br>
+      3. Maximum earning potential at current level<br>
+      4. Next promotion level with timeline and criteria<br>
+      5. 3-year earning trajectory if targets are met<br>
+      6. This document is CONFIDENTIAL and personalized
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Earning Potential Simulator</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Current Monthly Salary (&#8377;)</label>
+        <input type="number" id="careerSalary" value="28200">
+      </div>
+      <div class="form-group">
+        <label>Current Role</label>
+        <select id="careerRole">
+          <option value="l10">Executive (L10)</option>
+          <option value="l9" selected>Relationship Manager (L9)</option>
+          <option value="l8">Sr. Relationship Manager (L8)</option>
+          <option value="l7">Sales Manager (L7)</option>
+          <option value="l6">CDM / Asst. Branch Manager (L6)</option>
+          <option value="l5">Area Manager (L5)</option>
+          <option value="l4">Sales Head (L4)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Expected Target Achievement (%)</label>
+        <input type="number" id="careerAchievement" value="120" min="0" max="300">
+      </div>
+    </div>
+    <button class="btn btn-success" onclick="calculateCareerEarning()">Show Earning Potential</button>
+    <div id="careerResult" style="display:none;" class="result-box"></div>
+  </div>
+
+  <div class="card">
+    <h2>Performance Improvement Plan (PIP) - Characteristic Model</h2>
+    <table>
+      <tr><th>Performance Level</th><th>Criteria</th><th>Action</th><th>Timeline</th></tr>
+      <tr style="background:#f0fff4;"><td><span class="tag tag-green">Star Performer</span></td><td>&gt; 130% target, 3+ consecutive quarters</td><td>Fast-track promotion, retention bonus, public recognition</td><td>Immediate</td></tr>
+      <tr style="background:#f0fff4;"><td><span class="tag tag-green">High Performer</span></td><td>100-130% target, consistent</td><td>Standard promotion track, full incentives, mentorship role</td><td>Next cycle</td></tr>
+      <tr><td><span class="tag tag-yellow">Meets Expectations</span></td><td>80-100% target</td><td>Coaching, skill development, marginal incentive</td><td>Ongoing</td></tr>
+      <tr style="background:#fffbeb;"><td><span class="tag tag-yellow">Below Expectations</span></td><td>60-80% target for 2 consecutive quarters</td><td>Formal PIP, 90-day improvement plan, weekly reviews</td><td>90 days</td></tr>
+      <tr style="background:#fff5f5;"><td><span class="tag tag-red">Non-Performer</span></td><td>&lt; 60% target for 2 consecutive quarters OR PIP failure</td><td>Role reassignment or separation. Cost attributed to hiring manager.</td><td>Immediate</td></tr>
+    </table>
+    <div class="danger-highlight"><strong>Zero Tolerance Rule:</strong> If someone is not justifying their present cost (i.e., they are generating less revenue than their CTC), they enter automatic PIP. The system flags this automatically - no manual intervention needed. Impartial, data-driven, no favoritism.</div>
+  </div>
+</div>
+
+<!-- ==================== SECTION 9: PERFORMANCE DASHBOARD ==================== -->
+<div id="dashboard" class="section">
+  <div class="card">
+    <h2>Performance Dashboard - Live View</h2>
+    <p>This section simulates how the automated dashboard would work. In production, this connects to your business management system and auto-calculates in real-time.</p>
+
+    <h3>Quick Performance Entry</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Select Employee</label>
+        <select id="dashEmployee" onchange="loadEmployeeData()">
+          <option value="">-- Select --</option>
+          <option value="balbinder" data-salary="36017" data-role="direct-rm" data-dept="operation">Balbinder Kaur - Inhouse Sales Manager</option>
+          <option value="laxman" data-salary="43700" data-role="posp-rm" data-dept="life">Laxman Sharma - RM, Life</option>
+          <option value="tamanna" data-salary="90000" data-role="sales-head" data-dept="fp">Tamanna Kejriwal - Sales Head, FP</option>
+          <option value="bhola" data-salary="103500" data-role="area-mgr" data-dept="gi">Bhola Singh - Area Manager, GI</option>
+          <option value="jitender" data-salary="40440" data-role="posp-rm" data-dept="health">Jitender Roy - RM, Health</option>
+          <option value="vinita" data-salary="43200" data-role="direct-rm" data-dept="fp">Vinita Kabra - RM, FP</option>
+          <option value="partha" data-salary="112008" data-role="area-mgr" data-dept="posp">Partha Deb Barman - Regional Manager, POSP</option>
+          <option value="khushbu" data-salary="38200" data-role="direct-rm" data-dept="life">Khushbu Chhajer - Sales Manager, Life</option>
+          <option value="hemanta" data-salary="66117" data-role="cdm" data-dept="operation">Hemanta Saharia - CDM</option>
+          <option value="mrinmoy" data-salary="95833" data-role="area-mgr" data-dept="health">Mrinmoy Choudhury - Regional Team Expansion Mgr</option>
+          <option value="dipankar" data-salary="48200" data-role="outbound-tl" data-dept="health">Dipankar Das - Outbound Team Leader</option>
+          <option value="jasmine" data-salary="28200" data-role="direct-rm" data-dept="fp">Jasmine Jain - RM & Trainer, FP</option>
+          <option value="indranil" data-salary="67008" data-role="cdm" data-dept="posp">Indranil Roy - CDM, POSP</option>
+          <option value="mousam" data-salary="67008" data-role="cdm" data-dept="posp">Mousam Majumdar - RM, POSP</option>
+          <option value="abir" data-salary="300000" data-role="sales-head" data-dept="operation">Abir Das - CDO</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Month</label>
+        <select id="dashMonth">
+          <option>April 2026</option><option>May 2026</option><option>June 2026</option>
+          <option>July 2026</option><option>August 2026</option><option>September 2026</option>
+          <option>October 2026</option><option>November 2026</option><option>December 2026</option>
+          <option>January 2027</option><option>February 2027</option><option selected>March 2027</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Business Done This Month (&#8377;)</label>
+        <input type="number" id="dashBusiness" value="0">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="showDashboard()">Generate Dashboard</button>
+
+    <div id="dashResult" style="display:none;"></div>
+  </div>
+
+  <div class="card">
+    <h2>Organization-Wide Scorecard (Sample)</h2>
+    <table>
+      <tr><th>Metric</th><th>Current</th><th>Target</th><th>Status</th></tr>
+      <tr><td>Total Monthly Revenue</td><td id="orgRevenue">-</td><td>&#8377;1.5 Cr</td><td><span class="tag tag-yellow">Enter Data</span></td></tr>
+      <tr><td>Total Monthly Cost</td><td>&#8377;33.5L (fixed) + variable</td><td>&lt; &#8377;45L</td><td><span class="tag tag-yellow">Monitor</span></td></tr>
+      <tr><td>Cost-to-Income Ratio</td><td id="orgCTI">-</td><td>&lt; 40%</td><td><span class="tag tag-yellow">Enter Data</span></td></tr>
+      <tr><td>Revenue per Sales Employee</td><td id="orgRPE">-</td><td>&gt; &#8377;3L/month</td><td><span class="tag tag-yellow">Enter Data</span></td></tr>
+      <tr><td>Active POSPs / Sub-brokers</td><td>-</td><td>500+</td><td><span class="tag tag-yellow">Enter Data</span></td></tr>
+      <tr><td>Team Retention (6-month)</td><td>-</td><td>&gt; 80%</td><td><span class="tag tag-yellow">Enter Data</span></td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== SECTION 10: ADMIN CONTROLS ==================== -->
+<div id="admin" class="section">
+  <div class="card">
+    <h2>Admin Controls & Access Management</h2>
+    <div class="danger-highlight">
+      <strong>SUPER ADMIN ACCESS ONLY</strong><br>
+      Only Ram Shah and Sangita Shah have full power to change, edit, or override any incentive parameter.<br>
+      President and Vice President have limited viewing and approval powers.<br>
+      All deviations require written approval from Directors and top shareholders.
+    </div>
+
+    <h3>Access Control Matrix</h3>
+    <table>
+      <tr><th>Role</th><th>View Dashboard</th><th>Enter Business Data</th><th>Edit Targets</th><th>Override Incentive</th><th>Change Slabs/Rules</th><th>Approve Deviation</th></tr>
+      <tr><td><strong>Super Admin (Directors)</strong></td><td><span class="tag tag-green">Yes</span></td><td><span class="tag tag-green">Yes</span></td><td><span class="tag tag-green">Yes</span></td><td><span class="tag tag-green">Yes</span></td><td><span class="tag tag-green">Yes</span></td><td><span class="tag tag-green">Yes</span></td></tr>
+      <tr><td><strong>President / VP</strong></td><td><span class="tag tag-green">Yes</span></td><td><span class="tag tag-green">Yes</span></td><td><span class="tag tag-yellow">Limited</span></td><td><span class="tag tag-red">No</span></td><td><span class="tag tag-red">No</span></td><td><span class="tag tag-yellow">Limited (up to &#8377;50K)</span></td></tr>
+      <tr><td><strong>Regional Manager / Sales Head</strong></td><td><span class="tag tag-green">Own Region</span></td><td><span class="tag tag-green">Own Team</span></td><td><span class="tag tag-red">No</span></td><td><span class="tag tag-red">No</span></td><td><span class="tag tag-red">No</span></td><td><span class="tag tag-red">No</span></td></tr>
+      <tr><td><strong>RM / Executive</strong></td><td><span class="tag tag-green">Own Data</span></td><td><span class="tag tag-red">No</span></td><td><span class="tag tag-red">No</span></td><td><span class="tag tag-red">No</span></td><td><span class="tag tag-red">No</span></td><td><span class="tag tag-red">No</span></td></tr>
+      <tr><td><strong>HR / Accounts</strong></td><td><span class="tag tag-green">Payroll View</span></td><td><span class="tag tag-red">No</span></td><td><span class="tag tag-red">No</span></td><td><span class="tag tag-red">No</span></td><td><span class="tag tag-red">No</span></td><td><span class="tag tag-red">No</span></td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Deviation Approval Workflow</h2>
+    <table>
+      <tr><th>Step</th><th>Action</th><th>Authority</th></tr>
+      <tr><td>1</td><td>Deviation request raised by manager with justification</td><td>Any authorized manager</td></tr>
+      <tr><td>2</td><td>First-level approval (up to &#8377;50,000 impact)</td><td>President / Vice President</td></tr>
+      <tr><td>3</td><td>Final approval (any amount)</td><td>Directors (Ram Shah / Sangita Shah)</td></tr>
+      <tr><td>4</td><td>System entry of approved deviation with audit trail</td><td>Super Admin only</td></tr>
+      <tr><td>5</td><td>Quarterly audit of all deviations</td><td>Board review</td></tr>
+    </table>
+    <div class="highlight"><strong>Listed Company Compliance:</strong> All incentive deviations are logged with timestamp, approver, justification, and amount. This audit trail is essential for SEBI compliance post-listing.</div>
+  </div>
+
+  <div class="card">
+    <h2>Implementation Roadmap</h2>
+    <table>
+      <tr><th>Phase</th><th>Timeline</th><th>Activities</th><th>Deliverables</th></tr>
+      <tr><td><strong>Phase 1: Foundation</strong></td><td>Month 1-2</td><td>Finalize incentive slabs, get board approval, configure system rules</td><td>Approved incentive policy document, system setup</td></tr>
+      <tr><td><strong>Phase 2: Communication</strong></td><td>Month 2-3</td><td>Individual career roadmap creation, team briefings, FAQ preparation</td><td>Personalized offer letters with earning potential</td></tr>
+      <tr><td><strong>Phase 3: Pilot</strong></td><td>Month 3-4</td><td>Run parallel calculation (old + new system) for one quarter</td><td>Comparison report, adjustment recommendations</td></tr>
+      <tr><td><strong>Phase 4: Go-Live</strong></td><td>Month 4-5</td><td>Full system launch, automated dashboards, first incentive payout</td><td>Live dashboard, first automated payout</td></tr>
+      <tr><td><strong>Phase 5: Optimize</strong></td><td>Month 6+</td><td>Quarterly review, slab adjustments, market benchmarking</td><td>Quarterly review reports to board</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Technology Requirements for Automation</h2>
+    <table>
+      <tr><th>Component</th><th>Purpose</th><th>Suggestion</th></tr>
+      <tr><td>CRM / Business Management</td><td>Track all policy/MF business per RM</td><td>Zoho CRM / custom-built integrated with insurer APIs</td></tr>
+      <tr><td>HRMS</td><td>Attendance, leave, payroll, PF/ESI</td><td>GreytHR / Keka (already seems in use based on salary data)</td></tr>
+      <tr><td>Incentive Engine</td><td>Auto-calculate incentives from business data</td><td>Custom module on website (this HTML is the prototype)</td></tr>
+      <tr><td>Dashboard & Reporting</td><td>Real-time performance view for all levels</td><td>Power BI / Metabase connected to CRM</td></tr>
+      <tr><td>Document Management</td><td>Career roadmaps, offer letters, PIP documents</td><td>Google Workspace / SharePoint</td></tr>
+    </table>
+  </div>
+</div>
+
+</div><!-- end container -->
+
+<div style="background:var(--primary); color:white; text-align:center; padding:20px; margin-top:40px;">
+  <p style="font-size:12px;">&copy; 2026 Trustner Group. All Rights Reserved. This document is confidential and proprietary.</p>
+  <p style="font-size:11px; opacity:0.7;">Version 1.0 | Designed for Board Review | Super Admin: Ram Shah, Sangita Shah</p>
+</div>
+
+<script>
+// ============ NAVIGATION ============
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+// ============ FORMAT CURRENCY ============
+function fmt(num) {
+  if (num >= 10000000) return '₹' + (num/10000000).toFixed(2) + ' Cr';
+  if (num >= 100000) return '₹' + (num/100000).toFixed(2) + ' L';
+  return '₹' + Math.round(num).toLocaleString('en-IN');
+}
+
+function fmtP(num) { return num.toFixed(1) + '%'; }
+
+// ============ SALES INCENTIVE CALCULATOR ============
+function calculateIncentive() {
+  const name = document.getElementById('empName').value || 'Employee';
+  const salary = parseFloat(document.getElementById('empSalary').value) || 0;
+  const role = document.getElementById('empRole').value;
+  const dept = document.getElementById('empDept').value;
+  const business = parseFloat(document.getElementById('empBusiness').value) || 0;
+  const pospBiz = parseFloat(document.getElementById('empPospBiz').value) || 0;
+  const selfSourced = parseFloat(document.getElementById('empSelfSourced').value) / 100;
+  const newClients = parseInt(document.getElementById('empNewClients').value) || 0;
+  const pospActivated = parseInt(document.getElementById('empPospActivated').value) || 0;
+
+  // Target calculation based on role
+  let annualTarget, monthlyTarget, pospTarget;
+  switch(role) {
+    case 'direct-rm':
+      annualTarget = salary * 6 * 12 / 12; // monthly base = salary * 6
+      monthlyTarget = salary * 6;
+      pospTarget = monthlyTarget * 3;
+      break;
+    case 'posp-rm':
+      annualTarget = salary * 6 * 12 / 12;
+      monthlyTarget = salary * 6;
+      pospTarget = monthlyTarget * 3;
+      break;
+    case 'cdm':
+      monthlyTarget = salary * 2.5;
+      pospTarget = monthlyTarget * 3;
+      break;
+    case 'sales-head':
+      monthlyTarget = salary * 8;
+      pospTarget = monthlyTarget * 2;
+      break;
+    case 'area-mgr':
+      monthlyTarget = salary * 5;
+      pospTarget = monthlyTarget * 2.5;
+      break;
+    case 'outbound-tl':
+      monthlyTarget = salary * 4;
+      pospTarget = monthlyTarget * 2;
+      break;
+    default:
+      monthlyTarget = salary * 6;
+      pospTarget = monthlyTarget * 3;
+  }
+
+  const totalBiz = business + pospBiz;
+  const effectiveTarget = role === 'posp-rm' ? pospTarget : monthlyTarget;
+  const achievement = (totalBiz / effectiveTarget) * 100;
+
+  // Incentive calculation with slabs
+  let incentiveRate = 0;
+  let incentiveAmount = 0;
+  let slabName = '';
+  let slabColor = 'red';
+
+  if (achievement < 80) {
+    slabName = 'Below Threshold';
+    slabColor = 'red';
+    incentiveRate = 0;
+  } else if (achievement <= 100) {
+    slabName = 'Base Slab (80-100%)';
+    slabColor = 'yellow';
+    incentiveRate = 0.04;
+    incentiveAmount = totalBiz * incentiveRate;
+  } else if (achievement <= 110) {
+    slabName = 'Standard (101-110%)';
+    slabColor = 'green';
+    incentiveRate = 0.04;
+    incentiveAmount = totalBiz * incentiveRate;
+  } else if (achievement <= 130) {
+    slabName = 'Enhanced (111-130%)';
+    slabColor = 'green';
+    incentiveRate = 0.04 * 1.15;
+    incentiveAmount = totalBiz * incentiveRate;
+  } else if (achievement <= 150) {
+    slabName = 'Super (131-150%)';
+    slabColor = 'green';
+    incentiveRate = 0.04 * 1.25;
+    incentiveAmount = totalBiz * incentiveRate;
+  } else {
+    slabName = 'Champion (150%+)';
+    slabColor = 'green';
+    incentiveRate = 0.04 * 1.50;
+    incentiveAmount = totalBiz * incentiveRate;
+  }
+
+  // Self-sourced vs assigned adjustment
+  const selfSourcedIncentive = incentiveAmount * selfSourced;
+  const assignedIncentive = incentiveAmount * (1 - selfSourced) * 0.6; // 60% for assigned business
+  const finalIncentive = selfSourcedIncentive + assignedIncentive;
+
+  // Additional bonuses
+  let clientBonus = newClients > 3 ? (newClients - 3) * 500 : 0;
+  let pospBonus = pospActivated * 1000;
+
+  const totalEarning = salary + finalIncentive + clientBonus + pospBonus;
+  const costToCompany = totalEarning;
+  const revenueMultiple = totalBiz / costToCompany;
+
+  const resultDiv = document.getElementById('incentiveResult');
+  resultDiv.style.display = 'block';
+  resultDiv.innerHTML = `
+    <h3>Incentive Calculation for ${name}</h3>
+    <div class="grid-2">
+      <div>
+        <table>
+          <tr><th colspan="2">Target & Achievement</th></tr>
+          <tr><td>Monthly Salary (Fixed)</td><td><strong>${fmt(salary)}</strong></td></tr>
+          <tr><td>Monthly Target (${role === 'posp-rm' ? 'POSP Channel' : 'Direct'})</td><td><strong>${fmt(effectiveTarget)}</strong></td></tr>
+          <tr><td>Actual Business Done</td><td><strong>${fmt(totalBiz)}</strong></td></tr>
+          <tr><td>Achievement %</td><td><strong><span class="tag tag-${slabColor}">${fmtP(achievement)}</span></strong></td></tr>
+          <tr><td>Slab Applied</td><td><strong>${slabName}</strong></td></tr>
+          <tr><td>Effective Incentive Rate</td><td><strong>${(incentiveRate * 100).toFixed(2)}%</strong></td></tr>
+        </table>
+      </div>
+      <div>
+        <table>
+          <tr><th colspan="2">Earnings Breakdown</th></tr>
+          <tr><td>Fixed Salary</td><td>${fmt(salary)}</td></tr>
+          <tr><td>Performance Incentive</td><td><strong style="color:${finalIncentive > 0 ? 'green' : 'red'}">${fmt(finalIncentive)}</strong></td></tr>
+          <tr><td>New Client Bonus</td><td>${fmt(clientBonus)}</td></tr>
+          <tr><td>POSP Activation Bonus</td><td>${fmt(pospBonus)}</td></tr>
+          <tr style="background:#f0fff4;"><td><strong>TOTAL MONTHLY EARNING</strong></td><td><strong style="font-size:18px;">${fmt(totalEarning)}</strong></td></tr>
+          <tr><td>Variable as % of Fixed</td><td>${fmtP(((totalEarning - salary) / salary) * 100)}</td></tr>
+          <tr><td>Revenue Multiple (Biz / Total Cost)</td><td><strong>${revenueMultiple.toFixed(1)}x</strong></td></tr>
+        </table>
+      </div>
+    </div>
+    ${achievement < 80 ? '<div class="danger-highlight"><strong>WARNING:</strong> Below 80% threshold. No incentive earned. Employee enters performance monitoring.</div>' : ''}
+    ${achievement >= 130 ? '<div class="success-highlight"><strong>STAR PERFORMER!</strong> Eligible for fast-track promotion consideration and retention bonus.</div>' : ''}
+    ${revenueMultiple < 1.5 ? '<div class="danger-highlight"><strong>COST ALERT:</strong> Revenue multiple is below 1.5x. Employee cost is not being justified by business generation.</div>' : ''}
+  `;
+}
+
+// ============ TRAIL INCOME CALCULATOR ============
+function calculateTrail() {
+  const aum = parseFloat(document.getElementById('trailAum').value) || 0;
+  const rate = parseFloat(document.getElementById('trailRate').value) / 100;
+  const source = document.getElementById('trailSource').value;
+  const incremental = parseFloat(document.getElementById('trailIncremental').value) || 0;
+
+  const shareRates = {
+    'self': { rm: 0.25, mgmt: 0.15, company: 0.60 },
+    'assigned-new': { rm: 0.15, mgmt: 0.10, company: 0.75 },
+    'assigned-none': { rm: 0, mgmt: 0.05, company: 0.95 },
+    'office': { rm: 0.10, mgmt: 0.10, company: 0.80 }
+  };
+
+  const shares = shareRates[source];
+  const annualTrail = aum * rate;
+  const monthlyTrail = annualTrail / 12;
+
+  // Trail only on incremental for assigned
+  const effectiveBase = source.startsWith('assigned') ? incremental : aum;
+  const effectiveTrail = effectiveBase * rate;
+
+  const rmShare = effectiveTrail * shares.rm;
+  const mgmtShare = effectiveTrail * shares.mgmt;
+  const companyShare = effectiveTrail * shares.company;
+
+  const resultDiv = document.getElementById('trailResult');
+  resultDiv.style.display = 'block';
+  resultDiv.innerHTML = `
+    <h3>Trail Income Calculation</h3>
+    <table>
+      <tr><td>Total Book/AUM</td><td><strong>${fmt(aum)}</strong></td></tr>
+      <tr><td>Annual Trail Commission (full book)</td><td>${fmt(annualTrail)}</td></tr>
+      <tr><td>Effective Base for Sharing (incremental only for assigned)</td><td><strong>${fmt(effectiveBase)}</strong></td></tr>
+      <tr><td>Annual Trail on Effective Base</td><td>${fmt(effectiveTrail)}</td></tr>
+      <tr style="background:#f0fff4;"><td>RM's Annual Trail Share (${(shares.rm*100)}%)</td><td><strong>${fmt(rmShare)}</strong> (${fmt(rmShare/12)}/month)</td></tr>
+      <tr><td>Management Share (${(shares.mgmt*100)}%)</td><td>${fmt(mgmtShare)}</td></tr>
+      <tr><td>Company Retention (${(shares.company*100)}%)</td><td>${fmt(companyShare)}</td></tr>
+    </table>
+    ${source === 'assigned-none' ? '<div class="danger-highlight"><strong>ZERO TRAIL:</strong> No incremental business generated from assigned clients. Trail entitlement is frozen. RM must generate new business to earn trail share.</div>' : ''}
+    ${shares.rm > 0 ? '<div class="success-highlight"><strong>Monthly Trail Income to RM:</strong> ' + fmt(rmShare/12) + ' - This is passive income that grows as the book grows!</div>' : ''}
+  `;
+}
+
+// ============ PROFIT CENTER CALCULATOR ============
+function calculateProfitCenter() {
+  const name = document.getElementById('pcName').value;
+  const manager = document.getElementById('pcManager').value;
+  const level = document.getElementById('pcLevel').value;
+  const revenue = parseFloat(document.getElementById('pcRevenue').value) || 0;
+  const mgrSalary = parseFloat(document.getElementById('pcMgrSalary').value) || 0;
+  const teamSalary = parseFloat(document.getElementById('pcTeamSalary').value) || 0;
+  const teamIncentive = parseFloat(document.getElementById('pcTeamIncentive').value) || 0;
+  const otherCost = parseFloat(document.getElementById('pcOtherCost').value) || 0;
+  const attritionCost = parseFloat(document.getElementById('pcAttritionCost').value) || 0;
+
+  const profitShareRates = { 'l2': 0.10, 'l3': 0.065, 'l4': 0.04, 'l5': 0.03 };
+  const profitShareRate = profitShareRates[level];
+
+  const totalCost = mgrSalary + teamSalary + teamIncentive + otherCost + attritionCost;
+  const grossProfit = revenue - totalCost;
+  const isProfit = grossProfit > 0;
+  const mgrBonus = isProfit ? grossProfit * profitShareRate : 0;
+  const cti = (totalCost / revenue) * 100;
+  const teamSize = Math.round(teamSalary / 35000) || 1;
+  const revPerEmp = revenue / (teamSize + 1);
+
+  let healthStatus, healthColor;
+  if (cti < 40) { healthStatus = 'HEALTHY'; healthColor = 'green'; }
+  else if (cti < 60) { healthStatus = 'WARNING'; healthColor = 'yellow'; }
+  else { healthStatus = 'CRITICAL'; healthColor = 'red'; }
+
+  const resultDiv = document.getElementById('pcResult');
+  resultDiv.style.display = 'block';
+  resultDiv.innerHTML = `
+    <h3>Profit Center P&L: ${name}</h3>
+    <div class="grid-2">
+      <div>
+        <table>
+          <tr><th colspan="2">Revenue & Costs</th></tr>
+          <tr style="background:#f0fff4;"><td>Monthly Revenue</td><td><strong>${fmt(revenue)}</strong></td></tr>
+          <tr><td>(-) Manager Salary</td><td>${fmt(mgrSalary)}</td></tr>
+          <tr><td>(-) Team Salary</td><td>${fmt(teamSalary)}</td></tr>
+          <tr><td>(-) Team Incentives</td><td>${fmt(teamIncentive)}</td></tr>
+          <tr><td>(-) Other Variable Costs</td><td>${fmt(otherCost)}</td></tr>
+          <tr><td>(-) Attrition Cost (attributed)</td><td style="color:${attritionCost > 0 ? 'red' : 'inherit'}">${fmt(attritionCost)}</td></tr>
+          <tr><td><strong>Total Cost</strong></td><td><strong>${fmt(totalCost)}</strong></td></tr>
+          <tr style="background:${isProfit ? '#f0fff4' : '#fff5f5'}"><td><strong>NET PROFIT / (LOSS)</strong></td><td><strong style="font-size:18px; color:${isProfit ? 'green' : 'red'}">${fmt(grossProfit)}</strong></td></tr>
+        </table>
+      </div>
+      <div>
+        <table>
+          <tr><th colspan="2">Key Metrics</th></tr>
+          <tr><td>Cost-to-Income Ratio</td><td><span class="tag tag-${healthColor}">${fmtP(cti)} - ${healthStatus}</span></td></tr>
+          <tr><td>Revenue per Employee</td><td>${fmt(revPerEmp)}/month</td></tr>
+          <tr><td>Manager ROI (Revenue / Mgr CTC)</td><td>${(revenue / mgrSalary).toFixed(1)}x</td></tr>
+          <tr><td>Profit Share Rate</td><td>${(profitShareRate * 100)}% of profit</td></tr>
+          <tr style="background:#f0fff4;"><td><strong>Manager's Profit Bonus</strong></td><td><strong style="color:${mgrBonus > 0 ? 'green' : 'red'}">${fmt(mgrBonus)}/month</strong></td></tr>
+          <tr><td>Manager Total Earning (Salary + Bonus)</td><td><strong>${fmt(mgrSalary + mgrBonus)}</strong></td></tr>
+          <tr><td>Annual Profit Bonus (if sustained)</td><td>${fmt(mgrBonus * 12)}</td></tr>
+        </table>
+      </div>
+    </div>
+    ${!isProfit ? '<div class="danger-highlight"><strong>LOSS-MAKING VERTICAL:</strong> No profit-sharing bonus for manager. Vertical must turn profitable before any incentive is paid. Current monthly burn: ' + fmt(Math.abs(grossProfit)) + '</div>' : ''}
+    ${attritionCost > 0 ? '<div class="danger-highlight"><strong>ATTRITION COST IMPACT:</strong> ₹' + fmt(attritionCost) + ' has been attributed to this vertical due to early departures. This reduces the profit center performance.</div>' : ''}
+    ${isProfit && cti < 40 ? '<div class="success-highlight"><strong>PROFITABLE & EFFICIENT:</strong> This vertical is operating at a healthy cost-to-income ratio. Manager qualifies for full profit-sharing bonus.</div>' : ''}
+  `;
+}
+
+// ============ HIRING ROI CALCULATOR ============
+function calculateHiringROI() {
+  const name = document.getElementById('hireName').value;
+  const location = document.getElementById('hireLocation').value;
+  const leaderSalary = parseFloat(document.getElementById('hireLeaderSalary').value) || 0;
+  const teamSize = parseInt(document.getElementById('hireTeamSize').value) || 0;
+  const teamAvgSalary = parseFloat(document.getElementById('hireTeamAvgSalary').value) || 0;
+  const setupCost = parseFloat(document.getElementById('hireSetupCost').value) || 0;
+  const gracePeriod = parseInt(document.getElementById('hireGracePeriod').value) || 3;
+  const expectedRevenue = parseFloat(document.getElementById('hireExpectedRevenue').value) || 0;
+  const revenueSharePct = parseFloat(document.getElementById('hireRevenueShare').value) / 100;
+
+  const monthlyTeamCost = teamSize * teamAvgSalary;
+  const totalMonthlyCost = leaderSalary + monthlyTeamCost;
+  const graceInvestment = totalMonthlyCost * gracePeriod + setupCost;
+  const sixMonthInvestment = totalMonthlyCost * 6 + setupCost;
+  const yearInvestment = totalMonthlyCost * 12 + setupCost;
+
+  const monthlyNetRevenue = expectedRevenue * revenueSharePct;
+  const monthlyProfit = monthlyNetRevenue - totalMonthlyCost;
+
+  // Breakeven calculation
+  let breakevenMonths = 0;
+  let cumCost = setupCost;
+  let cumRevenue = 0;
+  for (let m = 1; m <= 36; m++) {
+    cumCost += totalMonthlyCost;
+    if (m > gracePeriod) {
+      // Ramp up: month 1 after grace = 30%, month 2 = 60%, month 3+ = 100%
+      let rampFactor = Math.min(1, (m - gracePeriod) * 0.3);
+      if (m - gracePeriod >= 3) rampFactor = 1;
+      cumRevenue += monthlyNetRevenue * rampFactor;
+    }
+    if (cumRevenue >= cumCost && breakevenMonths === 0) {
+      breakevenMonths = m;
+    }
+  }
+
+  const resultDiv = document.getElementById('hiringResult');
+  resultDiv.style.display = 'block';
+  resultDiv.innerHTML = `
+    <h3>Hiring ROI Analysis: ${name} - ${location}</h3>
+    <div class="grid-2">
+      <div>
+        <table>
+          <tr><th colspan="2">Cost Structure</th></tr>
+          <tr><td>Leader Monthly Salary</td><td>${fmt(leaderSalary)}</td></tr>
+          <tr><td>Team Cost (${teamSize} x ${fmt(teamAvgSalary)})</td><td>${fmt(monthlyTeamCost)}</td></tr>
+          <tr><td><strong>Total Monthly Burn</strong></td><td><strong>${fmt(totalMonthlyCost)}</strong></td></tr>
+          <tr><td>Setup / Infrastructure (one-time)</td><td>${fmt(setupCost)}</td></tr>
+          <tr><td>Grace Period Investment (${gracePeriod} months)</td><td style="color:red"><strong>${fmt(graceInvestment)}</strong></td></tr>
+          <tr><td>6-Month Total Investment</td><td style="color:red">${fmt(sixMonthInvestment)}</td></tr>
+          <tr><td>12-Month Total Investment</td><td style="color:red">${fmt(yearInvestment)}</td></tr>
+        </table>
+      </div>
+      <div>
+        <table>
+          <tr><th colspan="2">Revenue & ROI</th></tr>
+          <tr><td>Expected Monthly Gross Business</td><td>${fmt(expectedRevenue)}</td></tr>
+          <tr><td>Company Revenue Share (${(revenueSharePct*100)}%)</td><td>${fmt(monthlyNetRevenue)}</td></tr>
+          <tr><td>Monthly Net Profit (post full ramp)</td><td style="color:${monthlyProfit > 0 ? 'green' : 'red'}">${fmt(monthlyProfit)}</td></tr>
+          <tr style="background:#f0fff4;"><td><strong>Estimated Breakeven</strong></td><td><strong style="font-size:16px;">${breakevenMonths > 0 ? breakevenMonths + ' months' : '> 36 months (RISKY)'}</strong></td></tr>
+          <tr><td>12-Month ROI (post breakeven)</td><td>${breakevenMonths > 0 && breakevenMonths < 12 ? fmt((12 - breakevenMonths) * monthlyProfit) + ' profit' : 'Negative'}</td></tr>
+          <tr><td>Required Monthly Biz to Break Even</td><td>${fmt(totalMonthlyCost / revenueSharePct)}</td></tr>
+        </table>
+      </div>
+    </div>
+    ${breakevenMonths <= 6 ? '<div class="success-highlight"><strong>GOOD INVESTMENT:</strong> Breakeven within 6 months. This hire is justified.</div>' : ''}
+    ${breakevenMonths > 6 && breakevenMonths <= 12 ? '<div class="highlight"><strong>MODERATE RISK:</strong> Breakeven in 6-12 months. Proceed with milestone-based review at 3 and 6 months.</div>' : ''}
+    ${breakevenMonths > 12 || breakevenMonths === 0 ? '<div class="danger-highlight"><strong>HIGH RISK:</strong> Breakeven exceeds 12 months. Reconsider or negotiate lower fixed cost with higher variable.</div>' : ''}
+    <div class="highlight" style="margin-top:12px;">
+      <strong>Requirement for the candidate:</strong> This person must commit to generating ${fmt(totalMonthlyCost / revenueSharePct)} in monthly business (team total) to justify the investment. This should be in their KRA/appointment letter.
+    </div>
+  `;
+}
+
+// ============ CAREER EARNING SIMULATOR ============
+function calculateCareerEarning() {
+  const salary = parseFloat(document.getElementById('careerSalary').value) || 0;
+  const role = document.getElementById('careerRole').value;
+  const achievement = parseFloat(document.getElementById('careerAchievement').value) || 100;
+
+  const roleMap = {
+    'l10': { name: 'Executive', next: 'Relationship Manager', jumpPct: 0.20, targetMult: 4 },
+    'l9': { name: 'Relationship Manager', next: 'Sr. RM', jumpPct: 0.18, targetMult: 6 },
+    'l8': { name: 'Sr. Relationship Manager', next: 'Sales Manager', jumpPct: 0.25, targetMult: 6 },
+    'l7': { name: 'Sales Manager', next: 'Asst. Branch Manager', jumpPct: 0.22, targetMult: 6 },
+    'l6': { name: 'CDM / ABM', next: 'Area Manager', jumpPct: 0.30, targetMult: 5 },
+    'l5': { name: 'Area Manager', next: 'Sales Head', jumpPct: 0.35, targetMult: 5 },
+    'l4': { name: 'Sales Head', next: 'Regional Manager/VP', jumpPct: 0.40, targetMult: 8 }
+  };
+
+  const r = roleMap[role];
+  const target = salary * r.targetMult;
+  const business = target * achievement / 100;
+
+  // Calculate incentive
+  let incentiveRate = 0;
+  if (achievement >= 150) incentiveRate = 0.06;
+  else if (achievement >= 130) incentiveRate = 0.05;
+  else if (achievement >= 110) incentiveRate = 0.046;
+  else if (achievement >= 80) incentiveRate = 0.04;
+
+  const incentive = business * incentiveRate;
+  const totalMonthly = salary + incentive;
+  const totalAnnual = totalMonthly * 12;
+
+  // Year 2 (promoted)
+  const y2Salary = salary * (1 + r.jumpPct);
+  const y2Incentive = y2Salary * r.targetMult * (achievement / 100) * incentiveRate;
+  const y2Monthly = y2Salary + y2Incentive;
+
+  // Year 3
+  const y3Salary = y2Salary * 1.15;
+  const y3Incentive = y3Salary * r.targetMult * (achievement / 100) * incentiveRate;
+  const y3Monthly = y3Salary + y3Incentive;
+
+  const resultDiv = document.getElementById('careerResult');
+  resultDiv.style.display = 'block';
+  resultDiv.innerHTML = `
+    <h3>3-Year Earning Trajectory: ${r.name}</h3>
+    <table>
+      <tr><th>Year</th><th>Role</th><th>Monthly Salary</th><th>Monthly Incentive (at ${achievement}%)</th><th>Total Monthly</th><th>Total Annual</th></tr>
+      <tr style="background:#ebf8ff;"><td><strong>Year 1 (Current)</strong></td><td>${r.name}</td><td>${fmt(salary)}</td><td>${fmt(incentive)}</td><td><strong>${fmt(totalMonthly)}</strong></td><td><strong>${fmt(totalAnnual)}</strong></td></tr>
+      <tr style="background:#f0fff4;"><td><strong>Year 2 (Promoted)</strong></td><td>${r.next}</td><td>${fmt(y2Salary)}</td><td>${fmt(y2Incentive)}</td><td><strong>${fmt(y2Monthly)}</strong></td><td><strong>${fmt(y2Monthly * 12)}</strong></td></tr>
+      <tr style="background:#f0fff4;"><td><strong>Year 3</strong></td><td>${r.next} (Senior)</td><td>${fmt(y3Salary)}</td><td>${fmt(y3Incentive)}</td><td><strong>${fmt(y3Monthly)}</strong></td><td><strong>${fmt(y3Monthly * 12)}</strong></td></tr>
+    </table>
+    <div class="success-highlight" style="margin-top:12px;">
+      <strong>3-Year Growth:</strong> From ${fmt(totalMonthly)}/month to ${fmt(y3Monthly)}/month = <strong>${((y3Monthly / totalMonthly - 1) * 100).toFixed(0)}% growth</strong> in total earning if ${achievement}% performance is maintained.
+    </div>
+    <div class="highlight">
+      <strong>This is the Career Roadmap document given on Day 1.</strong> It clearly shows: "If you perform at ${achievement}% of target consistently, here's exactly how your career and earnings will progress over 3 years at Trustner."
+    </div>
+  `;
+}
+
+// ============ DASHBOARD ============
+function loadEmployeeData() {
+  const sel = document.getElementById('dashEmployee');
+  const opt = sel.options[sel.selectedIndex];
+  if (opt.value) {
+    document.getElementById('dashBusiness').value = '';
+  }
+}
+
+function showDashboard() {
+  const sel = document.getElementById('dashEmployee');
+  const opt = sel.options[sel.selectedIndex];
+  if (!opt.value) { alert('Please select an employee'); return; }
+
+  const salary = parseFloat(opt.dataset.salary) || 0;
+  const role = opt.dataset.role;
+  const business = parseFloat(document.getElementById('dashBusiness').value) || 0;
+  const month = document.getElementById('dashMonth').value;
+  const empName = opt.text.split(' - ')[0];
+
+  let targetMult = 6;
+  if (role === 'cdm') targetMult = 2.5;
+  if (role === 'sales-head') targetMult = 8;
+  if (role === 'area-mgr') targetMult = 5;
+  if (role === 'outbound-tl') targetMult = 4;
+
+  const target = salary * targetMult;
+  const achievement = business > 0 ? (business / target * 100) : 0;
+
+  let status, statusColor, statusTag;
+  if (achievement >= 130) { status = 'Star Performer'; statusColor = '#38a169'; statusTag = 'tag-green'; }
+  else if (achievement >= 100) { status = 'High Performer'; statusColor = '#38a169'; statusTag = 'tag-green'; }
+  else if (achievement >= 80) { status = 'Meets Expectations'; statusColor = '#d69e2e'; statusTag = 'tag-yellow'; }
+  else if (achievement >= 60) { status = 'Below Expectations - PIP Warning'; statusColor = '#e53e3e'; statusTag = 'tag-yellow'; }
+  else if (achievement > 0) { status = 'Non-Performer - Action Required'; statusColor = '#e53e3e'; statusTag = 'tag-red'; }
+  else { status = 'Awaiting Data Entry'; statusColor = '#718096'; statusTag = 'tag-yellow'; }
+
+  let incentiveRate = 0;
+  if (achievement >= 150) incentiveRate = 0.06;
+  else if (achievement >= 130) incentiveRate = 0.05;
+  else if (achievement >= 110) incentiveRate = 0.046;
+  else if (achievement >= 80) incentiveRate = 0.04;
+
+  const incentive = business * incentiveRate;
+  const totalEarning = salary + incentive;
+  const costJustified = business >= salary * 1.6;
+
+  const resultDiv = document.getElementById('dashResult');
+  resultDiv.style.display = 'block';
+  resultDiv.innerHTML = `
+    <div class="card" style="margin-top:16px; border-left: 5px solid ${statusColor};">
+      <h3 style="margin-bottom:4px;">${empName}</h3>
+      <p style="color:var(--muted); margin-bottom:16px;">${month} | Monthly Salary: ${fmt(salary)} | Target: ${fmt(target)}</p>
+      <div class="grid-3">
+        <div style="text-align:center;">
+          <div style="font-size:36px; font-weight:bold; color:${statusColor};">${business > 0 ? fmtP(achievement) : '-'}</div>
+          <div style="font-size:13px; color:var(--muted);">Target Achievement</div>
+          <div class="progress-bar" style="margin-top:8px;">
+            <div class="progress-fill" style="width:${Math.min(achievement, 100)}%; background:${statusColor};"></div>
+          </div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:36px; font-weight:bold; color:var(--secondary);">${fmt(totalEarning)}</div>
+          <div style="font-size:13px; color:var(--muted);">Total Earning This Month</div>
+          <div style="font-size:12px; margin-top:4px;">Fixed: ${fmt(salary)} + Incentive: ${fmt(incentive)}</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:20px; font-weight:bold; margin-top:8px;"><span class="tag ${statusTag}">${status}</span></div>
+          <div style="font-size:12px; margin-top:8px;">Cost Justified: <strong style="color:${costJustified ? 'green' : 'red'}">${costJustified ? 'YES' : 'NO'}</strong></div>
+          <div style="font-size:12px;">Min Business Required: ${fmt(salary * 1.6)}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Initialize with first section visible
+document.addEventListener('DOMContentLoaded', function() {
+  showSection('overview');
+});
+</script>
+
+</body>
+</html>
