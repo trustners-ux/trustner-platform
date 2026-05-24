@@ -185,6 +185,19 @@ export default function NewDiagnosticPage() {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'Save failed' }));
+        // Session expired (24h admin / 12h employee TTL) — bounce to login.
+        // The draft is preserved in localStorage so nothing is lost; user
+        // returns here after signing in.
+        if (res.status === 401) {
+          setSaveError(
+            'Your session has expired. Redirecting to login… (your draft is auto-saved locally and will be here when you return)'
+          );
+          setTimeout(() => {
+            const next = encodeURIComponent('/admin/portfolio-diagnostic/new');
+            window.location.href = `/admin/login?next=${next}`;
+          }, 1500);
+          return;
+        }
         setSaveError(err.error ?? `HTTP ${res.status}`);
         return;
       }
