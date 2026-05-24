@@ -4,6 +4,242 @@ const AUTHOR = { name: 'Ram Shah', role: 'Founder & CEO, Trustner Asset Services
 
 export const blogPosts: BlogPost[] = [
 
+  // ───────────────────────────── POST 82 ────────────────────────────
+  // Today's relevant blog (simple-language portfolio diagnostic insight)
+  {
+    id: 'post-082',
+    title: 'If You Own More Than 7 Mutual Funds, You Don\'t Have a Diversified Portfolio. You Have a Mess.',
+    slug: 'too-many-mutual-funds-diversification-myth-portfolio-cleanup-india',
+    excerpt:
+      'A Trustner client we reviewed this week had ₹26 lakh spread across 15 mutual fund schemes. Four of them were flexi-cap funds. Three were multi-cap funds. Two folios held the same Franklin scheme. The portfolio had earned a 7.15% XIRR over five years — well below what a simple three-fund equity portfolio would have delivered. This is not unusual. It is the rule, not the exception. If you own more than 7 mutual funds today, your portfolio is almost certainly not 3x more diversified than someone who owns 5. It is just 3x harder to manage, 3x harder to rebalance, and 3x more likely to underperform. Here is why over-diversification destroys returns, and the simple test that tells you exactly how many funds you actually need.',
+    author: AUTHOR,
+    date: '2026-05-24',
+    category: 'Fund Analysis',
+    readTime: '8 min read',
+    tags: ['portfolio diagnostic', 'over-diversification', 'fund consolidation', 'asset allocation', 'mutual fund selection', 'flexi cap', 'multi cap', 'XIRR', 'MFD review', 'fund overlap', 'category concentration', 'simple investing', 'May 2026'],
+    featured: true,
+    coverGradient: 'from-emerald-900 to-teal-700',
+    content: [
+      {
+        type: 'paragraph',
+        text: 'This week, a Trustner client family ran their portfolio through our new Portfolio Diagnostic Workbench. The headline number looked fine on the surface: ₹26 lakh corpus, ₹2 lakh gain, 8.5% absolute return over five years. The XIRR — the right way to measure SIP returns — told a different story: 7.15%. Over the same five years, a simple Nifty 500 Index Fund delivered approximately 14% annualised. The portfolio was earning half of what the broader market gave for free.',
+      },
+      {
+        type: 'paragraph',
+        text: 'When we opened the bonnet, the cause was instantly obvious. The portfolio held 15 mutual fund schemes across 11 asset management companies. Four of those 15 were Flexi Cap funds. Three were Multi Cap funds. Two were Small Cap funds. The same Franklin India Flexi Cap appeared under two different folio numbers — a paperwork accident that nobody had ever cleaned up. The investor had been adding "a new good fund" every six months for five years, on the gentle assumption that more is safer.',
+      },
+      {
+        type: 'paragraph',
+        text: 'More is not safer. More is just more. This article explains why — in plain language, with the actual numbers.',
+      },
+
+      {
+        type: 'heading',
+        text: 'Diversification Has a Limit. And You Hit It Faster Than You Think.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The case for diversification is real and simple. If you own one stock and that one company has a bad year, your wealth has a bad year. If you own 50 stocks across different industries, the bad year of any one company barely shows up in your total return. This is the entire reason mutual funds exist — one Flexi Cap fund typically holds 40 to 80 stocks across every major sector. That fund, on its own, is already deeply diversified.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Here is the part most investors miss. The diversification benefit of adding a second Flexi Cap fund alongside your first is close to zero. Both funds are buying from the same universe of Indian large-cap, mid-cap, and small-cap companies. Both follow broadly the same SEBI rules for that category. Both end up with 60–80% overlap of the same top 30 stocks — Reliance, HDFC Bank, Infosys, ICICI Bank, TCS, ITC, L&T, Bharti Airtel, and so on. Adding a third or fourth Flexi Cap fund just buys you more of the same stocks under a different scheme name.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Academic research and our own data on Indian portfolios converges on the same answer. The marginal benefit of an additional mutual fund drops to near-zero somewhere between scheme number 6 and scheme number 8 — assuming each new scheme is in a genuinely different category (large cap, mid cap, small cap, debt, hybrid, international, gold). Beyond that point, you are not buying diversification. You are buying noise.',
+      },
+
+      {
+        type: 'callout',
+        variant: 'info',
+        text: 'A clean Indian equity portfolio for most clients needs at most ONE scheme in each of these categories: Flexi Cap (or Multi Cap, not both), Large & Mid Cap, Mid Cap, Small Cap, Hybrid Aggressive, Short Duration Debt, and Ultra Short Debt. That is seven schemes total. Anything beyond that should be specifically justified — for example, a thematic exposure to international equity, gold, or a passive index — not added on autopilot.',
+      },
+
+      {
+        type: 'heading',
+        text: 'The Three Real Costs of Owning Too Many Funds',
+      },
+      {
+        type: 'paragraph',
+        text: 'Over-diversification is not free. It comes with three quiet but compounding costs that most investors never see.',
+      },
+      {
+        type: 'paragraph',
+        text: 'COST 1: STAR PERFORMERS GET DILUTED. In every multi-year period, one or two of your funds will quietly do significantly better than the others. In our 15-fund example, Bandhan Small Cap delivered an 18.6% XIRR over five years — genuinely excellent. But because the investor only had 11% of the portfolio in that fund (the other 89% was spread across 14 mostly-mediocre schemes), the brilliant performance of the one good fund got drowned in the average of the rest. If the same investor had held 25% in Bandhan Small Cap, 25% in Parag Parikh Flexi Cap, 20% in Motilal Oswal Large & Mid, and the rest in just three more funds, their portfolio XIRR would have been materially higher.',
+      },
+      {
+        type: 'paragraph',
+        text: 'COST 2: REBALANCING BECOMES IMPOSSIBLE. The whole point of asset allocation is to bring the portfolio back to its target mix once a year. With 7 funds, this is a 30-minute job — sell ₹X from the over-weight, buy ₹Y in the under-weight, done. With 15 funds across 11 AMCs, rebalancing means staring at a spreadsheet for two hours, calling four different RMs, processing eight transactions, and probably giving up halfway. The investor we reviewed had not rebalanced once in five years — because the cognitive load of doing so was too high.',
+      },
+      {
+        type: 'paragraph',
+        text: 'COST 3: TAX EFFICIENCY GETS DESTROYED. Indian equity LTCG (gains held over 12 months) is taxed at 12.5% above ₹1,25,000 per year per investor. With 7 funds, you can plan switches and rebalances to stay within that ₹1.25 lakh exemption window every year, paying zero capital gains tax. With 15 funds, every rebalance triggers gains in five or six places simultaneously — most investors give up trying to optimise and just pay the tax. Over a decade, this leakage can easily cost 0.5–1.0% of annual return.',
+      },
+
+      {
+        type: 'heading',
+        text: 'The 7-Fund Test: A 60-Second Check You Can Run Right Now',
+      },
+      {
+        type: 'paragraph',
+        text: 'Open your CAS (Consolidated Account Statement) from CAMS, Karvy, or your MFD\'s monthly valuation report. Count the number of distinct mutual fund schemes you hold. Then ask three questions about that list.',
+      },
+      {
+        type: 'paragraph',
+        text: 'QUESTION 1: How many of those schemes are in the same SEBI category? If you have 2+ Flexi Cap funds, or 2+ Multi Cap funds, or 2+ Small Cap funds, you are paying twice for the same exposure. Pick the better one and consolidate.',
+      },
+      {
+        type: 'paragraph',
+        text: 'QUESTION 2: Is the same fund showing up under two folio numbers? This happens when a transfer-in from a prior MFD created a duplicate folio, or when an old paper application was processed alongside an online one. Both folios add zero value but double your paperwork. Consolidate to one folio.',
+      },
+      {
+        type: 'paragraph',
+        text: 'QUESTION 3: What is your debt allocation? If you are over 35 and your debt allocation is less than 15% of total portfolio, you do not have a diversified portfolio — you have a 100% equity portfolio with cosmetic debt. The bigger your equity overweight, the more you need a meaningful debt cushion to ride out rupee crises, oil shocks, and FII selling waves like the one this week.',
+      },
+
+      {
+        type: 'heading',
+        text: 'What the Cleanup Actually Looks Like',
+      },
+      {
+        type: 'paragraph',
+        text: 'In the 15-fund portfolio we reviewed, the clean-up plan reduced it to 7 schemes — one Flexi Cap (Parag Parikh), one Large & Mid Cap (Motilal Oswal), one Mid Cap (Invesco India), one Multi Cap (Nippon India), one Small Cap (Bandhan), one Hybrid Aggressive (ICICI Pru Equity & Debt), and two debt schemes to lift the debt allocation from 0.3% to 20%. Total tax cost of the entire restructure: zero, because all the gains being realised fit within the ₹1.25 lakh annual LTCG exemption.',
+      },
+      {
+        type: 'paragraph',
+        text: 'That is the typical outcome. Most Indian portfolios that look "diversified" with 12-18 schemes can be cleaned up to 6-8 schemes inside a single financial year, with little or no tax cost, and with a forward XIRR expectation that is materially higher than what the over-diversified version was producing.',
+      },
+
+      {
+        type: 'callout',
+        variant: 'tip',
+        text: 'You do not have to clean it up yourself. Trustner\'s new Portfolio Diagnostic Workbench scores every scheme in your portfolio against its category benchmark, flags duplicates, computes the tax cost of every proposed swap, and produces a restructured target portfolio in 24-48 hours. If you are a Trustner client, ask your Relationship Manager for a portfolio diagnostic review at your next interaction. If you are not yet a client, request one through the contact form on this website and a certified planner will get back to you within one working day. There is no charge for the diagnostic itself — the value is in the time you save and the returns you stop leaking.',
+      },
+
+      {
+        type: 'heading',
+        text: 'The Single Sentence That Should Stay With You',
+      },
+      {
+        type: 'paragraph',
+        text: 'Diversification is the only free lunch in investing. But like every lunch, you can have too much of it. Seven well-chosen mutual funds, held with discipline through good years and bad, will outperform fifteen mediocre funds in almost every five-year period. Count yours today. If the number starts with 1, it is probably time to clean.',
+      },
+    ],
+  },
+
+  // ───────────────────────────── POST 81 ────────────────────────────
+  // Newsletter companion (Market Analysis) — Issue 12 weekly recap
+  {
+    id: 'post-081',
+    title: 'Rupee Hits Lifetime Low ₹96.90, RBI Burns $8 Billion in Forex — Nifty Holds Flat at 23,719. What This Week Means for Your SIP.',
+    slug: 'rupee-lifetime-low-rbi-8-billion-intervention-nifty-flat-week-may-17-23-2026',
+    excerpt:
+      'On Tuesday May 20, 2026, the Indian rupee broke a record that nobody wanted to see broken — it touched ₹96.90 against the US dollar, the weakest level in history. The Reserve Bank of India responded with one of the most aggressive currency defences of 2026, selling approximately $8 billion from forex reserves over two sessions and dragging the rupee back to ₹95.59 by Friday. The Nifty 50 ended the week at 23,719.30 — almost exactly where it started. Bank Nifty was the visible casualty at -2.89%. Brent stayed elevated at $103.94/bbl. FIIs continued their now-historic selling streak, with year-to-date outflows at ₹1.92 lakh crore already exceeding the entire 2025 year in just five months. DIIs absorbed nearly 90% of that selling. Here is what actually happened, why it matters, and what it changes (and doesn\'t change) for your SIP plan.',
+    author: AUTHOR,
+    date: '2026-05-24',
+    category: 'Market Analysis',
+    readTime: '11 min read',
+    tags: ['rupee crisis', 'RBI intervention', 'forex reserves', 'FII outflows', 'DII flows', 'SIP discipline', 'Bank Nifty', 'Brent crude', 'May 2026', 'Weekly Market Brief', 'macro', 'currency defence', 'inflation risk', 'June MPC'],
+    coverGradient: 'from-amber-900 to-rose-800',
+    content: [
+      {
+        type: 'paragraph',
+        text: 'This was the week where the headline number was a lie. The Nifty 50 ended Friday May 22 at 23,719.30, up just 76 points from the prior Friday — a barely-visible +0.32% for the entire week. Anyone scanning the closing tickers might have concluded that nothing much happened. The truth is the exact opposite. The five trading sessions between May 17 and May 23, 2026 contained one of the most consequential macro events of 2026 so far — and the Nifty held flat only because the system worked exactly as it was designed to.',
+      },
+
+      {
+        type: 'heading',
+        text: 'Tuesday May 20: The Rupee Broke a Record',
+      },
+      {
+        type: 'paragraph',
+        text: 'On the morning of Tuesday May 20, USD/INR opened weak and kept weakening through the session. Just before noon, the pair touched approximately ₹96.90 to the dollar — a fresh all-time low, breaking the prior record of ₹95.7 set only a week earlier. To put that in context, the rupee has fallen roughly 4% against the dollar since early April and roughly 9% over twelve months. For a currency that the RBI has spent the last decade trying to anchor near ₹83-85, a ₹96.90 print is the kind of headline that wakes finance ministers and corporate treasurers at 2 AM.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The drivers were the now-familiar trio: Brent crude stuck above $100 (every $10 over $100 adds roughly $15 billion to India\'s annual oil import bill and widens the current account deficit by 0.3% of GDP), FIIs in heavy net-selling mode (₹1.92 lakh crore of equity outflows in the first five months of 2026 alone), and a hawkish US Federal Reserve keeping the dollar bid against most emerging market currencies. India is the world\'s third-largest crude importer, so the math is unforgiving — sustained $103-110 oil keeps the rupee under structural pressure regardless of how strong the domestic growth story looks.',
+      },
+
+      {
+        type: 'heading',
+        text: 'Tuesday Afternoon: RBI Responds With $8 Billion',
+      },
+      {
+        type: 'paragraph',
+        text: 'The RBI does not announce currency interventions in real time, but the after-the-fact data is unmistakable. Across Tuesday and Wednesday, India\'s forex reserves declined by approximately $8 billion — by far the heaviest two-day drawdown of 2026. That entire amount was effectively used to buy rupees and sell dollars in the spot market, supporting the currency. The intervention worked: by Wednesday close the rupee had bounced back to roughly ₹95.80, and by Friday close it was at ₹95.59 — a recovery of approximately ₹1.30 from the panic low.',
+      },
+      {
+        type: 'paragraph',
+        text: 'But $8 billion of forex reserves consumed in two days is not free. India\'s headline reserves of approximately $670 billion can absorb a few weeks of this kind of defence; it cannot absorb a few months. The RBI Governor used a mid-week communication to explicitly flag that elevated crude prices combined with continued supply-side pressures could fuel inflation risks and strain India\'s external sector despite resilient GDP growth. Read between those lines and you can hear the message: do not expect a rate cut at the June 5-7 MPC. The doves who had been pricing in a June cut spent Wednesday and Thursday quietly repricing.',
+      },
+
+      {
+        type: 'heading',
+        text: 'Bank Nifty Took The Pain. Index Investors Did Not.',
+      },
+      {
+        type: 'paragraph',
+        text: 'Banking and financial services stocks were the visible casualties of the deferred-rate-cut narrative. The Bank Nifty closed the week at 53,710.35 — down approximately 1,600 points or -2.89% on the week — the worst-performing major segment by a wide margin. Even Friday\'s sharp intraday rebound in Axis Bank, ICICI Bank, and HDFC Bank could not reverse the weekly damage. PSU bank counters absorbed most of the FII selling, with State Bank of India down -2.53% on Monday May 18 alone.',
+      },
+      {
+        type: 'paragraph',
+        text: 'If you held a basket of bank stocks directly, your portfolio took a roughly 3% hit this week. If you held a diversified flexi-cap or multi-cap mutual fund, the same banking weakness was offset by gains in Trent (a Friday Sensex leader), Tech Mahindra (+4.85% on Monday), Infosys, Bharti Airtel, Wipro, and the energy and consumer durables segments. Your fund NAV moved fractions of a percent. That is the structural advantage of a diversified mutual fund showing up exactly when an investor needs it most.',
+      },
+
+      {
+        type: 'heading',
+        text: 'The Quiet Numbers: FII vs DII, and Why You Are Now the Marginal Buyer',
+      },
+      {
+        type: 'paragraph',
+        text: 'On Friday May 22 alone, FIIs sold ₹4,440 crore of Indian equities in the cash market. DIIs bought ₹6,003 crore. The DII bid was bigger than the FII offer by ₹1,500 crore — and that pattern has now repeated, almost without interruption, for over five months. The cumulative numbers are striking. Foreign investors have pulled approximately ₹1.92 lakh crore out of Indian equities in calendar 2026 so far, already exceeding the full-year 2025 outflow of ₹1.66 lakh crore. In the same five months, domestic institutional investors — funded almost entirely by your SIPs and the SIPs of approximately 4.5 crore other Indian households — have put in ₹1.7 lakh crore. The absorption rate is roughly 90%.',
+      },
+      {
+        type: 'paragraph',
+        text: 'This is a structural shift, not a cyclical one. For the first time in Indian equity history, the Indian retail investor — through monthly SIP installments aggregating to ₹31,000+ crore — has become the marginal buyer of his own country\'s equity market. The Nifty held flat this week not because FIIs stopped selling. They did not. The Nifty held flat because for every ₹100 of FII selling, your monthly SIP plus the SIPs of every other disciplined Indian investor delivered ₹90 of buying. That is what a structural domestic floor looks like in practice.',
+      },
+
+      {
+        type: 'heading',
+        text: 'So What Should You Actually Do This Week?',
+      },
+      {
+        type: 'paragraph',
+        text: 'The honest answer is: very little. The macro picture is genuinely uncertain — Brent could go to $115 or back to $95, the rupee could test ₹97 or strengthen to ₹94, the June MPC could surprise with a cut or hold as expected. None of these can be predicted with any reliability. What can be done with reliability is the following.',
+      },
+      {
+        type: 'paragraph',
+        text: 'ONE — Do not pause your SIPs. The single biggest mistake an Indian investor can make right now is to look at the rupee at ₹96.90, the FII outflow headline at ₹1.92 lakh crore, and the Bank Nifty weakness, and conclude that this is the moment to step back. Every Indian SIP investor who paused during the 2008 crisis, the 2013 taper tantrum, the 2018 IL&FS panic, the 2020 COVID lockdown, or the 2022 Ukraine war eventually re-entered at higher levels and lost permanent compounding. The investors who stayed enrolled — buying units at the exact lower NAVs that headlines were screaming about — are the ones whose portfolios now sit comfortably above pre-crisis levels.',
+      },
+      {
+        type: 'paragraph',
+        text: 'TWO — Do not chase the rupee story with currency-themed mutual funds or thematic plays. Currency hedging is what the RBI and large corporate treasuries do. For an individual investor with a 10-year SIP horizon, equity returns of 12-15% annualised swamp the 2-3% per year of long-term rupee depreciation. Buying a USD-themed fund today, after the rupee has already weakened ~9% in twelve months, is selling cheap and buying expensive.',
+      },
+      {
+        type: 'paragraph',
+        text: 'THREE — Check your sector concentration. The Bank Nifty -2.89% week is a reminder that even a "diversified" portfolio can have hidden concentration. If your direct stock holdings plus your mutual fund banking exposure together exceed 30-35% of your total equity, this is the week to ask your Trustner Relationship Manager to model what a rebalance would look like. If your portfolio is sitting at 12-15 mutual fund schemes, this is also the week to ask for a Portfolio Diagnostic review (see the blog post we published alongside this one on over-diversification). The cleanup is usually tax-free within the ₹1.25 lakh annual LTCG exemption.',
+      },
+      {
+        type: 'paragraph',
+        text: 'FOUR — For new money in debt, stay short-duration. With the 10-Year G-Sec yield near 7.05% and the RBI in a clearly-on-hold posture, short-duration regular plans (low-duration funds and money-market funds) remain the right positioning for fresh debt allocations. The duration call can wait for the RBI to signal that the rate-cutting cycle has actually resumed.',
+      },
+
+      {
+        type: 'heading',
+        text: 'The Week Ahead',
+      },
+      {
+        type: 'paragraph',
+        text: 'The June 5-7 RBI MPC is now the single most important event in the calendar for Indian markets. The most likely outcome is a hold at the current 5.25% repo rate, with the policy statement leaning hawkish on the back of rupee and crude pressures. A surprise cut would be a strong positive catalyst for Bank Nifty and broader rate-sensitives; a hawkish hold could keep banking under pressure for a few more weeks. Either way, the SIP investor has the same answer prepared in advance: stay enrolled, do not try to time the announcement, let the next month\'s installment buy whatever the market is offering on its date.',
+      },
+      {
+        type: 'paragraph',
+        text: 'The full 3-page Trustner Weekly Market Brief covering all 14 sections — index performance, sectoral breakdown, currency and crude detail, FII/DII numbers, top movers, and the complete week-ahead calendar — is available for download as a PDF below. The PDF is designed to be printed and reviewed in 10 minutes; we send a fresh issue every Sunday.',
+      },
+    ],
+  },
+
   // ───────────────────────────── POST 79 ────────────────────────────
   {
     id: 'post-079',
@@ -16,7 +252,6 @@ export const blogPosts: BlogPost[] = [
     category: 'SIP Strategy',
     readTime: '13 min read',
     tags: ['VUCA', 'SIP discipline', 'market correction', 'redemption psychology', 'behavioural finance', 'Buffett crashes', '2008 crisis', '2020 COVID', 'past learnings', 'top-up', 'asset allocation', 'flexi-cap', 'small cap', 'long-term investing', 'MFD coaching', 'May 2026', 'Brent crisis', 'Iran ceasefire'],
-    featured: true,
     coverGradient: 'from-slate-900 to-amber-800',
     content: [
       {

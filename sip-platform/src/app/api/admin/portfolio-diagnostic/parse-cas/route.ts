@@ -57,10 +57,13 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const pdfBuffer = Buffer.from(arrayBuffer);
 
-    // Parse
+    // Parse — empty string password is treated as no password.
+    // Most Trustner Valuation Reports are not password-protected;
+    // only CAMS / Karvy CAS files require a PAN-based password.
+    const trimmedPassword = (password ?? '').trim();
     const result = await parseCasPdf({
       pdfBuffer,
-      password: password ?? undefined,
+      password: trimmedPassword.length > 0 ? trimmedPassword : undefined,
     });
 
     return NextResponse.json(result);

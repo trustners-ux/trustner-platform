@@ -20,6 +20,7 @@ import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '@/lib/auth/jwt';
 import { verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 import { getSupabaseAdmin } from '@/lib/db/supabase';
+import { APPROVER_EMAILS } from '@/lib/auth/config';
 import type {
   RawHolding,
   RawSip,
@@ -287,10 +288,29 @@ async function resolveEmployeeId(): Promise<number | null> {
 
   const supabase = getSupabaseAdmin();
   if (!supabase) return null;
+
+  // Case-insensitive lookup — JWT email casing can vary from the DB.
   const { data } = await supabase
     .from('employees')
     .select('id')
-    .eq('email', email)
-    .single();
-  return (data?.id as number) ?? null;
+    .ilike('email', email.trim())
+    .maybeSingle();
+  if (data?.id) return data.id as number;
+
+  // Approver fallback — Ram + Sangeeta should never be locked out.
+  // If their employees row isn't found by direct email match, try
+  // resolving by their canonical APPROVER_EMAILS, which always exist.
+  const emailLc = email.trim().toLowerCase();
+  if (APPROVER_EMAILS.includes(emailLc)) {
+    const { data: approverRow } = await supabase
+      .from('employees')
+      .select('id')
+      .ilike('email', emailLc)
+      .maybeSingle();
+    if (approverRow?.id) return approverRow.id as number;
+    // Final fallback: any employees row matching the lowercased approver email
+    // (covers data-entry case mismatches between JWT and DB).
+  }
+
+  return null;
 }

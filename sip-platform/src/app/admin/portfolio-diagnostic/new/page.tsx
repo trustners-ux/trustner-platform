@@ -597,11 +597,30 @@ function HoldingsTab({
 }: HoldingsTabProps) {
   const [mode, setMode] = useState<'cas' | 'manual'>('cas');
   const [casPassword, setCasPassword] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [passwordPromptVisible, setPasswordPromptVisible] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // When the parent reports an encrypted-PDF error, surface the
+  // password prompt. Otherwise hide it on success.
+  useEffect(() => {
+    if (casParseError && /password|encrypted|protected/i.test(casParseError)) {
+      setPasswordPromptVisible(true);
+    } else if (casParseSuccess) {
+      setPasswordPromptVisible(false);
+      setSelectedFile(null);
+      setCasPassword('');
+    }
+  }, [casParseError, casParseSuccess]);
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) onCasUpload(file, casPassword);
+    if (!file) return;
+    // Reset state, then try without password first.
+    setSelectedFile(file);
+    setPasswordPromptVisible(false);
+    setCasPassword('');
+    onCasUpload(file, '');
   }
 
   function addManualHolding() {
@@ -653,48 +672,100 @@ function HoldingsTab({
       {mode === 'cas' && (
         <div className="rounded-lg border border-slate-200 bg-white p-5">
           <h3 className="text-sm font-semibold text-slate-900 mb-2">
-            Upload Consolidated Account Statement (CAS)
+            Upload Consolidated Account Statement (CAS) or Trustner Valuation Report
           </h3>
           <p className="text-xs text-slate-500 mb-4">
-            CAMS or Karvy CAS PDF. Password is usually the investor&apos;s PAN (uppercase).
-            We parse holdings + active SIPs.
+            Drop the PDF here. <strong>No password needed for Trustner reports</strong> —
+            we&apos;ll ask only if the file turns out to be password-protected (typical for
+            CAMS / Karvy CAS, which use the investor&apos;s PAN as the password).
           </p>
 
-          <div className="space-y-3">
-            <FormField label="CAS Password (usually PAN)">
-              <input
-                type="password"
-                value={casPassword}
-                onChange={(e) => setCasPassword(e.target.value)}
-                placeholder="ABCDE1234F"
-                maxLength={10}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono uppercase"
-              />
-            </FormField>
+          {/* Selected-file pill — shown after a file is chosen */}
+          {selectedFile && (
+            <div className="mb-3 flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+              <span className="text-slate-700 truncate">
+                <FileText className="inline w-4 h-4 mr-1.5 text-slate-400" />
+                {selectedFile.name}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedFile(null);
+                  setPasswordPromptVisible(false);
+                  setCasPassword('');
+                  if (fileInputRef.current) fileInputRef.current.value = '';
+                }}
+                className="text-xs text-slate-500 hover:text-slate-900"
+              >
+                Remove
+              </button>
+            </div>
+          )}
 
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={casUploading}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition"
-            >
-              {casUploading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Upload className="h-4 w-4" />
-              )}
-              {casUploading ? 'Parsing...' : 'Choose CAS PDF'}
-            </button>
+          {/* Password prompt — only shown when parse failed with encrypted-PDF error */}
+          {passwordPromptVisible && (
+            <div className="mb-3 rounded-lg border border-amber-300 bg-amber-50 p-3">
+              <div className="flex items-start gap-2 mb-2">
+                <AlertTriangle className="h-4 w-4 text-amber-700 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-amber-900">
+                  <strong>This PDF is password-protected.</strong> Enter the password
+                  (usually the investor&apos;s PAN in uppercase) and we&apos;ll retry.
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={casPassword}
+                  onChange={(e) => setCasPassword(e.target.value.toUpperCase())}
+                  placeholder="ABCDE1234F"
+                  maxLength={10}
+                  autoFocus
+                  className="flex-1 rounded-lg border border-amber-300 px-3 py-2 text-sm font-mono uppercase focus:outline-none focus:border-amber-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (selectedFile && casPassword.trim()) {
+                      onCasUpload(selectedFile, casPassword.trim());
+                    }
+                  }}
+                  disabled={casUploading || casPassword.trim().length === 0}
+                  className="rounded-lg bg-amber-700 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-800 disabled:opacity-50"
+                >
+                  {casUploading ? 'Trying…' : 'Retry'}
+                </button>
+              </div>
+            </div>
+          )}
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="application/pdf"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-          </div>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={casUploading}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition"
+          >
+            {casUploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Upload className="h-4 w-4" />
+            )}
+            {casUploading
+              ? 'Parsing...'
+              : passwordPromptVisible
+              ? 'Choose Different PDF'
+              : selectedFile
+              ? 'Choose Different PDF'
+              : 'Choose CAS / Valuation PDF'}
+          </button>
 
-          {casParseError && (
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/pdf"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+
+          {casParseError && !passwordPromptVisible && (
             <div className="mt-4 rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-900 flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
               <div>
