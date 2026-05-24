@@ -278,6 +278,32 @@ export async function GET(
     .eq('action', 'SHARE_WITH_CLIENT')
     .order('created_at', { ascending: false });
 
+  // Also pull per-share-event token engagement (opens / first-opened)
+  const eventIds = (events ?? []).map((e) => (e as { id: number }).id);
+  const tokenRowsByEvent = new Map<
+    number,
+    Array<{ deliverableId: string; openCount: number; firstOpenedAt: string | null; lastOpenedAt: string | null; expiresAt: string; revokedAt: string | null }>
+  >();
+  if (eventIds.length > 0) {
+    const { data: tokenRows } = await supabase
+      .from('pd_share_links')
+      .select('share_event_id, deliverable_id, open_count, first_opened_at, last_opened_at, expires_at, revoked_at')
+      .in('share_event_id', eventIds);
+    for (const t of tokenRows ?? []) {
+      const eid = t.share_event_id as number;
+      const arr = tokenRowsByEvent.get(eid) ?? [];
+      arr.push({
+        deliverableId: t.deliverable_id as string,
+        openCount: (t.open_count as number) ?? 0,
+        firstOpenedAt: (t.first_opened_at as string | null) ?? null,
+        lastOpenedAt: (t.last_opened_at as string | null) ?? null,
+        expiresAt: t.expires_at as string,
+        revokedAt: (t.revoked_at as string | null) ?? null,
+      });
+      tokenRowsByEvent.set(eid, arr);
+    }
+  }
+
   const shares = (events ?? []).map((e) => {
     let payload: Record<string, unknown> = {};
     try {
@@ -287,8 +313,12 @@ export async function GET(
     }
     const actorObj = (e as { actor?: unknown }).actor;
     const actor = Array.isArray(actorObj) ? actorObj[0] : actorObj;
+    const eventId = (e as { id: number }).id;
+    const tokens = tokenRowsByEvent.get(eventId) ?? [];
+    const totalOpens = tokens.reduce((sum, t) => sum + t.openCount, 0);
+    const openedDeliverables = tokens.filter((t) => t.openCount > 0).map((t) => t.deliverableId);
     return {
-      id: (e as { id: number }).id,
+      id: eventId,
       createdAt: (e as { created_at: string }).created_at,
       actorName: (actor as { name?: string } | undefined)?.name ?? '—',
       actorEmail: (actor as { email?: string } | undefined)?.email ?? '',
@@ -296,6 +326,18 @@ export async function GET(
       recipients: (payload.recipients as string[]) ?? [],
       ccs: (payload.ccs as string[]) ?? [],
       hadCustomMessage: Boolean(payload.hadCustomMessage),
+      engagement: {
+        totalOpens,
+        openedDeliverables,
+        deliverables: tokens.map((t) => ({
+          id: t.deliverableId,
+          opens: t.openCount,
+          firstOpenedAt: t.firstOpenedAt,
+          lastOpenedAt: t.lastOpenedAt,
+          expiresAt: t.expiresAt,
+          revoked: Boolean(t.revokedAt),
+        })),
+      },
     };
   });
 

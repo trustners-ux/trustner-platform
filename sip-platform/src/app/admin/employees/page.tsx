@@ -240,7 +240,12 @@ function EmployeeTable({
             return (
               <tr key={e.id} className="border-t border-slate-100 hover:bg-slate-50">
                 <td className="px-4 py-2 align-top">
-                  <div className="font-semibold text-slate-900">{e.name}</div>
+                  <Link
+                    href={`/admin/employees/${e.id}`}
+                    className="font-semibold text-slate-900 hover:text-primary-700"
+                  >
+                    {e.name}
+                  </Link>
                   <div className="text-xs text-slate-500">{e.employeeCode} · {e.email ?? '—'}</div>
                 </td>
                 <td className="px-4 py-2 align-top text-xs text-slate-700">

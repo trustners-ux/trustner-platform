@@ -14,6 +14,7 @@ import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '@/lib/auth/jwt';
 import { verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 import { getSupabaseAdmin } from '@/lib/db/supabase';
+import { logArtefactView } from '@/lib/permissions/hierarchy';
 import type { Verdict } from '@/lib/portfolio-diagnostic/types';
 
 export async function GET(
@@ -55,6 +56,28 @@ export async function GET(
       { status: 404 }
     );
   }
+
+  // ── Audit log: record this read ──
+  // Fire-and-forget — never blocks the user-facing response.
+  // Resolves the viewer's employees.id by email asynchronously and
+  // writes one row to app_artefact_views with the artefact link.
+  void (async () => {
+    const sb = getSupabaseAdmin();
+    if (!sb) return;
+    const { data: emp } = await sb
+      .from('employees')
+      .select('id')
+      .ilike('email', employeeEmail.trim())
+      .maybeSingle();
+    if (emp?.id) {
+      await logArtefactView({
+        viewerEmployeeId: emp.id as number,
+        artefactType: 'portfolio_diagnostic',
+        artefactId: parseInt(id, 10),
+        userAgent: request.headers.get('user-agent') ?? undefined,
+      });
+    }
+  })();
 
   // ── Load holdings ─────────────────────────────────────────
   const { data: holdings } = await supabase

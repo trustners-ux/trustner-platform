@@ -89,6 +89,18 @@ interface ShareHistoryItem {
   recipients: string[];
   ccs: string[];
   hadCustomMessage: boolean;
+  engagement?: {
+    totalOpens: number;
+    openedDeliverables: string[];
+    deliverables: Array<{
+      id: string;
+      opens: number;
+      firstOpenedAt: string | null;
+      lastOpenedAt: string | null;
+      expiresAt: string;
+      revoked: boolean;
+    }>;
+  };
 }
 
 // Catalog mirrors src/lib/portfolio-diagnostic/send-client-share-email.ts
@@ -744,6 +756,24 @@ export default function ReviewPage() {
                       {h.deliverables.join(' · ')}
                       {h.hadCustomMessage && ' · custom note'}
                     </div>
+                    {/* Engagement signals — what the client actually opened */}
+                    {h.engagement && h.engagement.totalOpens > 0 ? (
+                      <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                          <Eye className="h-2.5 w-2.5" />
+                          {h.engagement.totalOpens} open{h.engagement.totalOpens !== 1 ? 's' : ''}
+                        </span>
+                        {h.engagement.deliverables.filter((d) => d.opens > 0).map((d) => (
+                          <span key={d.id} className="inline-block px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-700">
+                            {d.id}: {d.opens}×
+                          </span>
+                        ))}
+                      </div>
+                    ) : h.engagement ? (
+                      <div className="mt-1.5 text-[10px] text-slate-400 italic">
+                        Not yet opened by the client
+                      </div>
+                    ) : null}
                   </div>
                 ))}
               </div>
