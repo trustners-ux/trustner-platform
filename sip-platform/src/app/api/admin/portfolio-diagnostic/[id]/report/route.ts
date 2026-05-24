@@ -19,6 +19,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '@/lib/auth/jwt';
 import { verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
+import { getSupabaseAdmin } from '@/lib/db/supabase';
 import { loadReportData } from '@/lib/portfolio-diagnostic/report-data';
 import { renderFullPortfolioReviewHtml } from '@/lib/portfolio-diagnostic/reports/full-portfolio-review';
 import { renderActionSheetHtml } from '@/lib/portfolio-diagnostic/reports/action-sheet';
@@ -39,11 +40,6 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const email = await resolveEmployeeEmail();
-  if (!email) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-  }
-
   const numericId = parseInt(id, 10);
   if (Number.isNaN(numericId)) {
     return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
@@ -57,6 +53,32 @@ export async function GET(
       { status: 400 }
     );
   }
+
+  // Auth: either an admin/employee cookie OR a valid share token in ?token=...
+  // Token path lets unauthenticated clients open the deliverable link
+  // we emailed them. Tokens are bound to (run_id, deliverable_id) and
+  // expire after the configured TTL (90 days by default).
+  const shareToken = url.searchParams.get('token');
+  let authMode: 'session' | 'token' = 'session';
+
+  if (shareToken) {
+    const tokenOk = await validateShareToken(shareToken, numericId, type);
+    if (!tokenOk) {
+      return NextResponse.json(
+        { error: 'Share link is invalid, expired, or revoked. Please ask your advisor to resend.' },
+        { status: 401 }
+      );
+    }
+    authMode = 'token';
+  } else {
+    const email = await resolveEmployeeEmail();
+    if (!email) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+  }
+  // authMode is currently informational; could be used later to inject
+  // a "Shared with you by your advisor" banner on client-only views.
+  void authMode;
 
   const data = await loadReportData(numericId);
   if (!data) {
@@ -127,4 +149,51 @@ async function resolveEmployeeEmail(): Promise<string | null> {
     if (p) return p.email;
   }
   return null;
+}
+
+/**
+ * Validate a signed share token. Returns true if the token:
+ *   - exists in pd_share_links
+ *   - matches the requested diagnostic_run_id
+ *   - matches the requested deliverable type (so a Full link cannot be
+ *     used to fetch the Action sheet — strict deliverable binding)
+ *   - is not expired
+ *   - is not revoked
+ *
+ * Also (best-effort) increments open_count + sets last_opened_at for
+ * engagement tracking. Tracking is fire-and-forget; never blocks the
+ * download path.
+ */
+async function validateShareToken(
+  token: string,
+  runId: number,
+  deliverableType: string
+): Promise<boolean> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return false;
+
+  const { data: row } = await supabase
+    .from('pd_share_links')
+    .select(
+      'id, diagnostic_run_id, deliverable_id, expires_at, revoked_at, open_count, first_opened_at'
+    )
+    .eq('token', token)
+    .maybeSingle();
+
+  if (!row) return false;
+  if (row.diagnostic_run_id !== runId) return false;
+  if (row.deliverable_id !== deliverableType) return false;
+  if (row.revoked_at) return false;
+  if (new Date(row.expires_at as string).getTime() < Date.now()) return false;
+
+  // Engagement tracking (fire-and-forget)
+  const now = new Date().toISOString();
+  const updates: Record<string, unknown> = {
+    last_opened_at: now,
+    open_count: ((row.open_count as number) ?? 0) + 1,
+  };
+  if (!row.first_opened_at) updates.first_opened_at = now;
+  void supabase.from('pd_share_links').update(updates).eq('id', row.id);
+
+  return true;
 }

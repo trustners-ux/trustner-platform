@@ -16,6 +16,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { randomBytes } from 'crypto';
 import { verifyToken, COOKIE_NAME } from '@/lib/auth/jwt';
 import { verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 import { getSupabaseAdmin } from '@/lib/db/supabase';
@@ -24,6 +25,16 @@ import {
   DELIVERABLE_OPTIONS,
   type DeliverableId,
 } from '@/lib/portfolio-diagnostic/send-client-share-email';
+
+// Tokens expire 90 days from issue. Long enough for a slow-to-respond
+// client to still open the report; short enough that abandoned links
+// can't be reused indefinitely.
+const TOKEN_TTL_DAYS = 90;
+
+function mintToken(): string {
+  // 32 url-safe chars: 24 random bytes → base64url → 32 chars
+  return randomBytes(24).toString('base64url');
+}
 
 const VALID_DELIVERABLE_IDS = new Set(DELIVERABLE_OPTIONS.map((d) => d.id));
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -130,10 +141,44 @@ export async function POST(
     );
   }
 
+  // Mint a fresh signed token PER deliverable so clients (who have no
+  // employee/admin session) can open the share-email links. Each token
+  // is bound to its (diagnostic, deliverable) pair, expires in 90 days,
+  // and is revocable by setting revoked_at.
+  const expiresAt = new Date(Date.now() + TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const tokenByDeliverable: Record<string, string> = {};
+  const linkRowsToInsert = deliverableIds.map((dId) => {
+    const tok = mintToken();
+    tokenByDeliverable[dId] = tok;
+    return {
+      diagnostic_run_id: parseInt(id, 10),
+      deliverable_id: dId,
+      token: tok,
+      created_by_employee_id: actorId,
+      expires_at: expiresAt,
+      recipient_emails: validRecipients,
+    };
+  });
+
+  // Insert all token rows first — if this fails, abort before sending
+  // any email (so we don't leak dead links to clients).
+  const { error: tokenErr } = await supabase
+    .from('pd_share_links')
+    .insert(linkRowsToInsert);
+  if (tokenErr) {
+    return NextResponse.json(
+      {
+        error: `Could not mint share tokens: ${tokenErr.message}. Has migration 011_pd_share_links.sql been applied?`,
+      },
+      { status: 500 }
+    );
+  }
+
   // Send via Resend
   const sendResult = await sendClientShareEmail({
     diagnosticRunId: parseInt(id, 10),
     deliverableIds,
+    deliverableTokens: tokenByDeliverable,
     recipientEmails: validRecipients,
     ccEmails: validCcs,
     subject: body.subject,
@@ -144,6 +189,12 @@ export async function POST(
   });
 
   if (!sendResult.success) {
+    // Roll back the share-link rows so a failed send doesn't leave
+    // orphan tokens around.
+    await supabase
+      .from('pd_share_links')
+      .delete()
+      .in('token', Object.values(tokenByDeliverable));
     return NextResponse.json(
       {
         error: sendResult.error ?? 'Send failed',
@@ -162,17 +213,30 @@ export async function POST(
     subject: body.subject || null,
     hadCustomMessage: Boolean(body.message?.trim()),
     emailId: sendResult.emailId || null,
+    expiresAt,
   };
 
-  await supabase.from('pd_workflow_events').insert({
-    diagnostic_run_id: parseInt(id, 10),
-    actor_employee_id: actorId,
-    actor_role: 'admin',     // any planner can share; not gated by approve/publish role
-    action: 'SHARE_WITH_CLIENT',
-    from_status: run.status,
-    to_status: run.status,   // no status transition
-    comment: JSON.stringify(auditPayload),
-  });
+  const { data: eventRow } = await supabase
+    .from('pd_workflow_events')
+    .insert({
+      diagnostic_run_id: parseInt(id, 10),
+      actor_employee_id: actorId,
+      actor_role: 'admin',     // any planner can share; not gated by approve/publish role
+      action: 'SHARE_WITH_CLIENT',
+      from_status: run.status,
+      to_status: run.status,   // no status transition
+      comment: JSON.stringify(auditPayload),
+    })
+    .select('id')
+    .single();
+
+  // Backfill the share_event_id on the token rows so we can join them
+  if (eventRow?.id) {
+    await supabase
+      .from('pd_share_links')
+      .update({ share_event_id: eventRow.id })
+      .in('token', Object.values(tokenByDeliverable));
+  }
 
   return NextResponse.json({
     success: true,

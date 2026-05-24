@@ -71,6 +71,14 @@ export const SEGMENT_DEFAULTS: Record<ClientSegment, DeliverableId[]> = {
 export interface SendShareOptions {
   diagnosticRunId: number;
   deliverableIds: DeliverableId[];
+  /**
+   * Per-deliverable signed tokens minted by the /share endpoint. URLs in
+   * the email become `…/report?type=X&token=…` so unauthenticated clients
+   * can open them. If a token is missing for a deliverable, that link
+   * will fail for clients — caller must supply tokens for all selected
+   * deliverables.
+   */
+  deliverableTokens?: Record<string, string>;
   recipientEmails: string[];
   ccEmails?: string[];
   subject?: string;
@@ -136,11 +144,18 @@ export async function sendClientShareEmail(
   );
 
   const baseUrl = `${SITE_URL}/api/admin/portfolio-diagnostic/${opts.diagnosticRunId}/report`;
-  const links = selectedDeliverables.map((d) => ({
-    label: `${d.emoji} ${d.label}`,
-    desc: d.description,
-    url: `${baseUrl}?type=${d.urlSuffix}`,
-  }));
+  const links = selectedDeliverables.map((d) => {
+    const token = opts.deliverableTokens?.[d.id];
+    // Append signed token so unauthenticated clients can open the URL.
+    // (If no token was supplied, the link will 401 for clients — but it
+    // still works for internal advisors via their cookie session.)
+    const tokenParam = token ? `&token=${encodeURIComponent(token)}` : '';
+    return {
+      label: `${d.emoji} ${d.label}`,
+      desc: d.description,
+      url: `${baseUrl}?type=${d.urlSuffix}${tokenParam}`,
+    };
+  });
 
   const subject =
     opts.subject?.trim() ||
