@@ -132,10 +132,29 @@ export default function EditDiagnosticPage() {
   }
 
   async function submitForReview() {
-    // Note: replaced native confirm() with inline action — re-add a
-    // React modal later if a confirmation step is desired.
     setSubmitting(true);
     try {
+      // Auto-trigger scoring if any holding is unscored. Saves the user
+      // a click and ensures the reviewer always sees scored data.
+      const needsScoring = diagnostic?.holdings.some(
+        (h) => h.compositeScore === null || h.compositeScore === undefined
+      );
+      if (needsScoring) {
+        const scoreRes = await fetch(`/api/admin/portfolio-diagnostic/${id}/score`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({}),
+        });
+        if (!scoreRes.ok) {
+          const err = await scoreRes.json().catch(() => ({} as { error?: string }));
+          alert(`Auto-scoring failed before submit: ${err.error ?? scoreRes.status}. ` +
+            'Click "Run Scoring" manually, fix any issues, then submit.');
+          setSubmitting(false);
+          return;
+        }
+      }
+
       const res = await fetch(`/api/admin/portfolio-diagnostic/${id}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
