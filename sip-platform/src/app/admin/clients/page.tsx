@@ -107,6 +107,12 @@ export default function ClientsDirectoryPage() {
             Every family Trustner serves — searchable, filterable, with one-click drill-down into their complete history.
           </p>
         </div>
+        <Link
+          href="/admin/clients/import"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-2 text-xs font-bold text-white hover:bg-primary-700"
+        >
+          Import CSV / Excel
+        </Link>
       </div>
 
       {/* KPI strip */}
