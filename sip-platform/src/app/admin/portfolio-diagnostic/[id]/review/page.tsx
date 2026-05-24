@@ -35,6 +35,9 @@ import {
   ClipboardCheck,
   FileSpreadsheet,
   Presentation,
+  Mail,
+  Eye,
+  Clock,
 } from 'lucide-react';
 import type {
   Verdict,
@@ -77,6 +80,33 @@ interface Comment {
   createdAt: string;
 }
 
+interface ShareHistoryItem {
+  id: number;
+  createdAt: string;
+  actorName: string;
+  actorEmail: string;
+  deliverables: string[];
+  recipients: string[];
+  ccs: string[];
+  hadCustomMessage: boolean;
+}
+
+// Catalog mirrors src/lib/portfolio-diagnostic/send-client-share-email.ts
+// (kept in sync — small enough that duplication is cheaper than an extra fetch).
+const DELIVERABLE_CATALOG: Array<{
+  id: 'one-pager' | 'full' | 'three-pager' | 'action' | 'xlsx' | 'pptx';
+  label: string;
+  desc: string;
+  previewSuffix: string;
+}> = [
+  { id: 'one-pager',   label: '📋 One-Pager Snapshot',     desc: 'Single-page bottom-line summary',                          previewSuffix: 'one-pager'   },
+  { id: 'full',        label: '📄 Full Portfolio Review',  desc: 'Detailed 2-page tier-by-tier verdict report',              previewSuffix: 'full'        },
+  { id: 'three-pager', label: '📊 Three-Pager Diagnostic', desc: 'Methodology + holdings + wealth projection',               previewSuffix: 'three-pager' },
+  { id: 'action',      label: '✅ Action Sheet',            desc: 'Sign-off ready execution plan with tax estimate',          previewSuffix: 'action'      },
+  { id: 'xlsx',        label: '📈 Wealth Math Tracker',     desc: 'Excel workbook with stay-vs-realign math',                 previewSuffix: 'xlsx'        },
+  { id: 'pptx',        label: '🎯 Family Meeting Deck',     desc: 'PowerPoint for the in-person review',                      previewSuffix: 'pptx'        },
+];
+
 // ─────────────────────────────────────────────────────────────────
 // PAGE COMPONENT
 // ─────────────────────────────────────────────────────────────────
@@ -106,8 +136,23 @@ export default function ReviewPage() {
   const [overrideOpen, setOverrideOpen] = useState<number | null>(null);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
 
+  // Share-with-Client state — planner picks which deliverables to send
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareSelected, setShareSelected] = useState<Record<string, boolean>>({
+    'one-pager': false, full: false, 'three-pager': false,
+    action: false, xlsx: false, pptx: false,
+  });
+  const [shareRecipient, setShareRecipient] = useState('');
+  const [shareCc, setShareCc] = useState('wecare@merasip.com');
+  const [shareSubject, setShareSubject] = useState('');
+  const [shareMessage, setShareMessage] = useState('');
+  const [shareIncludeKpi, setShareIncludeKpi] = useState(true);
+  const [shareSending, setShareSending] = useState(false);
+  const [shareHistory, setShareHistory] = useState<ShareHistoryItem[]>([]);
+
   useEffect(() => {
     void loadDiagnostic();
+    void loadShareHistory();
   }, [id]);
 
   async function loadDiagnostic() {
@@ -129,6 +174,76 @@ export default function ReviewPage() {
       setError((e as Error).message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadShareHistory() {
+    try {
+      const res = await fetch(`/api/admin/portfolio-diagnostic/${id}/share`, {
+        credentials: 'include',
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setShareHistory(data.shares ?? []);
+    } catch {
+      // Silent — history is a nice-to-have, not blocking
+    }
+  }
+
+  async function sendShare() {
+    const selectedIds = Object.entries(shareSelected)
+      .filter(([, v]) => v)
+      .map(([k]) => k);
+    if (selectedIds.length === 0) {
+      alert('Pick at least one report to share.');
+      return;
+    }
+    const recipients = shareRecipient
+      .split(/[,;\n]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (recipients.length === 0) {
+      alert('Add at least one recipient email.');
+      return;
+    }
+    const ccs = shareCc
+      .split(/[,;\n]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    setShareSending(true);
+    try {
+      const res = await fetch(`/api/admin/portfolio-diagnostic/${id}/share`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          deliverableIds: selectedIds,
+          recipientEmails: recipients,
+          ccEmails: ccs,
+          subject: shareSubject || undefined,
+          message: shareMessage || undefined,
+          includeKpiSnapshot: shareIncludeKpi,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(`Send failed: ${data.error ?? `HTTP ${res.status}`}`);
+        return;
+      }
+      alert(`Sent ${selectedIds.length} report(s) to ${recipients.join(', ')}.`);
+      // Reset selection but keep recipient + cc for follow-ups
+      setShareSelected({
+        'one-pager': false, full: false, 'three-pager': false,
+        action: false, xlsx: false, pptx: false,
+      });
+      setShareSubject('');
+      setShareMessage('');
+      void loadShareHistory();
+    } catch (e) {
+      alert(`Send failed: ${(e as Error).message}`);
+    } finally {
+      setShareSending(false);
     }
   }
 
@@ -329,7 +444,13 @@ export default function ReviewPage() {
             {diagnostic.availableActions?.includes('PUBLISH') && (
               <button
                 onClick={() => {
-                  if (confirm('Publishing will generate 4 PDFs and email the client. Continue?'))
+                  if (
+                    confirm(
+                      'Mark this diagnostic as Published (internally final & ready)? ' +
+                        'The client will NOT be auto-emailed — you choose which reports to share ' +
+                        'from the "Share with Client" panel below.'
+                    )
+                  )
                     void workflowAction('publish');
                 }}
                 disabled={!!actionInProgress}
@@ -338,21 +459,24 @@ export default function ReviewPage() {
                 {actionInProgress === 'publish' ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <Send className="h-3.5 w-3.5" />
+                  <CheckCircle2 className="h-3.5 w-3.5" />
                 )}
-                Publish to Client
+                Mark Published
               </button>
             )}
           </div>
         </div>
 
-        {/* Client-facing deliverables — six formats covering every meeting context */}
+        {/* Internal preview — advisor views all 6 formats privately to judge which to share */}
         {diagnostic.holdings.length > 0 && (
           <div className="mt-4 pt-4 border-t border-slate-200">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-slate-600">CLIENT DELIVERABLES (6 formats):</span>
+              <div className="flex items-center gap-2">
+                <Eye className="h-4 w-4 text-slate-500" />
+                <span className="text-xs font-semibold text-slate-600">INTERNAL PREVIEW (advisor only — client sees nothing until you Share)</span>
+              </div>
               <span className="text-xs text-slate-500">
-                HTML opens print view → Cmd+P → Save as PDF · XLSX / PPTX download directly
+                HTML → Cmd+P → PDF · XLSX / PPTX download directly
               </span>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -427,6 +551,206 @@ export default function ReviewPage() {
           ))}
         </div>
       </div>
+
+      {/* ──── SHARE WITH CLIENT ─────────────────────────────────────
+          Only visible once internally approved. Planner picks which
+          reports to send — never auto-sends. Tracks history for audit. */}
+      {['APPROVED', 'PUBLISHED'].includes(diagnostic.status) && (
+        <div className="rounded-lg border border-teal-200 bg-gradient-to-br from-teal-50 to-white p-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-teal-700" />
+              <h2 className="text-base font-bold text-teal-900">Share with Client</h2>
+              <span className="text-xs text-slate-500">
+                · You decide which reports go out, when, and to whom.
+              </span>
+            </div>
+            <button
+              onClick={() => setShareOpen((v) => !v)}
+              className="text-xs font-semibold text-teal-700 hover:text-teal-900"
+            >
+              {shareOpen ? 'Hide' : `Compose share${shareHistory.length > 0 ? ` (${shareHistory.length} sent)` : ''}`}
+            </button>
+          </div>
+
+          {shareOpen && (
+            <div className="mt-4 space-y-4">
+              {/* Pick reports */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wide text-slate-600 mb-2">
+                  1 · Pick reports to include
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {DELIVERABLE_CATALOG.map((d) => (
+                    <label
+                      key={d.id}
+                      className={`flex items-start gap-2 rounded-lg border p-3 cursor-pointer transition ${
+                        shareSelected[d.id]
+                          ? 'border-teal-500 bg-teal-50'
+                          : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        className="mt-0.5"
+                        checked={shareSelected[d.id]}
+                        onChange={(e) =>
+                          setShareSelected((prev) => ({ ...prev, [d.id]: e.target.checked }))
+                        }
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold text-slate-900">{d.label}</div>
+                        <div className="text-xs text-slate-600 mt-0.5">{d.desc}</div>
+                        <a
+                          href={`/api/admin/portfolio-diagnostic/${id}/report?type=${d.previewSuffix}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-[11px] text-teal-700 hover:text-teal-900 mt-1 inline-flex items-center gap-1"
+                        >
+                          <Eye className="h-3 w-3" /> Preview
+                        </a>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+                <div className="mt-2 text-[11px] text-slate-500">
+                  Tip: not every client needs all six. Retail clients usually value just
+                  One-Pager + Action; HNI/UHNI families typically get Full + Meeting Deck.
+                </div>
+              </div>
+
+              {/* Recipients */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wide text-slate-600 mb-1">
+                    2 · To (client email)
+                  </label>
+                  <input
+                    type="text"
+                    value={shareRecipient}
+                    onChange={(e) => setShareRecipient(e.target.value)}
+                    placeholder="client@example.com (comma-separate multiple)"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wide text-slate-600 mb-1">
+                    Cc (internal)
+                  </label>
+                  <input
+                    type="text"
+                    value={shareCc}
+                    onChange={(e) => setShareCc(e.target.value)}
+                    placeholder="wecare@merasip.com"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Subject + Message */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wide text-slate-600 mb-1">
+                  3 · Subject (optional — defaults to portfolio report)
+                </label>
+                <input
+                  type="text"
+                  value={shareSubject}
+                  onChange={(e) => setShareSubject(e.target.value)}
+                  placeholder={`Your Portfolio Diagnostic Report — ${diagnostic.familyName}`}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wide text-slate-600 mb-1">
+                  4 · Personal note (optional — replaces default intro paragraph)
+                </label>
+                <textarea
+                  value={shareMessage}
+                  onChange={(e) => setShareMessage(e.target.value)}
+                  rows={4}
+                  placeholder="e.g. Dear Ramesh, I have completed a fresh review of your family portfolio. Before we meet on Friday, please review the Action Sheet — I have flagged 2 swaps that will save you ~₹38k in expense ratio annually..."
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
+                />
+              </div>
+
+              {/* Options */}
+              <label className="flex items-center gap-2 text-xs text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={shareIncludeKpi}
+                  onChange={(e) => setShareIncludeKpi(e.target.checked)}
+                />
+                Include KPI snapshot (Invested / Current / Gain / XIRR) at top of email
+              </label>
+
+              {/* Send */}
+              <div className="flex items-center justify-between pt-2 border-t border-slate-200">
+                <div className="text-xs text-slate-600">
+                  <span className="font-semibold">
+                    {Object.values(shareSelected).filter(Boolean).length}
+                  </span>{' '}
+                  report(s) selected ·{' '}
+                  <span className="font-semibold">
+                    {shareRecipient.split(/[,;\n]/).filter((s) => s.trim()).length}
+                  </span>{' '}
+                  recipient(s)
+                </div>
+                <button
+                  onClick={() => void sendShare()}
+                  disabled={shareSending}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-teal-700 px-4 py-2 text-sm font-bold text-white hover:bg-teal-800 disabled:opacity-50"
+                >
+                  {shareSending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                  Send to Client
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* History timeline */}
+          {shareHistory.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-teal-200">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="h-4 w-4 text-slate-500" />
+                <span className="text-xs font-bold uppercase tracking-wide text-slate-600">
+                  Share History ({shareHistory.length})
+                </span>
+              </div>
+              <div className="space-y-2">
+                {shareHistory.map((h) => (
+                  <div key={h.id} className="text-xs text-slate-700 bg-white rounded-md border border-slate-200 px-3 py-2">
+                    <div className="flex items-center justify-between flex-wrap gap-1">
+                      <span>
+                        <strong>{h.actorName}</strong> shared{' '}
+                        <strong>
+                          {h.deliverables.length} report{h.deliverables.length !== 1 ? 's' : ''}
+                        </strong>{' '}
+                        with <strong>{h.recipients.join(', ')}</strong>
+                        {h.ccs.length > 0 && <span className="text-slate-500"> (cc {h.ccs.join(', ')})</span>}
+                      </span>
+                      <span className="text-slate-500">
+                        {new Date(h.createdAt).toLocaleString('en-IN', {
+                          dateStyle: 'medium',
+                          timeStyle: 'short',
+                        })}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">
+                      {h.deliverables.join(' · ')}
+                      {h.hadCustomMessage && ' · custom note'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="border-b border-slate-200">

@@ -352,6 +352,10 @@ export function getAvailableActions(input: {
         ESCALATE: 'canReview',
         REJECT: 'canApprove',
         PUBLISH: 'canPublish',
+        // SHARE_WITH_CLIENT does not transition state. We allow anyone who
+        // can publish to share — the share itself is gated by status
+        // (APPROVED/PUBLISHED only) in the /share endpoint.
+        SHARE_WITH_CLIENT: 'canPublish',
         ARCHIVE: 'canOverrideHierarchy',
         OVERRIDE: 'canOverrideHierarchy',
         CREATE_DRAFT: 'canUpload',

@@ -137,6 +137,7 @@ export type WorkflowAction =
   | 'ESCALATE'
   | 'REJECT'
   | 'PUBLISH'
+  | 'SHARE_WITH_CLIENT'    // planner selectively shared a subset of deliverables
   | 'ARCHIVE'
   | 'OVERRIDE';
 

@@ -172,30 +172,12 @@ export async function POST(
     comment: body.comment ?? null,
   });
 
-  // On PUBLISH, send the client-facing email with deep links to all 6 deliverables.
-  // Fire-and-don't-block: if email fails, the publish still succeeds.
-  let emailResult: { sentTo?: string[]; error?: string; skipped?: boolean } | null = null;
-  if (actionDef.to === 'PUBLISHED') {
-    try {
-      const { sendPublishNotificationEmail } = await import('@/lib/portfolio-diagnostic/send-publish-email');
-      const { data: actorRow } = await supabase
-        .from('employees')
-        .select('name, email')
-        .eq('id', actorEmployeeId)
-        .maybeSingle();
-      const r = await sendPublishNotificationEmail({
-        diagnosticRunId: parseInt(id, 10),
-        publishedByName: (actorRow?.name as string) ?? 'Trustner',
-        publishedByEmail: (actorRow?.email as string) ?? 'wecare@merasip.com',
-      });
-      emailResult = r.success
-        ? { sentTo: r.sentTo }
-        : { error: r.error, skipped: r.skipped };
-    } catch (e) {
-      console.error('[publish] Email send failed (non-fatal):', e);
-      emailResult = { error: e instanceof Error ? e.message : String(e) };
-    }
-  }
+  // NOTE: Publish does NOT auto-email the client. It only marks the diagnostic
+  // as internally approved + ready to share. Client communication happens via
+  // the separate /share endpoint where the planner picks which deliverables
+  // (One-Pager, Full, Three-Pager, Action, XLSX, PPTX) the client receives.
+  // This preserves planner judgement across Retail / HNI / UHNI / Corporate
+  // segments — different clients value different report mixes.
 
   return NextResponse.json({
     success: true,
@@ -203,7 +185,6 @@ export async function POST(
     fromStatus: currentStatus,
     toStatus: actionDef.to,
     action: actionDef.action,
-    ...(emailResult ? { email: emailResult } : {}),
   });
 }
 
