@@ -561,6 +561,16 @@ export default function ReviewPage() {
           {(['STAR', 'KEEP', 'WATCH', 'SWAP', 'LIQUIDATE'] as Verdict[]).map((v) => (
             <VerdictPill key={v} verdict={v} count={diagnostic.verdictCounts?.[v] ?? 0} />
           ))}
+          <span className="ml-auto">
+            <Link
+              href={`/admin/audit/views?artefactType=portfolio_diagnostic&artefactId=${id}`}
+              className="text-xs text-slate-500 hover:text-primary-600 inline-flex items-center gap-1"
+              title="See who has viewed this diagnostic"
+            >
+              <Clock className="h-3 w-3" />
+              View audit log
+            </Link>
+          </span>
         </div>
       </div>
 
