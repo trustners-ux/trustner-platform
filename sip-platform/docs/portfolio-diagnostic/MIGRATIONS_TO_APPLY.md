@@ -1,8 +1,8 @@
 # Migrations Pending Application
 
-When this file is non-empty, apply the listed migrations in order via
-**Supabase Studio → SQL Editor**. Each migration is idempotent (safe to
-re-run if already applied).
+When this file lists pending migrations, apply them in order via
+**Supabase Studio → SQL Editor**. Each migration is idempotent (safe
+to re-run if already applied).
 
 ## How to apply
 
@@ -11,21 +11,20 @@ re-run if already applied).
 3. Paste into the SQL editor
 4. Click **Run** (or Cmd+Enter)
 5. Confirm "Success" message
-6. Delete the entry from this file after applying
+6. Move the entry from "Pending" to "Applied"
 
 ## Pending
 
-### 010_agent_workflow_events.sql
+_(none — all migrations applied)_
 
-**Why:** The IP / CO / PR workbench draft & action API routes write audit
-events to `agent_workflow_events`. This generic table does not exist yet
-(it was added today, 2026-05-24). Until applied:
+## Applied
 
-- Workflows still function (drafts save, reviews approve, etc.)
-- Audit-write errors appear in Vercel runtime logs as:
-  `[audit] Failed to insert agent_workflow_events ... relation does not exist`
-- The audit trail for IP/CO/PR is **incomplete** until the table is created.
-
-**File:** `src/lib/db/migrations/010_agent_workflow_events.sql`
-
-**Apply now:** 30-second job, one-time, no downtime.
+| # | File | Applied On | Notes |
+|---|---|---|---|
+| 004 | `004_portfolio_diagnostic_schema.sql` | 2026-05-23 | PD core tables (15 tables) |
+| 005 | `005_portfolio_diagnostic_seed.sql` | 2026-05-23 | 5 roles + 12 preferred fund categories |
+| 006 | `006_meeting_prep_schema.sql` | 2026-05-23 | Meeting Prep schema (mp_*) |
+| 007 | `007_investment_proposal_schema.sql` | 2026-05-23 | Investment Proposal schema (ip_*) |
+| 008 | `008_client_orientation_schema.sql` | 2026-05-23 | Client Orientation schema (co_*) |
+| 009 | `009_periodic_review_schema.sql` | 2026-05-23 | Periodic Review schema (pr_*) |
+| 010 | `010_agent_workflow_events.sql` | 2026-05-24 | Generic cross-agent audit trail (RLS disabled — server-only via service role) |
