@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils/cn';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AdminHeader } from '@/components/admin/AdminHeader';
+import { HealthBanner } from '@/components/admin/HealthBanner';
 import type { AdminRole } from '@/lib/auth/config';
 
 interface UserInfo {
@@ -55,6 +56,7 @@ export default function AdminLayoutShell({ children }: { children: React.ReactNo
       />
 
       <div className={cn('transition-all duration-300', sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-60')}>
+        <HealthBanner />
         <AdminHeader
           userName={user.name}
           userRole={user.role}

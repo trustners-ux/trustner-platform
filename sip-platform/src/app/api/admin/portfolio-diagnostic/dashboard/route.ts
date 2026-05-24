@@ -29,6 +29,7 @@ import {
   isApproverEmail,
   buildApproverFallbackResponse,
 } from '@/lib/trustner-agent-platform/generic-queries';
+import { getVisibleEmployeeIds } from '@/lib/permissions/hierarchy';
 
 export async function GET() {
   // ── Authenticate ────────────────────────────────────────────
@@ -106,15 +107,23 @@ export async function GET() {
     });
   }
 
-  // ── Load queues in parallel ─────────────────────────────────
-  // Principals (Ram + Sangeeta) see ALL team drafts in their "My Drafts"
-  // section — this prevents the "Sangeeta uploaded a draft but Ram
-  // doesn't see it" gap when both work on the same family portfolios.
-  const showAllTeamDrafts = approver;
+  // ── Resolve visibility scope from role hierarchy ─────────────
+  // The actor's role declares a visibility_scope (own / direct_reports
+  // / subtree / firm). Principals always see firm. Everyone else sees
+  // what their role allows — e.g. a senior_reviewer sees their entire
+  // org subtree, a junior_analyst sees only their own work.
+  const scope = await getVisibleEmployeeIds({
+    employeeId,
+    email: employeeEmail,
+    roleName: employee.role.name,
+  });
+  const showAllTeamDrafts = scope.includeAll;
+  const visibleEmployeeIds = scope.includeAll ? undefined : scope.employeeIds;
+
   const [counts, myDrafts, awaiting, approvedPending, recent] = await Promise.all([
-    getDashboardCounts(employeeId, { showAllTeam: showAllTeamDrafts }),
+    getDashboardCounts(employeeId, { showAllTeam: showAllTeamDrafts, visibleEmployeeIds }),
     employee.role.canEditDraft
-      ? getMyDrafts(employeeId, 20, { showAllTeam: showAllTeamDrafts })
+      ? getMyDrafts(employeeId, 20, { showAllTeam: showAllTeamDrafts, visibleEmployeeIds })
       : Promise.resolve([]),
     employee.role.canReview ? getAwaitingMyReview(employeeId) : Promise.resolve([]),
     employee.role.canPublish ? getMyApprovedAwaitingPublish(employeeId) : Promise.resolve([]),
@@ -141,6 +150,14 @@ export async function GET() {
     awaiting,
     approvedPending,
     recent,
+    // Surface the resolved visibility so the UI can show "viewing
+    // your team (12 people)" or "viewing firm (all)" badges.
+    visibility: {
+      scope: scope.scope,
+      includeAll: scope.includeAll,
+      employeeCount: scope.includeAll ? null : scope.employeeIds.length,
+      reason: scope.reason,
+    },
   });
 }
 

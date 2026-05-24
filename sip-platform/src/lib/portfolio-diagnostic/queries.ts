@@ -28,9 +28,17 @@ export interface DashboardCounts {
   totalThisMonth: number;
 }
 
+/**
+ * NEW (May 2026): `visibleEmployeeIds` is the result of the
+ * hierarchy scope resolver. If provided, list queries return rows
+ * uploaded by ANY of these employees (your subtree, your direct
+ * reports, etc.) instead of just your own. `showAllTeam` is now
+ * an alias for "I'm an approver → see everything" that bypasses
+ * the visibleEmployeeIds filter.
+ */
 export async function getDashboardCounts(
   employeeId: number,
-  opts?: { showAllTeam?: boolean }
+  opts?: { showAllTeam?: boolean; visibleEmployeeIds?: number[] }
 ): Promise<DashboardCounts> {
   const supabase = getSupabaseAdmin();
   if (!supabase) {
@@ -47,12 +55,19 @@ export async function getDashboardCounts(
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
 
-  // My drafts — for principals (showAllTeam=true), count ALL team drafts
+  // Build the uploader filter from the new visibility model:
+  //   - showAllTeam=true (principals)  → no filter, see all
+  //   - visibleEmployeeIds provided    → see anything any of them owns
+  //   - neither                        → see only your own
   let draftsQuery = supabase
     .from('pd_diagnostic_runs')
     .select('id', { count: 'exact', head: true })
     .in('status', ['DRAFT', 'CHANGES_REQUESTED']);
-  if (!opts?.showAllTeam) {
+  if (opts?.showAllTeam) {
+    // no filter — sees everything
+  } else if (opts?.visibleEmployeeIds && opts.visibleEmployeeIds.length > 0) {
+    draftsQuery = draftsQuery.in('uploaded_by_employee_id', opts.visibleEmployeeIds);
+  } else {
     draftsQuery = draftsQuery.eq('uploaded_by_employee_id', employeeId);
   }
 
@@ -139,20 +154,24 @@ const DIAGNOSTIC_SELECT_COLS = `
 export async function getMyDrafts(
   employeeId: number,
   limit = 20,
-  opts?: { showAllTeam?: boolean }
+  opts?: { showAllTeam?: boolean; visibleEmployeeIds?: number[] }
 ): Promise<DiagnosticListItem[]> {
   const supabase = getSupabaseAdmin();
   if (!supabase) return [];
 
-  // For firm principals (Ram + Sangeeta), showAllTeam=true returns ALL
-  // team drafts regardless of who uploaded them. This prevents the
-  // "Sangeeta saved a draft but Ram can't see it" gap when both
-  // act on the same portfolios.
+  // Visibility:
+  //   showAllTeam=true (principals)  → see everything (no filter)
+  //   visibleEmployeeIds provided    → see anything any of them uploaded
+  //   neither                        → see only your own
   let query = supabase
     .from('pd_diagnostic_runs')
     .select(DIAGNOSTIC_SELECT_COLS)
     .in('status', ['DRAFT', 'CHANGES_REQUESTED']);
-  if (!opts?.showAllTeam) {
+  if (opts?.showAllTeam) {
+    // no filter
+  } else if (opts?.visibleEmployeeIds && opts.visibleEmployeeIds.length > 0) {
+    query = query.in('uploaded_by_employee_id', opts.visibleEmployeeIds);
+  } else {
     query = query.eq('uploaded_by_employee_id', employeeId);
   }
 
