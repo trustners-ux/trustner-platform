@@ -31,8 +31,10 @@ import { renderNarrativeReviewHtml } from '@/lib/portfolio-diagnostic/reports/na
 import { renderMeetingNoteHtml } from '@/lib/portfolio-diagnostic/reports/meeting-note';
 import { getOrGenerateNarrative } from '@/lib/portfolio-diagnostic/narrative-engine';
 
-// XLSX, PPTX, and LLM-narrative generation can be slow; allow up to 60s
-export const maxDuration = 60;
+// XLSX, PPTX, and LLM-narrative generation can be slow. Opus 4.7 with
+// adaptive thinking on a 10-15 holding family takes 50-90 sec uncached,
+// so we headroom up to the Vercel Pro ceiling of 300 sec.
+export const maxDuration = 300;
 
 type ReportType = 'full' | 'action' | 'one-pager' | 'three-pager' | 'xlsx' | 'pptx' | 'narrative' | 'meeting-note';
 

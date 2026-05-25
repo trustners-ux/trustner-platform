@@ -19,7 +19,11 @@ import { verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 import { getSupabaseAdmin } from '@/lib/db/supabase';
 import { getOrGenerateNarrative, type NarrativeJSON } from '@/lib/portfolio-diagnostic/narrative-engine';
 
-export const maxDuration = 60;
+// Opus 4.7 with adaptive thinking on a 10-15 holding family takes 50-90 sec
+// uncached. We need headroom over the typical 60 sec Vercel default — set
+// to the Pro-plan ceiling (300 sec / 5 min). For Hobby this would be capped
+// to 60 automatically.
+export const maxDuration = 300;
 
 // ─────────────────────────────────────────────────────────────────
 // GET — fetch the current narrative (LLM + reviewer edits)

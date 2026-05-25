@@ -19,7 +19,9 @@ import { verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 import { getSupabaseAdmin } from '@/lib/db/supabase';
 import { generateNarrative } from '@/lib/portfolio-diagnostic/narrative-engine';
 
-export const maxDuration = 60;
+// Opus 4.7 with adaptive thinking on a 10-15 holding family takes 50-90 sec
+// uncached. Pro-plan ceiling is 300 sec.
+export const maxDuration = 300;
 
 export async function POST(
   req: NextRequest,
