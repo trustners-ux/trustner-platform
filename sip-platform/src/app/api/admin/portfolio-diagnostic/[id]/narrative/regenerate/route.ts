@@ -47,20 +47,29 @@ export async function POST(
     return NextResponse.json({ error: 'Database unavailable' }, { status: 500 });
   }
 
-  // Look up the employee row regardless — we need actorId for the audit log
+  // Look up the employee row — used for audit-log attribution AND, for
+  // non-admin callers, for the can_review permission check.
+  // NOTE: Admin-token users (Sangeeta/Ram) are NOT in the employees table;
+  //   they live in the ADMIN_USERS env var. For those callers we accept
+  //   the auth and use actorId = null (audit log records the email instead).
   const { data: emp } = await supabase
     .from('employees')
     .select('id, full_name, role_id')
     .eq('email', email)
-    .single();
+    .maybeSingle();
 
-  const actorId = emp?.id as number | undefined;
-  if (!actorId) {
-    return NextResponse.json({ error: 'Employee row not found' }, { status: 403 });
-  }
+  const actorId = (emp?.id as number | undefined) ?? null;
 
-  if (!viaAdmin) {
-    // Check pd_role.can_review
+  if (viaAdmin) {
+    // Admin token bypasses the can_review check entirely. Sangeeta and Ram
+    // can regenerate any narrative.
+  } else {
+    if (!actorId) {
+      return NextResponse.json(
+        { error: 'Not authorised — your email is not in the employees table and not an admin.' },
+        { status: 403 }
+      );
+    }
     const roleId = emp?.role_id as number | undefined;
     let canReview = false;
     if (roleId) {

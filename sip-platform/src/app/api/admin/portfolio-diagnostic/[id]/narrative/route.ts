@@ -135,16 +135,15 @@ export async function PATCH(
     return NextResponse.json({ error: 'Database unavailable' }, { status: 500 });
   }
 
-  // Look up actor
+  // Look up actor — for audit attribution. Admin-token users (Sangeeta /
+  // Ram) don&apos;t have employees rows; we accept null actorId and the audit
+  // log uses the email instead.
   const { data: emp } = await supabase
     .from('employees')
     .select('id, full_name')
     .eq('email', email)
-    .single();
-  const actorId = (emp?.id as number) ?? null;
-  if (!actorId) {
-    return NextResponse.json({ error: 'Employee row not found' }, { status: 403 });
-  }
+    .maybeSingle();
+  const actorId = (emp?.id as number | undefined) ?? null;
 
   // Verify the narrative row exists first
   const { data: existing } = await supabase
