@@ -28,7 +28,7 @@ import {
   computeApproxXirr,
   computeHoldingPeriodMonths,
 } from '@/lib/portfolio-diagnostic/scoring-engine';
-import { fuzzyMatchSchemeName } from '@/lib/portfolio-diagnostic/fund-data-client';
+import { fuzzyMatchSchemeName, normaliseSchemeName, detectPlanType } from '@/lib/portfolio-diagnostic/fund-data-client';
 import {
   linkSipsToHoldings,
   analyzeSip,
@@ -106,11 +106,35 @@ export async function POST(
     .select('amfi_code, scheme_name, amc_name, category, current_nav, fund_manager, manager_since_date, cagr_1y, cagr_3y, cagr_5y, cagr_10y, category_rank_3y, category_rank_5y, category_total, trustner_preferred, last_refreshed_at, aum_inr_cr, expense_ratio, sub_category')
     .in('amfi_code', amfiCodes.length > 0 ? amfiCodes : ['_no_match_']);
 
-  // For holdings without an AMFI code, try in priority order:
-  //   1. Exact name match (case-insensitive)
-  //   2. ILIKE match against a small candidate set built from name keywords
-  //   3. Fuzzy token match across Trustner-preferred funds only
+  // For holdings without an AMFI code, we run a 3-tier matcher:
+  //   Path 1: Direct AMFI code (rare — only if upstream parser populated it)
+  //   Path 2: Exact case-insensitive scheme name (rare)
+  //   Path 3: Normalised-name fuzzy match across the FULL pd_fund_master,
+  //           respecting the Regular-vs-Direct plan type detected from
+  //           the uploaded name.
+  //
+  // The old matcher had bugs: hardcoded `.ilike('%direct%')` rejected the
+  // common Regular-plan case, and the trustner_preferred-only fallback
+  // missed funds outside our short preferred list. Both fixed.
   const fundsByHoldingId = new Map<number, FundMaster>();
+
+  // Pre-fetch the FULL fund_master so the matcher runs in-memory without
+  // per-holding round trips. 4-5K rows is fine for one Supabase call.
+  const { data: allFunds } = await supabase
+    .from('pd_fund_master')
+    .select('amfi_code, scheme_name, amc_name, category, current_nav, fund_manager, manager_since_date, cagr_1y, cagr_3y, cagr_5y, cagr_10y, category_rank_3y, category_rank_5y, category_total, trustner_preferred, last_refreshed_at, aum_inr_cr, expense_ratio, sub_category');
+  const masterList = allFunds ?? [];
+
+  // Index by plan type for cheap filtering during the fuzzy pass
+  const masterByPlan: { regular: typeof masterList; direct: typeof masterList } = {
+    regular: [],
+    direct: [],
+  };
+  for (const f of masterList) {
+    const planType = detectPlanType((f.scheme_name as string) ?? '');
+    masterByPlan[planType].push(f);
+  }
+
   for (const h of holdings) {
     // Path 1: direct AMFI code match
     const direct = fundsByCode?.find((f) => f.amfi_code === h.amfi_code);
@@ -123,57 +147,51 @@ export async function POST(
     if (!name) continue;
 
     // Path 2: exact match (case-insensitive)
-    const { data: exactRows } = await supabase
-      .from('pd_fund_master')
-      .select('amfi_code, scheme_name, amc_name, category, current_nav, fund_manager, manager_since_date, cagr_1y, cagr_3y, cagr_5y, cagr_10y, category_rank_3y, category_rank_5y, category_total, trustner_preferred, last_refreshed_at, aum_inr_cr, expense_ratio, sub_category')
-      .ilike('scheme_name', name)
-      .limit(5);
-
-    if (exactRows && exactRows.length > 0) {
-      fundsByHoldingId.set(h.id as number, toFundMaster(exactRows[0]));
+    const exactHit = masterList.find(
+      (f) => ((f.scheme_name as string) ?? '').toLowerCase() === name.toLowerCase()
+    );
+    if (exactHit) {
+      fundsByHoldingId.set(h.id as number, toFundMaster(exactHit));
       continue;
     }
 
-    // Path 3: substring match on first 3 distinctive tokens
-    const tokens = name
-      .split(/[\s\-,]+/)
-      .filter((t) => t.length > 3 && !/(growth|direct|regular|plan|fund|idcw)/i.test(t))
-      .slice(0, 3);
+    // Path 3: normalised fuzzy match — respect detected plan type
+    const planType = detectPlanType(name);
+    const candidates = masterByPlan[planType];
 
-    if (tokens.length > 0) {
-      // Build a query that requires ALL tokens
-      let q = supabase
-        .from('pd_fund_master')
-        .select('amfi_code, scheme_name, amc_name, category, current_nav, fund_manager, manager_since_date, cagr_1y, cagr_3y, cagr_5y, cagr_10y, category_rank_3y, category_rank_5y, category_total, trustner_preferred, last_refreshed_at, aum_inr_cr, expense_ratio, sub_category')
-        .ilike('scheme_name', '%growth%')
-        .ilike('scheme_name', '%direct%');
-      for (const tok of tokens) q = q.ilike('scheme_name', `%${tok}%`);
-      const { data: tokenRows } = await q.limit(5);
+    // Run the in-memory Jaccard fuzzy against THIS plan's candidates.
+    const fuzzyCandidates = candidates.map((c) => ({
+      amfiCode: c.amfi_code as string,
+      schemeName: c.scheme_name as string,
+    }));
+    const match = fuzzyMatchSchemeName(name, fuzzyCandidates);
 
-      if (tokenRows && tokenRows.length > 0) {
-        // Prefer the one whose name length is shortest (cleanest match)
-        tokenRows.sort((a, b) => a.scheme_name.length - b.scheme_name.length);
-        fundsByHoldingId.set(h.id as number, toFundMaster(tokenRows[0]));
+    if (match) {
+      const matched = candidates.find((c) => c.amfi_code === match.amfiCode);
+      if (matched) {
+        fundsByHoldingId.set(h.id as number, toFundMaster(matched));
         continue;
       }
     }
 
-    // Path 4: fall back to fuzzy match against Trustner-preferred set
-    const { data: preferredRows } = await supabase
-      .from('pd_fund_master')
-      .select('amfi_code, scheme_name, amc_name, category, current_nav, fund_manager, manager_since_date, cagr_1y, cagr_3y, cagr_5y, cagr_10y, category_rank_3y, category_rank_5y, category_total, trustner_preferred, last_refreshed_at, aum_inr_cr, expense_ratio, sub_category')
-      .eq('trustner_preferred', true);
-    if (preferredRows && preferredRows.length > 0) {
-      const candidateList = preferredRows.map((c) => ({
-        amfiCode: c.amfi_code as string,
-        schemeName: c.scheme_name as string,
-      }));
-      const match = fuzzyMatchSchemeName(name, candidateList);
-      if (match) {
-        const matched = preferredRows.find((c) => c.amfi_code === match.amfiCode);
-        if (matched) fundsByHoldingId.set(h.id as number, toFundMaster(matched));
+    // Path 4 (last resort): if plan-restricted match fails, try the
+    // OTHER plan type. Some master rows are mis-classified or only have
+    // one plan in the master (e.g., direct-only AMCs).
+    const otherCandidates = masterByPlan[planType === 'regular' ? 'direct' : 'regular'];
+    const otherFuzzy = otherCandidates.map((c) => ({
+      amfiCode: c.amfi_code as string,
+      schemeName: c.scheme_name as string,
+    }));
+    const fallback = fuzzyMatchSchemeName(name, otherFuzzy);
+    if (fallback) {
+      const matched = otherCandidates.find((c) => c.amfi_code === fallback.amfiCode);
+      if (matched) {
+        fundsByHoldingId.set(h.id as number, toFundMaster(matched));
       }
     }
+
+    // Suppress lint warning for the kept `normaliseSchemeName` import
+    void normaliseSchemeName;
   }
 
   // ── Step 3: Load category benchmarks ───────────────────────

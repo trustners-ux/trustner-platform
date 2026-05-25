@@ -221,7 +221,16 @@ export function renderNarrativeReviewHtml(
 <html><head><meta charset="utf-8"/>
 <title>${escape(familyBase)} Family — Portfolio Review · ${escape(reportDate)}</title>
 <style>
-  @page { size: A4; margin: 24mm 16mm 22mm 16mm; }
+  @page { size: A4; margin: 24mm 20mm 22mm 20mm; }
+  /* Screen-only: render as a centered paper on a soft grey background so the
+     on-screen preview has breathing room L/R. Print mode strips this back. */
+  @media screen {
+    html { background: #f1f5f9; min-height: 100vh; }
+    body { max-width: 210mm; margin: 16px auto; padding: 24mm 20mm 22mm 20mm; box-shadow: 0 4px 24px rgba(15, 23, 42, 0.10); border-radius: 4px; background: white; }
+  }
+  @media print {
+    html, body { background: white; }
+  }
   * { box-sizing: border-box; }
   html, body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a1a2e; font-size: 9.5pt; line-height: 1.5; margin: 0; padding: 0; }
   .running-header { position: fixed; top: 6mm; left: 16mm; right: 16mm; height: 10mm; display: flex; align-items: center; justify-content: space-between; font-size: 7pt; color: #64748b; letter-spacing: 0.4px; border-bottom: 0.5px solid #cbd5e1; padding-bottom: 2mm; }

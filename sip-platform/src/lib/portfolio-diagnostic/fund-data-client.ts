@@ -406,16 +406,61 @@ export function fuzzyMatchSchemeName(
     }
   }
 
-  if (!bestMatch || bestMatch.confidence < 0.7) return null;
+  // 0.5 threshold — after the abbreviation expansion in normaliseSchemeName,
+  // a 0.5 Jaccard means at least half the distinctive tokens match, which
+  // is a strong signal for these tightly-structured Indian scheme names.
+  if (!bestMatch || bestMatch.confidence < 0.5) return null;
   return bestMatch;
 }
 
-function normaliseSchemeName(name: string): string {
+/**
+ * Normalise a scheme name for fuzzy matching. The goal: produce a
+ * canonical form that's the same whether the source said "Bandhan
+ * Small Cap Fund Reg (G)" or "BANDHAN SMALL CAP FUND - REGULAR PLAN
+ * GROWTH". We do this by:
+ *   1. Expanding AMC abbreviations BEFORE stripping noise words
+ *      (icici pru → icici prudential, ppfas → parag parikh, etc.)
+ *   2. Expanding plan-option suffixes ((G) → growth, Reg → regular)
+ *   3. Stripping all noise words AFTER expansion
+ *
+ * Exported so the score-route matcher can re-use it.
+ */
+export function normaliseSchemeName(name: string): string {
   return name
     .toLowerCase()
+    // ── Expand AMC abbreviations FIRST (before parens stripping) ──
+    .replace(/\bicici pru\b/g, 'icici prudential')
+    .replace(/\bpru\b/g, 'prudential')
+    .replace(/\babsl\b/g, 'aditya birla sun life')
+    .replace(/\bppfas\b/g, 'parag parikh')
+    .replace(/\bhdfc mf\b/g, 'hdfc')
+    .replace(/\bsbi mf\b/g, 'sbi')
+    // ── Expand plan/option suffixes ──
+    .replace(/\(g\)\s*$/g, ' growth')
+    .replace(/\(d\)\s*$/g, ' dividend')
+    .replace(/\(idcw\)\s*$/g, ' idcw')
+    // ── Strip all non-alphanumerics ──
     .replace(/[^a-z0-9\s]/g, ' ')
-    // Common synonyms / suffixes we strip
-    .replace(/\b(growth|reg|direct|plan|fund|scheme|idcw|dividend|reinvestment|payout)\b/g, '')
+    // ── Strip noise words (do this LAST so abbreviations got expanded) ──
+    .replace(/\b(growth|reg|regular|direct|dir|plan|fund|scheme|idcw|dividend|reinvestment|payout|option)\b/g, '')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+/**
+ * Detect whether a scheme name refers to a Regular or Direct plan.
+ * Crucial for matching the right AMFI code — most funds have both
+ * variants with different codes.
+ *
+ *   "Bandhan Small Cap Fund Reg (G)"          → 'regular'
+ *   "Bandhan Small Cap Fund (Direct) (G)"     → 'direct'
+ *   "BANDHAN SMALL CAP FUND - REGULAR PLAN..." → 'regular'
+ *   plain "Bandhan Small Cap Fund (G)"        → 'regular' (default — retail
+ *                                                clients almost always have
+ *                                                Regular plans via MFDs)
+ */
+export function detectPlanType(name: string): 'regular' | 'direct' {
+  const lower = name.toLowerCase();
+  if (/\bdirect\b/.test(lower) || /\bdir\b/.test(lower)) return 'direct';
+  return 'regular';
 }

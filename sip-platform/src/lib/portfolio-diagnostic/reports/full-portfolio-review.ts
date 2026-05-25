@@ -22,11 +22,19 @@ import {
 const STYLES = `
   @page {
     size: A4;
-    margin: 10mm 10mm 12mm 10mm;
+    margin: 14mm 16mm 16mm 16mm;
   }
   @media print {
     .no-print { display: none !important; }
-    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white; }
+    html { background: white; }
+  }
+  /* Screen-only: render the report as a centered "paper" on a soft grey
+     background so the on-screen preview has breathing room L/R.
+     Print mode strips this back to plain @page margins. */
+  @media screen {
+    html { background: #f1f5f9; min-height: 100vh; }
+    body { max-width: 210mm; margin: 16px auto; padding: 14mm 16mm; box-shadow: 0 4px 24px rgba(15, 23, 42, 0.10); border-radius: 4px; }
   }
   * { box-sizing: border-box; }
   body {
@@ -37,7 +45,7 @@ const STYLES = `
     margin: 0;
     background: white;
   }
-  .container { max-width: 190mm; margin: 0 auto; padding: 4mm 0; }
+  .container { max-width: 178mm; margin: 0 auto; padding: 4mm 0; }
   .no-print-bar {
     position: sticky; top: 0; z-index: 100; background: #0F766E; color: white;
     padding: 8px 16px; margin: -4mm 0 8mm 0; display: flex; gap: 12px; align-items: center; justify-content: space-between;

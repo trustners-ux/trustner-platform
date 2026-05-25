@@ -17,10 +17,16 @@ import {
 } from '../report-data';
 
 const STYLES = `
-  @page { size: A4; margin: 12mm 12mm 14mm 12mm; }
+  @page { size: A4; margin: 14mm 18mm 16mm 18mm; }
   @media print {
     .no-print { display: none !important; }
-    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white; }
+    html { background: white; }
+  }
+  /* Screen preview: paper-on-grey for breathing room */
+  @media screen {
+    html { background: #f1f5f9; min-height: 100vh; }
+    body { max-width: 210mm; margin: 16px auto; padding: 14mm 18mm; box-shadow: 0 4px 24px rgba(15, 23, 42, 0.10); border-radius: 4px; }
   }
   * { box-sizing: border-box; }
   body {
@@ -31,7 +37,7 @@ const STYLES = `
     margin: 0;
     background: white;
   }
-  .container { max-width: 186mm; margin: 0 auto; }
+  .container { max-width: 174mm; margin: 0 auto; }
   .no-print-bar {
     position: sticky; top: 0; z-index: 100; background: #B45309; color: white;
     padding: 8px 16px; margin: 0 0 8mm 0; display: flex; gap: 12px; align-items: center; justify-content: space-between;
