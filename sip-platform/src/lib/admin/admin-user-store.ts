@@ -37,7 +37,13 @@ export async function getAdminUsersFromBlob(): Promise<AdminUser[]> {
     const result = await list({ prefix: BLOB_PATH, limit: 1 });
 
     if (result.blobs.length > 0) {
-      const res = await fetch(result.blobs[0].url);
+      // Bypass CDN cache — credentials must be read fresh on every call.
+      // Vercel Blob serves with 30-day cache-control by default; without
+      // no-store the serverless function sees stale hashes after a reset.
+      const res = await fetch(result.blobs[0].url + '?_=' + Date.now(), {
+        cache: 'no-store',
+        next: { revalidate: 0 },
+      } as RequestInit);
       if (res.ok) {
         const users = (await res.json()) as AdminUser[];
         return users;
@@ -81,6 +87,7 @@ async function saveUsers(users: AdminUser[]): Promise<void> {
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: 'application/json',
+    cacheControlMaxAge: 0,
   });
 }
 

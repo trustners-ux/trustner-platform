@@ -48,7 +48,13 @@ async function readBlob<T>(path: string, fallback: T[]): Promise<T[]> {
   try {
     const result = await list({ prefix: path, limit: 1 });
     if (result.blobs.length > 0) {
-      const res = await fetch(result.blobs[0].url);
+      // Bypass CDN cache — credentials must be read fresh on every call.
+      // The blob URL has 30-day cache-control by default; without no-store
+      // the serverless function sees stale hashes after a password change.
+      const res = await fetch(result.blobs[0].url + '?_=' + Date.now(), {
+        cache: 'no-store',
+        next: { revalidate: 0 },
+      } as RequestInit);
       if (res.ok) return (await res.json()) as T[];
     }
   } catch (err) {
@@ -63,6 +69,7 @@ async function writeBlob<T>(path: string, data: T[]): Promise<void> {
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: 'application/json',
+    cacheControlMaxAge: 0,
   });
 }
 
