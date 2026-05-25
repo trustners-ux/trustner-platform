@@ -27,12 +27,15 @@ export function renderMeetingNoteHtml(
   narrative: NarrativeJSON
 ): string {
   const familyName = data.familyName;
+  // DB names may already end in "Family" (e.g. "Madhuchanda Dhar Family") —
+  // strip it so the template's own " Family" suffix doesn't double up.
+  const familyBase = familyName.replace(/\s+family\s*$/i, '');
   const reportDate = data.reportDate;
-  const docId = `${familyName.replace(/[^A-Z0-9]+/gi, '').slice(0, 6).toUpperCase()}-MN-${data.reportDateIso}`;
+  const docId = `${familyBase.replace(/[^A-Z0-9]+/gi, '').slice(0, 6).toUpperCase()}-MN-${data.reportDateIso}`;
 
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"/>
-<title>Meeting Note · ${escape(familyName)} Family · ${escape(reportDate)}</title>
+<title>Meeting Note · ${escape(familyBase)} Family · ${escape(reportDate)}</title>
 <style>
   @page { size: A4; margin: 22mm 16mm 22mm 16mm; }
   * { box-sizing: border-box; }
@@ -76,7 +79,7 @@ export function renderMeetingNoteHtml(
 
 <div class="confidential">⚠ Internal — pre-meeting brief for Sangeeta &amp; Ram only · ${escape(reportDate)}</div>
 
-<h1>MEETING NOTE — ${escape(familyName)} Family</h1>
+<h1>MEETING NOTE — ${escape(familyBase)} Family</h1>
 <div class="subtitle">Pre-call brief · ${escape(reportDate)} · For: Sangeeta &amp; Ram</div>
 
 <div class="kpis">

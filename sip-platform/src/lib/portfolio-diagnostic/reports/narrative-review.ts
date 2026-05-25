@@ -41,8 +41,11 @@ export function renderNarrativeReviewHtml(
   opts: RenderOpts = {}
 ): string {
   const familyName = data.familyName;
+  // DB names may already end in "Family" (e.g. "Madhuchanda Dhar Family") —
+  // strip it so the template's own " Family" suffix doesn't double up.
+  const familyBase = familyName.replace(/\s+family\s*$/i, '');
   const reportDate = data.reportDate;
-  const docId = `${familyName.replace(/[^A-Z0-9]+/gi, '').slice(0, 6).toUpperCase()}-NR-${data.reportDateIso}`;
+  const docId = `${familyBase.replace(/[^A-Z0-9]+/gi, '').slice(0, 6).toUpperCase()}-NR-${data.reportDateIso}`;
 
   const printBar = opts.showPrintBar
     ? `<div class="print-bar"><span>Use <strong>Cmd+P / Ctrl+P</strong> and "Save as PDF" — A4 portrait recommended.</span></div>`
@@ -216,7 +219,7 @@ export function renderNarrativeReviewHtml(
   // Final HTML
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"/>
-<title>${escape(familyName)} Family — Portfolio Review · ${escape(reportDate)}</title>
+<title>${escape(familyBase)} Family — Portfolio Review · ${escape(reportDate)}</title>
 <style>
   @page { size: A4; margin: 24mm 16mm 22mm 16mm; }
   * { box-sizing: border-box; }
@@ -258,7 +261,7 @@ export function renderNarrativeReviewHtml(
 
 <div class="running-header">
   <div class="firm">TRUSTNER ASSET SERVICES PVT. LTD. · ARN-286886</div>
-  <div class="doc">${escape(familyName)} Family · Portfolio Diagnostic Review · ${escape(reportDate)}</div>
+  <div class="doc">${escape(familyBase)} Family · Portfolio Diagnostic Review · ${escape(reportDate)}</div>
 </div>
 
 <div class="running-footer">
@@ -268,7 +271,7 @@ export function renderNarrativeReviewHtml(
 
 ${printBar}
 
-<h1>${escape(familyName.toUpperCase())} FAMILY — Portfolio Diagnostic Review</h1>
+<h1>${escape(familyBase.toUpperCase())} FAMILY — Portfolio Diagnostic Review</h1>
 <h3>Report date: ${escape(reportDate)} · Prepared by Trustner Asset Services (ARN-286886)</h3>
 
 <h2>1 · Family snapshot</h2>
