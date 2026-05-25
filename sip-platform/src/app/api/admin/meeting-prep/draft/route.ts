@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
   try {
     const { data: latestRun } = await supabase
       .from('pd_diagnostic_runs')
-      .select('id, total_aum_inr, total_invested_inr, family_xirr_pct, num_holdings, num_active_sips, monthly_sip_flow_inr, created_at')
+      .select('id, current_value_inr, total_invested_inr, family_xirr_pct, num_holdings, num_active_sips, monthly_sip_flow_inr, created_at')
       .eq('family_id', body.familyId)
       .in('status', ['APPROVED', 'PUBLISHED'])
       .order('created_at', { ascending: false })
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
     if (latestRun) {
       snapshot = {
-        total_aum_inr: (latestRun.total_aum_inr as number) ?? null,
+        total_aum_inr: (latestRun.current_value_inr as number) ?? null,
         total_invested_inr: (latestRun.total_invested_inr as number) ?? null,
         family_xirr_pct: (latestRun.family_xirr_pct as number) ?? null,
         num_holdings: (latestRun.num_holdings as number) ?? null,

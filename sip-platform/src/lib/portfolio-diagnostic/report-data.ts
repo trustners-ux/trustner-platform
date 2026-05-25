@@ -97,7 +97,7 @@ export async function loadReportData(
     .from('pd_diagnostic_runs')
     .select(`
       id, document_id, family_id, family_name, created_at,
-      total_invested_inr, total_aum_inr, family_xirr_pct,
+      total_invested_inr, current_value_inr, family_xirr_pct,
       num_holdings, num_active_sips, monthly_sip_flow_inr
     `)
     .eq('id', diagnosticRunId)
@@ -179,7 +179,7 @@ export async function loadReportData(
   const liquidateHoldings = shaped.filter((h) => h.verdict === 'LIQUIDATE').sort(sortByCagr3y);
 
   // ── 6. KPIs ────────────────────────────────────────────────
-  const currentValueInr = Number(run.total_aum_inr ?? shaped.reduce((s, h) => s + h.currentValueInr, 0));
+  const currentValueInr = Number(run.current_value_inr ?? shaped.reduce((s, h) => s + h.currentValueInr, 0));
   const totalInvestedInr = Number(run.total_invested_inr ?? shaped.reduce((s, h) => s + h.investedInr, 0));
   const totalGainInr = currentValueInr - totalInvestedInr;
 
