@@ -259,6 +259,93 @@ function extractEntityName(entity: unknown): string {
   return 'Unknown';
 }
 
+// ─────────────────────────────────────────────────────────────────
+// DELETE — admin-only hard delete of a diagnostic + cascading rows
+// ─────────────────────────────────────────────────────────────────
+//
+// Permission gate: admin-token holders ONLY (Sangeeta / Ram via
+// ADMIN_USERS). Employees never get this affordance — the workflow
+// model is REJECT (soft) for them.
+//
+// Cascade behaviour: Supabase relies on FK ON DELETE CASCADE on
+// pd_diagnostic_holdings, pd_diagnostic_sips, pd_diagnostic_comments,
+// pd_diagnostic_narratives, pd_share_links. Deleting the parent run
+// row removes all children automatically. If any FK lacks CASCADE we
+// fall back to per-table cleanup below to avoid orphan rows.
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const numericId = parseInt(id, 10);
+  if (Number.isNaN(numericId)) {
+    return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
+  }
+
+  // Admin token only — we deliberately do NOT accept employee-token here.
+  const cookieStore = await cookies();
+  const adminToken = cookieStore.get(COOKIE_NAME)?.value;
+  const admin = adminToken ? await verifyToken(adminToken) : null;
+  if (!admin) {
+    return NextResponse.json(
+      { error: 'Delete is restricted to admin accounts. Reviewers should use Reject instead.' },
+      { status: 403 }
+    );
+  }
+
+  const supabase = getSupabaseAdmin();
+  if (!supabase) {
+    return NextResponse.json({ error: 'Database unavailable' }, { status: 500 });
+  }
+
+  // Capture metadata for the audit-log entry BEFORE we delete
+  const { data: run } = await supabase
+    .from('pd_diagnostic_runs')
+    .select('id, family_name, status, num_holdings, num_active_sips, total_invested_inr, current_value_inr')
+    .eq('id', numericId)
+    .maybeSingle();
+
+  if (!run) {
+    return NextResponse.json({ error: 'Diagnostic not found' }, { status: 404 });
+  }
+
+  // Belt-and-braces cleanup of dependent rows in case any FK lacks
+  // ON DELETE CASCADE. Order matters — children first.
+  await supabase.from('pd_share_links').delete().eq('diagnostic_run_id', numericId);
+  await supabase.from('pd_diagnostic_narratives').delete().eq('diagnostic_run_id', numericId);
+  await supabase.from('pd_diagnostic_comments').delete().eq('diagnostic_run_id', numericId);
+  await supabase.from('pd_diagnostic_sips').delete().eq('diagnostic_run_id', numericId);
+  await supabase.from('pd_diagnostic_holdings').delete().eq('diagnostic_run_id', numericId);
+
+  // Now the parent
+  const { error: delErr } = await supabase
+    .from('pd_diagnostic_runs')
+    .delete()
+    .eq('id', numericId);
+  if (delErr) {
+    return NextResponse.json({ error: delErr.message }, { status: 500 });
+  }
+
+  // Fire-and-forget audit log
+  void supabase
+    .from('app_artefact_views')
+    .insert({
+      artefact_type: 'pd_diagnostic_delete',
+      artefact_id: numericId,
+      actor_email: admin.email,
+      view_count: 1,
+    });
+
+  return NextResponse.json({
+    success: true,
+    deletedRunId: numericId,
+    familyName: run.family_name,
+    formerStatus: run.status,
+    deletedBy: admin.email,
+    deletedAt: new Date().toISOString(),
+  });
+}
+
 function computeAvailableActions(status: string): string[] {
   // Simplified — full permission check is in workflow-state-machine.ts.
   // The UI uses these to render the right buttons.

@@ -38,6 +38,7 @@ import {
   Mail,
   Eye,
   Clock,
+  Trash2,
 } from 'lucide-react';
 import type {
   Verdict,
@@ -562,7 +563,7 @@ export default function ReviewPage() {
           {(['STAR', 'KEEP', 'WATCH', 'SWAP', 'LIQUIDATE'] as Verdict[]).map((v) => (
             <VerdictPill key={v} verdict={v} count={diagnostic.verdictCounts?.[v] ?? 0} />
           ))}
-          <span className="ml-auto">
+          <span className="ml-auto flex items-center gap-3">
             <Link
               href={`/admin/audit/views?artefactType=portfolio_diagnostic&artefactId=${id}`}
               className="text-xs text-slate-500 hover:text-primary-600 inline-flex items-center gap-1"
@@ -571,6 +572,34 @@ export default function ReviewPage() {
               <Clock className="h-3 w-3" />
               View audit log
             </Link>
+            <button
+              onClick={async () => {
+                const ok = confirm(
+                  `Permanently delete this diagnostic?\n\n` +
+                  `Family: ${diagnostic.familyName}\n` +
+                  `Status: ${diagnostic.status}\n` +
+                  `${diagnostic.numHoldings} holdings · ${diagnostic.numActiveSips} SIPs\n\n` +
+                  `This will also delete:\n` +
+                  `  • All comments and reviewer notes\n` +
+                  `  • The LLM narrative draft (if any)\n` +
+                  `  • Any active share links sent to the client\n\n` +
+                  `This action cannot be undone. Admin only.`
+                );
+                if (!ok) return;
+                const res = await fetch(`/api/admin/portfolio-diagnostic/${id}`, { method: 'DELETE', credentials: 'include' });
+                if (res.ok) {
+                  router.push('/admin/portfolio-diagnostic');
+                } else {
+                  const err = await res.json().catch(() => ({}));
+                  alert(`Delete failed: ${err.error ?? res.status}`);
+                }
+              }}
+              className="text-xs text-rose-700 hover:text-rose-900 inline-flex items-center gap-1 border border-rose-200 rounded px-2 py-0.5 hover:bg-rose-50"
+              title="Admin only — permanently delete this diagnostic"
+            >
+              <Trash2 className="h-3 w-3" />
+              Delete diagnostic
+            </button>
           </span>
         </div>
       </div>
