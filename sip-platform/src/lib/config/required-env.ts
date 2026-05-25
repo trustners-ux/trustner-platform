@@ -81,9 +81,22 @@ export const REQUIRED_ENV_VARS: EnvVarSpec[] = [
 
   // ── AI / Email ───────────────────────────────────────────────
   {
+    name: 'ANTHROPIC_API_KEY',
+    description: 'Anthropic API key for the LLM narrative engine (per-holding "why" reasoning, advisor narrative review, meeting-note brief).',
+    affects: ['/api/admin/portfolio-diagnostic/[id]/report?type=narrative', '/api/admin/portfolio-diagnostic/[id]/report?type=meeting-note', 'Full review per-holding "Why" enrichment'],
+    critical: false,
+    pattern: /^sk-ant-/,
+  },
+  {
+    name: 'ANTHROPIC_NARRATIVE_MODEL',
+    description: 'Override the default Claude model for narrative generation (default: claude-opus-4-7). Set to claude-sonnet-4-6 to reduce cost ~5x with marginal quality drop.',
+    affects: ['narrative cost + quality'],
+    critical: false,
+  },
+  {
     name: 'OPENAI_API_KEY',
-    description: 'OpenAI API key for AI advisor + generation features.',
-    affects: ['AI advisor', 'meeting prep generation', 'content suggestions'],
+    description: 'OpenAI API key for legacy AI advisor + generation features (used by older paths). Narrative engine uses Anthropic.',
+    affects: ['AI advisor', 'content suggestions'],
     critical: false,
   },
   {

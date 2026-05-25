@@ -27,13 +27,16 @@ import { renderOnePagerHtml } from '@/lib/portfolio-diagnostic/reports/one-pager
 import { renderThreePagerHtml } from '@/lib/portfolio-diagnostic/reports/three-pager';
 import { buildWealthTrackerXlsx } from '@/lib/portfolio-diagnostic/reports/xlsx-tracker';
 import { buildFamilyMeetingDeckPptx } from '@/lib/portfolio-diagnostic/reports/pptx-deck';
+import { renderNarrativeReviewHtml } from '@/lib/portfolio-diagnostic/reports/narrative-review';
+import { renderMeetingNoteHtml } from '@/lib/portfolio-diagnostic/reports/meeting-note';
+import { getOrGenerateNarrative } from '@/lib/portfolio-diagnostic/narrative-engine';
 
-// XLSX and PPTX generation can be CPU-heavy; allow up to 60s
+// XLSX, PPTX, and LLM-narrative generation can be slow; allow up to 60s
 export const maxDuration = 60;
 
-type ReportType = 'full' | 'action' | 'one-pager' | 'three-pager' | 'xlsx' | 'pptx';
+type ReportType = 'full' | 'action' | 'one-pager' | 'three-pager' | 'xlsx' | 'pptx' | 'narrative' | 'meeting-note';
 
-const VALID_TYPES: ReportType[] = ['full', 'action', 'one-pager', 'three-pager', 'xlsx', 'pptx'];
+const VALID_TYPES: ReportType[] = ['full', 'action', 'one-pager', 'three-pager', 'xlsx', 'pptx', 'narrative', 'meeting-note'];
 
 export async function GET(
   req: NextRequest,
@@ -49,7 +52,7 @@ export async function GET(
   const type = (url.searchParams.get('type') ?? 'full').toLowerCase() as ReportType;
   if (!VALID_TYPES.includes(type)) {
     return NextResponse.json(
-      { error: `Unknown report type: ${type}. Use ?type=full|action|one-pager|three-pager|xlsx|pptx.` },
+      { error: `Unknown report type: ${type}. Use ?type=full|action|one-pager|three-pager|xlsx|pptx|narrative|meeting-note.` },
       { status: 400 }
     );
   }
@@ -86,6 +89,45 @@ export async function GET(
       { error: 'Diagnostic not found or has no holdings' },
       { status: 404 }
     );
+  }
+
+  // ── Internal-only types — block share-token access ──
+  // The meeting note is an advisor pre-call brief; never expose to clients
+  // even when a valid share token is present for this diagnostic.
+  if (type === 'meeting-note' && authMode === 'token') {
+    return NextResponse.json(
+      { error: 'Internal document. Not accessible via share links.' },
+      { status: 403 }
+    );
+  }
+
+  // ── LLM-generated narrative + meeting note ──
+  // These call into the narrative-engine which may regenerate via Claude
+  // if no cached narrative exists. Cached path is fast (<200ms).
+  if (type === 'narrative' || type === 'meeting-note') {
+    const result = await getOrGenerateNarrative(numericId);
+    if (!result.ok || !result.narrative) {
+      return NextResponse.json(
+        {
+          error: result.error ?? 'Could not generate narrative',
+          hint: 'Make sure ANTHROPIC_API_KEY is configured on Vercel and the diagnostic has parsed holdings.',
+        },
+        { status: 500 }
+      );
+    }
+    const html =
+      type === 'narrative'
+        ? renderNarrativeReviewHtml(data, result.narrative, { showPrintBar: true })
+        : renderMeetingNoteHtml(data, result.narrative);
+    return new NextResponse(html, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-store, max-age=0',
+        'X-Narrative-From-Cache': result.fromCache ? '1' : '0',
+        'X-Narrative-Generation-Ms': String(result.generationMs ?? 0),
+      },
+    });
   }
 
   // ── HTML formats ──
