@@ -4,11 +4,14 @@
  * On first load, seeds from env var if Blob doesn't exist (backward compatible).
  */
 
-import { put, list } from '@vercel/blob';
+import { put, list, del } from '@vercel/blob';
 import bcrypt from 'bcryptjs';
 import type { AdminUser, AdminRole } from '@/lib/auth/config';
 
 const BLOB_PATH = 'admin/users.json';
+// addRandomSuffix=true makes writes produce URLs like "admin/users-XXXXXX.json",
+// so the list prefix must NOT include the ".json" extension.
+const BLOB_LIST_PREFIX = 'admin/users';
 
 // ─── Super Admin — cannot be deleted, requires dual OTP ───
 export const SUPER_ADMIN_EMAIL = 'ram@trustner.in';
@@ -34,13 +37,17 @@ export function canResetPasswords(email: string): boolean {
 
 export async function getAdminUsersFromBlob(): Promise<AdminUser[]> {
   try {
-    const result = await list({ prefix: BLOB_PATH, limit: 1 });
+    // We use addRandomSuffix: true on writes, so we always pick the
+    // most-recently-uploaded blob. This avoids Vercel Blob's
+    // public-CDN-doesn't-invalidate-on-overwrite bug, which can make
+    // password changes invisible for up to 30 days.
+    const result = await list({ prefix: BLOB_LIST_PREFIX, limit: 100 });
 
     if (result.blobs.length > 0) {
-      // Bypass CDN cache — credentials must be read fresh on every call.
-      // Vercel Blob serves with 30-day cache-control by default; without
-      // no-store the serverless function sees stale hashes after a reset.
-      const res = await fetch(result.blobs[0].url + '?_=' + Date.now(), {
+      const latest = result.blobs
+        .slice()
+        .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime())[0];
+      const res = await fetch(latest.url + '?_=' + Date.now(), {
         cache: 'no-store',
         next: { revalidate: 0 },
       } as RequestInit);
@@ -82,13 +89,29 @@ function getEnvUsers(): AdminUser[] {
 // ─── Write to Blob ───
 
 async function saveUsers(users: AdminUser[]): Promise<void> {
-  await put(BLOB_PATH, JSON.stringify(users, null, 2), {
+  // Use addRandomSuffix: true so every write produces a brand-new URL.
+  // This is the only reliable way to defeat Vercel Blob's CDN caching
+  // (CDN keys ignore query strings, and the public URL doesn't invalidate
+  // on overwrite). After the write, we delete the older versions.
+  const result = await put(BLOB_PATH, JSON.stringify(users, null, 2), {
     access: 'public',
-    addRandomSuffix: false,
-    allowOverwrite: true,
+    addRandomSuffix: true,
     contentType: 'application/json',
     cacheControlMaxAge: 0,
   });
+
+  // Cleanup older versions (best-effort)
+  try {
+    const all = await list({ prefix: BLOB_LIST_PREFIX, limit: 100 });
+    const toDelete = all.blobs
+      .filter((b) => b.url !== result.url)
+      .map((b) => b.url);
+    if (toDelete.length > 0) {
+      await del(toDelete);
+    }
+  } catch (err) {
+    console.error('[AdminUserStore] Cleanup of stale blobs failed:', err);
+  }
 }
 
 // ─── Find User ───

@@ -5,7 +5,7 @@
  * The directory is the whitelist; this store tracks auth state.
  */
 
-import { put, list } from '@vercel/blob';
+import { put, list, del } from '@vercel/blob';
 import bcrypt from 'bcryptjs';
 import { findEmployeeByEmail, findEmployeeById, getResetApprovalChain } from './employee-directory';
 import type { Employee, EmployeeRole } from './employee-directory';
@@ -44,19 +44,30 @@ const RESETS_BLOB = 'employee/reset-requests.json';
 
 // ─── Credential CRUD ─────────────────────────────────────────
 
+// addRandomSuffix=true makes writes produce URLs like
+// "employee/credentials-XXXXXX.json", so the list prefix must NOT include
+// the ".json" extension — we strip it to match versioned blobs.
+function listPrefix(path: string): string {
+  return path.replace(/\.json$/, '');
+}
+
 async function readBlob<T>(path: string, fallback: T[]): Promise<T[]> {
   try {
-    const result = await list({ prefix: path, limit: 1 });
-    if (result.blobs.length > 0) {
-      // Bypass CDN cache — credentials must be read fresh on every call.
-      // The blob URL has 30-day cache-control by default; without no-store
-      // the serverless function sees stale hashes after a password change.
-      const res = await fetch(result.blobs[0].url + '?_=' + Date.now(), {
-        cache: 'no-store',
-        next: { revalidate: 0 },
-      } as RequestInit);
-      if (res.ok) return (await res.json()) as T[];
-    }
+    // We use addRandomSuffix: true on writes, so we always have to list
+    // blobs by prefix and pick the most-recently-uploaded one. This avoids
+    // Vercel Blob's public-CDN-doesn't-invalidate-on-overwrite bug, which
+    // can make credential changes invisible for up to 30 days.
+    const result = await list({ prefix: listPrefix(path), limit: 100 });
+    if (result.blobs.length === 0) return fallback;
+    // Sort by uploadedAt desc to find the latest
+    const latest = result.blobs
+      .slice()
+      .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime())[0];
+    const res = await fetch(latest.url + '?_=' + Date.now(), {
+      cache: 'no-store',
+      next: { revalidate: 0 },
+    } as RequestInit);
+    if (res.ok) return (await res.json()) as T[];
   } catch (err) {
     console.error(`[EmployeeAuth] Blob read failed for ${path}:`, err);
   }
@@ -64,13 +75,30 @@ async function readBlob<T>(path: string, fallback: T[]): Promise<T[]> {
 }
 
 async function writeBlob<T>(path: string, data: T[]): Promise<void> {
-  await put(path, JSON.stringify(data, null, 2), {
+  // Use addRandomSuffix: true so every write produces a brand-new URL.
+  // This is the only reliable way to defeat Vercel Blob's CDN caching
+  // (CDN keys ignore query strings, and the public URL doesn't invalidate
+  // on overwrite). After the write, we delete the older versions so the
+  // blob doesn't accumulate.
+  const result = await put(path, JSON.stringify(data, null, 2), {
     access: 'public',
-    addRandomSuffix: false,
-    allowOverwrite: true,
+    addRandomSuffix: true,
     contentType: 'application/json',
     cacheControlMaxAge: 0,
   });
+
+  // Cleanup: delete prior versions (best-effort; do not fail the write)
+  try {
+    const all = await list({ prefix: listPrefix(path), limit: 100 });
+    const toDelete = all.blobs
+      .filter((b) => b.url !== result.url)
+      .map((b) => b.url);
+    if (toDelete.length > 0) {
+      await del(toDelete);
+    }
+  } catch (err) {
+    console.error(`[EmployeeAuth] Cleanup of stale ${path} blobs failed:`, err);
+  }
 }
 
 export async function getCredentials(): Promise<EmployeeCredential[]> {
