@@ -105,7 +105,7 @@ ${narrative.sipAudit ? `
 
 <p><strong>4. The top actions (15 min)</strong></p>
 <ol>
-${narrative.topActions.map((a) => `<li>${escape(a)}</li>`).join('')}
+${(narrative.topActions ?? []).map((a) => `<li>${escape(a)}</li>`).join('')}
 </ol>
 
 <h2>Tone calibration — read this before the meeting</h2>
@@ -113,7 +113,7 @@ ${narrative.topActions.map((a) => `<li>${escape(a)}</li>`).join('')}
 
 <h2 style="page-break-before: always;">Anticipated client questions — scripted answers</h2>
 <p style="font-size:8.5pt;color:#64748b;font-style:italic;">Use these verbatim or as starting points. They're written in the advisor's voice.</p>
-${narrative.anticipatedQA
+${(narrative.anticipatedQA ?? [])
   .map(
     (qa) => `<div class="qa">
       <div class="q">Q: ${escape(qa.question)}</div>
@@ -124,14 +124,14 @@ ${narrative.anticipatedQA
 
 <h2>What NOT to discuss yet</h2>
 <ul>
-${narrative.whatNotToDo.map((w) => `<li>${escape(w)}</li>`).join('')}
+${(narrative.whatNotToDo ?? []).map((w) => `<li>${escape(w)}</li>`).join('')}
 </ul>
 
 <h2>Recommended meeting agenda</h2>
 <table style="width:100%;border-collapse:collapse;font-size:9pt;margin-top:6pt;">
   <thead><tr style="background:#0c4a6e;color:white;"><th style="padding:5pt 6pt;text-align:left;width:20%;">Time</th><th style="padding:5pt 6pt;text-align:left;">Topic</th></tr></thead>
   <tbody>
-  ${narrative.meetingAgenda
+  ${(narrative.meetingAgenda ?? [])
     .map(
       (a) =>
         `<tr><td style="padding:4pt 6pt;border-bottom:1px solid #e2e8f0;"><strong>${escape(a.time)}</strong></td><td style="padding:4pt 6pt;border-bottom:1px solid #e2e8f0;">${escape(a.topic)}</td></tr>`

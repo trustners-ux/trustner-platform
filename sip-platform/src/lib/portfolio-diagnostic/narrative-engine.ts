@@ -361,7 +361,41 @@ Your output will be rendered in PDF reports that match these gold-standard hand-
 
 Generate the NarrativeJSON for the family whose structured data follows. Match the tone exactly. Use specific numbers from the data — never invent figures. If a section doesn't apply (no laggards → deadMoneyFindings: null), use null. If you don't know something (e.g., 5Y peer median for a brand-new fund), say so explicitly.
 
-Output the JSON exactly matching the schema. Do not wrap in markdown code fences. Do not add commentary.`;
+Output the JSON exactly matching the schema. Do not wrap in markdown code fences. Do not add commentary.
+
+# CRITICAL — EXACT FIELD NAMES (CASE-SENSITIVE, NO RENAMES)
+
+Your output MUST be a single JSON object using these EXACT field names — no synonyms, no renames, no extras. Missing any required field will break the renderer.
+
+\`\`\`
+{
+  "centralFinding": "string — 2-3 sentence lede",
+  "bottomLine": "string — 1-paragraph 'bottom line' for Section 1",
+  "panLevelObservation": "string — PAN-level XIRR gap text; empty string '' if single PAN",
+  "perHoldingWhy": [{ "holdingId": 0, "fundName": "", "heldBy": "", "why": "", "replaceWith": "" }],
+  "deadMoneyFindings": null | { "headline": "", "perPosition": [{ "fund": "", "impact": "" }], "opportunityCost": "" },
+  "sipAudit": null | { "headline": "", "findings": [""], "recommendation": "" },
+  "portfolioOverlap": { "summary": "", "perCategory": [{ "category": "", "observation": "", "recommendation": "" }] },
+  "internationalPlan": null | { "currentExposure": "", "targetExposure": "", "rationale": "", "fundPicks": [{ "name": "", "allocation": "", "role": "" }] },
+  "taxImpact": { "perSwap": [{ "pan": "", "fund": "", "gain": "", "taxType": "", "tax": "", "phasingNote": "" }], "netTax": "", "summary": "" },
+  "wealthScenarios": [{ "label": "", "fiveYearAum": "", "marginalBenefit": "" }],
+  "topActions": ["string", "string"],
+  "whatNotToDo": ["string", "string"],
+  "directNote": "string — 3-4 paragraph empathetic close",
+  "meetingAgenda": [{ "time": "5 min", "topic": "" }],
+  "anticipatedQA": [{ "question": "", "answer": "" }],
+  "toneNote": "string"
+}
+\`\`\`
+
+DO NOT use these alternate names:
+- ❌ "anticipatedQuestions" → use "anticipatedQA"
+- ❌ "taxStrategy" → use "taxImpact"
+- ❌ "wealthCreationStory" — NOT IN SCHEMA, omit
+- ❌ "actions" → use "topActions"
+- ❌ "directLetter" → use "directNote"
+
+For optional-and-empty fields use null (not omit). For optional-and-present-with-no-items use \`{ "perCategory": [] }\`. Never omit a required key. Never add keys outside this schema.`;
 
 // ─────────────────────────────────────────────────────────────────
 // DATA LOADING (loads the diagnostic + family + holdings + scoring)
@@ -587,6 +621,148 @@ Output ONLY the JSON. No markdown fences, no commentary.`;
 }
 
 // ─────────────────────────────────────────────────────────────────
+// OUTPUT NORMALIZATION
+// The LLM occasionally drifts from the schema (renames fields, drops
+// optionals, adds extras). This function maps common variants to the
+// canonical schema + fills missing required fields with safe defaults
+// so the renderer never crashes on a partial response.
+// ─────────────────────────────────────────────────────────────────
+
+function asString(v: unknown, fallback = ''): string {
+  return typeof v === 'string' ? v : fallback;
+}
+function asArray<T>(v: unknown, fallback: T[] = []): T[] {
+  return Array.isArray(v) ? (v as T[]) : fallback;
+}
+function asObjOrNull<T extends object>(v: unknown): T | null {
+  return v && typeof v === 'object' && !Array.isArray(v) ? (v as T) : null;
+}
+
+function normalizeNarrative(raw: Record<string, unknown>): NarrativeJSON {
+  // Field-name aliases observed in the wild
+  const aliasMap: Record<string, string> = {
+    anticipatedQuestions: 'anticipatedQA',
+    qAndA: 'anticipatedQA',
+    questions: 'anticipatedQA',
+    taxStrategy: 'taxImpact',
+    taxAnalysis: 'taxImpact',
+    actions: 'topActions',
+    actionItems: 'topActions',
+    directLetter: 'directNote',
+    familyNote: 'directNote',
+    bottom_line: 'bottomLine',
+    central_finding: 'centralFinding',
+    per_holding_why: 'perHoldingWhy',
+  };
+  const r = { ...raw } as Record<string, unknown>;
+  for (const [from, to] of Object.entries(aliasMap)) {
+    if (r[from] !== undefined && r[to] === undefined) {
+      r[to] = r[from];
+      delete r[from];
+    }
+  }
+
+  // wealthCreationStory and other unknown keys: silently drop
+  // (additionalProperties: false in our schema)
+
+  // Build a normalized object with safe defaults for every required field
+  const out: NarrativeJSON = {
+    centralFinding: asString(r.centralFinding, 'Diagnostic complete — see per-holding analysis below for the family-specific findings.'),
+    bottomLine: asString(r.bottomLine, ''),
+    panLevelObservation: asString(r.panLevelObservation, ''),
+    perHoldingWhy: asArray<NarrativeJSON['perHoldingWhy'][number]>(r.perHoldingWhy).map((h) => ({
+      holdingId: typeof h.holdingId === 'number' ? h.holdingId : 0,
+      fundName: asString(h.fundName),
+      heldBy: asString(h.heldBy),
+      why: asString(h.why),
+      replaceWith: asString(h.replaceWith),
+    })),
+    deadMoneyFindings: (() => {
+      const o = asObjOrNull<Record<string, unknown>>(r.deadMoneyFindings);
+      if (!o) return null;
+      return {
+        headline: asString(o.headline),
+        perPosition: asArray<{ fund: string; impact: string }>(o.perPosition).map((p) => ({
+          fund: asString(p.fund),
+          impact: asString(p.impact),
+        })),
+        opportunityCost: asString(o.opportunityCost),
+      };
+    })(),
+    sipAudit: (() => {
+      const o = asObjOrNull<Record<string, unknown>>(r.sipAudit);
+      if (!o) return null;
+      return {
+        headline: asString(o.headline),
+        findings: asArray<string>(o.findings).filter((x) => typeof x === 'string'),
+        recommendation: asString(o.recommendation),
+      };
+    })(),
+    portfolioOverlap: (() => {
+      const o = asObjOrNull<Record<string, unknown>>(r.portfolioOverlap);
+      if (!o) return { summary: '', perCategory: [] };
+      return {
+        summary: asString(o.summary),
+        perCategory: asArray<{ category: string; observation: string; recommendation: string }>(o.perCategory).map((c) => ({
+          category: asString(c.category),
+          observation: asString(c.observation),
+          recommendation: asString(c.recommendation),
+        })),
+      };
+    })(),
+    internationalPlan: (() => {
+      const o = asObjOrNull<Record<string, unknown>>(r.internationalPlan);
+      if (!o) return null;
+      return {
+        currentExposure: asString(o.currentExposure),
+        targetExposure: asString(o.targetExposure),
+        rationale: asString(o.rationale),
+        fundPicks: asArray<{ name: string; allocation: string; role: string }>(o.fundPicks).map((f) => ({
+          name: asString(f.name),
+          allocation: asString(f.allocation),
+          role: asString(f.role),
+        })),
+      };
+    })(),
+    taxImpact: (() => {
+      const o = asObjOrNull<Record<string, unknown>>(r.taxImpact);
+      if (!o) return { perSwap: [], netTax: '₹0', summary: 'No swaps recommended.' };
+      return {
+        perSwap: asArray<{ pan: string; fund: string; gain: string; taxType: string; tax: string; phasingNote: string }>(o.perSwap).map((t) => ({
+          pan: asString(t.pan),
+          fund: asString(t.fund),
+          gain: asString(t.gain),
+          taxType: asString(t.taxType),
+          tax: asString(t.tax),
+          phasingNote: asString(t.phasingNote),
+        })),
+        netTax: asString(o.netTax, '₹0'),
+        summary: asString(o.summary),
+      };
+    })(),
+    wealthScenarios: asArray<{ label: string; fiveYearAum: string; marginalBenefit: string }>(r.wealthScenarios).map((s) => ({
+      label: asString(s.label),
+      fiveYearAum: asString(s.fiveYearAum),
+      marginalBenefit: asString(s.marginalBenefit),
+    })),
+    topActions: asArray<string>(r.topActions).filter((x) => typeof x === 'string'),
+    whatNotToDo: asArray<string>(r.whatNotToDo).filter((x) => typeof x === 'string'),
+    directNote: asString(r.directNote),
+    meetingAgenda: asArray<{ time: string; topic: string }>(r.meetingAgenda).map((a) => ({
+      time: asString(a.time),
+      topic: asString(a.topic),
+    })),
+    anticipatedQA: asArray<{ question: string; answer: string }>(r.anticipatedQA).map((q) => ({
+      question: asString(q.question),
+      answer: asString(q.answer),
+    })),
+    toneNote: asString(r.toneNote),
+  };
+
+  return out;
+}
+
+// ─────────────────────────────────────────────────────────────────
 // MAIN ENGINE — call Claude, parse, save
 // ─────────────────────────────────────────────────────────────────
 
@@ -684,7 +860,8 @@ export async function generateNarrative(diagnosticRunId: number): Promise<Genera
       .trim();
 
     try {
-      narrative = JSON.parse(cleaned) as NarrativeJSON;
+      const parsed = JSON.parse(cleaned) as Record<string, unknown>;
+      narrative = normalizeNarrative(parsed);
     } catch (e) {
       return {
         ok: false,
@@ -779,7 +956,9 @@ export async function getOrGenerateNarrative(diagnosticRunId: number): Promise<G
 
   if (existing && existing.narrative_json) {
     // Use edited_json if available, else narrative_json
-    const narrative = (existing.edited_json ?? existing.narrative_json) as NarrativeJSON;
+    // Normalize on read so older rows with drifted field names still render.
+    const rawRow = (existing.edited_json ?? existing.narrative_json) as Record<string, unknown>;
+    const narrative = normalizeNarrative(rawRow);
     return {
       ok: true,
       narrative,

@@ -137,8 +137,11 @@ export function renderNarrativeReviewHtml(
     })
     .join('');
 
-  // Section 6: Portfolio overlap
-  const overlapRows = narrative.portfolioOverlap.perCategory
+  // Section 6: Portfolio overlap (null-safe — engine normalizer guarantees
+  // portfolioOverlap is at least `{ summary: '', perCategory: [] }`, but a
+  // hand-edited row could still drop one of the keys)
+  const overlapSummary = narrative.portfolioOverlap?.summary ?? '';
+  const overlapRows = (narrative.portfolioOverlap?.perCategory ?? [])
     .map(
       (c) => `<tr>
         <td><strong>${escape(c.category)}</strong></td>
@@ -169,8 +172,9 @@ export function renderNarrativeReviewHtml(
     `
     : '';
 
-  // Section 8: Tax impact
-  const taxRows = narrative.taxImpact.perSwap
+  // Section 8: Tax impact (null-safe)
+  const taxImpact = narrative.taxImpact ?? { perSwap: [], netTax: '', summary: '' };
+  const taxRows = (taxImpact.perSwap ?? [])
     .map(
       (t) => `<tr>
         <td><strong>${escape(t.pan)}</strong></td>
@@ -183,8 +187,8 @@ export function renderNarrativeReviewHtml(
     )
     .join('');
 
-  // Section 9: Wealth scenarios
-  const scenarioRows = narrative.wealthScenarios
+  // Section 9: Wealth scenarios (null-safe)
+  const scenarioRows = (narrative.wealthScenarios ?? [])
     .map(
       (s, i) => `<tr>
         <td><strong>${String.fromCharCode(65 + i)}</strong></td>
@@ -195,17 +199,17 @@ export function renderNarrativeReviewHtml(
     )
     .join('');
 
-  // Section 10/11: Top actions + What NOT to do
-  const topActionsList = narrative.topActions
+  // Section 10/11: Top actions + What NOT to do (null-safe)
+  const topActionsList = (narrative.topActions ?? [])
     .map((a, i) => `<li><strong>${i + 1}.</strong> ${escape(a)}</li>`)
     .join('');
-  const whatNotList = narrative.whatNotToDo.map((a) => `<li>❌ ${escape(a)}</li>`).join('');
+  const whatNotList = (narrative.whatNotToDo ?? []).map((a) => `<li>❌ ${escape(a)}</li>`).join('');
 
-  // Section 12: Direct note
-  const directNote = paragraphs(narrative.directNote);
+  // Section 12: Direct note (null-safe)
+  const directNote = narrative.directNote ? paragraphs(narrative.directNote) : '';
 
-  // Section 13: Meeting agenda
-  const agendaRows = narrative.meetingAgenda
+  // Section 13: Meeting agenda (null-safe)
+  const agendaRows = (narrative.meetingAgenda ?? [])
     .map((a) => `<tr><td><strong>${escape(a.time)}</strong></td><td>${escape(a.topic)}</td></tr>`)
     .join('');
 
@@ -285,51 +289,51 @@ ${sipAudit}
   <tbody>${holdingsRows}</tbody>
 </table>
 
-<h2>6 · Portfolio overlap analysis</h2>
-<p>${escape(narrative.portfolioOverlap.summary)}</p>
-<table>
+${overlapRows || overlapSummary ? `<h2>6 · Portfolio overlap analysis</h2>
+<p>${escape(overlapSummary)}</p>
+${overlapRows ? `<table>
   <thead><tr><th>Category</th><th>Observation</th><th>Recommendation</th></tr></thead>
   <tbody>${overlapRows}</tbody>
-</table>
+</table>` : ''}` : ''}
 
 ${intl}
 
-<h2>8 · Tax impact</h2>
-<table>
+${taxRows || taxImpact.summary ? `<h2>8 · Tax impact</h2>
+${taxRows ? `<table>
   <thead><tr><th>PAN</th><th>Fund</th><th>Gain</th><th>Tax type</th><th class="num">Est. tax</th><th>Phasing</th></tr></thead>
   <tbody>${taxRows}</tbody>
-  <tfoot><tr><td colspan="4"><strong>NET</strong></td><td class="num"><strong>${escape(narrative.taxImpact.netTax)}</strong></td><td></td></tr></tfoot>
-</table>
-<p><strong>${escape(narrative.taxImpact.summary)}</strong></p>
+  <tfoot><tr><td colspan="4"><strong>NET</strong></td><td class="num"><strong>${escape(taxImpact.netTax)}</strong></td><td></td></tr></tfoot>
+</table>` : ''}
+${taxImpact.summary ? `<p><strong>${escape(taxImpact.summary)}</strong></p>` : ''}` : ''}
 
-<h2>9 · Wealth math — 5-year scenarios</h2>
+${scenarioRows ? `<h2>9 · Wealth math — 5-year scenarios</h2>
 <table>
   <thead><tr><th>Scenario</th><th>Action</th><th class="num">5-yr AUM</th><th class="num">Marginal benefit</th></tr></thead>
   <tbody>${scenarioRows}</tbody>
-</table>
+</table>` : ''}
 
-<h2>10 · What to do FIRST</h2>
-<ol style="padding-left:22pt;">${topActionsList}</ol>
+${topActionsList ? `<h2>10 · What to do FIRST</h2>
+<ol style="padding-left:22pt;">${topActionsList}</ol>` : ''}
 
-<h2>11 · What NOT to do</h2>
-<ul>${whatNotList}</ul>
+${whatNotList ? `<h2>11 · What NOT to do</h2>
+<ul>${whatNotList}</ul>` : ''}
 
-<h2>12 · A direct note for the family</h2>
-${directNote}
+${directNote ? `<h2>12 · A direct note for the family</h2>
+${directNote}` : ''}
 
-<h2 class="new-page">13 · Recommended meeting agenda</h2>
+${agendaRows ? `<h2 class="new-page">13 · Recommended meeting agenda</h2>
 <table>
   <thead><tr><th>Time</th><th>Topic</th></tr></thead>
   <tbody>${agendaRows}</tbody>
 </table>
-<blockquote><strong>Tone for this meeting:</strong> ${escape(narrative.toneNote)}</blockquote>
+${narrative.toneNote ? `<blockquote><strong>Tone for this meeting:</strong> ${escape(narrative.toneNote)}</blockquote>` : ''}` : ''}
 
-<h2>14 · Anticipated Q&amp;A — for the advisor</h2>
-${narrative.anticipatedQA
+${(narrative.anticipatedQA ?? []).length > 0 ? `<h2>14 · Anticipated Q&amp;A — for the advisor</h2>
+${(narrative.anticipatedQA ?? [])
   .map(
     (qa) => `<p><strong>Q: ${escape(qa.question)}</strong><br/>${escape(qa.answer)}</p>`
   )
-  .join('')}
+  .join('')}` : ''}
 
 <hr style="margin-top: 18pt; border: none; border-top: 1px solid #cbd5e1;"/>
 <p style="font-size: 7pt; color: #64748b; line-height: 1.4;">
