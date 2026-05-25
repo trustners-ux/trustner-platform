@@ -69,7 +69,10 @@ export async function parseCasPdf(input: {
       };
     }
 
-    // Auto-detect format
+    // Auto-detect format — order matters: most-specific markers first
+    if (isPortfolioValuationSummary(text)) {
+      return parsePortfolioValuationSummary(text);
+    }
     if (isTrustnerValuationReport(text)) {
       return parseTrustnerValuationReport(text);
     }
@@ -264,6 +267,157 @@ function extractInvestorNameTrustner(text: string): string | undefined {
   // right after "Valuation Report as on Date - <date>".
   const m = text.match(/Valuation\s+Report\s+as\s+on\s+Date[^\n]*\n([A-Z][A-Z\s.]+?)\s*\(PAN:/);
   return m?.[1]?.trim();
+}
+
+// ─────────────────────────────────────────────────────────────────
+// PORTFOLIO VALUATION SUMMARY (BSE Star MF / Wealth Spectrum / Investwell)
+//
+// Format produced by several MFD back-office tools. Distinct from the
+// older "Valuation Report" format above. Layout:
+//
+//   <Firm header>
+//   <Investor name + PAN + address + RM info>
+//   Portfolio Valuation Summary
+//   As on <date>
+//   Investment snapshot since <YYYY-MM-DD>
+//   Investment (A) ... XIRR x.xx %
+//   Allocation By Applicant
+//   Mutual Fund Allocation by Applicant
+//   Mutual Fund Allocation by Fund         ← AMC-level summary
+//   Mutual Fund Allocation by Scheme       ← THE HOLDINGS TABLE
+//   Mutual Fund Allocation by Sub Category
+//   Mutual Fund (Equity) Cap Allocation
+//
+// The holdings table format is:
+//   <Scheme Name (G|D|IDCW)>  <PurchaseValue>  <CurrentValue>  <AbsRet%>  <CAGR%>  <Alloc%>
+//
+// No folio numbers, no units, no current NAV in this format — just the
+// per-scheme rollup. The SIP detail comes from a separate XLSX export
+// (handled by the SIP parser).
+// ─────────────────────────────────────────────────────────────────
+
+function isPortfolioValuationSummary(text: string): boolean {
+  // Require ALL THREE to avoid false positives — these strings together
+  // uniquely identify this format.
+  return (
+    /Portfolio\s+Valuation\s+Summary/i.test(text) &&
+    /Investment\s+snapshot\s+since/i.test(text) &&
+    /Mutual\s+Fund\s+Allocation\s+by\s+Scheme/i.test(text)
+  );
+}
+
+function parsePortfolioValuationSummary(text: string): CasParseResult {
+  const investorName = extractInvestorNamePVS(text) ?? extractInvestorName(text);
+  const pan = extractPan(text);
+
+  // Find the "Mutual Fund Allocation by Scheme" block. The block ends at
+  // whichever comes first: next "Mutual Fund Allocation by ..." header or
+  // "Mutual Fund (Equity)" or "Total :" followed by another section.
+  const blockStartMatch = text.match(/Mutual\s+Fund\s+Allocation\s+by\s+Scheme/i);
+  if (!blockStartMatch) {
+    return {
+      success: false,
+      error: 'Portfolio Valuation Summary detected but "by Scheme" section not found',
+      investorName,
+      pan,
+      holdings: [],
+      sips: [],
+      totalFoliosFound: 0,
+      totalAmcsFound: 0,
+    };
+  }
+  const blockStart = (blockStartMatch.index ?? 0) + blockStartMatch[0].length;
+  // Look for the next "by Sub Category" or "(Equity) Cap Allocation" header
+  // as the block end.
+  const rest = text.slice(blockStart);
+  const endMatch = rest.match(/Mutual\s+Fund\s+Allocation\s+by\s+Sub\s+Category|Mutual\s+Fund\s*\(Equity\)\s+Cap\s+Allocation/i);
+  const blockEnd = endMatch ? blockStart + (endMatch.index ?? 0) : text.length;
+  const block = text.slice(blockStart, blockEnd);
+
+  // Investment-snapshot earliest date — fallback firstInvestmentDate for
+  // each holding (we don't have per-fund start dates in this report).
+  const sinceMatch = text.match(/Investment\s+snapshot\s+since\s+(\d{2}-\d{2}-\d{4})/i);
+  const firstInvDate = sinceMatch ? normaliseDdMmYyyy(sinceMatch[1]) : undefined;
+
+  // Row pattern: <words ending in "(G)" or "(D)" or "(IDCW)" or "(B)"> <inv> <cur> <abs%> <cagr%> <alloc%>
+  // Numbers can be Indian-format (with commas), include decimals, and the
+  // %% columns can be negative.
+  //
+  // Examples:
+  //   Bandhan Small Cap Fund Reg (G) 40,000 42,212 5.53 5.03 7.26
+  //   Edelweiss Business Cycle Fund Reg (G) 50,000 43,878 -12.24 -6.92 7.55
+  //   ICICI Pru Balanced Advantage Fund Reg (G) 1,29,451 1,44,089 11.31 5.83 24.79
+  //
+  // The (G)/(D)/(IDCW) suffix is the anchor — it's always present.
+  const rowRe = /([A-Z][A-Za-z0-9 &\-/().,'']*?\((?:G|D|IDCW|B)\))\s+([\d,]+(?:\.\d+)?)\s+([\d,]+(?:\.\d+)?)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+([\d.]+)\b/g;
+
+  const holdings: RawHolding[] = [];
+  const entityName = investorName ?? 'Unknown';
+
+  for (const m of block.matchAll(rowRe)) {
+    const [, schemeRaw, invStr, curStr, , , ] = m;
+    const fundName = cleanSchemeName(schemeRaw.trim());
+
+    // Skip the "Total :" row if it got matched (it won't have a (G)/(D)/(IDCW)
+    // suffix though, so this is belt-and-braces)
+    if (/^Total\b/i.test(fundName)) continue;
+
+    const investedAmount = numeric(invStr);
+    const currentValue = numeric(curStr);
+    if (!investedAmount || !currentValue) continue;
+
+    const amc = guessAmcFromSchemeName(fundName);
+
+    holdings.push({
+      entityName,
+      entityType: detectEntityType(entityName),
+      fundName,
+      folioNumber: undefined, // not in this format; planner can fill via SIP upload
+      amcName: amc,
+      units: 0,             // not in this format
+      currentNav: 0,        // not in this format
+      currentValue,
+      investedAmount,
+      firstInvestmentDate: firstInvDate,
+    });
+  }
+
+  const amcSet = new Set(holdings.map((h) => h.amcName ?? '').filter(Boolean));
+  const folioSet = new Set(holdings.map((h) => h.folioNumber ?? '').filter(Boolean));
+
+  return {
+    success: holdings.length > 0,
+    error: holdings.length === 0
+      ? 'Portfolio Valuation Summary detected but no scheme rows could be extracted. The PDF layout may have changed.'
+      : undefined,
+    investorName,
+    pan,
+    holdings,
+    sips: [], // SIPs come from the separate "My SIP's" XLSX
+    totalFoliosFound: folioSet.size,
+    totalAmcsFound: amcSet.size,
+  };
+}
+
+function extractInvestorNamePVS(text: string): string | undefined {
+  // The investor name appears just after "Trustner Asset Services Pvt. Ltd."
+  // and before the PAN. The line is in ALL CAPS on its own.
+  //
+  // Example:
+  //   Trustner Asset Services Pvt. Ltd.
+  //    MOHIT GULATI
+  //   AKAPG5617P
+  const m = text.match(/Trustner\s+Asset\s+Services\s+Pvt\.\s*Ltd\.\s*[\n\r]+\s*([A-Z][A-Z\s.&]{2,60}?)\s*[\n\r]+\s*[A-Z]{5}\d{4}[A-Z]/i);
+  if (m?.[1]) return m[1].replace(/\s+/g, ' ').trim();
+  return undefined;
+}
+
+function normaliseDdMmYyyy(s?: string): string | undefined {
+  if (!s) return undefined;
+  const m = s.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  if (!m) return s;
+  const [, dd, mm, yyyy] = m;
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 function numeric(s?: string): number {

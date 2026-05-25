@@ -932,6 +932,11 @@ interface SipsTabProps {
 }
 
 function SipsTab({ sips, onChange }: SipsTabProps) {
+  const sipFileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingSipFile, setIsUploadingSipFile] = useState(false);
+  const [sipUploadError, setSipUploadError] = useState<string | null>(null);
+  const [sipUploadWarnings, setSipUploadWarnings] = useState<string[]>([]);
+
   function addSip() {
     onChange([
       ...sips,
@@ -946,6 +951,42 @@ function SipsTab({ sips, onChange }: SipsTabProps) {
         hasStepUp: false,
       },
     ]);
+  }
+
+  async function handleSipFileUpload(file: File) {
+    setSipUploadError(null);
+    setSipUploadWarnings([]);
+    setIsUploadingSipFile(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/admin/portfolio-diagnostic/parse-sips', {
+        method: 'POST',
+        body: fd,
+        credentials: 'include',
+      });
+      const data = (await res.json()) as {
+        success: boolean;
+        error?: string;
+        sips?: RawSip[];
+        warnings?: string[];
+        totalRows?: number;
+        detectedFormat?: string;
+      };
+      if (!data.success || !data.sips) {
+        setSipUploadError(data.error ?? 'Could not parse SIP file');
+        return;
+      }
+      // Replace strategy: blow away the existing rows and use the parsed
+      // set. The planner can still edit each row inline before saving.
+      onChange(data.sips);
+      setSipUploadWarnings(data.warnings ?? []);
+    } catch (e) {
+      setSipUploadError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setIsUploadingSipFile(false);
+      if (sipFileInputRef.current) sipFileInputRef.current.value = '';
+    }
   }
 
   function updateSip(idx: number, field: keyof RawSip, value: unknown) {
@@ -982,21 +1023,70 @@ function SipsTab({ sips, onChange }: SipsTabProps) {
         </span>
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h3 className="text-sm font-semibold text-slate-900">Active SIPs</h3>
           <p className="text-xs text-slate-500">
             Forward cash flows. Total monthly outflow: <strong>₹{totalMonthly.toLocaleString('en-IN')}</strong>
           </p>
         </div>
-        <button
-          onClick={addSip}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          Add SIP
-        </button>
+        <div className="flex items-center gap-2">
+          <input
+            ref={sipFileInputRef}
+            type="file"
+            accept=".xlsx,.xls,.csv,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void handleSipFileUpload(f);
+            }}
+          />
+          <button
+            onClick={() => sipFileInputRef.current?.click()}
+            disabled={isUploadingSipFile}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            title="Upload an XLSX / CSV / PDF SIP listing — the Trustner 'My SIP&apos;s' export works directly"
+          >
+            {isUploadingSipFile ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+            {isUploadingSipFile ? 'Parsing…' : 'Upload SIP file'}
+          </button>
+          <button
+            onClick={addSip}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add SIP
+          </button>
+        </div>
       </div>
+
+      {sipUploadError && (
+        <div className="rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-900 flex items-start gap-2">
+          <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+          <div>
+            <div className="font-semibold">SIP upload failed</div>
+            <div className="mt-0.5">{sipUploadError}</div>
+            <div className="mt-1 text-rose-700">
+              Supported: Trustner &quot;My SIP&apos;s&quot; XLSX, CSV with same columns, or PDF of the same report.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {sipUploadWarnings.length > 0 && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          <div className="font-semibold flex items-center gap-1.5">
+            <AlertTriangle className="h-4 w-4" />
+            {sipUploadWarnings.length} SIP{sipUploadWarnings.length === 1 ? '' : 's'} flagged for review
+          </div>
+          <ul className="mt-1 list-disc pl-5 space-y-0.5">
+            {sipUploadWarnings.map((w, i) => (
+              <li key={i}>{w}</li>
+            ))}
+          </ul>
+          <p className="mt-1 text-amber-700">These rows are marked <strong>Stopped</strong> below — surface them in the client meeting.</p>
+        </div>
+      )}
 
       {sips.length === 0 ? (
         <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 py-8 text-center">
