@@ -34,7 +34,8 @@ const STYLES = `
      Print mode strips this back to plain @page margins. */
   @media screen {
     html { background: #f1f5f9; min-height: 100vh; }
-    body { max-width: 210mm; margin: 16px auto; padding: 14mm 16mm; box-shadow: 0 4px 24px rgba(15, 23, 42, 0.10); border-radius: 4px; }
+    /* html body is more specific than plain body — wins over later body{margin:0} */
+    html body { max-width: 210mm; margin: 16px auto; padding: 14mm 16mm; box-shadow: 0 4px 24px rgba(15, 23, 42, 0.10); border-radius: 4px; }
   }
   * { box-sizing: border-box; }
   body {

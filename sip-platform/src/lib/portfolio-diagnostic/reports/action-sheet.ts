@@ -26,7 +26,7 @@ const STYLES = `
   /* Screen preview: paper-on-grey for breathing room */
   @media screen {
     html { background: #f1f5f9; min-height: 100vh; }
-    body { max-width: 210mm; margin: 16px auto; padding: 14mm 18mm; box-shadow: 0 4px 24px rgba(15, 23, 42, 0.10); border-radius: 4px; }
+    html body { max-width: 210mm; margin: 16px auto; padding: 14mm 18mm; box-shadow: 0 4px 24px rgba(15, 23, 42, 0.10); border-radius: 4px; }
   }
   * { box-sizing: border-box; }
   body {
