@@ -47,6 +47,7 @@ import type {
   AnalyzedHolding,
   AnalyzedSip,
 } from '@/lib/portfolio-diagnostic/types';
+import { NarrativeEditor } from './NarrativeEditor';
 
 // ─────────────────────────────────────────────────────────────────
 // TYPES
@@ -144,7 +145,7 @@ export default function ReviewPage() {
   }>({ field: 'monthlyAmountInr', direction: 'desc' });
 
   // UI state
-  const [activeTab, setActiveTab] = useState<'holdings' | 'sips' | 'comments'>('holdings');
+  const [activeTab, setActiveTab] = useState<'holdings' | 'sips' | 'narrative' | 'comments'>('holdings');
   const [overrideOpen, setOverrideOpen] = useState<number | null>(null);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
 
@@ -797,6 +798,7 @@ export default function ReviewPage() {
         <nav className="flex gap-1">
           <TabPill label={`Holdings (${diagnostic.holdings.length})`} active={activeTab === 'holdings'} onClick={() => setActiveTab('holdings')} />
           <TabPill label={`SIPs (${diagnostic.sips.length})`} active={activeTab === 'sips'} onClick={() => setActiveTab('sips')} />
+          <TabPill label="✨ Narrative" active={activeTab === 'narrative'} onClick={() => setActiveTab('narrative')} />
           <TabPill label={`Comments (${comments.length})`} active={activeTab === 'comments'} onClick={() => setActiveTab('comments')} />
         </nav>
       </div>
@@ -860,6 +862,11 @@ export default function ReviewPage() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* NARRATIVE TAB — Phase-2 reviewer override UI for LLM narrative */}
+      {activeTab === 'narrative' && (
+        <NarrativeEditor diagnosticRunId={parseInt(id as string, 10)} />
       )}
 
       {/* COMMENTS TAB */}
