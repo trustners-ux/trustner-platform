@@ -1,7 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Menu, LogOut, User } from 'lucide-react';
+import Link from 'next/link';
+import { Menu, LogOut, User, KeyRound } from 'lucide-react';
 import { type AdminRole, ROLE_LABELS, ROLE_COLORS } from '@/lib/auth/config';
 
 export function AdminHeader({
@@ -42,6 +43,13 @@ export function AdminHeader({
           </div>
           <span className="hidden sm:inline font-medium text-primary-700">{userName}</span>
         </div>
+        <Link
+          href="/admin/account/change-password"
+          className="p-2 rounded-lg text-slate-400 hover:text-brand hover:bg-brand/10 transition-colors"
+          title="Change password"
+        >
+          <KeyRound className="w-4 h-4" />
+        </Link>
         <button
           onClick={handleLogout}
           className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
