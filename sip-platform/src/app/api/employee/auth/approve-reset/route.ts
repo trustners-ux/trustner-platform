@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { approveResetRequest } from '@/lib/employee/employee-auth';
 import { verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 
+// Auth routes: always dynamic, Node runtime, zero caching.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const runtime = 'nodejs';
+export const fetchCache = 'force-no-store';
+
 /**
  * POST /api/employee/auth/approve-reset
  * Manager approves or rejects a password reset request.

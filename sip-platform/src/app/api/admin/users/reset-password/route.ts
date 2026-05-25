@@ -6,6 +6,12 @@ import {
   canResetPasswords,
 } from '@/lib/admin/admin-user-store';
 
+// Auth routes: always dynamic, Node runtime, zero caching.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const runtime = 'nodejs';
+export const fetchCache = 'force-no-store';
+
 const getSecret = () =>
   new TextEncoder().encode(process.env.JWT_SECRET || 'dev-secret-change-in-production');
 

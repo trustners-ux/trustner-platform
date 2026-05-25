@@ -3,6 +3,12 @@ import { setupPassword } from '@/lib/employee/employee-auth';
 import { findEmployeeByEmail } from '@/lib/employee/employee-directory';
 import { signEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 
+// Auth routes: always dynamic, Node runtime, zero caching.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const runtime = 'nodejs';
+export const fetchCache = 'force-no-store';
+
 /**
  * POST /api/employee/auth/setup-password
  * First-time password setup. After setting password, auto-logs the user in.

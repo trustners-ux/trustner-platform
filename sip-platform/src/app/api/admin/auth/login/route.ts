@@ -4,6 +4,14 @@ import { findUserByEmailFromBlob } from '@/lib/admin/admin-user-store';
 import { signToken, COOKIE_NAME } from '@/lib/auth/jwt';
 import { writeAuditLog } from '@/lib/dal/audit';
 
+// Auth routes MUST always be dynamic + Node runtime + zero caching.
+// Without these, Vercel may reuse cached serverless bundles or stale blob
+// reads, causing password changes not to take effect for hours/days.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const runtime = 'nodejs';
+export const fetchCache = 'force-no-store';
+
 export async function POST(request: Request) {
   try {
     const { email, password } = await request.json();

@@ -3,6 +3,14 @@ import { verifyLogin } from '@/lib/employee/employee-auth';
 import { signEmployeeToken, verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 import { writeAuditLog } from '@/lib/dal/audit';
 
+// Auth routes MUST always be dynamic + Node runtime + zero caching.
+// Without these, Vercel may reuse cached serverless bundles or stale blob
+// reads, causing password changes not to take effect for hours/days.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const runtime = 'nodejs';
+export const fetchCache = 'force-no-store';
+
 /**
  * POST /api/employee/auth/login — Authenticate with email + password
  * GET  /api/employee/auth/login — Get current session

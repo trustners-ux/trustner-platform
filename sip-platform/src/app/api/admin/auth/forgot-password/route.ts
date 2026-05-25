@@ -6,6 +6,12 @@ import {
   SUPER_ADMIN_EMAIL,
 } from '@/lib/admin/admin-user-store';
 
+// Auth routes: always dynamic, Node runtime, zero caching.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const runtime = 'nodejs';
+export const fetchCache = 'force-no-store';
+
 /**
  * Forgot Password — Self-service password reset.
  * Sends an OTP to the super admin for verification,
