@@ -254,7 +254,7 @@ export default function PortfolioDiagnosticDashboard() {
           subtitle="One-click publish to generate the 4 client PDFs and queue delivery."
           items={approvedPending}
           emptyState="Nothing waiting to publish."
-          actionHref={(item) => `/admin/portfolio-diagnostic/${item.id}/publish`}
+          actionHref={(item) => `/admin/portfolio-diagnostic/${item.id}/review`}
           actionLabel="Review & publish"
           accent="emerald"
         />
