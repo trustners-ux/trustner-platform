@@ -69,59 +69,74 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Try employee credential store first
-    const result = await changePassword(email, currentPassword, newPassword);
+    // ─── Strategy: try BOTH stores, accept the one where the password matches ───
+    //
+    // A user can have entries in BOTH the employee credential store AND the
+    // admin store (Sangeeta does — she's listed in admin for portal access
+    // AND in employees for hierarchy/permissions). The two stores can have
+    // DIFFERENT passwords because they're independently managed.
+    //
+    // Old logic tried employee FIRST and only fell back to admin if the
+    // employee row was missing. Result: when an admin user logged in with
+    // their admin password and tried to change it, the employee hash check
+    // failed first and the endpoint returned 401 — even though the password
+    // was correct for the admin store.
+    //
+    // New logic: probe BOTH stores. If currentPassword matches in admin,
+    // update admin. If it matches in employee, update employee. If it
+    // matches in both, update both (keeping the dual portals in sync).
+    // Only return 401 if it matches NEITHER.
 
-    let bothUpdated = false;
-    if (result.success) {
-      // ALSO update admin password (if user exists in admin store) so the
-      // same password works for both portals.
-      try {
-        const adminUser = await findUserByEmailFromBlob(email);
-        if (adminUser) {
-          // We've already verified currentPassword against employee creds.
-          // Verify it ALSO matches the admin hash before overwriting, to
-          // prevent silent overwrite when admin password is different.
-          const matchesAdmin = await bcrypt.compare(currentPassword, adminUser.passwordHash);
-          if (matchesAdmin) {
-            await resetUserPassword(email, newPassword);
-            bothUpdated = true;
-          }
+    const employeeResult = await changePassword(email, currentPassword, newPassword);
+    const employeeOk = employeeResult.success;
+    const employeeNotFound = employeeResult.error === 'Credential not found';
+
+    let adminOk = false;
+    let adminFound = false;
+    try {
+      const adminUser = await findUserByEmailFromBlob(email);
+      if (adminUser) {
+        adminFound = true;
+        const matches = await bcrypt.compare(currentPassword, adminUser.passwordHash);
+        if (matches) {
+          await resetUserPassword(email, newPassword);
+          adminOk = true;
         }
-      } catch {
-        // Admin update is best-effort; employee update has already succeeded.
       }
+    } catch (err) {
+      console.error('[change-password] admin update failed', err);
+    }
 
+    if (employeeOk && adminOk) {
       return NextResponse.json({
         success: true,
-        message: bothUpdated
-          ? 'Password changed for both Employee + Admin portals.'
-          : 'Password changed for the Employee portal.',
+        message: 'Password changed for both Employee + Admin portals.',
+      });
+    }
+    if (employeeOk) {
+      return NextResponse.json({
+        success: true,
+        message: 'Password changed for the Employee portal.',
+      });
+    }
+    if (adminOk) {
+      return NextResponse.json({
+        success: true,
+        message: 'Password changed for the Admin portal.',
       });
     }
 
-    // Employee changePassword failed — maybe the user only exists in admin store
-    if (result.error === 'Credential not found') {
-      const adminUser = await findUserByEmailFromBlob(email);
-      if (adminUser) {
-        const matchesAdmin = await bcrypt.compare(currentPassword, adminUser.passwordHash);
-        if (!matchesAdmin) {
-          return NextResponse.json(
-            { success: false, error: 'Current password is incorrect' },
-            { status: 401 }
-          );
-        }
-        await resetUserPassword(email, newPassword);
-        return NextResponse.json({
-          success: true,
-          message: 'Password changed for the Admin portal.',
-        });
-      }
+    // Neither store accepted the password.
+    // Distinguish "no account at all" from "wrong password".
+    if (employeeNotFound && !adminFound) {
+      return NextResponse.json(
+        { success: false, error: 'No password is set for your account yet — contact an admin.' },
+        { status: 404 }
+      );
     }
-
     return NextResponse.json(
-      { success: false, error: result.error || 'Failed to change password' },
-      { status: result.error === 'Current password is incorrect' ? 401 : 400 }
+      { success: false, error: 'Current password is incorrect' },
+      { status: 401 }
     );
   } catch (err) {
     console.error('[change-password]', err);
