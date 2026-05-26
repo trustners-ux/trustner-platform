@@ -96,11 +96,28 @@ export function normaliseQuartile(quartile: 1 | 2 | 3 | 4): number {
  *   - AMC stability flag (compliance issues, ownership change, etc.)
  *
  * Returns a 0-1 score.
+ *
+ * IMPORTANT — null-safe default: when manager tenure data is missing
+ * (managerSinceDate not populated in fund_master), we use a NEUTRAL
+ * 0.60 instead of penalising as 0.20. Data gaps in our master are not
+ * the fund's fault — a confidently identified fund with no tenure data
+ * was being dragged from "KEEP" to "SWAP" purely on missing data
+ * (the PPFAS Flexi Cap consistency bug Ram caught on 26 May 2026).
+ *
+ * Pass `tenureUnknown: true` when managerSinceDate is null/missing to
+ * get the neutral score. The "0 months tenure" path now only applies
+ * to GENUINELY new managers (data exists but is recent).
  */
 export function computeManagerStability(input: {
   managerTenureMonths: number;     // 0+
   amcCompliancePenalty?: number;   // 0-0.3 deducted for known issues
+  tenureUnknown?: boolean;         // true if managerSinceDate was null/missing
 }): number {
+  if (input.tenureUnknown) {
+    // Neutral: don't reward, don't penalise. Equivalent to ~36 months tenure.
+    const penalty = input.amcCompliancePenalty ?? 0;
+    return clamp01(0.60 - penalty);
+  }
   // Tenure curve: 0 mo → 0.20, 24 mo → 0.60, 60+ mo → 1.00
   const tenureScore = clamp01(0.20 + (input.managerTenureMonths / 60) * 0.80);
   const penalty = input.amcCompliancePenalty ?? 0;
@@ -124,10 +141,26 @@ export function clamp01(x: number): number {
  * Bump this when weights or thresholds change. Persist with each
  * DiagnosticRun for reproducibility.
  */
-export const METHODOLOGY_VERSION = '1.0.0';
+export const METHODOLOGY_VERSION = '1.1.0';
 
 /**
  * Changelog (maintain in chronological order):
+ *
+ * v1.1.0 (26 May 2026) — Consistency floors, Ram + Claude collaboration
+ *   - Quality floor: a fund that beats category median on BOTH 3Y AND 5Y
+ *     CAGR cannot fall to SWAP (minimum verdict = KEEP). Mathematically
+ *     contradictory to recommend swapping out of a top-half-by-both-windows
+ *     fund. Fixes the PPFAS Flexi Cap inconsistency Ram caught:
+ *     beat 3Y median by +0.23pp and 5Y median by +3.08pp yet was flagged
+ *     SWAP because manager-stability data was null in master.
+ *   - Null-safe manager stability: missing managerSinceDate now returns
+ *     neutral 0.60 instead of penalty 0.20. Data gaps in our master are
+ *     not the fund's fault.
+ *   - Trustner-preferred floor: if pd_fund_master.trustner_preferred=true,
+ *     minimum verdict = KEEP. An analyst endorsement overrides a marginal
+ *     composite-score miss.
+ *   - Rationale text: when both deltas are positive, the rationale must
+ *     not say "better alternatives exist" — that contradicts the numbers.
  *
  * v1.0.0 (23 May 2026) — Initial methodology by Ram Shah, CFP™
  *   - 4-criterion weighted scoring

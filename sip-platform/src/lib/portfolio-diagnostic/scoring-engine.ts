@@ -82,6 +82,32 @@ export function analyzeHolding(input: {
     verdict = 'SWAP';
   }
 
+  // 4a. ── CONSISTENCY FLOORS (v1.1.0) ────────────────────────────
+  //
+  // The composite score can put a genuinely good fund into SWAP when
+  // upstream data has gaps (e.g., managerSinceDate is null in master).
+  // These floors prevent advisor-facing inconsistency where the same
+  // fund gets opposite recommendations across portfolios.
+  //
+  // Floor 1: "Beats both 3Y and 5Y median" → minimum KEEP. A fund that
+  //          tops the category median on BOTH long-window CAGRs is
+  //          mathematically a top-half performer. Cannot justify SWAP.
+  //
+  // Floor 2: trustner_preferred=true → minimum KEEP. An explicit
+  //          analyst endorsement overrides marginal score gaps.
+  //
+  // Floors only LIFT the verdict — they never demote.
+  if (verdict === 'SWAP' && fundMaster.cagr3y !== null && fundMaster.cagr5y !== null) {
+    const beats3y = (fundMaster.cagr3y ?? 0) > benchmark.median3y;
+    const beats5y = (fundMaster.cagr5y ?? 0) > benchmark.median5y;
+    if (beats3y && beats5y) {
+      verdict = 'KEEP';
+    }
+  }
+  if (verdict === 'SWAP' && fundMaster.trustnerPreferred) {
+    verdict = 'KEEP';
+  }
+
   // 5. Compute quartile from raw rank if available
   const quartile = computeQuartile(
     fundMaster.categoryRank3y,
@@ -155,6 +181,7 @@ export function computeCompositeScore(input: {
     cagr5yDelta: (fundMaster.cagr5y ?? 0) - benchmark.median5y,
     managerStability: computeManagerStability({
       managerTenureMonths: monthsSince(fundMaster.managerSinceDate),
+      tenureUnknown: !fundMaster.managerSinceDate,
       amcCompliancePenalty: 0, // TODO: source from AMC stability table
     }),
     quartile: computeQuartile(
@@ -266,12 +293,44 @@ function generateTemplateRationale(input: {
   switch (verdict) {
     case 'STAR':
       return `Top-quartile performance: 3Y CAGR ${cagr3y?.toFixed(2)}% vs category median ${benchmark.median3y.toFixed(2)}%. Continue.`;
-    case 'KEEP':
+    case 'KEEP': {
+      // Two flavours of KEEP:
+      //   (a) plain KEEP — score landed in [0.60, 0.80)
+      //   (b) "floor KEEP" — score was <0.60 but the consistency floor
+      //       upgraded it because the fund beats both medians OR is
+      //       Trustner-preferred. Use a different rationale so the
+      //       advisor knows WHY we keep it.
+      const beats3y = (cagr3y ?? -Infinity) > benchmark.median3y;
+      const beats5y = (cagr5y ?? -Infinity) > benchmark.median5y;
+      if (fundMaster.trustnerPreferred) {
+        return `Trustner-preferred fund. 3Y CAGR ${cagr3y?.toFixed(2)}% vs category median ${benchmark.median3y.toFixed(2)}%; 5Y CAGR ${cagr5y?.toFixed(2)}% vs median ${benchmark.median5y.toFixed(2)}%. Continue.`;
+      }
+      if (beats3y && beats5y) {
+        return `Beats category median on both 3Y (${cagr3y?.toFixed(2)}% vs ${benchmark.median3y.toFixed(2)}%) and 5Y (${cagr5y?.toFixed(2)}% vs ${benchmark.median5y.toFixed(2)}%). Continue.`;
+      }
       return `Solid fund: 3Y CAGR ${cagr3y?.toFixed(2)}% vs category median ${benchmark.median3y.toFixed(2)}%. ${holdingPeriodMonths < 24 ? 'SIP in J-curve phase; give 24-36 months.' : 'No change required.'}`;
+    }
     case 'WATCH':
       return `Fund has only ${holdingPeriodMonths} months of track record. Insufficient data for full assessment; re-assess at next quarterly review.`;
-    case 'SWAP':
-      return `Performance lags category: 3Y CAGR ${cagr3y?.toFixed(2)}% vs category median ${benchmark.median3y.toFixed(2)}% (delta ${((cagr3y ?? 0) - benchmark.median3y).toFixed(2)}pp). 5Y CAGR ${cagr5y?.toFixed(2)}% vs median ${benchmark.median5y.toFixed(2)}%. Better category alternatives exist.`;
+    case 'SWAP': {
+      // Build a precise, non-contradictory rationale. The earlier blanket
+      // "Better category alternatives exist" was wrong when deltas were
+      // positive (PPFAS Flexi Cap bug — Ram, 26 May 2026). The post-floor
+      // code path should rarely reach SWAP for a positive-delta fund,
+      // but if it does we MUST tell the truth.
+      const d3 = (cagr3y ?? 0) - benchmark.median3y;
+      const d5 = (cagr5y ?? 0) - benchmark.median5y;
+      const parts: string[] = [];
+      if (d3 < -1) parts.push(`3Y CAGR ${cagr3y?.toFixed(2)}% trails median ${benchmark.median3y.toFixed(2)}% by ${Math.abs(d3).toFixed(2)}pp`);
+      else if (d3 < 0) parts.push(`3Y CAGR ${cagr3y?.toFixed(2)}% slightly below median ${benchmark.median3y.toFixed(2)}%`);
+      else parts.push(`3Y CAGR ${cagr3y?.toFixed(2)}% (median ${benchmark.median3y.toFixed(2)}%)`);
+      if (d5 < -1) parts.push(`5Y CAGR ${cagr5y?.toFixed(2)}% trails median ${benchmark.median5y.toFixed(2)}% by ${Math.abs(d5).toFixed(2)}pp`);
+      else parts.push(`5Y CAGR ${cagr5y?.toFixed(2)}% vs median ${benchmark.median5y.toFixed(2)}%`);
+      const closing = (d3 < 0 && d5 < 0)
+        ? ' Stronger category options exist; recommend switch on next tax-efficient window.'
+        : ' Composite score sits in lower half — review against tax cost before acting.';
+      return parts.join('; ') + '.' + closing;
+    }
     case 'LIQUIDATE':
       return `Position value below ₹2,000 — immaterial to portfolio outcome. Redeem and redeploy to a meaningful holding.`;
   }
