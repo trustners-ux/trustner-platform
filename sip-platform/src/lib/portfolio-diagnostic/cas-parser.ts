@@ -73,6 +73,12 @@ export async function parseCasPdf(input: {
     if (isPortfolioValuationSummary(text)) {
       return parsePortfolioValuationSummary(text);
     }
+    if (isTrustnerFamilyReport(text)) {
+      // Newer Trustner multi-PAN "Family" valuation report (e.g., Aashish
+      // Jalan, Madhuchanda Dhar). Has per-PAN detail sections with full
+      // holdings + folio + units + NAV + XIRR per fund.
+      return parseTrustnerFamilyReport(text);
+    }
     if (isTrustnerValuationReport(text)) {
       return parseTrustnerValuationReport(text);
     }
@@ -267,6 +273,319 @@ function extractInvestorNameTrustner(text: string): string | undefined {
   // right after "Valuation Report as on Date - <date>".
   const m = text.match(/Valuation\s+Report\s+as\s+on\s+Date[^\n]*\n([A-Z][A-Z\s.]+?)\s*\(PAN:/);
   return m?.[1]?.trim();
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TRUSTNER FAMILY VALUATION REPORT (newer multi-PAN format)
+//
+// Distinguishing markers vs the single-PAN variant above:
+//   - "Mutual Fund Family Report"               (vs "Summary Report")
+//   - "Mutual Fund Family Investment Summary"   (table of PANs)
+//   - "Scheme Wise Family Investment Summary"   (family-level scheme table)
+//   - "Fund House Wise Family Investment Summary"
+//   - "Fund Type Wise Family Investment Summary"
+//
+// Structure:
+//   Page 1-2: family-level summary tables
+//   Page 3..N: per-PAN detail blocks, each starting with
+//              "Client Name : <NAME> [PAN : <CODE>]"
+//
+// Per-row format inside a PAN detail block (text often broken across
+// multiple lines by pypdf — we re-join):
+//   <Scheme Name> ... Growth[(SIP)] <Folio> ARN-<code> <DD-MM-YY>
+//   (<Days> Days) <Sensex> <InvCost> <SDuty> <DivR> <Units> <Price>
+//   <CurNav> <NavDate> <CurValue> <DivRein> <DivPaid> <Total>
+//   <Gain/Loss> <AbsRet%> <XIRR%>
+//
+// We extract holdings WITH PAN attribution so the diagnostic builds
+// the right multi-entity family structure.
+// ─────────────────────────────────────────────────────────────────
+
+function isTrustnerFamilyReport(text: string): boolean {
+  // Need at least 2 of these distinctive Family markers
+  const markers = [
+    /Mutual\s+Fund\s+Family\s+Report/i,
+    /Mutual\s+Fund\s+Family\s+Investment\s+Summary/i,
+    /Scheme\s+Wise\s+Family\s+Investment\s+Summary/i,
+    /Fund\s+House\s+Wise\s+Family\s+Investment\s+Summary/i,
+    /Fund\s+Type\s+Wise\s+Family\s+Investment\s+Summary/i,
+  ];
+  let hits = 0;
+  for (const m of markers) if (m.test(text)) hits++;
+  return hits >= 2;
+}
+
+function parseTrustnerFamilyReport(text: string): CasParseResult {
+  const holdings: RawHolding[] = [];
+  const sips: RawSip[] = [];
+
+  // ── Step 1: extract the family's PAN list ──
+  // Pattern: "1 AASHISH JALAN [3562658] 21,93,159.88 ..."
+  // The number in [brackets] is some internal code, NOT the PAN.
+  // We capture all PAN names from the "Mutual Fund Family Investment
+  // Summary" table.
+  const familySummaryStart = text.search(/Mutual\s+Fund\s+Family\s+Investment\s+Summary/i);
+  const familySummaryEnd = familySummaryStart >= 0
+    ? text.indexOf('Scheme Wise Family Investment Summary', familySummaryStart)
+    : -1;
+  const familySummaryBlock = familySummaryStart >= 0 && familySummaryEnd >= 0
+    ? text.slice(familySummaryStart, familySummaryEnd)
+    : text.slice(0, 4000);
+
+  const panNames: string[] = [];
+  // Each PAN row starts with a sequence number, then the PAN name in caps,
+  // then [code], then numerics. We capture the name only.
+  const panRowRe = /^\s*\d+\s+([A-Z][A-Z\s.&]{2,40}?)\s+\[\d+\]\s+[\d,]+\.\d+/gm;
+  for (const m of familySummaryBlock.matchAll(panRowRe)) {
+    const name = m[1].trim().replace(/\s+/g, ' ');
+    if (name && !/^total/i.test(name)) panNames.push(name);
+  }
+
+  // Extract the first investor as primary name (used for the family display)
+  const primaryName = panNames[0];
+  const pan = extractPan(text); // grabs the first PAN code (usually the head's)
+
+  // ── Step 2: walk each PAN's detail section ──
+  // PAN section starts with "Client Name :\n<NAME>\n[PAN : <CODE>]"
+  // and ends at the next "Client Name :" OR "Scheme Past Performance" OR EOF
+  const clientHeaderRe = /Client\s+Name\s*:\s*\n([A-Z][A-Z\s.&]{2,40}?)\s*\n\s*\[PAN\s*:\s*([A-Z]{5}\d{4}[A-Z])\]/g;
+  const clientHeaders = [...text.matchAll(clientHeaderRe)];
+
+  for (let i = 0; i < clientHeaders.length; i++) {
+    const m = clientHeaders[i];
+    const panName = m[1].trim().replace(/\s+/g, ' ');
+    const panCode = m[2];
+    const startIdx = m.index ?? 0;
+    const endIdx = i + 1 < clientHeaders.length
+      ? (clientHeaders[i + 1].index ?? text.length)
+      : (text.indexOf('Scheme Past Performance', startIdx) > 0
+          ? text.indexOf('Scheme Past Performance', startIdx)
+          : text.length);
+    const panBlock = text.slice(startIdx, endIdx);
+
+    // Parse all holdings within this PAN block
+    const panHoldings = extractHoldingsFromFamilyPanBlock(panBlock, panName);
+    holdings.push(...panHoldings);
+
+    // Detect SIPs from "(SIP)" suffix on scheme names
+    for (const h of panHoldings) {
+      if (/\(SIP\)/i.test(h.fundName)) {
+        const cleanedFundName = h.fundName.replace(/\s*\(SIP\)\s*/i, '').trim();
+        // Estimate monthly amount: invested ÷ months held (best-effort
+        // until we parse actual SIP register)
+        const monthsHeld = h.firstInvestmentDate
+          ? monthsBetween(h.firstInvestmentDate, new Date())
+          : 12;
+        const estMonthly = Math.round(h.investedAmount / Math.max(1, monthsHeld));
+        sips.push({
+          entityName: panName,
+          fundName: cleanedFundName,
+          folioNumber: h.folioNumber,
+          amcName: h.amcName,
+          monthlyAmountInr: estMonthly,
+          actualAmountInr: estMonthly,
+          frequency: 'Monthly' as SipFrequency,
+          startDate: h.firstInvestmentDate ?? new Date().toISOString().split('T')[0],
+          status: 'Active',
+          hasStepUp: false,
+        });
+      }
+    }
+  }
+
+  // ── Step 3: clean up scheme names (strip the (SIP) suffix on the stored
+  //           holding so it matches fund-master names) ──
+  for (const h of holdings) {
+    h.fundName = h.fundName.replace(/\s*\(SIP\)\s*/i, '').trim();
+  }
+
+  const amcSet = new Set(holdings.map((h) => h.amcName ?? '').filter(Boolean));
+  const folioSet = new Set(holdings.map((h) => h.folioNumber ?? '').filter(Boolean));
+
+  return {
+    success: holdings.length > 0,
+    error: holdings.length === 0
+      ? 'Trustner Family Report detected but no rows could be extracted. The PDF layout may have changed; share the file with engineering.'
+      : undefined,
+    investorName: primaryName,
+    pan,
+    holdings,
+    sips,
+    totalFoliosFound: folioSet.size,
+    totalAmcsFound: amcSet.size,
+  };
+}
+
+/**
+ * Extract holdings from one PAN's detail block. The block has category
+ * sub-sections ("Equity - Flexi Cap Fund", "Equity - Small Cap Fund",
+ * etc.) and within each, multi-line rows where pypdf has broken the
+ * single logical row across many lines.
+ *
+ * Strategy: walk lines, accumulate into a buffer, flush when we hit
+ * the "all numerics" trailing line that ends in "<n.nn>%" (XIRR%).
+ * Then parse the buffer as a single logical row.
+ */
+function extractHoldingsFromFamilyPanBlock(block: string, panName: string): RawHolding[] {
+  const out: RawHolding[] = [];
+
+  // Skip everything before the first category header
+  // Headers look like "Equity - Flexi Cap Fund", "Hybrid - Aggressive Hybrid
+  // Fund", "Others - FoF Domestic" (last one doesn't end in "Fund").
+  const firstCategoryIdx = block.search(/(?:Equity|Debt|Hybrid|Solution\s+Oriented|Others?)\s*-\s*[A-Z]/);
+  if (firstCategoryIdx === -1) return out;
+
+  // Stop ONLY at end-of-block markers. "Equity Fund Total :-" used to be a
+  // stop but that cut off Uma's Hybrid + Others rows that come AFTER it.
+  // The real end-of-PAN-block markers are "Grand Total" or the start of
+  // the per-PAN summary tables.
+  let endIdx = block.length;
+  for (const stop of [
+    /Grand\s+Total\s+[\d,]/,                  // "Grand Total 20,29,773.94 ..."
+    /Fund\s+House\s+Wise\s+Investment\s+Summary/i,
+    /Scheme\s+Past\s+Performance/i,
+  ]) {
+    const idx = block.slice(firstCategoryIdx).search(stop);
+    if (idx >= 0) {
+      endIdx = Math.min(endIdx, firstCategoryIdx + idx);
+    }
+  }
+  const holdingsArea = block.slice(firstCategoryIdx, endIdx);
+  const lines = holdingsArea.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length > 0);
+
+  let currentCategory: string | null = null;
+  let buffer: string[] = [];
+
+  const flushBuffer = () => {
+    if (buffer.length === 0) return;
+    const joined = buffer.join(' ').replace(/\s+/g, ' ').trim();
+    buffer = [];
+    const holding = parseFamilyHoldingRow(joined, panName, currentCategory);
+    if (holding) out.push(holding);
+  };
+
+  for (const line of lines) {
+    // Category header lines:
+    //   "Equity - Flexi Cap Fund"
+    //   "Hybrid - Aggressive Hybrid Fund"
+    //   "Others - FoF Domestic"   ← no trailing "Fund"
+    const catMatch = line.match(/^(Equity|Debt|Hybrid|Solution\s+Oriented|Others?)\s*-\s*([A-Z][A-Za-z &]{1,40}?)(?:\s+Fund)?\s*$/);
+    if (catMatch) {
+      flushBuffer();
+      currentCategory = `${catMatch[1]} - ${catMatch[2]}`.replace(/\s+/g, ' ');
+      continue;
+    }
+    // Asset-class wrappers — "Equity Fund Total", "Hybrid Fund Total",
+    // "Others Fund Total" — these are ABOVE the per-category sub-totals
+    // and we just skip them.
+    if (/^(Equity|Debt|Hybrid|Others?)\s+Fund\s+Total/i.test(line)) {
+      flushBuffer();
+      continue;
+    }
+    // Per-category sub-total lines like "Flexi Cap Fund Total :- 5,54,972.62 ..."
+    if (/Fund\s+Total\s*:-/.test(line)) {
+      flushBuffer();
+      continue;
+    }
+    // Skip table header repeats (both halves — pypdf often splits the
+    // header line into two: first half ends with "Div", second half
+    // starts with "Paid Total Gain / Loss Abs. Rtn. XIRR")
+    if (/^Scheme\s+Name\s+Inv\.\s*Since/i.test(line) || /^Paid\s+Total\s+Gain\s*\/\s*Loss/i.test(line)) {
+      flushBuffer();
+      continue;
+    }
+    // Skip page-number lines
+    if (/^Page\s+no\s+\d+\s+out\s+of/i.test(line)) continue;
+
+    buffer.push(line);
+
+    // Detect "end of row": line ends in a percentage value (XIRR %)
+    // Pattern: any combo ending in "<+-?n.nn>%"
+    if (/-?\d+(?:\.\d+)?%\s*$/.test(line)) {
+      flushBuffer();
+    }
+  }
+  flushBuffer();
+
+  return out;
+}
+
+/**
+ * Parse one logical holding row (lines already joined by space).
+ *
+ * Row shape (whitespace-normalised):
+ *   <Scheme Name> Growth[(SIP)] <Folio> ARN-<code,...> <DD-MM-YY>
+ *   (<Days> Days) <Sensex> <InvCost> <SDuty> <DivR> <Units> <Price>
+ *   <CurNav> <NavDate> <CurValue> <DivRein> <DivPaid> <Total>
+ *   <Gain/Loss> <AbsRet%> <XIRR%>
+ */
+function parseFamilyHoldingRow(row: string, panName: string, category: string | null): RawHolding | null {
+  // Anchor on the plan-option keyword (Growth / Dividend / IDCW)
+  // followed by optional (SIP) tag, then folio + ARN + date.
+  const re = new RegExp(
+    // Scheme name (greedy, ends at the Growth/Dividend/IDCW token)
+    '^([A-Za-z][A-Za-z0-9 &\\-/().,\']{1,80}?(?:Growth|Dividend|IDCW))' +
+    '(\\s*\\(SIP\\))?' +
+    '\\s+([\\d/\\-]+)' +                      // folio
+    '\\s+ARN-[\\d,]+' +                       // ARN code (digits + commas)
+    '\\s*\\d*' +                              // sometimes trailing digit from broken line
+    '\\s+(\\d{2}-\\d{2}-\\d{2})' +            // first investment date
+    '\\s*\\(\\s*(\\d+)\\s*Days?\\s*\\)' +     // (NNNN Days)
+    // Now 14 numeric fields:
+    '\\s+([\\d.,]+)' +                        // Sensex
+    '\\s+([\\d.,]+)' +                        // Inv Cost
+    '\\s+([\\d.,]+)' +                        // S Duty
+    '\\s+([\\d.,]+)' +                        // DivR (Dividend Reinvest cost)
+    '\\s+([\\d.,]+)' +                        // Units
+    '\\s+([\\d.,]+)' +                        // Price (allotment)
+    '\\s+([\\d.,]+)' +                        // Cur NAV
+    '\\s+(\\d{1,2}-[A-Za-z]+)' +              // NAV Date (e.g., 25-May)
+    '\\s+([\\d.,]+)' +                        // Cur Value
+    '\\s+([\\d.,]+)' +                        // Div Reinv
+    '\\s+([\\d.,]+)' +                        // Div Paid
+    '\\s+([\\d.,]+)' +                        // Total
+    '\\s+(-?[\\d.,]+)' +                      // Gain/Loss
+    '\\s+(-?[\\d.]+)%' +                      // Abs Rtn %
+    '\\s+(-?[\\d.]+)%'                        // XIRR %
+  );
+
+  const m = row.match(re);
+  if (!m) return null;
+  const [
+    , schemeRaw, sipTag, folio, , invSinceDdMmYy, , , invCostStr, , , unitsStr, , currentNavStr, , currentValueStr, , , , , ,
+  ] = m;
+  // The variadic destructure above is awkward; use indexed access for safety.
+  const schemeName = (m[1] + (m[2] ?? '')).trim();
+  // m[3] = folio, m[4] = date, m[5] = days
+  const folioNumber = m[3];
+  const firstInvDate = normaliseDdMmYy(m[4]);
+  // m[6]=Sensex, m[7]=InvCost, m[8]=SDuty, m[9]=DivR, m[10]=Units,
+  // m[11]=Price, m[12]=CurNAV, m[13]=NavDate, m[14]=CurValue
+  const invCost = numeric(m[7]);
+  const units = numeric(m[10]);
+  const currentNav = numeric(m[12]);
+  const currentValue = numeric(m[14]);
+
+  if (invCost <= 0 || currentValue <= 0) return null;
+
+  const cleanedScheme = cleanSchemeName(schemeName);
+  const amcName = guessAmcFromSchemeName(cleanedScheme);
+
+  // Suppress unused-var lint
+  void schemeRaw; void sipTag; void invSinceDdMmYy; void invCostStr; void unitsStr; void currentNavStr; void currentValueStr; void category;
+
+  return {
+    entityName: panName,
+    entityType: detectEntityType(panName),
+    fundName: schemeName,                     // keep "(SIP)" for downstream SIP detection
+    folioNumber,
+    amcName,
+    units,
+    currentNav,
+    currentValue,
+    investedAmount: invCost,
+    firstInvestmentDate: firstInvDate,
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────
