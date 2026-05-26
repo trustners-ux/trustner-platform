@@ -296,14 +296,12 @@ export default function EmployeeLoginPage() {
             </div>
 
             <div className="flex justify-end mb-5">
-              <button
-                type="button"
-                onClick={handleForgotPassword}
-                disabled={loading}
+              <a
+                href={`/auth/forgot${email ? `?email=${encodeURIComponent(email.trim())}` : ''}`}
                 className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition-colors"
               >
                 Forgot password?
-              </button>
+              </a>
             </div>
 
             <button
