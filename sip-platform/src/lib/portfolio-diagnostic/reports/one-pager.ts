@@ -39,24 +39,24 @@ const STYLES = `
   }
   .container { max-width: 174mm; margin: 0 auto; }
   .no-print-bar {
-    position: sticky; top: 0; background: #0F766E; color: white;
+    position: sticky; top: 0; background: #0c4a6e; color: white;
     padding: 8px 16px; margin-bottom: 8mm; display: flex; justify-content: space-between;
     align-items: center; font-size: 10pt;
   }
   .no-print-bar button {
-    background: white; color: #0F766E; border: 0; padding: 6px 14px; font-weight: 700;
+    background: white; color: #0c4a6e; border: 0; padding: 6px 14px; font-weight: 700;
     border-radius: 4px; cursor: pointer; font-size: 10pt;
   }
   .header {
-    border-bottom: 3px solid #0F766E; padding-bottom: 6px; margin-bottom: 8px;
+    border-bottom: 3px solid #0c4a6e; padding-bottom: 6px; margin-bottom: 8px;
     display: flex; justify-content: space-between; align-items: flex-end;
   }
-  .header .firm { color: #0F766E; font-weight: 700; font-size: 12pt; }
+  .header .firm { color: #0c4a6e; font-weight: 700; font-size: 12pt; }
   .header .sub { color: #6B5F54; font-size: 7.5pt; }
   .header-right { text-align: right; font-size: 8pt; color: #6B5F54; }
-  .header-right .label { font-size: 10pt; color: #0F766E; font-weight: 700; }
+  .header-right .label { font-size: 10pt; color: #0c4a6e; font-weight: 700; }
   .doc-title {
-    background: #0F766E; color: white; padding: 8px 14px; font-size: 14pt;
+    background: #0c4a6e; color: white; padding: 8px 14px; font-size: 14pt;
     font-weight: 700; margin-bottom: 8px; text-align: center;
   }
   .for-line { font-size: 10pt; font-weight: 400; margin-top: 3px; opacity: 0.92; }
@@ -64,11 +64,11 @@ const STYLES = `
     display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px;
   }
   .kpi-tile {
-    background: #F0FDFA; border: 1.5px solid #0F766E; padding: 8px;
+    background: #eff6ff; border: 1.5px solid #0c4a6e; padding: 8px;
     text-align: center; border-radius: 4px;
   }
   .kpi-tile .lbl { font-size: 7pt; color: #115E59; font-weight: 700; letter-spacing: 0.4px; }
-  .kpi-tile .val { font-size: 16pt; font-weight: 700; color: #0F766E; line-height: 1.05; margin-top: 3px; }
+  .kpi-tile .val { font-size: 16pt; font-weight: 700; color: #0c4a6e; line-height: 1.05; margin-top: 3px; }
   .kpi-tile .sub-val { font-size: 7pt; color: #6B5F54; margin-top: 2px; }
   .tier-grid {
     display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 10px;
@@ -85,14 +85,14 @@ const STYLES = `
   .tier-tile.swap { background: #DC2626; }
   .tier-tile.liq { background: #6B5F54; }
   h2 {
-    color: #0F766E; font-size: 11pt; margin: 8px 0 4px 0; padding-bottom: 2px;
-    border-bottom: 2px solid #0F766E; font-weight: 700;
+    color: #0c4a6e; font-size: 11pt; margin: 8px 0 4px 0; padding-bottom: 2px;
+    border-bottom: 2px solid #0c4a6e; font-weight: 700;
   }
   .verdict-line {
-    background: #F0FDFA; border-left: 4px solid #0F766E; padding: 8px 12px;
+    background: #eff6ff; border-left: 4px solid #0c4a6e; padding: 8px 12px;
     font-size: 10pt; margin-bottom: 8px;
   }
-  .verdict-line strong { color: #0F766E; font-weight: 700; }
+  .verdict-line strong { color: #0c4a6e; font-weight: 700; }
   .action-table {
     width: 100%; border-collapse: collapse; font-size: 8pt; margin: 4px 0 8px 0;
   }

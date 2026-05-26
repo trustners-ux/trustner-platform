@@ -48,30 +48,30 @@ const STYLES = `
   }
   .container { max-width: 178mm; margin: 0 auto; padding: 4mm 0; }
   .no-print-bar {
-    position: sticky; top: 0; z-index: 100; background: #0F766E; color: white;
+    position: sticky; top: 0; z-index: 100; background: #0c4a6e; color: white;
     padding: 8px 16px; margin: -4mm 0 8mm 0; display: flex; gap: 12px; align-items: center; justify-content: space-between;
     font-size: 9pt;
   }
   .no-print-bar button {
-    background: white; color: #0F766E; border: 0; padding: 6px 14px; font-weight: 700; font-size: 9pt;
+    background: white; color: #0c4a6e; border: 0; padding: 6px 14px; font-weight: 700; font-size: 9pt;
     border-radius: 4px; cursor: pointer;
   }
 
   .header {
-    border-bottom: 2px solid #0F766E;
+    border-bottom: 2px solid #0c4a6e;
     padding-bottom: 4px;
     margin-bottom: 5px;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
   }
-  .header-left .firm-name { color: #0F766E; font-weight: 700; font-size: 10pt; }
+  .header-left .firm-name { color: #0c4a6e; font-weight: 700; font-size: 10pt; }
   .header-left .firm-sub { color: #6B5F54; font-size: 6.5pt; }
   .header-right { text-align: right; font-size: 6.8pt; color: #6B5F54; }
-  .header-right .label { font-size: 7.5pt; color: #0F766E; font-weight: 700; letter-spacing: 0.5px; }
+  .header-right .label { font-size: 7.5pt; color: #0c4a6e; font-weight: 700; letter-spacing: 0.5px; }
 
   .doc-title {
-    background: #0F766E;
+    background: #0c4a6e;
     color: white;
     padding: 5px 10px;
     font-size: 11.5pt;
@@ -90,13 +90,13 @@ const STYLES = `
     margin-bottom: 6px;
   }
   .tile {
-    background: #F0FDFA;
-    border: 1px solid #0F766E;
+    background: #eff6ff;
+    border: 1px solid #0c4a6e;
     padding: 4px 5px;
     text-align: center;
   }
-  .tile .lbl { font-size: 6pt; color: #115E59; font-weight: 700; letter-spacing: 0.3px; }
-  .tile .val { font-size: 11pt; font-weight: 700; color: #0F766E; line-height: 1.05; margin-top: 1px; }
+  .tile .lbl { font-size: 6pt; color: #075985; font-weight: 700; letter-spacing: 0.3px; }
+  .tile .val { font-size: 11pt; font-weight: 700; color: #0c4a6e; line-height: 1.05; margin-top: 1px; }
 
   h2 {
     color: white;
@@ -122,13 +122,13 @@ const STYLES = `
     margin: 2px 0;
   }
   th {
-    background: #115E59;
+    background: #075985;
     color: white;
     padding: 3px 4px;
     text-align: left;
     font-weight: 600;
     font-size: 6.5pt;
-    border: 1px solid #0F766E;
+    border: 1px solid #0c4a6e;
   }
   td {
     padding: 3px 4px;
@@ -137,7 +137,7 @@ const STYLES = `
   }
   tr:nth-child(even) td { background: #FAFAF8; }
 
-  .amt { text-align: right; white-space: nowrap; font-weight: 600; color: #115E59; }
+  .amt { text-align: right; white-space: nowrap; font-weight: 600; color: #075985; }
   .ctr { text-align: center; }
   .pct-pos { color: #16A34A; font-weight: 700; }
   .pct-neg { color: #DC2626; font-weight: 700; }
@@ -192,7 +192,7 @@ const STYLES = `
   .obs-card.good { border-left: 3px solid #16A34A; background: #F0FDF4; }
   .obs-card.bad { border-left: 3px solid #DC2626; background: #FEF2F2; }
   .obs-card.watch { border-left: 3px solid #D97706; background: #FFFBEB; }
-  .obs-card.proj { border-left: 3px solid #0F766E; background: #F0FDFA; }
+  .obs-card.proj { border-left: 3px solid #0c4a6e; background: #eff6ff; }
   .obs-card h3 {
     margin: 0 0 3px 0; font-size: 7.5pt; font-weight: 700; letter-spacing: 0.2px;
     text-transform: uppercase;
@@ -200,7 +200,7 @@ const STYLES = `
   .obs-card.good h3 { color: #16A34A; }
   .obs-card.bad h3 { color: #DC2626; }
   .obs-card.watch h3 { color: #D97706; }
-  .obs-card.proj h3 { color: #0F766E; }
+  .obs-card.proj h3 { color: #0c4a6e; }
   .obs-card ul { margin: 0; padding-left: 14px; }
   .obs-card li { margin-bottom: 2px; }
 
@@ -378,7 +378,7 @@ export function renderFullPortfolioReviewHtml(data: ReportData, opts?: { showPri
           `
           )
           .join('')}
-        <tr style="font-weight:700; background:#F0FDFA;">
+        <tr style="font-weight:700; background:#eff6ff;">
           <td class="tier-label">TOTAL</td>
           <td>${data.numHoldings}</td>
           <td class="amt">${formatInrFull(totalInvested)}</td>
@@ -500,7 +500,7 @@ export function renderFullPortfolioReviewHtml(data: ReportData, opts?: { showPri
   ${renderTierTable(data.swapHoldings, 'swap')}
   ${renderTierTable(data.liquidateHoldings, 'liquidate')}
 
-  <h2 style="background: #0F766E;">
+  <h2 style="background: #0c4a6e;">
     <span>PORTFOLIO HEALTH SUMMARY</span>
     <span class="count">Bottom-line by tier</span>
   </h2>

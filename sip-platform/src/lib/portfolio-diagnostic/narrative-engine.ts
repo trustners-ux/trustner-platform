@@ -395,7 +395,20 @@ DO NOT use these alternate names:
 - ❌ "actions" → use "topActions"
 - ❌ "directLetter" → use "directNote"
 
-For optional-and-empty fields use null (not omit). For optional-and-present-with-no-items use \`{ "perCategory": [] }\`. Never omit a required key. Never add keys outside this schema.`;
+For optional-and-empty fields use null (not omit). For optional-and-present-with-no-items use \`{ "perCategory": [] }\`. Never omit a required key. Never add keys outside this schema.
+
+# OUTPUT SIZE BUDGET — CRITICAL FOR LARGE PORTFOLIOS
+
+You have **32,000 output tokens** for the entire JSON document.
+
+For portfolios with 30+ holdings, the \`perHoldingWhy\` array can balloon. Stay within budget by:
+- Keeping each \`why\` to ONE tight sentence with one specific number (XIRR, CAGR, or gap vs median)
+- Keeping each \`replaceWith\` to the bare fund name — no commentary
+- Keeping \`anticipatedQA\` to 5 questions max (not 10)
+- Keeping \`directNote\` to 3 short paragraphs (not 5 long ones)
+- Keeping each \`topActions\` item to one declarative sentence
+
+A truncated JSON breaks the renderer entirely — better to write tighter than to overflow. If in doubt, cut.`;
 
 // ─────────────────────────────────────────────────────────────────
 // DATA LOADING (loads the diagnostic + family + holdings + scoring)
@@ -638,6 +651,83 @@ function asObjOrNull<T extends object>(v: unknown): T | null {
   return v && typeof v === 'object' && !Array.isArray(v) ? (v as T) : null;
 }
 
+/**
+ * Best-effort repair for JSON that got truncated mid-emission.
+ *
+ * Strategy:
+ *   1. Walk the string character by character, tracking depth of
+ *      open arrays/objects and whether we're inside a string.
+ *   2. Find the LAST position that's "safe" — i.e., not inside a
+ *      string and at the start of a value (right after a `,` or `:` or
+ *      after the most recent `{` / `[`). Truncate there.
+ *   3. Append the right number of `]` and `}` to close every still-open
+ *      array and object.
+ *
+ * Won't recover partial inner content (e.g., a half-written
+ * perHoldingWhy entry), but the rest of the document survives.
+ */
+function repairTruncatedJson(s: string): string {
+  // First trim trailing whitespace/garbage
+  let text = s.trimEnd();
+  // Track structural state as we scan from left
+  type Stack = Array<'{' | '['>;
+  const stack: Stack = [];
+  let inString = false;
+  let escape = false;
+  let lastSafeEnd = -1; // index AFTER which we can safely truncate
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (escape) { escape = false; continue; }
+    if (ch === '\\') { escape = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === '{' || ch === '[') {
+      stack.push(ch);
+    } else if (ch === '}' || ch === ']') {
+      const open = stack[stack.length - 1];
+      if ((ch === '}' && open === '{') || (ch === ']' && open === '[')) {
+        stack.pop();
+        // Just closed a value — this is a safe truncation point
+        lastSafeEnd = i + 1;
+      }
+    } else if (ch === ',' && stack.length > 0) {
+      // After a comma at depth, the LAST completed value ends just
+      // before this comma (we already advanced lastSafeEnd on the
+      // closing of that value).
+      lastSafeEnd = i;
+    }
+  }
+  // If we never saw a safe point, give up — return as-is and let
+  // the outer parse fail with the original error.
+  if (lastSafeEnd < 0) return text;
+
+  // Trim to last safe point, then close all still-open structures.
+  let repaired = text.slice(0, lastSafeEnd).trimEnd();
+  // Remove trailing comma if any
+  repaired = repaired.replace(/,\s*$/, '');
+  // Recompute stack at the truncation point so we close in the right
+  // order. Re-walk the kept prefix:
+  const finalStack: Stack = [];
+  let inStr = false, esc = false;
+  for (let i = 0; i < repaired.length; i++) {
+    const ch = repaired[i];
+    if (esc) { esc = false; continue; }
+    if (ch === '\\') { esc = true; continue; }
+    if (ch === '"') { inStr = !inStr; continue; }
+    if (inStr) continue;
+    if (ch === '{' || ch === '[') finalStack.push(ch);
+    else if (ch === '}' || ch === ']') {
+      const open = finalStack[finalStack.length - 1];
+      if ((ch === '}' && open === '{') || (ch === ']' && open === '[')) finalStack.pop();
+    }
+  }
+  // Close everything still open, in reverse order.
+  for (let i = finalStack.length - 1; i >= 0; i--) {
+    repaired += finalStack[i] === '{' ? '}' : ']';
+  }
+  return repaired;
+}
+
 function normalizeNarrative(raw: Record<string, unknown>): NarrativeJSON {
   // Field-name aliases observed in the wild
   const aliasMap: Record<string, string> = {
@@ -823,7 +913,11 @@ export async function generateNarrative(diagnosticRunId: number): Promise<Genera
   try {
     const response = await client.messages.create({
       model: MODEL,
-      max_tokens: 16000,
+      // 16K was hit by Sribas Dhar's 63-holding family book (output got
+      // truncated mid-string on `perHoldingWhy`). Bumped to 32K — Opus 4.7
+      // supports up to 64K output. JSON-repair fallback handles late
+      // truncation if it ever happens again.
+      max_tokens: 32000,
       thinking: { type: 'adaptive' },
       // Use high effort for the analytical reasoning quality. effort goes
       // inside output_config on Opus 4.7.
@@ -863,15 +957,32 @@ export async function generateNarrative(diagnosticRunId: number): Promise<Genera
       const parsed = JSON.parse(cleaned) as Record<string, unknown>;
       narrative = normalizeNarrative(parsed);
     } catch (e) {
-      return {
-        ok: false,
-        diagnosticRunId,
-        error: `Could not parse Claude output as JSON: ${(e as Error).message}. First 500 chars of output: ${cleaned.slice(0, 500)}`,
-        inputTokens,
-        outputTokens,
-        cacheReadTokens,
-        cacheCreationTokens,
-      };
+      // ─── JSON REPAIR ATTEMPT ──────────────────────────────────
+      // The LLM occasionally hits max_tokens and emits a truncated
+      // payload (string left open mid-value, perHoldingWhy array
+      // half-finished, etc.). Rather than fail the whole call, try
+      // to repair by:
+      //   1. Trimming any trailing partial token
+      //   2. Closing any open string
+      //   3. Closing any open object/array
+      // Then parse + normalise. Any missing required fields fall
+      // back to safe defaults via normalizeNarrative.
+      try {
+        const repaired = repairTruncatedJson(cleaned);
+        const parsed = JSON.parse(repaired) as Record<string, unknown>;
+        narrative = normalizeNarrative(parsed);
+        console.warn(`[narrative-engine] Recovered truncated JSON for run ${diagnosticRunId}; output was ${cleaned.length} chars.`);
+      } catch (e2) {
+        return {
+          ok: false,
+          diagnosticRunId,
+          error: `Could not parse Claude output as JSON even after repair: ${(e as Error).message}. Repair attempt: ${(e2 as Error).message}. Output length: ${cleaned.length} chars.`,
+          inputTokens,
+          outputTokens,
+          cacheReadTokens,
+          cacheCreationTokens,
+        };
+      }
     }
   } catch (e) {
     if (e instanceof Anthropic.APIError) {

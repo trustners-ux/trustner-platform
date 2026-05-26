@@ -39,30 +39,30 @@ const STYLES = `
   }
   .container { max-width: 174mm; margin: 0 auto; }
   .no-print-bar {
-    position: sticky; top: 0; z-index: 100; background: #B45309; color: white;
+    position: sticky; top: 0; z-index: 100; background: #0c4a6e; color: white;
     padding: 8px 16px; margin: 0 0 8mm 0; display: flex; gap: 12px; align-items: center; justify-content: space-between;
     font-size: 9pt;
   }
   .no-print-bar button {
-    background: white; color: #B45309; border: 0; padding: 6px 14px; font-weight: 700; font-size: 9pt;
+    background: white; color: #0c4a6e; border: 0; padding: 6px 14px; font-weight: 700; font-size: 9pt;
     border-radius: 4px; cursor: pointer;
   }
 
   .header {
-    border-bottom: 2px solid #B45309;
+    border-bottom: 2px solid #0c4a6e;
     padding-bottom: 5px;
     margin-bottom: 6px;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
   }
-  .header-left .firm-name { color: #B45309; font-weight: 700; font-size: 10pt; }
+  .header-left .firm-name { color: #0c4a6e; font-weight: 700; font-size: 10pt; }
   .header-left .firm-sub { color: #6B5F54; font-size: 6.8pt; }
   .header-right { text-align: right; font-size: 7pt; color: #6B5F54; }
-  .header-right .label { font-size: 8pt; color: #B45309; font-weight: 700; letter-spacing: 0.5px; }
+  .header-right .label { font-size: 8pt; color: #0c4a6e; font-weight: 700; letter-spacing: 0.5px; }
 
   .doc-title {
-    background: #B45309;
+    background: #0c4a6e;
     color: white;
     padding: 6px 12px;
     font-size: 12pt;
@@ -82,7 +82,7 @@ const STYLES = `
     font-size: 7.5pt;
     color: #1A1A2E;
   }
-  .meta-strip strong { color: #B45309; }
+  .meta-strip strong { color: #0c4a6e; }
 
   h2 {
     color: white;
@@ -93,7 +93,7 @@ const STYLES = `
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #B45309;
+    background: #0c4a6e;
   }
   h2.sec-swap { background: #DC2626; }
   h2.sec-liq { background: #6B5F54; }
@@ -124,13 +124,13 @@ const STYLES = `
   }
   tr:nth-child(even) td { background: #FAFAF8; }
 
-  .amt { text-align: right; white-space: nowrap; font-weight: 600; color: #B45309; }
+  .amt { text-align: right; white-space: nowrap; font-weight: 600; color: #0c4a6e; }
   .ctr { text-align: center; }
   .checkbox { display: inline-block; width: 12px; height: 12px; border: 1.5px solid #1A1A2E; vertical-align: middle; margin-right: 4px; }
 
   .subtotal-row td { background: #FEF3C7 !important; font-weight: 700; }
   .grand-total {
-    background: #B45309;
+    background: #0c4a6e;
     color: white;
     padding: 6px 12px;
     margin: 4px 0;
