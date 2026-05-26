@@ -333,9 +333,11 @@ function parseTrustnerFamilyReport(text: string): CasParseResult {
     : text.slice(0, 4000);
 
   const panNames: string[] = [];
-  // Each PAN row starts with a sequence number, then the PAN name in caps,
-  // then [code], then numerics. We capture the name only.
-  const panRowRe = /^\s*\d+\s+([A-Z][A-Z\s.&]{2,40}?)\s+\[\d+\]\s+[\d,]+\.\d+/gm;
+  // Each PAN row starts with a sequence number, then the PAN name (may
+  // be ALL CAPS like "AASHISH JALAN" or Title Case like "Madhuchanda Dhar"
+  // depending on what the advisor entered in the back-office), then
+  // [code], then numerics. We capture the name only.
+  const panRowRe = /^\s*\d+\s+([A-Z][A-Za-z\s.&]{2,40}?)\s+\[\d+\]\s+[\d,]+\.\d+/gm;
   for (const m of familySummaryBlock.matchAll(panRowRe)) {
     const name = m[1].trim().replace(/\s+/g, ' ');
     if (name && !/^total/i.test(name)) panNames.push(name);
@@ -347,8 +349,11 @@ function parseTrustnerFamilyReport(text: string): CasParseResult {
 
   // ── Step 2: walk each PAN's detail section ──
   // PAN section starts with "Client Name :\n<NAME>\n[PAN : <CODE>]"
-  // and ends at the next "Client Name :" OR "Scheme Past Performance" OR EOF
-  const clientHeaderRe = /Client\s+Name\s*:\s*\n([A-Z][A-Z\s.&]{2,40}?)\s*\n\s*\[PAN\s*:\s*([A-Z]{5}\d{4}[A-Z])\]/g;
+  // and ends at the next "Client Name :" OR "Scheme Past Performance" OR EOF.
+  //
+  // Names may be ALL CAPS ("AASHISH JALAN") OR Title Case
+  // ("Madhuchanda Dhar") depending on the back-office input — accept both.
+  const clientHeaderRe = /Client\s+Name\s*:\s*\n([A-Z][A-Za-z\s.&]{2,40}?)\s*\n\s*\[PAN\s*:\s*([A-Z]{5}\d{4}[A-Z])\]/g;
   const clientHeaders = [...text.matchAll(clientHeaderRe)];
 
   for (let i = 0; i < clientHeaders.length; i++) {
@@ -429,9 +434,15 @@ function parseTrustnerFamilyReport(text: string): CasParseResult {
 function extractHoldingsFromFamilyPanBlock(block: string, panName: string): RawHolding[] {
   const out: RawHolding[] = [];
 
-  // Skip everything before the first category header
-  // Headers look like "Equity - Flexi Cap Fund", "Hybrid - Aggressive Hybrid
-  // Fund", "Others - FoF Domestic" (last one doesn't end in "Fund").
+  // Skip everything before the first category header.
+  // Headers seen in production PDFs include:
+  //   "Equity - Flexi Cap Fund"
+  //   "Hybrid - Aggressive Hybrid Fund"
+  //   "Hybrid - Dynamic Asset Allocation or Balanced Advantage" (lowercase "or")
+  //   "Others - FoF Domestic"             (no trailing "Fund")
+  //   "Others - Index Funds"              (plural "Funds")
+  //   "Equity - Sectoral/ Thematic"       (slash)
+  //   "Equity - ELSS"                     (no trailing "Fund")
   const firstCategoryIdx = block.search(/(?:Equity|Debt|Hybrid|Solution\s+Oriented|Others?)\s*-\s*[A-Z]/);
   if (firstCategoryIdx === -1) return out;
 
@@ -465,11 +476,18 @@ function extractHoldingsFromFamilyPanBlock(block: string, panName: string): RawH
   };
 
   for (const line of lines) {
-    // Category header lines:
+    // Category header lines — must end at line boundary (no trailing
+    // numbers, which would mean it's a category SUMMARY row instead of
+    // a section HEADER).
+    //
     //   "Equity - Flexi Cap Fund"
+    //   "Equity - ELSS"                              (no "Fund" suffix)
+    //   "Equity - Sectoral/ Thematic"                (slash + no "Fund")
     //   "Hybrid - Aggressive Hybrid Fund"
-    //   "Others - FoF Domestic"   ← no trailing "Fund"
-    const catMatch = line.match(/^(Equity|Debt|Hybrid|Solution\s+Oriented|Others?)\s*-\s*([A-Z][A-Za-z &]{1,40}?)(?:\s+Fund)?\s*$/);
+    //   "Hybrid - Dynamic Asset Allocation or Balanced Advantage" (lc "or")
+    //   "Others - FoF Domestic"                      (no "Fund")
+    //   "Others - Index Funds"                       (plural)
+    const catMatch = line.match(/^(Equity|Debt|Hybrid|Solution\s+Oriented|Others?)\s*-\s*([A-Z][A-Za-z0-9 &/\-]{1,80}?)(?:\s+Funds?)?\s*$/);
     if (catMatch) {
       flushBuffer();
       currentCategory = `${catMatch[1]} - ${catMatch[2]}`.replace(/\s+/g, ' ');
@@ -520,11 +538,16 @@ function extractHoldingsFromFamilyPanBlock(block: string, panName: string): RawH
  *   <Gain/Loss> <AbsRet%> <XIRR%>
  */
 function parseFamilyHoldingRow(row: string, panName: string, category: string | null): RawHolding | null {
-  // Anchor on the plan-option keyword (Growth / Dividend / IDCW)
-  // followed by optional (SIP) tag, then folio + ARN + date.
+  // Anchor on folio number + ARN code, with optional plan-option
+  // keyword (Growth / Dividend / IDCW) in the scheme name. Some funds
+  // (e.g., "ICICI Prudential Multi-Asset Fund") have no plan suffix at
+  // all in the report because they only have one option. We make the
+  // plan-option group optional so those rows still match.
   const re = new RegExp(
-    // Scheme name (greedy, ends at the Growth/Dividend/IDCW token)
-    '^([A-Za-z][A-Za-z0-9 &\\-/().,\']{1,80}?(?:Growth|Dividend|IDCW))' +
+    // Scheme name (non-greedy) with optional trailing plan-option token.
+    // The capture group includes the plan-option when present, so the
+    // stored fundName ends in "Growth"/"Dividend"/"IDCW" or just "Fund".
+    '^([A-Za-z][A-Za-z0-9 &\\-/().,\']{1,100}?(?:\\s+(?:Growth|Dividend|IDCW))?)' +
     '(\\s*\\(SIP\\))?' +
     '\\s+([\\d/\\-]+)' +                      // folio
     '\\s+ARN-[\\d,]+' +                       // ARN code (digits + commas)
@@ -545,8 +568,10 @@ function parseFamilyHoldingRow(row: string, panName: string, category: string | 
     '\\s+([\\d.,]+)' +                        // Div Paid
     '\\s+([\\d.,]+)' +                        // Total
     '\\s+(-?[\\d.,]+)' +                      // Gain/Loss
-    '\\s+(-?[\\d.]+)%' +                      // Abs Rtn %
-    '\\s+(-?[\\d.]+)%'                        // XIRR %
+    '\\s+(-?[\\d.,]+)%' +                     // Abs Rtn % (allow commas
+                                              //   — 23-year holds can be
+                                              //   2,292% absolute return)
+    '\\s+(-?[\\d.,]+)%'                       // XIRR %
   );
 
   const m = row.match(re);
