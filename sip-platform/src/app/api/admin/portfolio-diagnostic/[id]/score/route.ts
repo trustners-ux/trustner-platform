@@ -273,6 +273,26 @@ export async function POST(
       holdingId: String(h.id),
     });
 
+    // ─── Trustner-Preferred Swap Pair lookup ─────────────────
+    // If this holding ends up as SWAP, check whether the CFP committee
+    // has curated a specific replacement for this fund. If so, use
+    // their rationale + recommended fund instead of letting the engine
+    // auto-pick the highest-composite-score fund in category.
+    let preferredReplacementAmfiCode: string | null = null;
+    let finalRationale = analyzed.verdictRationale;
+    if (analyzed.verdict === 'SWAP') {
+      const { data: pair } = await supabase
+        .from('pd_preferred_swaps')
+        .select('recommended_amfi_code, recommended_scheme_name, rationale')
+        .eq('exit_amfi_code', fund.amfiCode)
+        .eq('active', true)
+        .maybeSingle();
+      if (pair) {
+        preferredReplacementAmfiCode = pair.recommended_amfi_code as string;
+        finalRationale = `Trustner-preferred swap → ${pair.recommended_scheme_name}. ${pair.rationale as string}`;
+      }
+    }
+
     // Update DB with scored values
     await supabase
       .from('pd_diagnostic_holdings')
@@ -289,7 +309,8 @@ export async function POST(
         category_quartile: analyzed.categoryQuartile,
         composite_score: analyzed.compositeScore,
         verdict: analyzed.verdict,
-        verdict_rationale: analyzed.verdictRationale,
+        verdict_rationale: finalRationale,
+        recommended_replacement_amfi_code: preferredReplacementAmfiCode,
       })
       .eq('id', h.id as number);
 

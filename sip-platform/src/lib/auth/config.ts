@@ -70,6 +70,8 @@ export const ADMIN_NAV = [
   { label: 'Dashboard', href: '/admin', icon: 'LayoutDashboard', role: 'viewer' as AdminRole },
   { label: 'Analytics', href: '/admin/analytics', icon: 'BarChart2', role: 'viewer' as AdminRole },
   { label: 'Fund Manager', href: '/admin/funds', icon: 'TrendingUp', role: 'editor' as AdminRole },
+  { label: 'Preferred Funds', href: '/admin/funds/preferred-list', icon: 'Star', role: 'editor' as AdminRole },
+  { label: 'Preferred Swaps', href: '/admin/funds/preferred-swaps', icon: 'Repeat', role: 'editor' as AdminRole },
   { label: 'Blog', href: '/admin/blog', icon: 'FileText', role: 'editor' as AdminRole },
   { label: 'Market Pulse', href: '/admin/market', icon: 'BarChart3', role: 'editor' as AdminRole },
   { label: 'Leads', href: '/admin/leads', icon: 'Users', role: 'editor' as AdminRole },

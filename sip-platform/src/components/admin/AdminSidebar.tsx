@@ -9,6 +9,7 @@ import {
   ClipboardCheck, ClipboardList, ScrollText, FileSpreadsheet, Percent, GraduationCap,
   Shield, ShieldCheck, Car,
   Calendar, Briefcase, UserPlus, RefreshCw, Sparkles,
+  Star, Repeat,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { canAccess, ADMIN_NAV, type AdminRole } from '@/lib/auth/config';
@@ -18,6 +19,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Image: ImageIcon, FileCheck, UserCog, ClipboardCheck, ClipboardList, ScrollText, FileSpreadsheet, Percent, GraduationCap,
   Shield, ShieldCheck, Car,
   Calendar, Briefcase, UserPlus, RefreshCw, Sparkles,
+  Star, Repeat,
 };
 
 export function AdminSidebar({
