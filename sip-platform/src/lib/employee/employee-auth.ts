@@ -364,6 +364,33 @@ export async function changePassword(
   return { success: true };
 }
 
+// ─── Force-Reset (skip current-password verification) ────────
+//
+// Used by the force-reset-self endpoint when an authenticated user
+// can't supply the current password (e.g., it was rotated while they
+// held a valid session). Caller is responsible for verifying the
+// session before calling this.
+
+export async function forceResetEmployeePassword(
+  email: string,
+  newPassword: string
+): Promise<{ success: boolean; error?: string }> {
+  if (newPassword.length < 8) {
+    return { success: false, error: 'Password must be at least 8 characters' };
+  }
+
+  const creds = await getCredentials();
+  const cred = creds.find(c => c.email.toLowerCase() === email.toLowerCase());
+  if (!cred) return { success: false, error: 'Credential not found' };
+
+  cred.passwordHash = await bcrypt.hash(newPassword, 12);
+  cred.isFirstLogin = false;
+  cred.passwordChangedAt = new Date().toISOString();
+  await saveCredentials(creds);
+
+  return { success: true };
+}
+
 // ─── Helpers ─────────────────────────────────────────────────
 
 function generateTempPassword(): string {
