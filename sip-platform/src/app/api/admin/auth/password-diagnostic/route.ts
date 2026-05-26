@@ -30,6 +30,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
 import { verifyToken, COOKIE_NAME } from '@/lib/auth/jwt';
+import { verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 import { findUserByEmailFromBlob } from '@/lib/admin/admin-user-store';
 import { getCredentials } from '@/lib/employee/employee-auth';
 
@@ -38,17 +39,33 @@ export const revalidate = 0;
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
-  // Auth — require admin cookie (super-admin gating)
+  // Auth — accept EITHER admin or employee cookie. We'll report which one
+  // we found so we can confirm what kind of session the user is on.
   const cookieStore = await cookies();
+  let email: string | null = null;
+  let sessionType: 'admin' | 'employee' | 'none' = 'none';
+
   const adminToken = cookieStore.get(COOKIE_NAME)?.value;
-  if (!adminToken) {
-    return NextResponse.json({ error: 'Admin token required' }, { status: 401 });
+  if (adminToken) {
+    const p = await verifyToken(adminToken);
+    if (p?.email) {
+      email = p.email;
+      sessionType = 'admin';
+    }
   }
-  const payload = await verifyToken(adminToken);
-  if (!payload?.email) {
-    return NextResponse.json({ error: 'Invalid admin token' }, { status: 401 });
+  if (!email) {
+    const empToken = cookieStore.get(EMPLOYEE_COOKIE)?.value;
+    if (empToken) {
+      const p = await verifyEmployeeToken(empToken);
+      if (p?.email) {
+        email = p.email;
+        sessionType = 'employee';
+      }
+    }
   }
-  const email = payload.email;
+  if (!email) {
+    return NextResponse.json({ error: 'Not authenticated (no admin or employee cookie)' }, { status: 401 });
+  }
 
   const body = await req.json().catch(() => ({}));
   const candidate = String(body.candidatePassword ?? '');
@@ -98,6 +115,7 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     yourEmail: email,
+    sessionType,
     adminExists,
     adminMatches,
     employeeExists,
