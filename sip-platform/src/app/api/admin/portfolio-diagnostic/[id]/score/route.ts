@@ -47,6 +47,16 @@ import type {
 
 export const maxDuration = 60;
 
+/**
+ * Round an INR amount to whole rupees for storage. Mirrors the same
+ * helper in draft/route.ts. See that file for the rationale (BIGINT
+ * columns can't accept paise-precision decimals).
+ */
+function inrRupees(n: number | null | undefined): number {
+  if (n === null || n === undefined || !isFinite(n)) return 0;
+  return Math.round(n);
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -305,8 +315,8 @@ export async function POST(
       verdict_watch_count: tally.WATCH,
       verdict_swap_count: tally.SWAP,
       verdict_liquidate_count: tally.LIQUIDATE,
-      total_swap_value_inr: totalSwapValue,
-      total_liquidate_value_inr: totalLiquidateValue,
+      total_swap_value_inr: inrRupees(totalSwapValue),
+      total_liquidate_value_inr: inrRupees(totalLiquidateValue),
     })
     .eq('id', diagnosticRunId);
 
@@ -355,8 +365,8 @@ export async function POST(
         .update({
           category: sip.category,
           age_in_months: sip.ageInMonths,
-          expected_annual_inflow_inr: sip.expectedAnnualInflowInr,
-          expected_5y_inflow_inr: sip.expected5YInflowInr,
+          expected_annual_inflow_inr: inrRupees(sip.expectedAnnualInflowInr),
+          expected_5y_inflow_inr: inrRupees(sip.expected5YInflowInr),
           fund_verdict: sip.fundVerdict,
           recommended_action: sip.recommendedAction,
           recommended_redirect_fund: sip.recommendedRedirectFund,

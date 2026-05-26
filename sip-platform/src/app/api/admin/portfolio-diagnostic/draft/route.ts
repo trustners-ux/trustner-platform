@@ -28,6 +28,24 @@ import type {
 } from '@/lib/portfolio-diagnostic/types';
 import { METHODOLOGY_VERSION } from '@/lib/portfolio-diagnostic/methodology';
 
+/**
+ * Round an INR amount to whole rupees for storage.
+ *
+ * All `*_inr` columns in the schema are BIGINT (no decimal places). PDFs
+ * give us paise-precision floats (e.g., the family current value
+ * "64,87,260.47" parses to 6487260.47). When the float-sum has the
+ * usual JS precision residue (6487260.470000001), passing it to a BIGINT
+ * column fails with "invalid input syntax for type bigint".
+ *
+ * We round here so callers can pass float sums directly. Paise are
+ * dropped — acceptable for portfolio diagnostics where every number is
+ * already in lakhs/crores.
+ */
+function inrRupees(n: number | null | undefined): number {
+  if (n === null || n === undefined || !isFinite(n)) return 0;
+  return Math.round(n);
+}
+
 interface FamilyForm {
   familyId?: number;
   familyName: string;
@@ -168,11 +186,11 @@ export async function POST(request: NextRequest) {
         num_active_sips: activeSips.length,
         num_unique_funds: uniqueFunds.size,
         num_amcs: uniqueAmcs.size,
-        total_invested_inr: totalInvested,
-        current_value_inr: totalCurrent,
-        unrealised_gain_inr: totalCurrent - totalInvested,
-        monthly_sip_flow_inr: monthlySipFlow,
-        annual_sip_flow_inr: monthlySipFlow * 12,
+        total_invested_inr: inrRupees(totalInvested),
+        current_value_inr: inrRupees(totalCurrent),
+        unrealised_gain_inr: inrRupees(totalCurrent - totalInvested),
+        monthly_sip_flow_inr: inrRupees(monthlySipFlow),
+        annual_sip_flow_inr: inrRupees(monthlySipFlow * 12),
       })
       .select('id')
       .single();
@@ -196,9 +214,9 @@ export async function POST(request: NextRequest) {
           fund_name: h.fundName,
           folio_number: h.folioNumber,
           units: h.units,
-          invested_inr: h.investedAmount,
-          current_value_inr: h.currentValue,
-          unrealised_gain_inr: h.currentValue - h.investedAmount,
+          invested_inr: inrRupees(h.investedAmount),
+          current_value_inr: inrRupees(h.currentValue),
+          unrealised_gain_inr: inrRupees(h.currentValue - h.investedAmount),
           first_investment_date: h.firstInvestmentDate,
           verdict: 'WATCH', // placeholder — scoring engine fills this in later
           verdict_rationale: 'Pending analysis — fund data refresh required.',
