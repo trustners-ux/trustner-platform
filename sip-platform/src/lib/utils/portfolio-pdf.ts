@@ -507,7 +507,7 @@ export async function generatePortfolioPDF(input: PortfolioPDFInput): Promise<vo
     ['AMFI ARN',    'ARN-286886'],
     ['CIN',         'U66301AS2023PTC025505'],
     ['Offices',     'Guwahati (HQ) | Bangalore | Kolkata | Hyderabad | Tezpur'],
-    ['Contact',     '6003903737 | wecare@merasip.com'],
+    ['Contact',     '6003903737 | wecare@trustner.in'],
     ['Website',     'www.merasip.com | www.trustner.in'],
     ['Grievance',   'grievance@trustner.in'],
   ];

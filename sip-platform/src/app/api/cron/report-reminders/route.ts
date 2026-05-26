@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
 
     await getResend().emails.send({
       from: 'Mera SIP Online <leads@merasip.com>',
-      to: 'wecare@merasip.com',
+      to: 'wecare@trustner.in',
       subject: `${isUrgent ? '[URGENT] ' : '[REMINDER] '}${reportsToRemind.length} Financial Report${reportsToRemind.length > 1 ? 's' : ''} Awaiting Review`,
       html,
     });

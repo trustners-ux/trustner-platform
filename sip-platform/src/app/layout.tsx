@@ -110,7 +110,7 @@ export default function RootLayout({
                 url: 'https://www.merasip.com/about',
               },
               telephone: '+91-6003903737',
-              email: 'wecare@merasip.com',
+              email: 'wecare@trustner.in',
               sameAs: [
                 'https://www.linkedin.com/company/trustner',
                 'https://www.instagram.com/trustner',

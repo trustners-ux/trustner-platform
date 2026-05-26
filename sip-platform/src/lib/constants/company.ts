@@ -42,9 +42,10 @@ export const COMPANY = {
   contact: {
     phone: '+91-6003903737',
     phoneDisplay: '6003903737',
-    email: 'wecare@merasip.com',
-    supportEmail: 'wecare@merasip.com',
+    email: 'wecare@trustner.in',
+    supportEmail: 'wecare@trustner.in',
     grievanceEmail: 'grievance@trustner.in',
+    careersEmail: 'career@trustner.in',
     whatsapp: '+916003903737',
     whatsappDisplay: '6003903737',
     workingHours: 'Mon - Sat: 9:00 AM - 7:00 PM IST',

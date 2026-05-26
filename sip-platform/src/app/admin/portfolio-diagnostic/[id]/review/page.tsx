@@ -157,7 +157,7 @@ export default function ReviewPage() {
     action: false, xlsx: false, pptx: false,
   });
   const [shareRecipient, setShareRecipient] = useState('');
-  const [shareCc, setShareCc] = useState('wecare@merasip.com');
+  const [shareCc, setShareCc] = useState('wecare@trustner.in');
   const [shareSubject, setShareSubject] = useState('');
   const [shareMessage, setShareMessage] = useState('');
   const [shareIncludeKpi, setShareIncludeKpi] = useState(true);
@@ -694,7 +694,7 @@ export default function ReviewPage() {
                     type="text"
                     value={shareCc}
                     onChange={(e) => setShareCc(e.target.value)}
-                    placeholder="wecare@merasip.com"
+                    placeholder="wecare@trustner.in"
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-teal-500 focus:outline-none"
                   />
                 </div>

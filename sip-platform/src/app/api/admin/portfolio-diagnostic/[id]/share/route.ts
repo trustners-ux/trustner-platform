@@ -185,7 +185,7 @@ export async function POST(
     customMessage: body.message,
     includeKpiSnapshot: body.includeKpiSnapshot,
     sentByName: (actor?.name as string) ?? 'Trustner',
-    sentByEmail: (actor?.email as string) ?? 'wecare@merasip.com',
+    sentByEmail: (actor?.email as string) ?? 'wecare@trustner.in',
   });
 
   if (!sendResult.success) {

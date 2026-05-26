@@ -407,6 +407,7 @@ export const FOOTER_LINKS = {
   Company: [
     { label: 'About Trustner', href: '/about' },
     { label: 'Contact Us', href: '/contact' },
+    { label: 'Careers', href: '/careers' },
     { label: 'Privacy Policy', href: '/privacy' },
     { label: 'Terms of Use', href: '/terms' },
     { label: 'Disclaimer', href: '/disclaimer' },

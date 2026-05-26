@@ -133,7 +133,7 @@ export default function TrackPage({ params }: PageProps) {
                   {!hasAdvanced && (
                     <p className="text-[11px] text-slate-400 mt-2">
                       Trustner is building certification-grade material for sub-broker onboarding and
-                      NISM/APMI/IRDAI exam prep. Email <a href="mailto:wecare@merasip.com" className="underline">wecare@merasip.com</a> to be notified when this releases.
+                      NISM/APMI/IRDAI exam prep. Email <a href="mailto:wecare@trustner.in" className="underline">wecare@trustner.in</a> to be notified when this releases.
                     </p>
                   )}
                 </div>

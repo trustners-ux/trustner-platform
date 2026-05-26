@@ -613,7 +613,7 @@ const KNOWLEDGE_BASE: ResponseEntry[] = [
       '• Curated Fund Selection based on 200+ parameters\n' +
       '• Research tools with historical data analysis\n\n' +
       '📍 Offices: Guwahati (HQ) | Bangalore | Kolkata | Hyderabad | Tezpur\n' +
-      '📞 Contact: +91-6003903737 | wecare@merasip.com\n' +
+      '📞 Contact: +91-6003903737 | wecare@trustner.in\n' +
       '🌐 Website: www.merasip.com',
   },
 
@@ -783,7 +783,7 @@ function getContactResponse(message: string): string | null {
       lower.includes('email') || lower.includes('reach')) {
     return 'You can reach our team for personalized guidance:\n\n' +
       'WhatsApp: +91-6003903737 (tap the green button on bottom-right)\n' +
-      'Email: wecare@merasip.com\n' +
+      'Email: wecare@trustner.in\n' +
       'Website: www.merasip.com\n\n' +
       'Trustner Asset Services Pvt. Ltd.\n' +
       '• AMFI ARN: 286886\n' +
@@ -918,7 +918,7 @@ ABOUT TRUSTNER:
 • AMFI Registered Mutual Fund Distributor (MFD)
 • ARN: 286886 | CIN: U66301AS2023PTC025505
 • Offices: Guwahati (HQ), Bangalore, Kolkata, Hyderabad, Tezpur
-• Contact: +91-6003903737 | wecare@merasip.com
+• Contact: +91-6003903737 | wecare@trustner.in
 • Website: www.merasip.com | www.trustner.in
 
 YOUR ROLE:

@@ -237,7 +237,7 @@ export async function DELETE(request: Request) {
               <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto; padding: 20px;">
                 <div style="background: #fff; padding: 24px; border: 1px solid #E2E8F0; border-radius: 12px;">
                   <p style="color: #334155; font-size: 15px; margin: 0 0 12px;">Your admin access to the Mera SIP Online panel has been removed.</p>
-                  <p style="color: #64748B; font-size: 13px; margin: 0;">If you believe this was done in error, please contact the team at wecare@merasip.com.</p>
+                  <p style="color: #64748B; font-size: 13px; margin: 0;">If you believe this was done in error, please contact the team at wecare@trustner.in.</p>
                 </div>
               </div>
             `,

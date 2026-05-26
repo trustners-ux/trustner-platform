@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     try {
       await getResend().emails.send({
         from: 'Mera SIP Online <leads@merasip.com>',
-        to: 'wecare@merasip.com',
+        to: 'wecare@trustner.in',
         subject: `[Review Required] Financial Report: ${userName} — Score: ${report.score.totalScore}/900`,
         html: buildAdminReviewNotificationHTML(userName, userEmail, phone, report, data, queueEntry.id),
       });

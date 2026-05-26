@@ -172,7 +172,7 @@ export async function POST(request: Request) {
         const resend = new Resend(process.env.RESEND_API_KEY);
         await resend.emails.send({
           from: 'Mera SIP Online <leads@merasip.com>',
-          to: 'wecare@merasip.com',
+          to: 'wecare@trustner.in',
           subject: `[Review Required] Financial Report: ${userName} — Score: ${report.score.totalScore}/900`,
           html: buildAdminReviewNotificationHTML(userName, userEmail, userPhone, report, data, reportId),
         });

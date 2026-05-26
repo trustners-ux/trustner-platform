@@ -90,7 +90,7 @@ export async function POST(request: Request) {
             },
             body: JSON.stringify({
               from: 'Mera SIP Online <leads@merasip.com>',
-              to: 'wecare@merasip.com',
+              to: 'wecare@trustner.in',
               subject: `New Lead: ${name} - ${goal || source || 'General Inquiry'}${phoneVerified ? ' ✓' : ''}${riskProfile ? ` [${riskProfile}]` : ''}`,
               html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
