@@ -267,14 +267,14 @@ export default function PortfolioDiagnosticDashboard() {
         subtitle="Last 20 published diagnostics across the team."
         items={recent}
         emptyState="No published diagnostics yet."
-        actionHref={(item) => `/admin/portfolio-diagnostic/${item.id}`}
+        actionHref={(item) => `/admin/portfolio-diagnostic/${item.id}/review`}
         actionLabel="View"
         accent="slate"
       />
 
       {/* Footer info */}
       <div className="text-xs text-slate-400 pt-4 border-t border-slate-200">
-        Methodology version: <span className="font-mono">v1.0.0</span> &middot;{' '}
+        Methodology version: <span className="font-mono">v1.1.0</span> &middot;{' '}
         Trustner Asset Services Pvt. Ltd. &middot; ARN-286886
       </div>
     </div>
