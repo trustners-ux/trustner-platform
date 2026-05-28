@@ -876,10 +876,17 @@ export async function generateClaudeNarrative(
     let totalUsage = { input: 0, output: 0, cacheWrite: 0, cacheRead: 0 };
 
     for (let iter = 0; iter < MAX_ITER; iter++) {
-      const message = await client.messages.create({
+      // Use streaming to keep the HTTP connection alive while Claude
+      // composes (comprehensive narratives can take 20-30s, especially
+      // when tool use chains 2-3 round-trips). `.finalMessage()` waits
+      // for completion and returns the assembled Message — same shape
+      // as messages.create() but without the SDK's own timeout risk on
+      // large max_tokens.
+      const stream = client.messages.stream({
         ...messageArgs,
         messages: convo,
       });
+      const message = await stream.finalMessage();
 
       const usage = message.usage as typeof message.usage & {
         cache_creation_input_tokens?: number;
@@ -1054,7 +1061,9 @@ export async function buildExecutiveSummary(
       ? `${buildExecSummaryUserPrompt(report, data, userName)}\n\n${preferredFundsBlock}`
       : buildExecSummaryUserPrompt(report, data, userName);
 
-    const message = await client.messages.create({
+    // Streaming keeps the connection alive — exec summary can be ~1500
+    // tokens of structured JSON which risks SDK timeouts on slow runs.
+    const stream = client.messages.stream({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1500,
       // Cache the entire EXEC_SUMMARY_SYSTEM_PROMPT (all of it is stable
@@ -1068,6 +1077,7 @@ export async function buildExecutiveSummary(
       ],
       messages: [{ role: 'user', content: userPrompt }],
     });
+    const message = await stream.finalMessage();
 
     const usage = message.usage as typeof message.usage & {
       cache_creation_input_tokens?: number;

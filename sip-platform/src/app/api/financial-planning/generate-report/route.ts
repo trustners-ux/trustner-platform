@@ -7,7 +7,12 @@ import { generateFinancialReport } from '@/lib/utils/financial-planning-pdf';
 import { createReportQueueEntry } from '@/lib/admin/report-queue-store';
 import { buildAdminReviewNotificationHTML } from '@/lib/utils/report-email-builders';
 
-export const maxDuration = 30;
+// Bumped from 30s -> 60s because Comprehensive tier now uses tool-use
+// agentic loop (up to 5 round-trips with Claude calling pd_* lookups +
+// insurance/retirement calculators). With Anthropic streaming keeping
+// each individual call's connection alive, total wall time can land in
+// the 25-45s range. 60s gives headroom.
+export const maxDuration = 60;
 
 function getResend() {
   return new Resend(process.env.RESEND_API_KEY);
