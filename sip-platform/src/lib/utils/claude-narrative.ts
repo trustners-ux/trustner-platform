@@ -4,6 +4,7 @@ import type { PlanTier } from '@/types/financial-planning-v2';
 import { formatINR } from '@/lib/utils/formatters';
 import { TIER_NARRATIVE_CONFIG } from '@/lib/constants/tier-config';
 import { getSupabaseAdmin } from '@/lib/db/supabase';
+import { compareTaxRegimes } from '@/lib/utils/tax-regime-calculator';
 
 // ──────────────────────────────────────────────────────────────────────────
 // TRUSTNER PREFERRED FUNDS CONTEXT (per-category curated picks)
@@ -715,6 +716,23 @@ const NARRATIVE_TOOLS: NarrativeTool[] = [
       required: ['currentAge', 'retireAge', 'currentCorpusInr', 'monthlySipInr', 'equityPct'],
     },
   },
+  {
+    name: 'compareTaxRegimes',
+    description:
+      'Compare income tax payable under Old vs New regime for FY 2025-26 (Finance Act 2024 slabs). Returns total tax under each regime, the optimal regime, and the savings amount. Use this in the Protection/Tax section of the narrative when the client has both salary income AND any old-regime deductions (80C/80D/home loan/HRA) — picking the wrong regime can cost tens of thousands per year. Always quote the savings as "approx Rs. X" because the calculator uses simplified assumptions (no LTA, no specific medical claims, standard 87A rebate logic).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        grossAnnualIncomeInr: { type: 'number', description: 'Gross annual income before any deductions (salary + bonus + rental + business + other).' },
+        section80cInr: { type: 'number', description: 'Section 80C investments (PPF, EPF, ELSS, life insurance premium) — capped Rs 1.5L. Pass 0 if none.' },
+        section80dInr: { type: 'number', description: 'Section 80D health insurance premium — pass 0 if none.' },
+        homeLoanInterestInr: { type: 'number', description: 'Section 24(b) home loan interest paid — capped Rs 2L for self-occupied. Pass 0 if none.' },
+        hraExemptionInr: { type: 'number', description: 'HRA exempt amount — pass 0 if no rent paid or own house. Pass 0 if unsure rather than guess.' },
+        otherOldRegimeDeductionsInr: { type: 'number', description: 'Other old-regime-only deductions (NPS 80CCD(1B), 80E, 80G, etc.) summed. Pass 0 if none.' },
+      },
+      required: ['grossAnnualIncomeInr'],
+    },
+  },
 ];
 
 /**
@@ -791,6 +809,18 @@ async function executeNarrativeTool(
         rationale: `${multiplier}× annual income covers ${dependents} dependents through ${65 - age} working years to retirement age.`,
         productGuidance: 'For policy structure (level/increasing cover, premium term, riders), the client should consult a licensed insurance advisor.',
       });
+    }
+
+    if (name === 'compareTaxRegimes') {
+      const result = compareTaxRegimes({
+        grossAnnualIncomeInr: Number(input.grossAnnualIncomeInr) || 0,
+        section80cInr: Number(input.section80cInr) || 0,
+        section80dInr: Number(input.section80dInr) || 0,
+        homeLoanInterestInr: Number(input.homeLoanInterestInr) || 0,
+        hraExemptionInr: Number(input.hraExemptionInr) || 0,
+        otherOldRegimeDeductionsInr: Number(input.otherOldRegimeDeductionsInr) || 0,
+      });
+      return JSON.stringify(result);
     }
 
     if (name === 'simulateRetirementCorpus') {
