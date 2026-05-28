@@ -272,10 +272,12 @@ export const NAVIGATION: NavItem[] = [
     label: 'Funds',
     href: '/funds',
     children: [
+      { label: 'Fund Universe — 2,000+ schemes', href: '/funds/universe', badge: 'New' },
       { label: 'Fund Explorer', href: '/funds' },
       { label: 'Trustner Fund Selection', href: '/funds/selection' },
+      { label: 'Fund Screener', href: '/funds/screener' },
       { label: 'Compare Funds', href: '/funds/compare' },
-      { label: 'Model Portfolio Builder', href: '/funds/portfolio-builder', badge: 'New' },
+      { label: 'Model Portfolio Builder', href: '/funds/portfolio-builder' },
     ],
   },
   {
@@ -395,6 +397,7 @@ export const FOOTER_LINKS = {
   ],
   Explore: [
     { label: 'Financial Health Assessment', href: '/financial-planning' },
+    { label: 'Fund Universe (2,000+ schemes)', href: '/funds/universe' },
     { label: 'Fund Explorer', href: '/funds' },
     { label: 'Trustner Fund Selection', href: '/funds/selection' },
     { label: 'Compare Funds', href: '/funds/compare' },

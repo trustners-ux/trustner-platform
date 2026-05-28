@@ -30,6 +30,7 @@ export const fetchCache = 'force-no-store';
 const SORTABLE = new Set([
   'scheme_name', 'amc_name', 'external_category',
   'live_nav', 'aum_inr_cr', 'ter',
+  'returns_1d', 'returns_5d', 'returns_mtd', 'returns_ytd',
   'returns_1m', 'returns_3m', 'returns_6m',
   'returns_1y', 'returns_2y', 'returns_3y', 'returns_5y', 'returns_7y', 'returns_10y', 'returns_15y',
   'returns_since_launch',
@@ -45,6 +46,7 @@ const SELECT_COLUMNS = [
   'external_category', 'broad_bucket', 'snapshot_date',
   'live_nav', 'live_nav_at', 'nav_date',
   'aum_inr_cr', 'riskometer', 'ter', 'launch_date',
+  'returns_1d', 'returns_5d', 'returns_mtd', 'returns_ytd',
   'returns_1m', 'returns_3m', 'returns_6m',
   'returns_1y', 'returns_2y', 'returns_3y', 'returns_5y', 'returns_7y', 'returns_10y', 'returns_15y',
   'returns_since_launch',

@@ -44,13 +44,20 @@ interface UniverseFund {
   riskometer: string | null;
   ter: number | null;
   launch_date: string | null;
+  returns_1d: number | null;
+  returns_5d: number | null;
+  returns_mtd: number | null;
+  returns_ytd: number | null;
   returns_1m: number | null;
   returns_3m: number | null;
   returns_6m: number | null;
   returns_1y: number | null;
+  returns_2y: number | null;
   returns_3y: number | null;
   returns_5y: number | null;
+  returns_7y: number | null;
   returns_10y: number | null;
+  returns_15y: number | null;
   returns_since_launch: number | null;
   volatility: number | null;
   sharpe: number | null;
@@ -89,7 +96,12 @@ const BROAD_BUCKETS = [
   { key: 'Solution', label: 'Solution', icon: Filter },
 ];
 
-// Columns with sort metadata
+// Format helpers
+const pct = (v: unknown) => (v != null ? (Number(v) * 100).toFixed(2) + '%' : '—');
+const num = (v: unknown, d = 2) => (v != null ? Number(v).toFixed(d) : '—');
+
+// Columns with sort metadata. The Scheme column is rendered sticky-left
+// in the table body so it stays visible during horizontal scroll.
 const COLUMNS: Array<{
   key: keyof UniverseFund;
   label: string;
@@ -97,84 +109,30 @@ const COLUMNS: Array<{
   width?: string;
   format?: (v: unknown, row: UniverseFund) => string;
   sortable?: boolean;
+  sticky?: boolean;
 }> = [
-  { key: 'scheme_name', label: 'Scheme', align: 'left', width: 'min-w-[280px]', sortable: true },
+  { key: 'scheme_name', label: 'Scheme', align: 'left', width: 'min-w-[260px]', sortable: true, sticky: true },
   {
-    key: 'external_category',
-    label: 'Category',
-    align: 'left',
-    width: 'min-w-[160px]',
+    key: 'external_category', label: 'Category', align: 'left', width: 'min-w-[140px]',
     format: (v) => (v ? String(v).split(':')[0].trim() : '—'),
   },
-  {
-    key: 'live_nav',
-    label: 'NAV (₹)',
-    align: 'right',
-    format: (v) => (v ? Number(v).toFixed(2) : '—'),
-    sortable: true,
-  },
-  {
-    key: 'aum_inr_cr',
-    label: 'AUM (₹ Cr)',
-    align: 'right',
-    format: (v) => (v ? Number(v).toLocaleString('en-IN', { maximumFractionDigits: 0 }) : '—'),
-    sortable: true,
-  },
-  {
-    key: 'returns_1y',
-    label: '1Y',
-    align: 'right',
-    format: (v) => (v != null ? (Number(v) * 100).toFixed(2) + '%' : '—'),
-    sortable: true,
-  },
-  {
-    key: 'returns_3y',
-    label: '3Y',
-    align: 'right',
-    format: (v) => (v != null ? (Number(v) * 100).toFixed(2) + '%' : '—'),
-    sortable: true,
-  },
-  {
-    key: 'returns_5y',
-    label: '5Y',
-    align: 'right',
-    format: (v) => (v != null ? (Number(v) * 100).toFixed(2) + '%' : '—'),
-    sortable: true,
-  },
-  {
-    key: 'returns_10y',
-    label: '10Y',
-    align: 'right',
-    format: (v) => (v != null ? (Number(v) * 100).toFixed(2) + '%' : '—'),
-    sortable: true,
-  },
-  {
-    key: 'sharpe',
-    label: 'Sharpe',
-    align: 'right',
-    format: (v) => (v != null ? Number(v).toFixed(2) : '—'),
-    sortable: true,
-  },
-  {
-    key: 'volatility',
-    label: 'Volatility',
-    align: 'right',
-    format: (v) => (v != null ? (Number(v) * 100).toFixed(2) + '%' : '—'),
-    sortable: true,
-  },
-  {
-    key: 'ter',
-    label: 'TER',
-    align: 'right',
-    format: (v) => (v != null ? Number(v).toFixed(2) + '%' : '—'),
-    sortable: true,
-  },
-  {
-    key: 'riskometer',
-    label: 'Risk',
-    align: 'left',
-    format: (v) => v ? String(v) : '—',
-  },
+  { key: 'live_nav',   label: 'NAV (₹)',    align: 'right', format: (v) => num(v, 2),                                       sortable: true },
+  { key: 'aum_inr_cr', label: 'AUM (₹ Cr)', align: 'right', format: (v) => (v ? Number(v).toLocaleString('en-IN', { maximumFractionDigits: 0 }) : '—'), sortable: true },
+  // ─── Return horizons — Ram's requested set ───
+  { key: 'returns_1d',  label: '1D',  align: 'right', format: pct, sortable: true },
+  { key: 'returns_5d',  label: '5D',  align: 'right', format: pct, sortable: true },
+  { key: 'returns_1m',  label: '1M',  align: 'right', format: pct, sortable: true },
+  { key: 'returns_3m',  label: '3M',  align: 'right', format: pct, sortable: true },
+  { key: 'returns_6m',  label: '6M',  align: 'right', format: pct, sortable: true },
+  { key: 'returns_1y',  label: '1Y',  align: 'right', format: pct, sortable: true },
+  { key: 'returns_3y',  label: '3Y',  align: 'right', format: pct, sortable: true },
+  { key: 'returns_5y',  label: '5Y',  align: 'right', format: pct, sortable: true },
+  { key: 'returns_10y', label: '10Y', align: 'right', format: pct, sortable: true },
+  // ─── Risk + cost ───
+  { key: 'sharpe',     label: 'Sharpe',     align: 'right', format: (v) => num(v, 2), sortable: true },
+  { key: 'volatility', label: 'Volatility', align: 'right', format: pct,              sortable: true },
+  { key: 'ter',        label: 'TER',        align: 'right', format: (v) => num(v, 2) + '%', sortable: true },
+  { key: 'riskometer', label: 'Risk',       align: 'left',  format: (v) => v ? String(v) : '—' },
 ];
 
 // ─── Page ─────────────────────────────────────────────────
@@ -386,7 +344,7 @@ export default function FundUniversePage() {
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200 sticky top-0">
+              <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
                   {COLUMNS.map((col) => {
                     const isActive = sortCol === col.key;
@@ -397,7 +355,8 @@ export default function FundUniversePage() {
                         className={cn(
                           'px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-slate-600 whitespace-nowrap',
                           col.align === 'right' ? 'text-right' : 'text-left',
-                          col.width
+                          col.width,
+                          col.sticky && 'sticky left-0 z-10 bg-slate-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]'
                         )}
                       >
                         {col.sortable ? (
@@ -420,10 +379,13 @@ export default function FundUniversePage() {
                 </tr>
               </thead>
               <tbody>
-                {data?.rows.map((fund) => (
+                {data?.rows.map((fund, rowIdx) => (
                   <tr
                     key={fund.amfi_code}
-                    className="border-b border-slate-100 hover:bg-slate-50/50 transition"
+                    className={cn(
+                      'border-b border-slate-100 hover:bg-brand/5 transition',
+                      rowIdx % 2 === 1 && 'bg-slate-50/40'
+                    )}
                   >
                     {COLUMNS.map((col) => {
                       const value = fund[col.key];
@@ -433,6 +395,17 @@ export default function FundUniversePage() {
                         ? '—'
                         : String(value);
                       const isSchemeCell = col.key === 'scheme_name';
+                      // Color-code returns: green if >0, red if <0
+                      const isReturnCol = String(col.key).startsWith('returns_');
+                      const numericValue = typeof value === 'number' ? value : null;
+                      const returnColor =
+                        isReturnCol && numericValue !== null
+                          ? numericValue > 0
+                            ? 'text-emerald-700'
+                            : numericValue < 0
+                            ? 'text-rose-600'
+                            : 'text-slate-500'
+                          : '';
                       return (
                         <td
                           key={String(col.key)}
@@ -440,8 +413,19 @@ export default function FundUniversePage() {
                             'px-3 py-2.5 text-sm whitespace-nowrap',
                             col.align === 'right'
                               ? 'text-right font-mono tabular-nums'
-                              : 'text-left'
+                              : 'text-left',
+                            col.sticky &&
+                              'sticky left-0 z-10 bg-inherit shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]',
+                            returnColor
                           )}
+                          style={
+                            col.sticky
+                              ? {
+                                  backgroundColor:
+                                    rowIdx % 2 === 1 ? 'rgb(248 250 252 / 1)' : 'white',
+                                }
+                              : undefined
+                          }
                         >
                           {isSchemeCell ? (
                             <div className="flex items-center gap-1.5">
@@ -449,7 +433,7 @@ export default function FundUniversePage() {
                                 <Star className="w-3 h-3 text-amber-500 fill-amber-500 flex-shrink-0" />
                               )}
                               <div className="min-w-0">
-                                <div className="font-medium text-slate-900 truncate max-w-[260px]">
+                                <div className="font-medium text-slate-900 truncate max-w-[240px]">
                                   {fund.scheme_name}
                                 </div>
                                 {fund.amc_name && (
