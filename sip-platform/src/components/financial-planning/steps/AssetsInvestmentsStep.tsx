@@ -2,7 +2,8 @@
 
 import { useMemo } from 'react';
 import CurrencyInput from '@/components/financial-planning/inputs/CurrencyInput';
-import type { AssetProfile } from '@/types/financial-planning';
+import CasUploadWidget from '@/components/financial-planning/inputs/CasUploadWidget';
+import type { AssetProfile, ExistingPortfolio } from '@/types/financial-planning';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -11,6 +12,15 @@ import type { AssetProfile } from '@/types/financial-planning';
 interface Props {
   data: AssetProfile;
   onUpdate: (updates: Partial<AssetProfile>) => void;
+  /**
+   * NEW (May 2026): Optional CAS upload bridge. When the parent threads
+   * `existingPortfolio` + `onUpdateExisting` through, the widget renders
+   * inline at the top of the step. When omitted (e.g., on the Basic/Standard
+   * tier wizards that don't surface CAS upload), the widget is hidden and
+   * the step behaves exactly as before.
+   */
+  existingPortfolio?: ExistingPortfolio;
+  onUpdateExisting?: (portfolio: ExistingPortfolio | null) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -44,7 +54,7 @@ const CATEGORIES = [
 // Component
 // ---------------------------------------------------------------------------
 
-export default function AssetsInvestmentsStep({ data, onUpdate }: Props) {
+export default function AssetsInvestmentsStep({ data, onUpdate, existingPortfolio, onUpdateExisting }: Props) {
   // ----- Computed allocation totals -----
   const allocation = useMemo(() => {
     const equity = (data.mutualFunds || 0) + (data.stocks || 0);
@@ -96,6 +106,11 @@ export default function AssetsInvestmentsStep({ data, onUpdate }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* CAS upload — optional, comprehensive tier only */}
+      {onUpdateExisting && (
+        <CasUploadWidget value={existingPortfolio} onParsed={onUpdateExisting} />
+      )}
+
       {/* ================================================================
          A. Bank & Fixed Income
          ================================================================ */}

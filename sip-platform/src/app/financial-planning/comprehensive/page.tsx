@@ -168,6 +168,11 @@ export default function ComprehensivePlanPage() {
   }, [updateData]);
 
   const handleAssetsUpdate = useCallback((u: Partial<AssetProfile>) => updateData((p) => ({ ...p, assetProfile: { ...p.assetProfile, ...u } })), [updateData]);
+  const handleExistingPortfolioUpdate = useCallback(
+    (portfolio: import('@/types/financial-planning').ExistingPortfolio | null) =>
+      updateData((p) => ({ ...p, existingPortfolio: portfolio || undefined })),
+    [updateData],
+  );
   const handleLiabilitiesUpdate = useCallback((u: Partial<LiabilityProfile>) => updateData((p) => ({ ...p, liabilityProfile: { ...p.liabilityProfile, ...u } })), [updateData]);
   const handleInsuranceUpdate = useCallback((u: Partial<InsuranceProfile>) => updateData((p) => ({ ...p, insuranceProfile: { ...p.insuranceProfile, ...u } })), [updateData]);
   const handleGoalsUpdate = useCallback((goals: FinancialGoal[]) => updateData((p) => ({ ...p, goals })), [updateData]);
@@ -253,7 +258,12 @@ export default function ComprehensivePlanPage() {
     )},
     { id: 3, title: 'Assets', icon: <Landmark className="w-4 h-4" />, component: (
       <WizardStep title="Assets & Investments" description="Your savings, investments and property" icon={<Landmark className="w-5 h-5" />}>
-        <AssetsInvestmentsStep data={planData.assetProfile} onUpdate={handleAssetsUpdate} />
+        <AssetsInvestmentsStep
+          data={planData.assetProfile}
+          onUpdate={handleAssetsUpdate}
+          existingPortfolio={planData.existingPortfolio}
+          onUpdateExisting={handleExistingPortfolioUpdate}
+        />
       </WizardStep>
     )},
     { id: 4, title: 'Debts', icon: <CreditCard className="w-4 h-4" />, component: (
