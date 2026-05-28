@@ -511,7 +511,21 @@ export default function FundExplorePage() {
           <h2 className="text-xl font-bold text-gray-900 mb-6 text-center">
             More Fund Research Tools
           </h2>
-          <div className="grid sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
+            <Link
+              href="/funds/universe"
+              className="group bg-gradient-to-br from-brand to-brand-700 text-white rounded-xl p-5 hover:shadow-lg transition-all"
+            >
+              <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center mb-3">
+                <TrendingUp className="w-5 h-5 text-white" />
+              </div>
+              <h3 className="font-bold text-sm mb-1">
+                Browse Full Universe
+              </h3>
+              <p className="text-xs text-white/80 leading-relaxed">
+                2,000+ funds across 80 categories — sortable on every metric
+              </p>
+            </Link>
             <Link
               href="/funds/selection"
               className="group bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md hover:border-teal-300 transition-all"
