@@ -549,6 +549,27 @@ ${behaviouralFlags.length > 0 ? behaviouralFlags.map((f, i) => `${i + 1}. ${f}`)
     prompt += `\n\n${goalTaxContext}`;
   }
 
+  // Existing portfolio (from CAS upload) — only if present + non-empty.
+  // Reference holdings concretely in the narrative ("you already hold Rs 4.2L in Flexi Cap").
+  const existing = data.existingPortfolio;
+  if (tier === 'comprehensive' && existing && existing.holdingsCount > 0) {
+    prompt += `\n\nEXISTING PORTFOLIO (parsed from client's CAS upload):
+- Total current value: ${formatINR(existing.totalValueInr)}
+- Total invested (cost basis): ${formatINR(existing.totalInvestedInr)}
+- Gain/loss: ${formatINR(existing.totalValueInr - existing.totalInvestedInr)} (${(((existing.totalValueInr - existing.totalInvestedInr) / Math.max(existing.totalInvestedInr, 1)) * 100).toFixed(1)}% lifetime)
+- Number of distinct holdings: ${existing.holdingsCount}
+
+Top holdings by current value:`;
+    const topHoldings = [...existing.holdings]
+      .sort((a, b) => (b.currentValueInr || 0) - (a.currentValueInr || 0))
+      .slice(0, 10);
+    for (const h of topHoldings) {
+      const pct = (h.currentValueInr / Math.max(existing.totalValueInr, 1)) * 100;
+      prompt += `\n  - ${h.fundName.slice(0, 75)} | ${formatINR(h.currentValueInr)} (${pct.toFixed(1)}% of portfolio)`;
+    }
+    prompt += `\n\nINTEGRATION NOTE: In the Goal-by-Goal section, where the existing portfolio can anchor a goal (e.g., an existing Flexi Cap holding earmarked for retirement), reference it concretely BY VALUE. When suggesting a new SIP, distinguish "step up the existing X SIP" from "add a new SIP into category Y". Do NOT name specific schemes to switch FROM — the workflow is review with the Trustner Relationship Manager. Use the getPreferredFundsForCategory tool to identify research-desk picks for any new allocations.`;
+  }
+
   const actionCount = tier === 'comprehensive' ? 6 : 4;
   prompt += `\n\nTOP ${actionCount} CONSIDERATIONS FOR REVIEW (impact-ranked):
 ${report.actionPlan.slice(0, actionCount).map((a, i) => `${i + 1}. [${a.impact.toUpperCase()} IMPACT] ${a.action}`).join('\n')}

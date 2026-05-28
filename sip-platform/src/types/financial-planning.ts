@@ -169,6 +169,38 @@ export interface TaxProfile {
   npsContribution: number;
 }
 
+/**
+ * NEW (May 2026): Lightweight holding shape captured when the client
+ * uploads their CAS during the Comprehensive wizard. This is a SUBSET
+ * of the full pd_diagnostic RawHolding — we only carry the fields the
+ * narrative generator + scoring engine actually need. Keeping it
+ * de-coupled from the PD types means future CAS-parser shape changes
+ * don't ripple through the public wizard.
+ */
+export interface ExistingPortfolioHolding {
+  fundName: string;
+  amcName?: string;
+  folioNumber?: string;
+  units: number;
+  currentValueInr: number;
+  investedAmountInr: number;
+  currentNav?: number;
+  firstInvestmentDate?: string;   // YYYY-MM-DD
+}
+
+export interface ExistingPortfolio {
+  /** When the upload happened (ISO timestamp). null if user skipped. */
+  parsedAt?: string;
+  /** Total current value across all holdings (denormalised from parse). */
+  totalValueInr: number;
+  /** Total invested cost basis. */
+  totalInvestedInr: number;
+  /** Number of distinct holdings parsed. */
+  holdingsCount: number;
+  /** The actual holdings — passed forward to the report generator. */
+  holdings: ExistingPortfolioHolding[];
+}
+
 /** Master data structure containing all questionnaire responses */
 export interface FinancialPlanningData {
   personalProfile: PersonalProfile;
@@ -182,6 +214,14 @@ export interface FinancialPlanningData {
   behavioralProfile: BehavioralProfile;
   emergencyProfile: EmergencyProfile;
   taxProfile: TaxProfile;
+  /**
+   * NEW (May 2026): Optional CAS-parsed existing portfolio. When present,
+   * the narrative generator references holdings concretely in the
+   * Goal-by-Goal section ("you already hold Rs 4.2 L in Flexi Cap which
+   * could anchor goal X"). When absent (user skipped), the report
+   * generator behaves exactly as before — no breakage.
+   */
+  existingPortfolio?: ExistingPortfolio;
 }
 
 export type PillarGrade = 'Excellent' | 'Good' | 'Fair' | 'Needs Attention' | 'Critical';
