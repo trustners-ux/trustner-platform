@@ -73,6 +73,8 @@ interface ApiResponse {
   page: number;
   pageSize: number;
   totalPages: number;
+  pendingSetup?: boolean;
+  message?: string;
 }
 
 type SortDir = 'asc' | 'desc';
@@ -466,7 +468,18 @@ export default function FundUniversePage() {
                 {!loading && data?.rows.length === 0 && (
                   <tr>
                     <td colSpan={COLUMNS.length} className="px-4 py-10 text-center text-sm text-slate-500">
-                      No funds match these filters. Try clearing the search or category.
+                      {data?.pendingSetup ? (
+                        <div className="space-y-2">
+                          <div className="font-semibold text-slate-700">Research universe is initialising</div>
+                          <div className="text-xs text-slate-500 max-w-md mx-auto">
+                            We&apos;re preparing the database of 2,000+ Indian mutual fund schemes
+                            with returns, risk metrics, and live NAVs. This typically takes a few
+                            minutes after a fresh setup. Please refresh in a moment.
+                          </div>
+                        </div>
+                      ) : (
+                        'No funds match these filters. Try clearing the search or category.'
+                      )}
                     </td>
                   </tr>
                 )}

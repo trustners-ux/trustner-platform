@@ -26,6 +26,11 @@ export async function GET() {
     .not('external_category', 'is', null);
 
   if (error) {
+    const missingTable =
+      /not\s+find\s+the\s+table|relation .* does not exist|schema cache/i.test(error.message);
+    if (missingTable) {
+      return NextResponse.json({ categories: [], pendingSetup: true });
+    }
     return NextResponse.json({ categories: [], error: error.message });
   }
 

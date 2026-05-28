@@ -113,7 +113,23 @@ export async function GET(req: NextRequest) {
 
   const { data, error, count } = await query;
 
+  // If the underlying table/view doesn't exist yet, return empty universe
+  // with a pendingSetup flag instead of a 500. Lets the UI render a
+  // friendly "loading research universe" state.
   if (error) {
+    const missingTable =
+      /not\s+find\s+the\s+table|relation .* does not exist|schema cache/i.test(error.message);
+    if (missingTable) {
+      return NextResponse.json({
+        rows: [],
+        total: 0,
+        page,
+        pageSize,
+        totalPages: 0,
+        pendingSetup: true,
+        message: 'Fund research universe is being prepared. Data will appear shortly.',
+      });
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
