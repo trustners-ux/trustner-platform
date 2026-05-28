@@ -631,6 +631,201 @@ function generateFallbackNarrative(
 /**
  * Generate personalised narrative using Claude API with template fallback.
  */
+// ──────────────────────────────────────────────────────────────────────────
+// TOOL USE — live data lookups (Comprehensive tier only)
+//
+// Instead of letting Claude invent benchmark numbers, insurance-gap math, or
+// retirement-corpus projections from training data, expose 4 tools backed by
+// live DB + deterministic calculators. Claude calls them during generation,
+// the results feed back into context, and the final narrative composes from
+// precise numbers — eliminating the entire class of "fabricated number"
+// risk that pure LLM generation runs into.
+//
+// Gated to comprehensive tier only because the agentic loop adds round-trip
+// latency. Basic/standard keep the single-call path (faster + cheaper).
+// ──────────────────────────────────────────────────────────────────────────
+
+type NarrativeTool = {
+  name: string;
+  description: string;
+  input_schema: {
+    type: 'object';
+    properties: Record<string, unknown>;
+    required?: string[];
+  };
+};
+
+const NARRATIVE_TOOLS: NarrativeTool[] = [
+  {
+    name: 'getCategoryBenchmark',
+    description:
+      'Retrieve median 3Y/5Y CAGR + top-10% / bottom-10% bands and total fund count for a Indian MF category, from the live Trustner research dataset. Use whenever the narrative needs to reference what a category typically delivers (e.g. "Flexi Cap median 3Y CAGR sits around X%"). Always quote with "as per the Trustner research desk", never as guaranteed returns.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        category: {
+          type: 'string',
+          description:
+            'MF category name — one of: Large Cap, Large & Mid Cap, Flexi Cap, Multi Cap, Mid Cap, Small Cap, ELSS, Focused, Value, Contra, Aggressive Hybrid, Balanced Advantage, Conservative Hybrid, Equity Savings, Arbitrage, Liquid, Short Duration, Corporate Bond, Banking & PSU, Gilt, Index - Nifty 50, Multi Asset, Gold/Silver. Match exactly.',
+        },
+      },
+      required: ['category'],
+    },
+  },
+  {
+    name: 'getPreferredFundsForCategory',
+    description:
+      'Look up the Trustner research desk\'s current primary + secondary fund picks for a given MF category (Regular plan, Growth option). Use when you want to name a category leader the RM should discuss with the client. Always frame as "for review with your Trustner RM", never as direct recommendation.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        category: { type: 'string', description: 'MF category name; same set as getCategoryBenchmark.' },
+      },
+      required: ['category'],
+    },
+  },
+  {
+    name: 'computeInsuranceGap',
+    description:
+      'Compute the recommended term life cover (15-20× annual income, scaled by dependents) and the gap vs current cover. Returns specific INR amounts. Use whenever the narrative discusses life insurance gaps. NOTE: For health insurance / product selection, always direct the client to a licensed insurance advisor — this tool only computes the math.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        age: { type: 'number', description: 'Client age in years.' },
+        dependents: { type: 'number', description: 'Number of financial dependents.' },
+        annualIncomeInr: { type: 'number', description: 'Annual gross income in INR.' },
+        currentTermCoverInr: { type: 'number', description: 'Current term life cover in INR; pass 0 if none.' },
+      },
+      required: ['age', 'dependents', 'annualIncomeInr', 'currentTermCoverInr'],
+    },
+  },
+  {
+    name: 'simulateRetirementCorpus',
+    description:
+      'Project retirement corpus given current age, retirement age, current invested corpus, monthly SIP, and equity allocation %. Uses an indicative return assumption keyed to equity %. Result is INDICATIVE — annotate as "projection, not guarantee" in the narrative. Equity returns 12% p.a., Debt returns 7% p.a., blended pro-rata.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        currentAge: { type: 'number' },
+        retireAge: { type: 'number' },
+        currentCorpusInr: { type: 'number' },
+        monthlySipInr: { type: 'number' },
+        equityPct: { type: 'number', description: 'Percentage of portfolio in equity (0-100).' },
+      },
+      required: ['currentAge', 'retireAge', 'currentCorpusInr', 'monthlySipInr', 'equityPct'],
+    },
+  },
+];
+
+/**
+ * Dispatcher: routes tool_use blocks from Claude to the matching backend.
+ * Errors are caught and returned as `is_error: true` tool_result content so
+ * Claude can adapt — never throws out of the agentic loop.
+ */
+async function executeNarrativeTool(
+  name: string,
+  input: Record<string, unknown>,
+): Promise<string> {
+  try {
+    if (name === 'getCategoryBenchmark') {
+      const supabase = getSupabaseAdmin();
+      if (!supabase) return JSON.stringify({ error: 'DB unavailable' });
+      const cat = String(input.category || '');
+      const { data, error } = await supabase
+        .from('pd_category_benchmarks')
+        .select('category, median_3y, median_5y, top_10_pct_3y, bottom_10_pct_3y, total_funds_in_category, as_of_date')
+        .ilike('category', cat)
+        .order('as_of_date', { ascending: false })
+        .limit(1);
+      if (error) return JSON.stringify({ error: error.message });
+      if (!data || data.length === 0) return JSON.stringify({ error: `No benchmark found for "${cat}"` });
+      return JSON.stringify(data[0]);
+    }
+
+    if (name === 'getPreferredFundsForCategory') {
+      const supabase = getSupabaseAdmin();
+      if (!supabase) return JSON.stringify({ error: 'DB unavailable' });
+      const cat = String(input.category || '');
+      const { data: prefs } = await supabase
+        .from('pd_preferred_funds_by_category')
+        .select('category, primary_amfi_code, secondary_amfi_code, rationale')
+        .ilike('category', cat)
+        .limit(1);
+      if (!prefs || prefs.length === 0) {
+        return JSON.stringify({ error: `No preferred picks found for "${cat}"` });
+      }
+      const p = prefs[0];
+      const codes = [p.primary_amfi_code, p.secondary_amfi_code].filter(Boolean) as string[];
+      const { data: funds } = await supabase
+        .from('pd_fund_master')
+        .select('amfi_code, scheme_name')
+        .in('amfi_code', codes);
+      const nameByCode = new Map<string, string>();
+      for (const f of funds ?? []) nameByCode.set(f.amfi_code as string, (f.scheme_name as string) || '');
+      const clean = (n: string) =>
+        n.replace(/\s*-\s*(REGULAR|Regular)\s*(PLAN\s*-?)?\s*(GROWTH|Growth)?.*$/i, '').trim();
+      return JSON.stringify({
+        category: p.category,
+        primary: p.primary_amfi_code ? clean(nameByCode.get(p.primary_amfi_code as string) || '') : null,
+        secondary: p.secondary_amfi_code ? clean(nameByCode.get(p.secondary_amfi_code as string) || '') : null,
+        note: 'Reference these as research desk picks for RM discussion. Never recommend directly to the client.',
+      });
+    }
+
+    if (name === 'computeInsuranceGap') {
+      const age = Number(input.age) || 30;
+      const dependents = Number(input.dependents) || 0;
+      const income = Number(input.annualIncomeInr) || 0;
+      const current = Number(input.currentTermCoverInr) || 0;
+      // 15× base, +1× per dependent up to +5×, capped at 20×
+      const multiplier = Math.min(20, 15 + Math.min(dependents, 5));
+      const recommended = income * multiplier;
+      const gap = Math.max(0, recommended - current);
+      const ratio = current > 0 ? current / income : 0;
+      return JSON.stringify({
+        recommendedTermCoverInr: recommended,
+        currentTermCoverInr: current,
+        gapInr: gap,
+        currentMultipleOfIncome: Number(ratio.toFixed(1)),
+        recommendedMultiple: multiplier,
+        rationale: `${multiplier}× annual income covers ${dependents} dependents through ${65 - age} working years to retirement age.`,
+        productGuidance: 'For policy structure (level/increasing cover, premium term, riders), the client should consult a licensed insurance advisor.',
+      });
+    }
+
+    if (name === 'simulateRetirementCorpus') {
+      const currentAge = Number(input.currentAge) || 30;
+      const retireAge = Number(input.retireAge) || 60;
+      const currentCorpus = Number(input.currentCorpusInr) || 0;
+      const monthlySip = Number(input.monthlySipInr) || 0;
+      const equityPct = Math.min(100, Math.max(0, Number(input.equityPct) || 60));
+      const years = Math.max(1, retireAge - currentAge);
+      const blendedReturn = (equityPct * 0.12 + (100 - equityPct) * 0.07) / 100;
+      const monthlyReturn = blendedReturn / 12;
+      const months = years * 12;
+      const fvCorpus = currentCorpus * Math.pow(1 + blendedReturn, years);
+      const fvSip =
+        monthlyReturn > 0
+          ? monthlySip * ((Math.pow(1 + monthlyReturn, months) - 1) / monthlyReturn) * (1 + monthlyReturn)
+          : monthlySip * months;
+      const total = fvCorpus + fvSip;
+      return JSON.stringify({
+        projectedCorpusInr: Math.round(total),
+        fvOfExistingCorpusInr: Math.round(fvCorpus),
+        fvOfSipInr: Math.round(fvSip),
+        yearsToRetirement: years,
+        assumedAnnualReturnPct: Number((blendedReturn * 100).toFixed(2)),
+        equityPct,
+        note: 'Indicative projection at blended return (Equity 12% p.a., Debt 7% p.a.). NOT a guarantee. Actual returns vary with markets and fund selection.',
+      });
+    }
+
+    return JSON.stringify({ error: `Unknown tool: ${name}` });
+  } catch (e) {
+    return JSON.stringify({ error: (e as Error).message });
+  }
+}
+
 export async function generateClaudeNarrative(
   report: Omit<FinancialHealthReport, 'claudeNarrative'>,
   data: FinancialPlanningData,
@@ -664,28 +859,78 @@ export async function generateClaudeNarrative(
       ? `${buildUserPrompt(report, data, userName, tier)}\n\n${preferredFundsBlock}`
       : buildUserPrompt(report, data, userName, tier);
 
-    const message = await client.messages.create({
+    // For COMPREHENSIVE tier: run a tool-use loop so Claude can call into
+    // live data (getCategoryBenchmark, getPreferredFundsForCategory,
+    // computeInsuranceGap, simulateRetirementCorpus). For basic/standard:
+    // single-call path stays — they're short and don't need tools.
+    const messageArgs = {
       model: 'claude-sonnet-4-20250514',
       max_tokens: maxTokensByTier[tier],
-      // System is an array of content blocks: STATIC_RULES_BLOCK is marked
-      // cache_control: ephemeral (90% cheaper on cache reads, 5-min TTL),
-      // tier-specific structure is the second block and stays uncached.
       system: buildSystemPrompt(tier),
-      messages: [{ role: 'user', content: userPrompt }],
-    });
+      ...(tier === 'comprehensive' ? { tools: NARRATIVE_TOOLS } : {}),
+    } as const;
 
-    const usage = message.usage as typeof message.usage & {
-      cache_creation_input_tokens?: number;
-      cache_read_input_tokens?: number;
-    };
+    let convo: Anthropic.MessageParam[] = [{ role: 'user', content: userPrompt }];
+    let finalText = '';
+    const MAX_ITER = 5;
+    let totalUsage = { input: 0, output: 0, cacheWrite: 0, cacheRead: 0 };
+
+    for (let iter = 0; iter < MAX_ITER; iter++) {
+      const message = await client.messages.create({
+        ...messageArgs,
+        messages: convo,
+      });
+
+      const usage = message.usage as typeof message.usage & {
+        cache_creation_input_tokens?: number;
+        cache_read_input_tokens?: number;
+      };
+      totalUsage.input += usage.input_tokens ?? 0;
+      totalUsage.output += usage.output_tokens ?? 0;
+      totalUsage.cacheWrite += usage.cache_creation_input_tokens ?? 0;
+      totalUsage.cacheRead += usage.cache_read_input_tokens ?? 0;
+
+      // Collect text from this turn (we keep the latest non-empty text)
+      const text = message.content
+        .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+        .map((b) => b.text)
+        .join('')
+        .trim();
+      if (text) finalText = text;
+
+      // No tool calls or non-comprehensive tier → done
+      if (message.stop_reason !== 'tool_use' || tier !== 'comprehensive') break;
+
+      const toolUseBlocks = message.content.filter(
+        (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
+      );
+      if (toolUseBlocks.length === 0) break;
+
+      // Append assistant turn (must include tool_use blocks verbatim)
+      convo = [...convo, { role: 'assistant', content: message.content }];
+
+      // Execute tools and append all results as a single user turn
+      const toolResults: Anthropic.ToolResultBlockParam[] = await Promise.all(
+        toolUseBlocks.map(async (tu) => ({
+          type: 'tool_result' as const,
+          tool_use_id: tu.id,
+          content: await executeNarrativeTool(tu.name, tu.input as Record<string, unknown>),
+        })),
+      );
+      convo = [...convo, { role: 'user', content: toolResults }];
+
+      console.log(
+        `[Claude Narrative] tier=${tier} iter=${iter} tool_calls=${toolUseBlocks.map((t) => t.name).join(',')}`,
+      );
+    }
+
     console.log(
-      `[Claude Narrative] tier=${tier} | input=${usage.input_tokens} | cache_write=${usage.cache_creation_input_tokens ?? 0} | cache_read=${usage.cache_read_input_tokens ?? 0} | output=${usage.output_tokens}`,
+      `[Claude Narrative] tier=${tier} | input=${totalUsage.input} | cache_write=${totalUsage.cacheWrite} | cache_read=${totalUsage.cacheRead} | output=${totalUsage.output}`,
     );
 
-    const textBlock = message.content.find((block) => block.type === 'text');
-    if (textBlock && textBlock.type === 'text') {
-      console.log(`[Claude Narrative] tier=${tier} wordCount=${textBlock.text.split(/\s+/).length}`);
-      return textBlock.text;
+    if (finalText) {
+      console.log(`[Claude Narrative] tier=${tier} wordCount=${finalText.split(/\s+/).length}`);
+      return finalText;
     }
     console.warn('[Claude Narrative] No text block in response — using fallback');
     return generateFallbackNarrative(report, data, userName, tier);
