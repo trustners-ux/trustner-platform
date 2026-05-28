@@ -148,7 +148,7 @@ export default function FundUniversePage() {
   const [pageSize] = useState<number>(50);
 
   const [data, setData] = useState<ApiResponse | null>(null);
-  const [categories, setCategories] = useState<Array<{ name: string; count: number }>>([]);
+  const [categories, setCategories] = useState<Array<{ name: string; count: number; broad_bucket: string }>>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -213,15 +213,10 @@ export default function FundUniversePage() {
 
   const filteredCategories = useMemo(() => {
     if (!broad) return categories;
-    const bucketPrefixes: Record<string, string[]> = {
-      Equity: ['Equity', 'ETFs: Equity', 'Equity Index'],
-      Debt: ['Debt', 'ETFs: Debt', 'Debt Index'],
-      Hybrid: ['Hybrid'],
-      Other: ['ETFs: Commodity', 'FoFs', 'Passive ELSS'],
-      Solution: ['Children', 'Retirement'],
-    };
-    const prefixes = bucketPrefixes[broad] || [];
-    return categories.filter((c) => prefixes.some((p) => c.name.startsWith(p)));
+    // Exact match on broad_bucket field returned by the API (which is computed
+    // by the pd_fund_universe_latest view's CASE expression — the canonical
+    // source of truth for bucket membership).
+    return categories.filter((c) => c.broad_bucket === broad);
   }, [categories, broad]);
 
   return (
