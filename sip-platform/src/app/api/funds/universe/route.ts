@@ -42,7 +42,7 @@ const SORTABLE = new Set([
 // Whitelist of columns to return. NGEN/feed proprietary scores omitted.
 const SELECT_COLUMNS = [
   'amfi_code', 'scheme_name', 'amc_name', 'amfi_category', 'amfi_sub_category',
-  'external_category', 'snapshot_date',
+  'external_category', 'broad_bucket', 'snapshot_date',
   'live_nav', 'live_nav_at', 'nav_date',
   'aum_inr_cr', 'riskometer', 'ter', 'launch_date',
   'returns_1m', 'returns_3m', 'returns_6m',
@@ -59,14 +59,8 @@ const SELECT_COLUMNS = [
   'trustner_preferred',
 ].join(',');
 
-// Broad category bucket mapping
-const BROAD_BUCKETS: Record<string, string[]> = {
-  Equity: ['Equity', 'ETFs: Equity', 'Equity Index'],
-  Debt: ['Debt', 'ETFs: Debt', 'Debt Index'],
-  Hybrid: ['Hybrid'],
-  Other: ['ETFs: Commodity', 'FoFs', 'Passive ELSS'],
-  Solution: ['Children', 'Retirement', 'Solution'],
-};
+// Valid broad bucket values (computed by the view's CASE expression)
+const VALID_BUCKETS = new Set(['Equity', 'Debt', 'Hybrid', 'Other', 'Solution']);
 
 export async function GET(req: NextRequest) {
   const supabase = getSupabaseAdmin();
@@ -101,10 +95,8 @@ export async function GET(req: NextRequest) {
   if (category) query = query.eq('external_category', category);
   if (amc) query = query.eq('amc_name', amc);
   if (q) query = query.ilike('scheme_name', `%${q}%`);
-  if (broad && BROAD_BUCKETS[broad]) {
-    // Match by external_category starting with any of the bucket's prefixes
-    const ors = BROAD_BUCKETS[broad].map((p) => `external_category.ilike.${p}*`).join(',');
-    query = query.or(ors);
+  if (broad && VALID_BUCKETS.has(broad)) {
+    query = query.eq('broad_bucket', broad);
   }
 
   query = query

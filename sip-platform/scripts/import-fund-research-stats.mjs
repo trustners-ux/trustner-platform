@@ -354,23 +354,51 @@ function matchFund(ngenFund, index, flatIndex) {
     if (arr && arr.length > 0) return preferRegularGrowth(arr);
   }
 
-  // Stage 3: token-set overlap — find AMFI fund where ALL ngen tokens (len>2)
-  // appear in the AMFI tokens, AND the first token (likely AMC) matches.
+  // Stage 3: token-set overlap with DISCRIMINATIVE-TOKEN guarding.
+  //
+  // SEBI category words ("flexi", "large", "mid", "multi", "small", "focused",
+  // "contra", "value", "elss", "bluechip" etc.) MUST agree between NGEN and
+  // AMFI — otherwise we'd accept "SBI Flexi Cap" ⇄ "SBI Large Cap" via the
+  // weak overlap on "sbi" + "cap" alone.
+  //
+  // Rule: if NGEN contains a category word, AMFI must contain the SAME one.
+  // If NGEN doesn't contain one, AMFI must also lack one (don't pick a more
+  // specific AMFI fund for a generic NGEN name).
+  const CATEGORY_DISCRIMINATORS = [
+    'flexi', 'large', 'mid', 'small', 'multi', 'focused', 'contra',
+    'value', 'elss', 'taxsaver', 'tax', 'bluechip', 'dividend', 'yield',
+    'liquid', 'overnight', 'gilt', 'arbitrage', 'balanced',
+  ];
+
   const ngenTokens = new Set(tokens.filter((t) => t.length > 2));
   if (ngenTokens.size === 0) return null;
   const ngenFirstToken = tokens[0];
+  const ngenDisc = new Set([...ngenTokens].filter((t) => CATEGORY_DISCRIMINATORS.includes(t)));
 
   let best = { row: null, score: -1 };
   for (const f of flatIndex) {
     const fTokens = new Set(f.norm.split(' ').filter((t) => t.length > 2));
-    // Require AMC token (first ngen token) to be present in AMFI tokens
     if (!fTokens.has(ngenFirstToken)) continue;
-    // Score = number of ngen tokens that appear in AMFI tokens
+
+    // Discriminative-token guard
+    const fDisc = new Set([...fTokens].filter((t) => CATEGORY_DISCRIMINATORS.includes(t)));
+    // If NGEN has discriminators, AMFI must have the SAME discriminators
+    // (no extras, no missing). "flexi" ngen against "large" amfi → reject.
+    if (ngenDisc.size > 0) {
+      if (fDisc.size !== ngenDisc.size) continue;
+      let allMatch = true;
+      for (const d of ngenDisc) if (!fDisc.has(d)) { allMatch = false; break; }
+      if (!allMatch) continue;
+    } else {
+      // NGEN has no category discriminator — don't accept a more specific AMFI
+      // (avoids "SBI Equity Fund" ngen → "SBI Large Cap" amfi pickup)
+      if (fDisc.size > 0) continue;
+    }
+
+    // Overlap score
     let score = 0;
     for (const t of ngenTokens) if (fTokens.has(t)) score++;
-    // Require >= 60% of ngen tokens to overlap
     if (score / ngenTokens.size < 0.6) continue;
-    // Penalise excess AMFI tokens (we want closest length match)
     const excess = Math.max(0, fTokens.size - ngenTokens.size);
     const adjScore = score - excess * 0.25;
     if (adjScore > best.score) {
@@ -378,7 +406,6 @@ function matchFund(ngenFund, index, flatIndex) {
     }
   }
   if (best.row) return best.row;
-
   return null;
 }
 
@@ -512,8 +539,22 @@ async function main() {
     feed_return_score: toNum(f.feed_return_score),
   }));
 
-  for (let i = 0; i < rows.length; i += BATCH) {
-    const slice = rows.slice(i, i + BATCH);
+  // Dedupe (amfi_code, snapshot_date) — fuzzy match can collide multiple
+  // NGEN scheme variants (Regular/Direct/IDCW) onto the same amfi_code.
+  // Keep the row with the highest AUM (or first non-null).
+  const dedupedMap = new Map();
+  for (const row of rows) {
+    const key = `${row.amfi_code}|${row.snapshot_date}`;
+    const existing = dedupedMap.get(key);
+    if (!existing || (row.aum_inr_cr ?? 0) > (existing.aum_inr_cr ?? 0)) {
+      dedupedMap.set(key, row);
+    }
+  }
+  const dedupedRows = [...dedupedMap.values()];
+  console.log(`Deduped: ${rows.length} → ${dedupedRows.length} unique (amfi_code, snapshot_date) rows`);
+
+  for (let i = 0; i < dedupedRows.length; i += BATCH) {
+    const slice = dedupedRows.slice(i, i + BATCH);
     const { error } = await supabase
       .from('pd_fund_research_stats')
       .upsert(slice, { onConflict: 'amfi_code,snapshot_date' });
@@ -521,7 +562,7 @@ async function main() {
       console.error(`Batch ${i}-${i + slice.length}: ${error.message}`);
       process.exit(3);
     }
-    console.log(`Upserted ${Math.min(i + BATCH, rows.length)} / ${rows.length}`);
+    console.log(`Upserted ${Math.min(i + BATCH, dedupedRows.length)} / ${dedupedRows.length}`);
   }
 
   // ─── Log unmatched ──────────────────────────────────────────
