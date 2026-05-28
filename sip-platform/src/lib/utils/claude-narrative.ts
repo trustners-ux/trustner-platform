@@ -3,6 +3,88 @@ import type { FinancialHealthReport, FinancialPlanningData } from '@/types/finan
 import type { PlanTier } from '@/types/financial-planning-v2';
 import { formatINR } from '@/lib/utils/formatters';
 import { TIER_NARRATIVE_CONFIG } from '@/lib/constants/tier-config';
+import { getSupabaseAdmin } from '@/lib/db/supabase';
+
+// ──────────────────────────────────────────────────────────────────────────
+// TRUSTNER PREFERRED FUNDS CONTEXT (per-category curated picks)
+//
+// Pulled from pd_preferred_funds_by_category in production Supabase. We
+// fetch this once per server process and memoize for 5 minutes so the
+// narrative endpoint isn't pounding the DB on every request. The narrative
+// uses category-name signals (e.g. "the Trustner research desk's current
+// pick in this category is led by Bandhan Small Cap") — never specific
+// AMC promotion, always framed as "for review with your Trustner team".
+// ──────────────────────────────────────────────────────────────────────────
+
+interface PreferredFundCacheEntry {
+  fetchedAt: number;
+  blockText: string;
+}
+let preferredFundsCache: PreferredFundCacheEntry | null = null;
+const PREFERRED_FUNDS_CACHE_TTL_MS = 5 * 60 * 1000;
+
+async function getPreferredFundsContext(): Promise<string> {
+  const now = Date.now();
+  if (preferredFundsCache && now - preferredFundsCache.fetchedAt < PREFERRED_FUNDS_CACHE_TTL_MS) {
+    return preferredFundsCache.blockText;
+  }
+  try {
+    const supabase = getSupabaseAdmin();
+    if (!supabase) return '';
+
+    // Pull preferred picks (primary + secondary AMFI codes) + the
+    // matching scheme names from pd_fund_master so the narrative can
+    // reference category leaders by name (NOT recommend a switch).
+    const { data: prefs } = await supabase
+      .from('pd_preferred_funds_by_category')
+      .select('category, primary_amfi_code, secondary_amfi_code')
+      .not('primary_amfi_code', 'is', null);
+
+    if (!prefs || prefs.length === 0) {
+      preferredFundsCache = { fetchedAt: now, blockText: '' };
+      return '';
+    }
+
+    // Resolve scheme names via pd_fund_master in a single query
+    const allCodes = new Set<string>();
+    for (const p of prefs) {
+      if (p.primary_amfi_code) allCodes.add(p.primary_amfi_code as string);
+      if (p.secondary_amfi_code) allCodes.add(p.secondary_amfi_code as string);
+    }
+    const { data: funds } = await supabase
+      .from('pd_fund_master')
+      .select('amfi_code, scheme_name')
+      .in('amfi_code', Array.from(allCodes));
+
+    const nameByCode = new Map<string, string>();
+    for (const f of funds ?? []) {
+      nameByCode.set(f.amfi_code as string, (f.scheme_name as string) || '');
+    }
+
+    const lines = [
+      'TRUSTNER RESEARCH DESK — CURRENT CATEGORY LEADERS (for context, do not advertise specific schemes):',
+      'When a goal calls for an asset category, you MAY reference the leader by name as the research desk\'s current pick (e.g. "the desk\'s current Flexi Cap pick is led by Parag Parikh Flexi Cap (Regular)"). Always frame as "for review with your Trustner Relationship Manager", never as a personal recommendation.',
+    ];
+    for (const p of prefs) {
+      const primaryName = nameByCode.get(p.primary_amfi_code as string) || '';
+      const secondaryName = p.secondary_amfi_code ? nameByCode.get(p.secondary_amfi_code as string) || '' : '';
+      const cleanPrimary = primaryName.replace(/\s*-\s*(REGULAR|Regular)\s*(PLAN\s*-?)?\s*(GROWTH|Growth)?.*$/i, '').trim();
+      const cleanSecondary = secondaryName.replace(/\s*-\s*(REGULAR|Regular)\s*(PLAN\s*-?)?\s*(GROWTH|Growth)?.*$/i, '').trim();
+      if (cleanSecondary) {
+        lines.push(`  - ${p.category}: ${cleanPrimary} (primary) / ${cleanSecondary} (secondary)`);
+      } else if (cleanPrimary) {
+        lines.push(`  - ${p.category}: ${cleanPrimary}`);
+      }
+    }
+
+    const blockText = lines.join('\n');
+    preferredFundsCache = { fetchedAt: now, blockText };
+    return blockText;
+  } catch (e) {
+    console.warn('[Claude Narrative] Failed to fetch preferred funds context (continuing without):', (e as Error).message);
+    return '';
+  }
+}
 
 // ──────────────────────────────────────────────────────────────────────────
 // FINANCE ACT 2024 — the only tax rates allowed anywhere in this engine.
@@ -243,10 +325,15 @@ function buildFamilyNarrativeBlock(data: FinancialPlanningData): string {
 // SYSTEM PROMPT
 // ──────────────────────────────────────────────────────────────────────────
 
-function buildSystemPrompt(tier: PlanTier): string {
-  const config = TIER_NARRATIVE_CONFIG[tier];
+// ──────────────────────────────────────────────────────────────────────────
+// STATIC SYSTEM-PROMPT BLOCK (cached via Anthropic prompt caching, ephemeral
+// 5-min TTL). Identical across every call regardless of tier — so the API
+// reads it from cache at ~0.1× input cost on repeated invocations. Any byte
+// change here invalidates the cache, so keep this block FROZEN and put
+// per-tier / per-call variation in the tier-specific block below.
+// ──────────────────────────────────────────────────────────────────────────
 
-  const baseRules = `You are a senior wealth strategist at Trustner Asset Services writing a personalised financial wellness assessment for an Indian investor. Use Indian financial context (Rs., lakh, crore). Address the investor by their first name.
+const STATIC_RULES_BLOCK = `You are a senior wealth strategist at Trustner Asset Services writing a personalised financial wellness assessment for an Indian investor. Use Indian financial context (Rs., lakh, crore). Address the investor by their first name.
 
 ${MFD_DISCLAIMER}
 
@@ -264,18 +351,44 @@ CORE RULES:
 - Quote specific numbers from the data (scores, gaps, percentages) — do not generalise.
 - End with a call-to-action to review the document with the Trustner team (call 6003903737 or visit merasip.com). Frame as "review with the Trustner team" or "schedule a conversation with your Trustner Relationship Manager", NEVER "review with your advisor" or "follow this advice".`;
 
-  if (tier === 'basic') {
-    return `${baseRules}
+/**
+ * Returns a 2-element content-block array for the Anthropic SDK's `system`
+ * field: [STATIC_RULES_BLOCK (cached), tier-specific structure (uncached)].
+ *
+ * Top-level layout reads like the original concatenated string when rendered,
+ * but the API caches the first block across calls and only re-tokenises the
+ * second. Saves ~70% on input tokens at typical traffic.
+ */
+type SystemBlock =
+  | { type: 'text'; text: string; cache_control?: { type: 'ephemeral' } }
+  | { type: 'text'; text: string };
 
-TONE: ${config.tone}
+function buildSystemPrompt(tier: PlanTier): SystemBlock[] {
+  const config = TIER_NARRATIVE_CONFIG[tier];
+  const staticBlock: SystemBlock = {
+    type: 'text',
+    text: STATIC_RULES_BLOCK,
+    cache_control: { type: 'ephemeral' },
+  };
+
+  if (tier === 'basic') {
+    return [
+      staticBlock,
+      {
+        type: 'text',
+        text: `TONE: ${config.tone}
 WORD LIMIT: ${config.minWords}-${config.maxWords} words — brief and encouraging.
-STRUCTURE: 2-3 short paragraphs (no headers/bullets). Score interpretation + top 3 considerations for review.`;
+STRUCTURE: 2-3 short paragraphs (no headers/bullets). Score interpretation + top 3 considerations for review.`,
+      },
+    ];
   }
 
   if (tier === 'comprehensive') {
-    return `${baseRules}
-
-TONE: ${config.tone}
+    return [
+      staticBlock,
+      {
+        type: 'text',
+        text: `TONE: ${config.tone}
 WORD LIMIT: ${config.minWords}-${config.maxWords} words — expert depth, but every paragraph must EARN its place.
 STRUCTURE — use these markdown headers in order:
 
@@ -300,14 +413,21 @@ Cover insurance gaps, income-tax regime suggestion (with the calculation logic),
 ## Carry Into Your Next Conversation
 Generate exactly FOUR specific questions the client should bring to their next conversation with the Trustner team, calibrated to the gaps in the data. Format as a numbered list. Each question must be answerable in a 15-minute conversation.
 
-CRITICAL: Use the LIFE_STAGE_CONTEXT, FAMILY NARRATIVE, BEHAVIOURAL FLAGS, and GOAL-TAX CONTEXT blocks in the user prompt as primary inputs. The narrative should feel like it was written for THIS family, with THESE constraints, at THIS life stage — not a template.`;
+CRITICAL: Use the LIFE_STAGE_CONTEXT, FAMILY NARRATIVE, BEHAVIOURAL FLAGS, and GOAL-TAX CONTEXT blocks in the user prompt as primary inputs. The narrative should feel like it was written for THIS family, with THESE constraints, at THIS life stage — not a template.`,
+      },
+    ];
   }
 
-  return `${baseRules}
-
-TONE: ${config.tone}
+  // Standard tier (default)
+  return [
+    staticBlock,
+    {
+      type: 'text',
+      text: `TONE: ${config.tone}
 WORD LIMIT: ${config.minWords}-${config.maxWords} words.
-STRUCTURE: 3-4 short paragraphs (no headers/bullets). Cover each pillar briefly, goal feasibility, and 5 key considerations for review.`;
+STRUCTURE: 3-4 short paragraphs (no headers/bullets). Cover each pillar briefly, goal feasibility, and 5 key considerations for review.`,
+    },
+  ];
 }
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -535,12 +655,32 @@ export async function generateClaudeNarrative(
 
   try {
     const client = new Anthropic({ apiKey });
+
+    // Fetch live preferred-funds context (memoized 5 min). When non-empty,
+    // we append it to the user-prompt body so Claude can reference category
+    // leaders by name in the Goal-by-Goal section.
+    const preferredFundsBlock = await getPreferredFundsContext();
+    const userPrompt = preferredFundsBlock
+      ? `${buildUserPrompt(report, data, userName, tier)}\n\n${preferredFundsBlock}`
+      : buildUserPrompt(report, data, userName, tier);
+
     const message = await client.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: maxTokensByTier[tier],
+      // System is an array of content blocks: STATIC_RULES_BLOCK is marked
+      // cache_control: ephemeral (90% cheaper on cache reads, 5-min TTL),
+      // tier-specific structure is the second block and stays uncached.
       system: buildSystemPrompt(tier),
-      messages: [{ role: 'user', content: buildUserPrompt(report, data, userName, tier) }],
+      messages: [{ role: 'user', content: userPrompt }],
     });
+
+    const usage = message.usage as typeof message.usage & {
+      cache_creation_input_tokens?: number;
+      cache_read_input_tokens?: number;
+    };
+    console.log(
+      `[Claude Narrative] tier=${tier} | input=${usage.input_tokens} | cache_write=${usage.cache_creation_input_tokens ?? 0} | cache_read=${usage.cache_read_input_tokens ?? 0} | output=${usage.output_tokens}`,
+    );
 
     const textBlock = message.content.find((block) => block.type === 'text');
     if (textBlock && textBlock.type === 'text') {
@@ -661,12 +801,36 @@ export async function buildExecutiveSummary(
 
   try {
     const client = new Anthropic({ apiKey });
+
+    // Append live preferred-funds context so per-goal recommendations can
+    // reference the research desk's current category leader by name.
+    const preferredFundsBlock = await getPreferredFundsContext();
+    const userPrompt = preferredFundsBlock
+      ? `${buildExecSummaryUserPrompt(report, data, userName)}\n\n${preferredFundsBlock}`
+      : buildExecSummaryUserPrompt(report, data, userName);
+
     const message = await client.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1500,
-      system: EXEC_SUMMARY_SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: buildExecSummaryUserPrompt(report, data, userName) }],
+      // Cache the entire EXEC_SUMMARY_SYSTEM_PROMPT (all of it is stable
+      // across calls — schema + MFD/tax/language rules).
+      system: [
+        {
+          type: 'text',
+          text: EXEC_SUMMARY_SYSTEM_PROMPT,
+          cache_control: { type: 'ephemeral' },
+        },
+      ],
+      messages: [{ role: 'user', content: userPrompt }],
     });
+
+    const usage = message.usage as typeof message.usage & {
+      cache_creation_input_tokens?: number;
+      cache_read_input_tokens?: number;
+    };
+    console.log(
+      `[Exec Summary] input=${usage.input_tokens} | cache_write=${usage.cache_creation_input_tokens ?? 0} | cache_read=${usage.cache_read_input_tokens ?? 0} | output=${usage.output_tokens}`,
+    );
 
     const textBlock = message.content.find((block) => block.type === 'text');
     if (!textBlock || textBlock.type !== 'text') return undefined;

@@ -109,6 +109,17 @@ export interface FinancialGoal {
    * category inflation (education 10%, marriage 8%, housing 7%, general 6%).
    */
   customInflationRate?: number;
+  /**
+   * NEW (May 2026): Per-goal horizon override. The global RiskProfile.investmentHorizon
+   * is a single bucket for the whole investor; in reality goals have very
+   * different horizons (5y house down-payment vs 25y retirement). When set,
+   * this overrides the global horizon for SIP allocation + de-risking glide
+   * path on THIS goal only. Express in whole years.
+   *
+   * Optional. When omitted, the scoring engine falls back to inferring the
+   * horizon from `targetYear` minus current year.
+   */
+  horizonOverrideYears?: number;
 }
 
 export interface RiskProfile {
@@ -116,6 +127,22 @@ export interface RiskProfile {
   investmentHorizon: 'less-than-3' | '3-to-5' | '5-to-10' | '10-plus';
   primaryObjective: 'capital-protection' | 'balanced-growth' | 'aggressive-growth';
   pastExperience: 'none' | 'limited' | 'moderate' | 'extensive';
+  /**
+   * NEW (May 2026): Risk CAPACITY (not tolerance). The other fields measure
+   * stated tolerance; this probes how the client would actually react if a
+   * real drawdown hit. The two often diverge — clients who say "aggressive
+   * growth" can still panic-sell at -40%. Use this to calibrate equity
+   * allocation more honestly than stated tolerance alone.
+   *
+   * Options:
+   *   minimal-drop  — anything worse than -10% causes me sleep loss
+   *   moderate-drop — I can stomach -20% to -25% without selling
+   *   severe-drop   — -40% would be tough but I'd hold
+   *   no-limit      — I'd see -50%+ as a buying opportunity
+   *
+   * Optional for backwards compat. New submissions are expected to populate.
+   */
+  drawdownTolerance?: 'minimal-drop' | 'moderate-drop' | 'severe-drop' | 'no-limit';
   riskScore: number;
   riskCategory: 'conservative' | 'moderate' | 'aggressive';
 }

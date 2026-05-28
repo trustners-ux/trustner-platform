@@ -99,6 +99,16 @@ const PAST_EXPERIENCE_OPTIONS = [
   { value: 'extensive', label: 'Extensive', description: '5+ years' },
 ];
 
+// Risk CAPACITY — drawdown tolerance (different from stated risk preference).
+// This calibrates equity allocation against how the client would actually
+// react to a real loss, not just how aggressive they say they are.
+const DRAWDOWN_TOLERANCE_OPTIONS = [
+  { value: 'minimal-drop', label: 'Up to -10%', description: 'Anything worse and I lose sleep' },
+  { value: 'moderate-drop', label: '-20% to -25%', description: 'I can stomach this without selling' },
+  { value: 'severe-drop', label: 'Around -40%', description: 'Tough but I would hold' },
+  { value: 'no-limit', label: '-50% or more', description: 'I would see it as a buying opportunity' },
+];
+
 /** Map Q1 score -> marketDropReaction value */
 const Q1_SCORE_TO_VALUE: Record<number, RiskProfile['marketDropReaction']> = {
   1: 'sell-immediately',
@@ -448,6 +458,25 @@ export default function RiskBehaviorStep({
               options={PAST_EXPERIENCE_OPTIONS}
               columns={4}
             />
+          </div>
+
+          {/* Drawdown Tolerance — risk CAPACITY (not just stated preference) */}
+          <div className="border border-surface-300 rounded-xl p-5 bg-white">
+            <RadioCards
+              label="5. Imagine your Rs 10 lakh equity portfolio drops next year. What's the maximum loss you could ride out without selling?"
+              value={riskData.drawdownTolerance || ''}
+              onChange={(val) =>
+                onUpdateRisk({
+                  drawdownTolerance: val as RiskProfile['drawdownTolerance'],
+                })
+              }
+              options={DRAWDOWN_TOLERANCE_OPTIONS}
+              columns={2}
+            />
+            <p className="mt-3 text-[11px] text-slate-500 leading-relaxed">
+              This is different from Q3 — that asked about your investment objective, this asks how you&apos;d actually react to a real loss.
+              The two often diverge; both matter for picking the right equity allocation.
+            </p>
           </div>
         </div>
       </section>
