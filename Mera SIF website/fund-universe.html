@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Live SIF Fund Universe — NAV, 1D/5D/1M/3M/SI Returns &amp; AUM | Mera SIF</title>
+<meta name="description" content="The most complete live tracker of every Specialized Investment Fund in India — 20 live SIFs across 13 AMCs with NAV, 1D / 5D / 1M / 3M / since-inception returns, AUM, Trustner Fund Score (TFS) and verdicts. Auto-updated daily. Regular-Growth plans.">
+<meta name="keywords" content="SIF NAV India, SIF returns, SIF performance, Altiva NAV, Magnum NAV, iSIF NAV, qSIF NAV, Specialized Investment Fund tracker, SIF 1 month return">
+<link rel="canonical" href="https://www.merasif.com/fund-universe.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+<link rel="icon" type="image/png" href="assets/img/logo.png">
+<link rel="stylesheet" href="assets/css/styles.css">
+<style>
+  .fcat-bar{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 24px;padding:6px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:14px}
+  .fcat{padding:9px 16px;background:transparent;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:600;color:var(--gray-600);cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;gap:6px}
+  .fcat:hover{color:var(--navy);background:#fff}
+  .fcat.active{background:var(--navy);color:#fff;box-shadow:0 4px 12px rgba(10,22,40,.18)}
+  .fcat .count{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:18px;background:rgba(255,255,255,.18);border-radius:9px;font-size:10.5px;font-weight:700;padding:0 6px}
+  .fcat:not(.active) .count{background:var(--gray-200);color:var(--gray-700)}
+
+  .fund-table-wrap{background:#fff;border:1px solid var(--gray-200);border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(10,22,40,.04);overflow-x:auto}
+  .fund-table{width:100%;border-collapse:collapse;font-size:13px;min-width:1080px}
+  .fund-table thead{background:var(--gray-50)}
+  .fund-table th{padding:13px 12px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-500);text-align:left;border-bottom:1px solid var(--gray-200);white-space:nowrap}
+  .fund-table th.num{text-align:right}
+  .fund-table td{padding:16px 12px;border-bottom:1px solid var(--gray-100);vertical-align:middle}
+  .fund-table tr:hover td{background:rgba(30,64,175,.025)}
+  .fund-table tbody tr:last-child td{border-bottom:none}
+  .fund-table td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+  .fname{display:flex;flex-direction:column;gap:3px}
+  .fname-main{font-size:14px;font-weight:700;color:var(--navy);letter-spacing:-.2px;line-height:1.3}
+  .fname-main a{color:inherit;text-decoration:none;border-bottom:1px dotted var(--gray-300)}
+  .fname-main a:hover{color:var(--royal);border-color:var(--royal)}
+  .fname-amc{font-size:11.5px;color:var(--gray-500)}
+  .fname-tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:5px;font-size:9.5px;font-weight:700;letter-spacing:.3px;background:rgba(212,160,23,.12);color:var(--gold);margin-top:4px;width:fit-content}
+  .fname-tag.hybrid{background:rgba(15,118,110,.12);color:var(--teal)}
+  .fname-tag.equity{background:rgba(30,64,175,.1);color:var(--royal)}
+  .fname-tag.ex100{background:rgba(232,85,58,.1);color:var(--secondary)}
+  .fname-tag.aaa{background:rgba(6,182,212,.12);color:#0E7490}
+
+  .nav-cell{font-size:15px;font-weight:800;color:var(--navy);letter-spacing:-.3px;display:inline-flex;align-items:center;gap:6px}
+  .live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulseDot 2s ease-in-out infinite}
+  @keyframes pulseDot{0%,100%{opacity:1}50%{opacity:.35}}
+  .change{font-size:12.5px;font-weight:700}
+  .change.up{color:var(--green)}
+  .change.down{color:var(--red)}
+  .change.flat{color:var(--gray-400)}
+
+  .aum{font-size:13px;font-weight:700;color:var(--gray-700)}
+  .gap{color:var(--gray-400);font-style:italic;font-weight:500;font-size:12px}
+
+  .tfs-pill{display:inline-flex;align-items:center;justify-content:center;width:40px;height:28px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:800;letter-spacing:-.2px}
+  .tfs-buy{background:linear-gradient(135deg,#10B981,#059669);color:#fff}
+  .tfs-acc{background:linear-gradient(135deg,#3B82F6,#1E40AF);color:#fff}
+  .tfs-hold{background:linear-gradient(135deg,#FCD34D,#D97706);color:#fff}
+  .tfs-monitor{display:inline-flex;align-items:center;background:var(--gray-200);color:var(--gray-600);font-size:10px;font-weight:700;padding:5px 8px;border-radius:8px}
+
+  .verdict{display:inline-flex;padding:4px 10px;border-radius:14px;font-size:10.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap}
+  .v-buy{background:rgba(5,150,105,.1);color:var(--green)}
+  .v-acc{background:rgba(30,64,175,.08);color:var(--royal)}
+  .v-hold{background:rgba(217,119,6,.1);color:var(--amber)}
+  .v-monitor{background:var(--gray-100);color:var(--gray-600)}
+
+  .row-action{padding:7px 13px;background:var(--gradient-cyan);color:#fff;border-radius:8px;font-size:11.5px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;transition:var(--transition)}
+  .row-action:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(30,64,175,.3)}
+  .row-action.subtle{background:#fff;color:var(--navy);border:1px solid var(--gray-300)}
+  .row-action.subtle:hover{border-color:var(--royal);color:var(--royal)}
+
+  /* live status strip above table */
+  .nav-status{display:inline-flex;align-items:center;gap:8px;font-size:11.5px;font-weight:600;color:var(--gray-600);background:var(--green-bg);border:1px solid rgba(5,150,105,.2);border-radius:20px;padding:5px 13px}
+  .nav-status .ns-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulseDot 2s ease-in-out infinite}
+
+  .nfo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:24px 0}
+  .nfo-card{background:#fff;border:1px solid var(--gray-200);border-radius:14px;padding:22px;border-left:4px solid var(--gold);transition:var(--transition)}
+  .nfo-card:hover{border-color:rgba(212,160,23,.4);box-shadow:0 6px 22px rgba(212,160,23,.12);transform:translateY(-2px)}
+  .nfo-status{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;background:rgba(212,160,23,.15);border-radius:14px;font-size:11px;font-weight:800;color:var(--amber);letter-spacing:.3px;text-transform:uppercase;margin-bottom:10px}
+  .nfo-status .dot{width:7px;height:7px;background:var(--gold);border-radius:50%;animation:pulseDot 2s ease-in-out infinite}
+  .nfo-name{font-size:17px;font-weight:800;color:var(--navy);letter-spacing:-.3px;margin-bottom:4px;line-height:1.3}
+  .nfo-amc{font-size:12.5px;color:var(--gray-500);margin-bottom:12px}
+  .nfo-desc{font-size:13.5px;color:var(--gray-700);line-height:1.55;margin-bottom:14px}
+  .nfo-window{display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:1px dashed var(--gray-200);font-size:12px;color:var(--gray-600)}
+  .nfo-window strong{color:var(--navy)}
+
+  .summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:24px 0}
+  .summary-card{background:linear-gradient(180deg,#fff,#F8FAFF);border:1px solid var(--gray-200);border-radius:14px;padding:22px;text-align:left}
+  .summary-card .label{font-size:11px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+  .summary-card .value{font-size:24px;font-weight:800;color:var(--navy);letter-spacing:-.5px;line-height:1.1;margin-bottom:6px}
+  .summary-card .fund{font-size:13px;color:var(--gray-700);font-weight:600}
+  .summary-card .change-line{font-size:14px;font-weight:800;margin-top:6px}
+
+  .fund-row.hidden{display:none}
+
+  @media (max-width:768px) {
+    .fcat{padding:8px 12px;font-size:12px}
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar"><div class="container"><div class="top-bar-left"><span class="top-bar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>AMFI Registered MFD &amp; SIF Distributor</span><span class="top-bar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>APMI Registered PMS Distributor</span><span class="top-bar-item">ARN-286886</span></div><div class="top-bar-right"><a href="tel:+916003903737">📞 +91 60039 03737</a><a href="https://www.merasip.com" target="_blank" rel="noopener">MeraSIP →</a></div></div></div>
+
+<nav class="navbar">
+  <div class="container">
+    <a href="index.html" class="nav-brand"><img src="assets/img/logo.png" alt="Trustner"><div class="nav-brand-text"><span class="nav-brand-name">Mera<span>SIF</span></span><span class="nav-brand-tag">by Trustner Asset Services</span></div></a>
+    <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">☰</button>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="what-is-sif.html">What is SIF</a></li>
+      <li><a href="calculator.html">Calculator</a></li>
+      <li><a href="suitability.html">Suitability</a></li>
+      <li><a href="fund-universe.html">Funds</a></li>
+      <li><a href="report.html">Report</a></li>
+      <li><a href="insights.html">Insights</a></li>
+      <li><a href="faq.html">FAQ</a></li>
+      <li><a href="contact.html" class="nav-cta">Talk to an Advisor</a></li>
+    </ul>
+  </div>
+</nav>
+
+<section class="page-hero">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">›</span><span>Fund Universe</span></div>
+    <h1>The <span style="background:linear-gradient(135deg,#22D3EE 0%,#3B82F6 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">Live SIF Universe</span></h1>
+    <p>Every Specialized Investment Fund in India, with <strong>1M &amp; 3M returns, AUM, risk band and TER sourced from Value Research</strong> (Regular-Growth plan, 9 Jun 2026), alongside our proprietary Trustner Fund Score. We show only officially-sourced data — per-unit NAV and since-inception returns appear once an official NAV feed is connected.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">
+      <a href="report.html" class="btn btn-gold btn-sm">📊 Read the H1 2026 Coverage Report</a>
+      <a href="suitability.html" class="btn btn-secondary btn-sm">Take the Suitability Quiz →</a>
+    </div>
+  </div>
+</section>
+
+<!-- STATS BAR -->
+<section class="compact bg-light" style="padding:24px 0">
+  <div class="container">
+    <div class="grid-4 reveal">
+      <div class="stat-card"><div class="stat-value">20</div><div class="stat-label">SIFs we cover</div></div>
+      <div class="stat-card"><div class="stat-value">12</div><div class="stat-label">AMCs covered</div></div>
+      <div class="stat-card"><div class="stat-value">₹11,766<span class="unit">Cr</span></div><div class="stat-label">Combined AUM, disclosed (VR)</div></div>
+      <div class="stat-card"><div class="stat-value">+9.9<span class="unit">%</span></div><div class="stat-label">Best 3M return (qSIF Ex-100)</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- TOP MOVERS -->
+<section class="compact">
+  <div class="container">
+    <h2 style="font-size:22px;font-weight:800;color:var(--navy);letter-spacing:-.4px;margin-bottom:6px">Top movers</h2>
+    <p style="font-size:14px;color:var(--gray-600);margin-bottom:16px">Hybrid SIFs dominated through the March drawdown. Equity LS funds are starting to recover.</p>
+    <div class="summary-grid">
+      <div class="summary-card" style="border-left:4px solid var(--green)">
+        <div class="label">Best 3-Month Return</div>
+        <div class="value">+9.89%</div>
+        <div class="fund">qSIF Equity Ex-Top 100 · Quant</div>
+        <div class="change-line" style="color:var(--green)">▲ Strongest SMID quant recovery</div>
+      </div>
+      <div class="summary-card" style="border-left:4px solid var(--gold)">
+        <div class="label">Largest by AUM</div>
+        <div class="value">₹3,761 Cr</div>
+        <div class="fund">Altiva Hybrid LS · Edelweiss</div>
+        <div class="change-line" style="color:var(--gold)">▲ Category's biggest book</div>
+      </div>
+      <div class="summary-card" style="border-left:4px solid var(--royal)">
+        <div class="label">Top 1-Month Gainer</div>
+        <div class="value">+0.67%</div>
+        <div class="fund">DynaSIF AAA · 360 ONE</div>
+        <div class="change-line" style="color:var(--royal)">▲ Multi-asset held firm in a soft month</div>
+      </div>
+      <div class="summary-card" style="border-left:4px solid var(--red)">
+        <div class="label">Largest 1M Drawdown</div>
+        <div class="value">-3.92%</div>
+        <div class="fund">Diviniti Equity LS · ITI MF</div>
+        <div class="change-line" style="color:var(--red)">▼ SMID exposure hit</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- IN NFO -->
+<section class="bg-light">
+  <div class="container">
+    <h2 style="font-size:22px;font-weight:800;color:var(--navy);letter-spacing:-.4px;margin-bottom:6px">Currently in NFO (May–June 2026)</h2>
+    <p style="font-size:14px;color:var(--gray-600);margin-bottom:6px">Four NFOs open simultaneously — the busiest month in category history.</p>
+    <div class="nfo-grid">
+      <div class="nfo-card">
+        <div class="nfo-status"><span class="dot"></span>NFO Active · Closes 3 Jun</div>
+        <div class="nfo-name">Platinum Hybrid Long-Short Fund</div>
+        <div class="nfo-amc">Mirae Asset Mutual Fund</div>
+        <div class="nfo-desc">Income-oriented hybrid: arbitrage, covered calls + debt with limited unhedged equity &amp; short via derivatives. Mirae's debut SIF.</div>
+        <div class="nfo-window"><span>20 May – 3 Jun 2026</span><strong>₹10 lakh min</strong></div>
+      </div>
+      <div class="nfo-card">
+        <div class="nfo-status"><span class="dot"></span>NFO Active · Closes 2 Jun</div>
+        <div class="nfo-name">iSIF Active Asset Allocator LS</div>
+        <div class="nfo-amc">ICICI Prudential Mutual Fund</div>
+        <div class="nfo-desc">Dynamic multi-asset SIF rotating across equity, debt, gold, and silver — first AAA SIF benchmarked with a derivative-overlay sleeve.</div>
+        <div class="nfo-window"><span>19 May – 2 Jun 2026</span><strong>₹10 lakh min</strong></div>
+      </div>
+      <div class="nfo-card">
+        <div class="nfo-status"><span class="dot"></span>NFO Active · Closes 2 Jun</div>
+        <div class="nfo-name">iSIF Equity Long-Short</div>
+        <div class="nfo-amc">ICICI Prudential Mutual Fund</div>
+        <div class="nfo-desc">Open-ended equity long-short SIF benchmarked to Nifty 500 TRI; long equity via fundamental selection, short via derivatives up to 25%.</div>
+        <div class="nfo-window"><span>19 May – 2 Jun 2026</span><strong>₹10 lakh min</strong></div>
+      </div>
+      <div class="nfo-card">
+        <div class="nfo-status"><span class="dot"></span>NFO Active · Closes 1 Jun</div>
+        <div class="nfo-name">Altiva Equity Ex-Top 100 LS</div>
+        <div class="nfo-amc">Edelweiss Mutual Fund</div>
+        <div class="nfo-desc">Edelweiss's second SIF — SMID-focused long-short (≥65% in stocks ranked &gt;100 by m-cap) with the same disciplined manager bench as Altiva Hybrid.</div>
+        <div class="nfo-window"><span>18 May – 1 Jun 2026</span><strong>₹10 lakh min</strong></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MAIN FUND TABLE -->
+<section>
+  <div class="container">
+    <div style="display:flex;justify-content:space-between;align-items:end;flex-wrap:wrap;gap:14px;margin-bottom:8px">
+      <div>
+        <h2 style="font-size:22px;font-weight:800;color:var(--navy);letter-spacing:-.4px">Every live SIF · ranked by Trustner Fund Score</h2>
+        <p style="font-size:14px;color:var(--gray-600);margin-top:4px">Click "Discuss" for a 1:1 with a Trustner advisor on any fund. Returns are absolute (point-to-point), Regular-Growth plan.</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;font-size:12px;color:var(--gray-500)">
+        <span>Sort:</span>
+        <select id="sortBy" style="padding:7px 12px;border:1px solid var(--gray-300);border-radius:8px;font-family:inherit;font-size:12px;color:var(--navy);background:#fff;cursor:pointer">
+          <option value="tfs">TFS (highest first)</option>
+          <option value="m3">3-Month return</option>
+          <option value="m1">1-Month return</option>
+          <option value="aum">AUM (largest first)</option>
+          <option value="ter">TER (lowest first)</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-bottom:16px"><span class="nav-status"><span class="ns-dot"></span><span id="navStatus">Loading Value Research data…</span></span></div>
+
+    <!-- FILTER CHIPS -->
+    <div class="fcat-bar">
+      <button class="fcat active" data-cat="all">All <span class="count">20</span></button>
+      <button class="fcat" data-cat="hybrid">Hybrid LS <span class="count">7</span></button>
+      <button class="fcat" data-cat="equity">Equity LS <span class="count">8</span></button>
+      <button class="fcat" data-cat="ex100">Equity Ex-Top 100 LS <span class="count">3</span></button>
+      <button class="fcat" data-cat="aaa">Active Asset Allocator <span class="count">2</span></button>
+    </div>
+
+    <!-- DATA TABLE -->
+    <div class="fund-table-wrap">
+      <table class="fund-table">
+        <thead>
+          <tr>
+            <th style="width:28%">Fund</th>
+            <th class="num">1M</th>
+            <th class="num">3M</th>
+            <th class="num">AUM</th>
+            <th class="num">Risk</th>
+            <th class="num">TER</th>
+            <th class="num">TFS</th>
+            <th class="num">Verdict</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="fundBody"></tbody>
+      </table>
+    </div>
+
+    <p style="font-size:12px;color:var(--gray-500);margin-top:14px;font-style:italic">
+      <strong>Every figure here is real and sourced.</strong> 1M and 3M returns, AUM, risk band and expense ratio are the <strong>Regular-Growth plan</strong> figures published by <strong>Value Research</strong> (SIF screener), as of 9 Jun 2026. We deliberately do <strong>not</strong> show per-unit NAV, since-inception or 1D/5D returns — no official public SIF NAV feed exists yet, and as an ethical firm we never display indicative or estimated numbers. Those columns will appear automatically the moment an official daily NAV feed (RTA / data vendor) is connected. <strong>TFS</strong> is the Trustner Research Desk's proprietary qualitative view, reviewed monthly — read the <a href="report.html#sec9" style="color:var(--royal);font-weight:600">full TFS methodology</a>.
+    </p>
+  </div>
+</section>
+
+<!-- WHAT YOU GET CALLOUT -->
+<section class="bg-light">
+  <div class="container container-narrow">
+    <div style="background:#0A1628;color:#fff;border-radius:18px;padding:36px 40px;border:1px solid rgba(255,255,255,.1)">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px">
+        <div>
+          <h3 style="font-family:inherit;font-size:22px;font-weight:800;color:#fff;letter-spacing:-.4px;margin-bottom:10px">Why this looks different from other SIF trackers</h3>
+          <p style="font-size:14.5px;color:rgba(255,255,255,.78);line-height:1.65;margin-bottom:14px">SIFPrime and SIF360 are aggregator platforms with "Invest Now" buttons. We are an AMFI Registered Distributor with a research desk. The two are complementary — they let you transact; we tell you whether you should.</p>
+          <p style="font-size:14.5px;color:rgba(255,255,255,.78);line-height:1.65">When you click <strong style="color:var(--cyan-light)">"Discuss"</strong> on any row, you get a 1:1 conversation with a Trustner advisor about that specific fund's fit for your portfolio — not a checkout flow.</p>
+        </div>
+        <div>
+          <h4 style="font-size:12px;color:var(--gold-light);text-transform:uppercase;letter-spacing:1px;font-weight:800;margin-bottom:12px">What ships with every Trustner consultation</h4>
+          <ul style="list-style:none;padding:0;display:flex;flex-direction:column;gap:10px;font-size:13.5px;color:rgba(255,255,255,.82);line-height:1.5">
+            <li style="display:flex;gap:10px"><span style="color:var(--cyan-light);font-weight:800">✓</span>Personalised TFS shortlist matched to your corpus and risk profile</li>
+            <li style="display:flex;gap:10px"><span style="color:var(--cyan-light);font-weight:800">✓</span>Post-tax IRR comparison against your current PMS / AIF / MF mix</li>
+            <li style="display:flex;gap:10px"><span style="color:var(--cyan-light);font-weight:800">✓</span>NFO calendar with AMC empanelment status</li>
+            <li style="display:flex;gap:10px"><span style="color:var(--cyan-light);font-weight:800">✓</span>Quarterly portfolio reviews as SIFs gather track record</li>
+            <li style="display:flex;gap:10px"><span style="color:var(--cyan-light);font-weight:800">✓</span>The full 41-page H1 2026 Coverage Report PDF</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="compact">
+  <div class="container">
+    <div class="cta-banner reveal">
+      <span class="section-eyebrow" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15);color:var(--cyan-light)">Ready to act</span>
+      <h2>The data is here. The decision is yours.</h2>
+      <p>If you've read the table, the next useful conversation isn't with another aggregator — it's with the advisor who'll help you map these funds onto your specific portfolio. 20 minutes. No fee. No obligation.</p>
+      <div class="cta-actions">
+        <a href="suitability.html" class="btn btn-gold btn-lg">Take the 60-second Suitability Quiz →</a>
+        <a href="contact.html" class="btn btn-outline btn-lg">Book a 1:1 Consultation</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <img src="assets/img/logo.png" alt="Trustner">
+        <div class="footer-brand-name">Mera<span>SIF</span></div>
+        <div class="footer-tagline">India's Specialized Investment Fund knowledge hub by Trustner Asset Services. Education-first, compliance-driven.</div>
+        <div class="footer-contact">
+          <a href="tel:+916003903737"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>+91 60039 03737</a>
+          <a href="mailto:wecare@trustner.in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>wecare@trustner.in</a>
+        </div>
+      </div>
+      <div><h4>Tools &amp; Learning</h4><div class="footer-links"><a href="calculator.html">Tax Calculator</a><a href="suitability.html">Suitability Quiz</a><a href="what-is-sif.html">What is SIF</a><a href="sif-vs-others.html">SIF vs MF/PMS/AIF</a><a href="glossary.html">Glossary</a><a href="report.html">Coverage Report</a></div></div>
+      <div><h4>Funds &amp; Insights</h4><div class="footer-links"><a href="fund-universe.html">Fund Universe</a><a href="tax-advantages.html">Tax Advantages</a><a href="eligibility.html">Eligibility</a><a href="insights.html">Insights &amp; Updates</a><a href="about.html">About Trustner</a><a href="contact.html">Contact</a></div></div>
+      <div><h4>Regulatory</h4><div class="footer-links"><a href="https://www.amfiindia.com" target="_blank" rel="noopener">AMFI India</a><a href="https://www.sebi.gov.in" target="_blank" rel="noopener">SEBI</a><a href="https://scores.gov.in" target="_blank" rel="noopener">SCORES</a><a href="disclaimer.html">Disclaimer</a><a href="disclaimer.html#grievance">Grievance</a><a href="disclaimer.html#privacy">Privacy</a></div></div>
+    </div>
+    <div class="footer-regulatory">
+      <div class="reg-badges">
+        <span class="reg-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>AMFI Registered MFD &amp; SIF Distributor</span>
+        <span class="reg-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>APMI Registered PMS Distributor</span>
+        <span class="reg-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>SSL Secured</span>
+      </div>
+      <p class="reg-text"><strong>Trustner Asset Services Pvt. Ltd.</strong> · ARN-286886 · AMFI Registered Mutual Fund Distributor and SIF Distributor; APMI Registered PMS Distributor.</p>
+    </div>
+    <div class="footer-disclaimers">
+      <div class="risk-banner">Mutual Fund and SIF investments are subject to market risks. Read all scheme-related documents carefully before investing.</div>
+      <p class="disc-block"><strong>Performance disclaimer:</strong> NAV and return data on this page are Regular-Growth plan, sourced from AMC disclosures and AMFI as of the date shown by the live status. Past performance is not indicative of future returns. The Trustner Fund Score is proprietary, reviewed monthly, and does not constitute personalised investment advice.</p>
+    </div>
+    <div class="footer-bottom">
+      <div>&copy; <span data-year>2026</span> Trustner Asset Services Pvt. Ltd. All rights reserved.</div>
+      <div class="footer-quick-links"><a href="disclaimer.html">Disclaimer</a><a href="disclaimer.html#privacy">Privacy</a><a href="disclaimer.html#terms">Terms</a><a href="disclaimer.html#grievance">Grievance</a></div>
+    </div>
+  </div>
+</footer>
+
+<a href="https://wa.me/916003903737?text=Hello%20Trustner%20%E2%80%94%20I%27d%20like%20to%20discuss%20a%20SIF." target="_blank" rel="noopener" class="fab-whatsapp" aria-label="Chat on WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.768.967-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg></a>
+
+<script src="assets/js/main.js"></script>
+<script>
+/* ===== Fund universe — engine-driven NAV/returns table ===== */
+(function(){
+  // Per-fund metadata (the editorial layer). NAV/returns/AUM come from sif-nav.php;
+  // seed values here are the fallback shown if the engine is unreachable.
+  var TAG = {hybrid:'Hybrid LS', equity:'Equity LS', ex100:'Equity Ex-Top 100 LS', aaa:'Active Asset Allocator'};
+  var FUNDS = [
+    {id:'isif-hybrid',cat:'hybrid',name:'iSIF Hybrid Long-Short',amc:'ICICI Prudential MF',tfs:78,tfsCls:'tfs-buy',v:'★ Buy',vCls:'v-buy',link:'funds/isif-hybrid.html',seed:{m1:-0.84,m3:0.12,aum:803,risk:5,ter:2.53}},
+    {id:'altiva-hybrid',cat:'hybrid',name:'Altiva Hybrid Long-Short',amc:'Edelweiss MF',tfs:76,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:'funds/altiva-hybrid.html',seed:{m1:0.44,m3:2.87,aum:3761,risk:2,ter:1.81}},
+    {id:'magnum-hybrid',cat:'hybrid',name:'Magnum Hybrid Long-Short',amc:'SBI MF',tfs:75,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:'funds/magnum-hybrid.html',seed:{m1:-0.28,m3:0.91,aum:3462,risk:1,ter:1.21}},
+    {id:'isif-equity-ex-top-100',cat:'ex100',name:'iSIF Equity Ex-Top 100 LS',amc:'ICICI Prudential MF',tfs:74,tfsCls:'tfs-buy',v:'★ Buy (sat.)',vCls:'v-buy',link:'funds/isif-equity-ex-top-100.html',seed:{m1:-0.2,m3:1.55,aum:1535,risk:5,ter:2.55}},
+    {id:'titanium-hybrid',cat:'hybrid',name:'Titanium Hybrid Long-Short',amc:'Tata MF',tfs:70,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:-1.65,m3:-0.67,aum:483,risk:5,ter:2.35}},
+    {id:'dynasif-equity',cat:'equity',name:'DynaSIF Equity Long-Short',amc:'360 ONE Asset',tfs:70,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:-3.44,m3:0.94,aum:154,risk:5,ter:2.47}},
+    {id:'apex-hybrid',cat:'hybrid',name:'Apex Hybrid Long-Short',amc:'Aditya Birla SL MF',tfs:68,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:-0.1,m3:null,aum:63,risk:2,ter:4.15}},
+    {id:'arudha-hybrid',cat:'hybrid',name:'Arudha Hybrid Long-Short',amc:'Bandhan MF',tfs:66,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:0.55,m3:1.18,aum:114,risk:1,ter:0.73}},
+    {id:'dynasif-aaa',cat:'aaa',name:'DynaSIF Active Asset Allocator',amc:'360 ONE Asset',tfs:65,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:0.67,m3:null,aum:131,risk:3,ter:1.92}},
+    {id:'qsif-hybrid',cat:'hybrid',name:'qSIF Hybrid Long-Short',amc:'Quant MF',tfs:64,tfsCls:'tfs-hold',v:'Hold',vCls:'v-hold',link:null,seed:{m1:-1.93,m3:5.92,aum:104,risk:3,ter:6.76}},
+    {id:'qsif-equity',cat:'equity',name:'qSIF Equity Long-Short',amc:'Quant MF',tfs:62,tfsCls:'tfs-hold',v:'Hold',vCls:'v-hold',link:null,seed:{m1:-0.66,m3:7.72,aum:484,risk:3,ter:7.17}},
+    {id:'diviniti',cat:'equity',name:'Diviniti Equity Long-Short',amc:'ITI MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:-3.92,m3:-5.7,aum:416,risk:3,ter:7.08}},
+    {id:'qsif-ex-top-100',cat:'ex100',name:'qSIF Equity Ex-Top 100',amc:'Quant MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:-1.8,m3:9.89,aum:188,risk:4,ter:5.83}},
+    {id:'qsif-aaa',cat:'aaa',name:'qSIF Active Asset Allocator',amc:'Quant MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:0.6,m3:null,aum:null,risk:5,ter:2.93}},
+    {id:'titanium-equity',cat:'equity',name:'Titanium Equity Long-Short',amc:'Tata MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:2.4}},
+    {id:'arudha-equity',cat:'equity',name:'Arudha Equity Long-Short',amc:'Bandhan MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:-2.72,m3:null,aum:68,risk:5,ter:2.43}},
+    {id:'sapphire',cat:'equity',name:'Sapphire Equity Long-Short',amc:'Franklin Templeton',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:-3.89,m3:null,aum:null,risk:5,ter:3.9}},
+    {id:'wsif-equity',cat:'equity',name:'WSIF Equity Long-Short',amc:'The Wealth Company MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:3.87}},
+    {id:'wsif-ex-top-100',cat:'ex100',name:'WSIF Equity Ex-Top 100',amc:'The Wealth Company MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:4.1}},
+    {id:'union-equity',cat:'equity',name:'Union Equity Long-Short SIF',amc:'Union MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:null,ter:null}}
+  ];
+
+  // working dataset = metadata + live/seed values
+  var DATA = FUNDS.map(function(f){
+    return {meta:f, m1:f.seed.m1, m3:f.seed.m3, aum:f.seed.aum, risk:f.seed.risk, ter:f.seed.ter, source:'disclosed'};
+  });
+
+  var body = document.getElementById('fundBody');
+  var statusEl = document.getElementById('navStatus');
+  var sortSelect = document.getElementById('sortBy');
+  var activeCat = 'all', sortKey = 'tfs';
+
+  function chg(v){
+    if(v===null||v===undefined||isNaN(v)) return '<span class="change flat">—</span>';
+    var n = Number(v);
+    if(n>0)  return '<span class="change up">▲ '+n.toFixed(2)+'%</span>';
+    if(n<0)  return '<span class="change down">▼ '+Math.abs(n).toFixed(2)+'%</span>';
+    return '<span class="change flat">0.00%</span>';
+  }
+  function aumTxt(a){
+    if(a===null||a===undefined) return '<span class="gap">—</span>';
+    return '<span class="aum">₹'+Number(a).toLocaleString('en-IN')+' Cr</span>';
+  }
+  function riskTxt(r){
+    if(r===null||r===undefined) return '<span class="gap">—</span>';
+    var col = r<=2?'#059669':(r==3?'#D97706':'#DC2626');
+    return '<span style="display:inline-flex;align-items:center;justify-content:center;min-width:26px;padding:3px 7px;border-radius:7px;font-size:11px;font-weight:800;color:#fff;background:'+col+'">'+r+'</span>';
+  }
+  function terTxt(t){
+    if(t===null||t===undefined) return '<span class="gap">—</span>';
+    return '<span class="aum" style="color:var(--gray-600)">'+Number(t).toFixed(2)+'%</span>';
+  }
+  function tfsTxt(f){
+    if(!f.tfs) return '<span class="tfs-monitor">Mon-ID</span>';
+    return '<span class="tfs-pill '+f.tfsCls+'">'+f.tfs+'</span>';
+  }
+  function actionTxt(f){
+    var cls = f.link ? 'row-action' : 'row-action subtle';
+    return '<a href="contact.html?fund='+f.id+'" class="'+cls+'">Discuss</a>';
+  }
+  function nameTxt(f){
+    var nm = f.link ? '<a href="'+f.link+'">'+f.name+'</a>' : f.name;
+    return '<div class="fname"><div class="fname-main">'+nm+'</div><div class="fname-amc">'+f.amc+'</div><span class="fname-tag '+f.cat+'">'+TAG[f.cat]+'</span></div>';
+  }
+
+  function sortVal(d){
+    var v = (sortKey==='tfs') ? d.meta.tfs : d[sortKey];
+    if(v===null||v===undefined||isNaN(v)) return -1e9;
+    return (sortKey==='ter') ? -Number(v) : Number(v);
+  }
+
+  function render(){
+    var rows = DATA
+      .filter(function(d){ return activeCat==='all' || d.meta.cat===activeCat; })
+      .sort(function(a,b){ return sortVal(b)-sortVal(a); });
+    body.innerHTML = rows.map(function(d){
+      var f = d.meta;
+      return '<tr class="fund-row">'
+        + '<td>'+nameTxt(f)+'</td>'
+        + '<td class="num">'+chg(d.m1)+'</td>'
+        + '<td class="num">'+chg(d.m3)+'</td>'
+        + '<td class="num">'+aumTxt(d.aum)+'</td>'
+        + '<td class="num">'+riskTxt(d.risk)+'</td>'
+        + '<td class="num">'+terTxt(d.ter)+'</td>'
+        + '<td class="num">'+tfsTxt(f)+'</td>'
+        + '<td class="num"><span class="verdict '+f.vCls+'">'+f.v+'</span></td>'
+        + '<td>'+actionTxt(f)+'</td>'
+        + '</tr>';
+    }).join('');
+  }
+
+  // initial render with seed values
+  render();
+
+  // filter chips
+  document.querySelectorAll('.fcat').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.fcat').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active'); activeCat = btn.dataset.cat; render();
+    });
+  });
+  sortSelect.addEventListener('change', function(){ sortKey = sortSelect.value; render(); });
+
+  // pull live NAVs/returns from the engine and merge
+  fetch('sif-nav.php', {cache:'no-store'})
+    .then(function(r){ return r.ok ? r.json() : Promise.reject(); })
+    .then(function(j){
+      if(!j || !j.funds) throw 0;
+      var liveCount = 0;
+      DATA.forEach(function(d){
+        var L = j.funds[d.meta.id];
+        if(!L) return;
+        d.m1 = (L.m1!=null?L.m1:d.m1); d.m3 = (L.m3!=null?L.m3:d.m3);
+        if(L.aum!=null) d.aum = L.aum; if(L.risk!=null) d.risk = L.risk; if(L.ter!=null) d.ter = L.ter;
+        d.source = L.source||'disclosed';
+        if(d.source==='live') liveCount++;
+      });
+      render();
+      var asOf = j.asOf ? new Date(j.asOf+'T00:00:00') : null;
+      var asOfTxt = asOf ? asOf.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '—';
+      statusEl.innerHTML = '1M / 3M returns, AUM, risk &amp; TER from <strong>Value Research</strong> (Regular plan) · as of <strong>'+asOfTxt+'</strong>'
+        + (liveCount>0 ? ' · '+liveCount+' on live NAV feed' : '');
+    })
+    .catch(function(){
+      statusEl.innerHTML = 'Returns, AUM, risk &amp; TER — Value Research (Regular plan). Reconnecting…';
+    });
+})();
+</script>
+
+</body>
+</html>

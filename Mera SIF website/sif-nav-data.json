@@ -1,0 +1,27 @@
+{
+  "_comment": "ONLY real, sourced data. 1M/3M returns, AUM, risk band and TER are the Regular-Growth-plan figures published by Value Research (SIF screener) on the asOf date. 'incept' is the launch date (derived from VR fund age). We do NOT store or display per-unit NAV, since-inception or 1D/5D — no public official SIF NAV feed exists yet, and we never show indicative numbers. Fill 'schemeCode' to pull official NAV+history automatically once a feed is available (see NAV-DATA-VENDORS.md).",
+  "asOf": "2026-06-09",
+  "source": "Value Research SIF screener (Regular-Growth plan), 9 Jun 2026",
+  "funds": {
+    "isif-hybrid":            {"name":"iSIF Hybrid Long-Short","amc":"ICICI Prudential","cat":"hybrid","aum":803,"m1":-0.84,"m3":0.12,"risk":5,"ter":2.53,"schemeCode":null,"incept":"2026-02-04"},
+    "altiva-hybrid":          {"name":"Altiva Hybrid Long-Short","amc":"Edelweiss","cat":"hybrid","aum":3761,"m1":0.44,"m3":2.87,"risk":2,"ter":1.81,"schemeCode":null,"incept":"2025-10-22"},
+    "magnum-hybrid":          {"name":"Magnum Hybrid Long-Short","amc":"SBI","cat":"hybrid","aum":3462,"m1":-0.28,"m3":0.91,"risk":1,"ter":1.21,"schemeCode":null,"incept":"2025-10-20"},
+    "isif-equity-ex-top-100": {"name":"iSIF Equity Ex-Top 100 LS","amc":"ICICI Prudential","cat":"ex100","aum":1535,"m1":-0.20,"m3":1.55,"risk":5,"ter":2.55,"schemeCode":null,"incept":"2026-02-04"},
+    "titanium-hybrid":        {"name":"Titanium Hybrid Long-Short","amc":"Tata","cat":"hybrid","aum":483,"m1":-1.65,"m3":-0.67,"risk":5,"ter":2.35,"schemeCode":null,"incept":"2025-12-11"},
+    "dynasif-equity":         {"name":"DynaSIF Equity Long-Short","amc":"360 ONE","cat":"equity","aum":154,"m1":-3.44,"m3":0.94,"risk":5,"ter":2.47,"schemeCode":null,"incept":"2026-02-25"},
+    "apex-hybrid":            {"name":"Apex Hybrid Long-Short","amc":"Aditya Birla SL","cat":"hybrid","aum":63,"m1":-0.10,"m3":null,"risk":2,"ter":4.15,"schemeCode":null,"incept":"2026-03-25"},
+    "arudha-hybrid":          {"name":"Arudha Hybrid Long-Short","amc":"Bandhan","cat":"hybrid","aum":114,"m1":0.55,"m3":1.18,"risk":1,"ter":0.73,"schemeCode":null,"incept":"2026-01-28"},
+    "dynasif-aaa":            {"name":"DynaSIF Active Asset Allocator","amc":"360 ONE","cat":"aaa","aum":131,"m1":0.67,"m3":null,"risk":3,"ter":1.92,"schemeCode":null,"incept":"2026-03-25"},
+    "qsif-hybrid":            {"name":"qSIF Hybrid Long-Short","amc":"Quant","cat":"hybrid","aum":104,"m1":-1.93,"m3":5.92,"risk":3,"ter":6.76,"schemeCode":null,"incept":"2025-10-15"},
+    "qsif-equity":            {"name":"qSIF Equity Long-Short","amc":"Quant","cat":"equity","aum":484,"m1":-0.66,"m3":7.72,"risk":3,"ter":7.17,"schemeCode":null,"incept":"2025-10-07"},
+    "diviniti":               {"name":"Diviniti Equity Long-Short","amc":"ITI","cat":"equity","aum":416,"m1":-3.92,"m3":-5.70,"risk":3,"ter":7.08,"schemeCode":null,"incept":"2025-12-01"},
+    "qsif-ex-top-100":        {"name":"qSIF Equity Ex-Top 100","amc":"Quant","cat":"ex100","aum":188,"m1":-1.80,"m3":9.89,"risk":4,"ter":5.83,"schemeCode":null,"incept":"2025-11-12"},
+    "qsif-aaa":               {"name":"qSIF Active Asset Allocator","amc":"Quant","cat":"aaa","aum":null,"m1":0.60,"m3":null,"risk":5,"ter":2.93,"schemeCode":null,"incept":"2026-04-21"},
+    "titanium-equity":        {"name":"Titanium Equity Long-Short","amc":"Tata","cat":"equity","aum":null,"m1":null,"m3":null,"risk":5,"ter":2.40,"schemeCode":null,"incept":"2026-05-14"},
+    "arudha-equity":          {"name":"Arudha Equity Long-Short","amc":"Bandhan","cat":"equity","aum":68,"m1":-2.72,"m3":null,"risk":5,"ter":2.43,"schemeCode":null,"incept":"2026-03-24"},
+    "sapphire":               {"name":"Sapphire Equity Long-Short","amc":"Franklin Templeton","cat":"equity","aum":null,"m1":-3.89,"m3":null,"risk":5,"ter":3.90,"schemeCode":null,"incept":"2026-04-29"},
+    "wsif-equity":            {"name":"WSIF Equity Long-Short","amc":"The Wealth Company","cat":"equity","aum":null,"m1":null,"m3":null,"risk":5,"ter":3.87,"schemeCode":null,"incept":"2026-05-06"},
+    "wsif-ex-top-100":        {"name":"WSIF Equity Ex-Top 100","amc":"The Wealth Company","cat":"ex100","aum":null,"m1":null,"m3":null,"risk":5,"ter":4.10,"schemeCode":null,"incept":"2026-05-06"},
+    "union-equity":           {"name":"Union Equity Long-Short SIF","amc":"Union","cat":"equity","aum":null,"m1":null,"m3":null,"risk":null,"ter":null,"schemeCode":null,"incept":"2026-05-20"}
+  }
+}

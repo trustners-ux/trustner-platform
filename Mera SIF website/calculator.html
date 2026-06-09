@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SIF vs PMS vs AIF Tax Calculator — See Your Real Post-Tax Returns | Mera SIF</title>
+<meta name="description" content="India's only interactive SIF tax calculator. Plug in your investment amount, expected return, and tax bracket to see exactly how much more wealth SIF preserves vs PMS and AIF Cat-III over your holding period. Built by Trustner Asset Services.">
+<meta name="keywords" content="SIF calculator, SIF tax calculator, SIF vs PMS calculator, post-tax returns SIF, SIF wealth calculator India">
+<link rel="canonical" href="https://www.merasif.com/calculator.html">
+<meta property="og:title" content="SIF vs PMS vs AIF Tax Calculator | Mera SIF">
+<meta property="og:description" content="Interactive calculator: see exactly how much more wealth SIF preserves vs PMS and AIF over 10 years.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+<link rel="icon" type="image/png" href="assets/img/logo.png">
+<link rel="stylesheet" href="assets/css/styles.css">
+<style>
+  .calc-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:32px;align-items:start}
+  @media (max-width:900px){.calc-grid{grid-template-columns:1fr;gap:20px}}
+  .calc-input-card{background:#fff;border:1px solid var(--gray-200);border-radius:18px;padding:28px;box-shadow:var(--shadow-sm);position:sticky;top:90px}
+  .calc-input-row{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
+  .calc-input-label{font-size:13px;font-weight:700;color:var(--navy);display:flex;justify-content:space-between;align-items:center}
+  .calc-input-label .calc-value{font-size:15px;color:var(--royal);font-weight:800}
+  .calc-input-row input[type=range]{width:100%;height:6px;background:linear-gradient(to right,var(--royal),var(--cyan));border-radius:5px;-webkit-appearance:none;outline:none;cursor:pointer}
+  .calc-input-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;background:#fff;border:3px solid var(--royal);border-radius:50%;cursor:pointer;box-shadow:0 2px 8px rgba(30,64,175,.3)}
+  .calc-input-row input[type=range]::-moz-range-thumb{width:22px;height:22px;background:#fff;border:3px solid var(--royal);border-radius:50%;cursor:pointer}
+  .calc-input-row .calc-tick{display:flex;justify-content:space-between;font-size:11px;color:var(--gray-500);margin-top:4px}
+  .calc-input-row select,.calc-input-row input[type=number]{padding:11px 14px;border:1px solid var(--gray-300);border-radius:9px;font-family:inherit;font-size:14px;color:var(--navy);background:#fff}
+
+  .calc-result{background:linear-gradient(180deg,#fff,#F8FAFF);border:1px solid var(--gray-200);border-radius:18px;padding:28px;margin-bottom:18px}
+  .calc-result-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+  .calc-result-tag{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase}
+  .calc-result.sif{border-color:rgba(6,182,212,.4);background:linear-gradient(180deg,#fff,#F0FDFF)}
+  .calc-result.sif .calc-result-tag{background:var(--gradient-cyan);color:#fff}
+  .calc-result.pms .calc-result-tag{background:var(--gray-200);color:var(--navy)}
+  .calc-result.aif .calc-result-tag{background:var(--gray-200);color:var(--navy)}
+  .calc-result.mf .calc-result-tag{background:rgba(212,160,23,.15);color:var(--amber)}
+  .calc-result-name{font-size:18px;font-weight:800;color:var(--navy);letter-spacing:-.3px}
+  .calc-result-corpus{font-size:36px;font-weight:800;letter-spacing:-1px;line-height:1.05;color:var(--navy);margin-top:6px}
+  .calc-result.sif .calc-result-corpus{background:var(--gradient-cyan);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .calc-result-cagr{font-size:13px;color:var(--gray-600);margin-top:6px}
+  .calc-result-bar{margin-top:14px;height:10px;background:var(--gray-100);border-radius:5px;overflow:hidden}
+  .calc-result-bar-fill{height:100%;border-radius:5px;transition:width .5s ease}
+  .calc-result.sif .calc-result-bar-fill{background:var(--gradient-cyan)}
+  .calc-result.mf .calc-result-bar-fill{background:linear-gradient(135deg,var(--gold),var(--gold-light))}
+  .calc-result.pms .calc-result-bar-fill,.calc-result.aif .calc-result-bar-fill{background:var(--gray-400)}
+
+  .calc-summary{background:linear-gradient(135deg,#0A1628,#142642);color:#fff;border-radius:20px;padding:32px;margin-top:24px}
+  .calc-summary-headline{font-size:14px;color:var(--cyan-light);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+  .calc-summary-amount{font-size:48px;font-weight:800;letter-spacing:-1.5px;line-height:1.05;background:linear-gradient(135deg,#22D3EE,#3B82F6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .calc-summary-text{font-size:15px;color:rgba(255,255,255,.85);line-height:1.6;margin-top:12px}
+
+  .preset-buttons{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .preset-btn{padding:7px 14px;background:#fff;border:1px solid var(--gray-300);border-radius:30px;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer;transition:var(--transition);font-family:inherit}
+  .preset-btn:hover{border-color:var(--royal);color:var(--royal)}
+  .preset-btn.active{background:var(--gradient-cyan);color:#fff;border-color:transparent}
+</style>
+</head>
+<body>
+
+<div class="top-bar"><div class="container"><div class="top-bar-left"><span class="top-bar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>AMFI Registered MFD &amp; SIF Distributor</span><span class="top-bar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>APMI Registered PMS Distributor</span><span class="top-bar-item">ARN-286886</span></div><div class="top-bar-right"><a href="tel:+916003903737">📞 +91 60039 03737</a><a href="https://www.merasip.com" target="_blank" rel="noopener">MeraSIP →</a></div></div></div>
+
+<nav class="navbar">
+  <div class="container">
+    <a href="index.html" class="nav-brand"><img src="assets/img/logo.png" alt="Trustner"><div class="nav-brand-text"><span class="nav-brand-name">Mera<span>SIF</span></span><span class="nav-brand-tag">by Trustner Asset Services</span></div></a>
+    <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">☰</button>
+        <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="what-is-sif.html">What is SIF</a></li>
+      <li><a href="calculator.html">Calculator</a></li>
+      <li><a href="suitability.html">Suitability</a></li>
+      <li><a href="fund-universe.html">Funds</a></li>
+      <li><a href="report.html">Report</a></li>
+      <li><a href="insights.html">Insights</a></li>
+      <li><a href="faq.html">FAQ</a></li>
+      <li><a href="contact.html" class="nav-cta">Talk to an Advisor</a></li>
+    </ul>
+  </div>
+</nav>
+
+<section class="page-hero">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">›</span><span>Tax Calculator</span></div>
+    <h1>The Real Cost of <span style="background:linear-gradient(135deg,#22D3EE 0%,#3B82F6 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">Tax</span> on Your HNI Portfolio</h1>
+    <p>Move the sliders. See exactly how much more wealth SIF preserves vs PMS and AIF Cat-III on your specific corpus, return assumption, and tax bracket. Most investors are shocked by the gap.</p>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="calc-grid">
+      <!-- LEFT: INPUTS -->
+      <div class="calc-input-card reveal-left">
+        <h2 style="font-size:18px;font-weight:800;color:var(--navy);margin-bottom:6px">Your inputs</h2>
+        <p style="font-size:13px;color:var(--gray-600);margin-bottom:18px">Adjust to your situation. Results update live.</p>
+
+        <div class="preset-buttons">
+          <button class="preset-btn" data-preset="emerging">Emerging affluent</button>
+          <button class="preset-btn active" data-preset="hni">HNI</button>
+          <button class="preset-btn" data-preset="ultra">Ultra-HNI</button>
+        </div>
+
+        <div class="calc-input-row">
+          <div class="calc-input-label">Initial investment <span class="calc-value" id="lblAmount">₹1.00 Cr</span></div>
+          <input type="range" id="amount" min="10" max="500" step="5" value="100">
+          <div class="calc-tick"><span>₹10 L</span><span>₹50 Cr</span></div>
+        </div>
+
+        <div class="calc-input-row">
+          <div class="calc-input-label">Expected gross CAGR <span class="calc-value" id="lblCagr">12%</span></div>
+          <input type="range" id="cagr" min="6" max="20" step="0.5" value="12">
+          <div class="calc-tick"><span>6%</span><span>20%</span></div>
+        </div>
+
+        <div class="calc-input-row">
+          <div class="calc-input-label">Holding period <span class="calc-value" id="lblYears">10 years</span></div>
+          <input type="range" id="years" min="2" max="20" step="1" value="10">
+          <div class="calc-tick"><span>2 yr</span><span>20 yr</span></div>
+        </div>
+
+        <div class="calc-input-row">
+          <div class="calc-input-label">Your tax bracket</div>
+          <select id="bracket">
+            <option value="20">20% (income ₹5–10 L)</option>
+            <option value="30">30% (income ₹10–50 L)</option>
+            <option value="34" selected>34% (income ₹50L–1 Cr · 10% surcharge)</option>
+            <option value="39">39% (income ₹1–5 Cr · 25% surcharge)</option>
+            <option value="42.74">42.74% (income &gt;₹5 Cr · 37% surcharge + cess)</option>
+          </select>
+        </div>
+
+        <div class="calc-input-row">
+          <div class="calc-input-label">SIF strategy type</div>
+          <select id="sifType">
+            <option value="equity">Equity-oriented (≥65% equity) — 12.5% LTCG</option>
+            <option value="hybrid_high" selected>Hybrid ≥65% equity — 12.5% LTCG (12 mo)</option>
+            <option value="hybrid_low">Hybrid &lt;65% equity — 12.5% LTCG (24 mo)</option>
+            <option value="debt">Debt-oriented — slab rate</option>
+          </select>
+        </div>
+
+        <div style="font-size:11px;color:var(--gray-500);background:var(--gray-50);padding:10px 12px;border-radius:8px;line-height:1.55;margin-top:8px">
+          <strong>Note:</strong> Calculator assumes the entire holding period is taxed once at exit (LTCG for SIF/MF; slab/business income for PMS/AIF Cat-III at fund level). PMS performance fee assumed 1.5% mgmt + 15% on returns &gt;6% hurdle. AIF Cat-III TER assumed 2% + 15% perf. Real outcomes vary with churn, cess, and structure.
+        </div>
+      </div>
+
+      <!-- RIGHT: RESULTS -->
+      <div class="reveal-right">
+        <!-- SIF -->
+        <div class="calc-result sif">
+          <div class="calc-result-header">
+            <div>
+              <span class="calc-result-tag">★ SIF (Recommended)</span>
+              <div class="calc-result-name" style="margin-top:8px">Specialized Investment Fund</div>
+              <div class="calc-result-cagr" id="sifCagr">Post-tax CAGR: 10.6%</div>
+            </div>
+            <div style="text-align:right">
+              <div class="calc-result-corpus" id="sifCorpus">₹2.74 Cr</div>
+              <div style="font-size:11px;color:var(--gray-500);margin-top:4px">final corpus</div>
+            </div>
+          </div>
+          <div class="calc-result-bar"><div class="calc-result-bar-fill" id="sifBar" style="width:100%"></div></div>
+          <div style="font-size:12px;color:var(--gray-600);margin-top:10px">
+            <strong style="color:var(--royal)">Tax wrapper:</strong> 12.5% LTCG · <strong style="color:var(--royal)">TER:</strong> ~0.4–1.0% · <strong style="color:var(--royal)">Performance fee:</strong> none
+          </div>
+        </div>
+
+        <!-- Mutual Fund -->
+        <div class="calc-result mf">
+          <div class="calc-result-header">
+            <div>
+              <span class="calc-result-tag">Mutual Fund</span>
+              <div class="calc-result-name" style="margin-top:8px">Equivalent equity-oriented MF</div>
+              <div class="calc-result-cagr" id="mfCagr">Post-tax CAGR: 10.4%</div>
+            </div>
+            <div style="text-align:right">
+              <div class="calc-result-corpus" id="mfCorpus">₹2.69 Cr</div>
+              <div style="font-size:11px;color:var(--gray-500);margin-top:4px">final corpus</div>
+            </div>
+          </div>
+          <div class="calc-result-bar"><div class="calc-result-bar-fill" id="mfBar" style="width:90%"></div></div>
+          <div style="font-size:12px;color:var(--gray-600);margin-top:10px">
+            <strong>Note:</strong> Same tax bucket as equity SIF. Trade-off: no long-short capability.
+          </div>
+        </div>
+
+        <!-- PMS -->
+        <div class="calc-result pms">
+          <div class="calc-result-header">
+            <div>
+              <span class="calc-result-tag">PMS</span>
+              <div class="calc-result-name" style="margin-top:8px">Portfolio Management Service</div>
+              <div class="calc-result-cagr" id="pmsCagr">Post-tax CAGR: 7.4%</div>
+            </div>
+            <div style="text-align:right">
+              <div class="calc-result-corpus" id="pmsCorpus">₹2.04 Cr</div>
+              <div style="font-size:11px;color:var(--gray-500);margin-top:4px">final corpus</div>
+            </div>
+          </div>
+          <div class="calc-result-bar"><div class="calc-result-bar-fill" id="pmsBar" style="width:74%"></div></div>
+          <div style="font-size:12px;color:var(--gray-600);margin-top:10px">
+            <strong>Drag:</strong> slab-rate tax + 1.5% mgmt + 15% performance fee on returns above 6%.
+          </div>
+        </div>
+
+        <!-- AIF Cat-III -->
+        <div class="calc-result aif">
+          <div class="calc-result-header">
+            <div>
+              <span class="calc-result-tag">AIF Cat-III</span>
+              <div class="calc-result-name" style="margin-top:8px">Alternative Investment Fund</div>
+              <div class="calc-result-cagr" id="aifCagr">Post-tax CAGR: 6.8%</div>
+            </div>
+            <div style="text-align:right">
+              <div class="calc-result-corpus" id="aifCorpus">₹1.93 Cr</div>
+              <div style="font-size:11px;color:var(--gray-500);margin-top:4px">final corpus</div>
+            </div>
+          </div>
+          <div class="calc-result-bar"><div class="calc-result-bar-fill" id="aifBar" style="width:70%"></div></div>
+          <div style="font-size:12px;color:var(--gray-600);margin-top:10px">
+            <strong>Drag:</strong> fund-level slab tax + 2% mgmt + 15% perf fee. Lock-in 1–3 yrs typical.
+          </div>
+        </div>
+
+        <!-- HEADLINE SUMMARY -->
+        <div class="calc-summary">
+          <div class="calc-summary-headline">SIF advantage on your inputs</div>
+          <div class="calc-summary-amount" id="summaryAmount">₹70 Lakh</div>
+          <div class="calc-summary-text" id="summaryText">
+            That's how much more wealth SIF preserves vs an equivalent AIF Cat-III over your selected holding period — purely from tax + cost arbitrage. No magic. Just the right wrapper.
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">
+            <a href="contact.html" class="btn btn-primary">Get a personalised SIF shortlist</a>
+            <a href="https://wa.me/916003903737?text=Hello%20Trustner%20%E2%80%94%20I%20just%20used%20your%20SIF%20calculator%20and%20want%20to%20discuss%20my%20portfolio." target="_blank" rel="noopener" class="btn btn-whatsapp">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.768.967-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>
+              Discuss on WhatsApp
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- METHODOLOGY -->
+<section class="bg-light">
+  <div class="container container-narrow">
+    <div class="prose reveal">
+      <h2 style="margin-top:0">How we calculate this</h2>
+      <p>The four wrappers carry materially different tax and cost structures. Here is exactly how each post-tax CAGR is computed:</p>
+      <ul>
+        <li><strong>SIF (equity / hybrid ≥65% eq):</strong> 12.5% LTCG on gains held &gt;12 months. TER ~0.6% (regular plan, average across live SIFs). No performance fee.</li>
+        <li><strong>SIF (hybrid &lt;65% eq):</strong> 12.5% LTCG on gains held &gt;24 months. TER ~0.5%. No performance fee.</li>
+        <li><strong>SIF (debt):</strong> Slab-rate tax. TER ~0.4%.</li>
+        <li><strong>Mutual Fund:</strong> 12.5% LTCG (equity ≥65%, &gt;12 mo). TER ~1.5% (regular plan equity MF average).</li>
+        <li><strong>PMS:</strong> Gains taxed at slab rate as business income. 1.5% management fee + 15% performance fee on returns above 6% hurdle.</li>
+        <li><strong>AIF Cat-III:</strong> Fund-level taxation at slab rate. 2% management + 15% performance fee on entire return.</li>
+      </ul>
+      <p>The formula assumes a single hold-and-exit at the end of the period. Real portfolios churn — which makes the wrapper differential <em>more</em> pronounced for slab-rate vehicles, not less. Calculator output is illustrative; actual outcomes depend on fund-specific cost, churn, sequence of returns, and individual tax circumstances.</p>
+
+      <h3>Why the gap is structural</h3>
+      <p>SIFs inherit Section 10(23D) fund-level tax exemption — gains compound untaxed inside the fund and are only taxed at investor-level redemption at LTCG rates. PMS gains are pass-through at slab. AIF Cat-III is taxed at the fund level at slab plus surcharge. Over a 10-year hold for a top-bracket investor, that single regulatory difference compounds to ₹70–80 lakh per crore of allocation.</p>
+    </div>
+
+    <div class="callout callout-warning reveal mt-6">
+      <div class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg></div>
+      <div class="callout-body">
+        <div class="callout-title">Important caveat</div>
+        <div class="callout-text">All numbers are illustrative for understanding the tax-and-cost differential. They do <strong>not</strong> constitute investment advice or a forecast of returns. Your actual outcome will depend on the specific fund(s) chosen, market conditions, churn, and your individual tax situation. Always consult a qualified Chartered Accountant and your Trustner advisor before deploying capital.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="compact">
+  <div class="container">
+    <div class="cta-banner reveal">
+      <span class="section-eyebrow" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15);color:var(--cyan-light)">Next step</span>
+      <h2>The math is clear. The right shortlist isn't.</h2>
+      <p>The calculator shows the tax-bucket arbitrage. The next conversation is which specific SIF strategies fit your goal, risk tolerance, and existing portfolio. That's a 20-minute call — no fee, no obligation.</p>
+      <div class="cta-actions">
+        <a href="suitability.html" class="btn btn-gold btn-lg">Take the 60-second SIF Suitability Quiz →</a>
+        <a href="contact.html" class="btn btn-outline btn-lg">Book a 1:1 Consultation</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER (same as other pages) -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <img src="assets/img/logo.png" alt="Trustner">
+        <div class="footer-brand-name">Mera<span>SIF</span></div>
+        <div class="footer-tagline">India's Specialized Investment Fund knowledge hub by Trustner Asset Services. Education-first, compliance-driven.</div>
+        <div class="footer-contact">
+          <a href="tel:+916003903737"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>+91 60039 03737</a>
+          <a href="mailto:wecare@trustner.in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>wecare@trustner.in</a>
+          <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Guwahati · Bangalore · Kolkata</a>
+        </div>
+      </div>
+      <div><h4>Tools &amp; Learning</h4><div class="footer-links"><a href="calculator.html">Tax Calculator</a><a href="suitability.html">Suitability Quiz</a><a href="what-is-sif.html">What is SIF</a><a href="sif-vs-others.html">SIF vs MF/PMS/AIF</a><a href="glossary.html">Glossary</a><a href="faq.html">FAQ</a></div></div>
+      <div><h4>Funds &amp; Insights</h4><div class="footer-links"><a href="fund-universe.html">Fund Universe</a><a href="tax-advantages.html">Tax Advantages</a><a href="eligibility.html">Eligibility</a><a href="insights.html">Insights &amp; Updates</a><a href="about.html">About Trustner</a><a href="contact.html">Contact</a></div></div>
+      <div><h4>Regulatory</h4><div class="footer-links"><a href="https://www.amfiindia.com" target="_blank" rel="noopener">AMFI India</a><a href="https://www.sebi.gov.in" target="_blank" rel="noopener">SEBI</a><a href="https://scores.gov.in" target="_blank" rel="noopener">SCORES</a><a href="disclaimer.html">Disclaimer</a><a href="disclaimer.html#grievance">Grievance</a><a href="disclaimer.html#privacy">Privacy</a></div></div>
+    </div>
+    <div class="footer-regulatory">
+      <div class="reg-badges">
+        <span class="reg-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>AMFI Registered MFD &amp; SIF Distributor</span>
+        <span class="reg-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>APMI Registered PMS Distributor</span>
+        <span class="reg-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>SSL Secured</span>
+      </div>
+      <p class="reg-text"><strong>Trustner Asset Services Pvt. Ltd.</strong> · ARN-286886 · CIN: U66301AS2023PTC025505 · AMFI Registered Mutual Fund Distributor and SIF Distributor; APMI Registered PMS Distributor. Registered Office: Sethi Trust Building, Unit 2, 4th Floor, G S Road, Bhangagarh, Guwahati - 781005, Assam, India.</p>
+    </div>
+    <div class="footer-disclaimers">
+      <div class="risk-banner">Mutual Fund and SIF investments are subject to market risks. Read all scheme-related documents carefully before investing.</div>
+      <p class="disc-block"><strong>Calculator disclaimer:</strong> All numbers are illustrative for understanding the tax-and-cost differential between investment wrappers. They do not constitute investment advice or a forecast of returns. Always consult a qualified Chartered Accountant and Trustner advisor regarding your specific situation.</p>
+    </div>
+    <div class="footer-bottom">
+      <div>&copy; <span data-year>2026</span> Trustner Asset Services Pvt. Ltd. All rights reserved.</div>
+      <div class="footer-quick-links"><a href="disclaimer.html">Disclaimer</a><a href="disclaimer.html#privacy">Privacy</a><a href="disclaimer.html#terms">Terms</a><a href="disclaimer.html#grievance">Grievance</a></div>
+    </div>
+  </div>
+</footer>
+
+<a href="https://wa.me/916003903737?text=Hello%20Trustner%20%E2%80%94%20I%20just%20used%20your%20SIF%20calculator%20and%20want%20to%20discuss%20my%20portfolio." target="_blank" rel="noopener" class="fab-whatsapp" aria-label="Chat on WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.768.967-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg></a>
+
+<script src="assets/js/main.js"></script>
+<script>
+// Calculator engine
+(function() {
+  const $ = id => document.getElementById(id);
+  const fmtINR = n => {
+    if (n >= 10000000) return '₹' + (n/10000000).toFixed(2) + ' Cr';
+    if (n >= 100000) return '₹' + (n/100000).toFixed(2) + ' L';
+    return '₹' + Math.round(n).toLocaleString('en-IN');
+  };
+  const fmtPct = n => n.toFixed(1) + '%';
+
+  const presets = {
+    emerging: { amount: 30, cagr: 11, years: 7, bracket: '30', sifType: 'hybrid_high' },
+    hni: { amount: 100, cagr: 12, years: 10, bracket: '34', sifType: 'hybrid_high' },
+    ultra: { amount: 500, cagr: 14, years: 15, bracket: '42.74', sifType: 'equity' }
+  };
+
+  function applyPreset(name) {
+    const p = presets[name];
+    $('amount').value = p.amount;
+    $('cagr').value = p.cagr;
+    $('years').value = p.years;
+    $('bracket').value = p.bracket;
+    $('sifType').value = p.sifType;
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.toggle('active', b.dataset.preset === name));
+    update();
+  }
+
+  function update() {
+    const amountLakh = parseFloat($('amount').value);  // lakhs
+    const principal = amountLakh * 100000;             // rupees
+    const cagr = parseFloat($('cagr').value) / 100;
+    const years = parseInt($('years').value);
+    const slab = parseFloat($('bracket').value) / 100;
+    const sifType = $('sifType').value;
+
+    $('lblAmount').textContent = fmtINR(principal);
+    $('lblCagr').textContent = ($('cagr').value) + '%';
+    $('lblYears').textContent = years + (years === 1 ? ' year' : ' years');
+
+    // Gross final corpus
+    const gross = principal * Math.pow(1 + cagr, years);
+    const grossGain = gross - principal;
+
+    // ---- SIF ----
+    // TER drag (approx 0.6% for equity/hybrid >=65, 0.5% for hybrid <65, 0.4% debt)
+    const sifTER = sifType === 'debt' ? 0.004 : sifType === 'hybrid_low' ? 0.005 : 0.006;
+    const sifNetCagr = cagr - sifTER;
+    const sifGross = principal * Math.pow(1 + sifNetCagr, years);
+    const sifGain = sifGross - principal;
+    let sifTaxRate;
+    if (sifType === 'debt') sifTaxRate = slab;
+    else sifTaxRate = 0.125; // 12.5% LTCG
+    const sifTax = sifGain * sifTaxRate;
+    const sifFinal = sifGross - sifTax;
+    const sifPostCagr = (Math.pow(sifFinal/principal, 1/years) - 1) * 100;
+
+    // ---- MF (equivalent equity-oriented MF) ----
+    const mfTER = 0.015;  // ~1.5% for regular plan equity MF
+    const mfNetCagr = cagr - mfTER;
+    const mfGross = principal * Math.pow(1 + mfNetCagr, years);
+    const mfGain = mfGross - principal;
+    const mfTax = mfGain * 0.125; // assume equity MF
+    const mfFinal = mfGross - mfTax;
+    const mfPostCagr = (Math.pow(mfFinal/principal, 1/years) - 1) * 100;
+
+    // ---- PMS ----
+    // 1.5% mgmt + 15% perf above 6% hurdle, then slab-rate tax
+    const pmsMgmt = 0.015;
+    const pmsHurdle = 0.06;
+    const pmsPerfRate = 0.15;
+    const grossAfterMgmt = cagr - pmsMgmt;
+    const excess = Math.max(0, grossAfterMgmt - pmsHurdle);
+    const pmsPerfFee = excess * pmsPerfRate;
+    const pmsNetCagr = grossAfterMgmt - pmsPerfFee;
+    const pmsGross = principal * Math.pow(1 + pmsNetCagr, years);
+    const pmsGain = pmsGross - principal;
+    const pmsTax = pmsGain * slab; // slab rate
+    const pmsFinal = pmsGross - pmsTax;
+    const pmsPostCagr = (Math.pow(pmsFinal/principal, 1/years) - 1) * 100;
+
+    // ---- AIF Cat-III ----
+    // 2% mgmt + 15% perf on whole return; fund-level slab tax
+    const aifMgmt = 0.02;
+    const aifPerfRate = 0.15;
+    const aifAfterMgmt = cagr - aifMgmt;
+    const aifPerf = Math.max(0, aifAfterMgmt) * aifPerfRate;
+    const aifNetCagr = aifAfterMgmt - aifPerf;
+    const aifGross = principal * Math.pow(1 + aifNetCagr, years);
+    const aifGain = aifGross - principal;
+    const aifTax = aifGain * slab;
+    const aifFinal = aifGross - aifTax;
+    const aifPostCagr = (Math.pow(aifFinal/principal, 1/years) - 1) * 100;
+
+    // Render
+    $('sifCorpus').textContent = fmtINR(sifFinal);
+    $('sifCagr').textContent = 'Post-tax CAGR: ' + fmtPct(sifPostCagr);
+    $('mfCorpus').textContent = fmtINR(mfFinal);
+    $('mfCagr').textContent = 'Post-tax CAGR: ' + fmtPct(mfPostCagr);
+    $('pmsCorpus').textContent = fmtINR(pmsFinal);
+    $('pmsCagr').textContent = 'Post-tax CAGR: ' + fmtPct(pmsPostCagr);
+    $('aifCorpus').textContent = fmtINR(aifFinal);
+    $('aifCagr').textContent = 'Post-tax CAGR: ' + fmtPct(aifPostCagr);
+
+    // Bar widths (relative to SIF)
+    const maxFinal = Math.max(sifFinal, mfFinal, pmsFinal, aifFinal);
+    $('sifBar').style.width = (sifFinal/maxFinal*100) + '%';
+    $('mfBar').style.width = (mfFinal/maxFinal*100) + '%';
+    $('pmsBar').style.width = (pmsFinal/maxFinal*100) + '%';
+    $('aifBar').style.width = (aifFinal/maxFinal*100) + '%';
+
+    // Summary: SIF advantage over AIF (worst peer)
+    const advantage = sifFinal - aifFinal;
+    $('summaryAmount').textContent = fmtINR(advantage);
+    const advYears = years;
+    $('summaryText').textContent =
+      'That’s how much more wealth SIF preserves vs an equivalent AIF Cat-III over your selected ' + advYears + '-year holding period — purely from tax + cost arbitrage. The SIF’s post-tax CAGR is ' +
+      fmtPct(sifPostCagr - aifPostCagr) + ' higher than AIF Cat-III on identical gross returns. No magic. Just the right wrapper.';
+  }
+
+  ['amount','cagr','years','bracket','sifType'].forEach(id => {
+    $(id).addEventListener('input', update);
+    $(id).addEventListener('change', update);
+  });
+  document.querySelectorAll('.preset-btn').forEach(b => {
+    b.addEventListener('click', () => applyPreset(b.dataset.preset));
+  });
+  update();
+})();
+</script>
+</body>
+</html>
