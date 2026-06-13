@@ -28,8 +28,11 @@ $AMFI_RAW   = $DIR . '/amfi-sif-raw.json';
 $CACHE_TTL  = 4 * 3600;
 
 $wantFund = isset($_GET['fund']) ? preg_replace('/[^a-z0-9-]/', '', $_GET['fund']) : null;
+$isCli = (PHP_SAPI === 'cli');   // cron runs `php sif-nav.php` — must ALWAYS rebuild + accrue daily NAV history
 
-if (!$wantFund && !isset($_GET['force']) && file_exists($CACHE_FILE) && (time() - filemtime($CACHE_FILE)) < $CACHE_TTL) {
+// Serve cache only for web hits within TTL. CLI (cron) and ?force always rebuild,
+// so the daily official-NAV snapshot is reliably appended to sif-nav-history.json.
+if (!$wantFund && !$isCli && !isset($_GET['force']) && file_exists($CACHE_FILE) && (time() - filemtime($CACHE_FILE)) < $CACHE_TTL) {
     echo file_get_contents($CACHE_FILE);
     exit;
 }
@@ -54,8 +57,9 @@ function ms_get($url) {
 function pct($now, $past) { return (!$past || $past == 0) ? null : round(($now / $past - 1) * 100, 2); }
 
 // ---- official AMFI snapshot (cached 4h; falls back to last good copy) ----
+// CLI (cron) and ?force always re-fetch the latest AMFI NAVs; web hits use the 4h cache.
 $amfi = null;
-if (file_exists($AMFI_RAW) && (time() - filemtime($AMFI_RAW)) < $CACHE_TTL) {
+if (!$isCli && !isset($_GET['force']) && file_exists($AMFI_RAW) && (time() - filemtime($AMFI_RAW)) < $CACHE_TTL) {
     $amfi = json_decode(@file_get_contents($AMFI_RAW), true);
 }
 if (!$amfi) {
