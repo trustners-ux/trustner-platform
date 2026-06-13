@@ -140,8 +140,8 @@
     <div class="grid-4 reveal">
       <div class="stat-card"><div class="stat-value">25</div><div class="stat-label">Live SIFs we cover</div></div>
       <div class="stat-card"><div class="stat-value">13</div><div class="stat-label">AMCs live</div></div>
-      <div class="stat-card"><div class="stat-value">₹11,766<span class="unit">Cr</span></div><div class="stat-label">Combined AUM, disclosed (VR)</div></div>
-      <div class="stat-card"><div class="stat-value">+9.9<span class="unit">%</span></div><div class="stat-label">Best 3M return (qSIF Ex-100)</div></div>
+      <div class="stat-card"><div class="stat-value">₹13,179<span class="unit">Cr</span></div><div class="stat-label">Combined AUM, disclosed (VR)</div></div>
+      <div class="stat-card"><div class="stat-value">+11.5<span class="unit">%</span></div><div class="stat-label">Best 3M return (qSIF Ex-100)</div></div>
     </div>
   </div>
 </section>
@@ -154,27 +154,27 @@
     <div class="summary-grid">
       <div class="summary-card" style="border-left:4px solid var(--green)">
         <div class="label">Best 3-Month Return</div>
-        <div class="value">+9.89%</div>
+        <div class="value">+11.52%</div>
         <div class="fund">qSIF Equity Ex-Top 100 · Quant</div>
         <div class="change-line" style="color:var(--green)">▲ Strongest SMID quant recovery</div>
       </div>
       <div class="summary-card" style="border-left:4px solid var(--gold)">
         <div class="label">Largest by AUM</div>
-        <div class="value">₹3,761 Cr</div>
+        <div class="value">₹4,466 Cr</div>
         <div class="fund">Altiva Hybrid LS · Edelweiss</div>
         <div class="change-line" style="color:var(--gold)">▲ Category's biggest book</div>
       </div>
       <div class="summary-card" style="border-left:4px solid var(--royal)">
         <div class="label">Top 1-Month Gainer</div>
-        <div class="value">+0.67%</div>
-        <div class="fund">DynaSIF AAA · 360 ONE</div>
-        <div class="change-line" style="color:var(--royal)">▲ Multi-asset held firm in a soft month</div>
+        <div class="value">+3.07%</div>
+        <div class="fund">qSIF Equity LS · Quant</div>
+        <div class="change-line" style="color:var(--royal)">▲ Quant momentum re-accelerating</div>
       </div>
       <div class="summary-card" style="border-left:4px solid var(--red)">
-        <div class="label">Largest 1M Drawdown</div>
-        <div class="value">-3.92%</div>
-        <div class="fund">Diviniti Equity LS · ITI MF</div>
-        <div class="change-line" style="color:var(--red)">▼ SMID exposure hit</div>
+        <div class="label">Only Negative on 1M</div>
+        <div class="value">-0.35%</div>
+        <div class="fund">DynaSIF AAA · 360 ONE</div>
+        <div class="change-line" style="color:var(--red)">▼ Sole decliner in a broad up-month</div>
       </div>
     </div>
   </div>
@@ -368,31 +368,31 @@
   // seed values here are the fallback shown if the engine is unreachable.
   var TAG = {hybrid:'Hybrid LS', equity:'Equity LS', ex100:'Equity Ex-Top 100 LS', aaa:'Active Asset Allocator', sector:'Sector Rotation LS'};
   var FUNDS = [
-    {id:'isif-hybrid',cat:'hybrid',name:'iSIF Hybrid Long-Short',amc:'ICICI Prudential MF',tfs:78,tfsCls:'tfs-buy',v:'★ Buy',vCls:'v-buy',link:'funds/isif-hybrid.html',seed:{m1:-0.84,m3:0.12,aum:803,risk:5,ter:2.53}},
-    {id:'altiva-hybrid',cat:'hybrid',name:'Altiva Hybrid Long-Short',amc:'Edelweiss MF',tfs:76,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:'funds/altiva-hybrid.html',seed:{m1:0.44,m3:2.87,aum:3761,risk:2,ter:1.81}},
-    {id:'magnum-hybrid',cat:'hybrid',name:'Magnum Hybrid Long-Short',amc:'SBI MF',tfs:75,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:'funds/magnum-hybrid.html',seed:{m1:-0.28,m3:0.91,aum:3462,risk:1,ter:1.21}},
-    {id:'isif-equity-ex-top-100',cat:'ex100',name:'iSIF Equity Ex-Top 100 LS',amc:'ICICI Prudential MF',tfs:74,tfsCls:'tfs-buy',v:'★ Buy (sat.)',vCls:'v-buy',link:'funds/isif-equity-ex-top-100.html',seed:{m1:-0.2,m3:1.55,aum:1535,risk:5,ter:2.55}},
-    {id:'titanium-hybrid',cat:'hybrid',name:'Titanium Hybrid Long-Short',amc:'Tata MF',tfs:70,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:-1.65,m3:-0.67,aum:483,risk:5,ter:2.35}},
-    {id:'dynasif-equity',cat:'equity',name:'DynaSIF Equity Long-Short',amc:'360 ONE Asset',tfs:70,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:-3.44,m3:0.94,aum:154,risk:5,ter:2.47}},
-    {id:'apex-hybrid',cat:'hybrid',name:'Apex Hybrid Long-Short',amc:'Aditya Birla SL MF',tfs:68,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:-0.1,m3:null,aum:63,risk:2,ter:4.15}},
-    {id:'arudha-hybrid',cat:'hybrid',name:'Arudha Hybrid Long-Short',amc:'Bandhan MF',tfs:66,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:0.55,m3:1.18,aum:114,risk:1,ter:0.73}},
-    {id:'dynasif-aaa',cat:'aaa',name:'DynaSIF Active Asset Allocator',amc:'360 ONE Asset',tfs:65,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:0.67,m3:null,aum:131,risk:3,ter:1.92}},
-    {id:'qsif-hybrid',cat:'hybrid',name:'qSIF Hybrid Long-Short',amc:'Quant MF',tfs:64,tfsCls:'tfs-hold',v:'Hold',vCls:'v-hold',link:null,seed:{m1:-1.93,m3:5.92,aum:104,risk:3,ter:6.76}},
-    {id:'qsif-equity',cat:'equity',name:'qSIF Equity Long-Short',amc:'Quant MF',tfs:62,tfsCls:'tfs-hold',v:'Hold',vCls:'v-hold',link:null,seed:{m1:-0.66,m3:7.72,aum:484,risk:3,ter:7.17}},
-    {id:'diviniti',cat:'equity',name:'Diviniti Equity Long-Short',amc:'ITI MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:-3.92,m3:-5.7,aum:416,risk:3,ter:7.08}},
-    {id:'qsif-ex-top-100',cat:'ex100',name:'qSIF Equity Ex-Top 100',amc:'Quant MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:-1.8,m3:9.89,aum:188,risk:4,ter:5.83}},
-    {id:'qsif-aaa',cat:'aaa',name:'qSIF Active Asset Allocator',amc:'Quant MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:0.6,m3:null,aum:null,risk:5,ter:2.93}},
-    {id:'titanium-equity',cat:'equity',name:'Titanium Equity Long-Short',amc:'Tata MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:2.4}},
-    {id:'arudha-equity',cat:'equity',name:'Arudha Equity Long-Short',amc:'Bandhan MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:-2.72,m3:null,aum:68,risk:5,ter:2.43}},
-    {id:'sapphire',cat:'equity',name:'Sapphire Equity Long-Short',amc:'Franklin Templeton',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:-3.89,m3:null,aum:null,risk:5,ter:3.9}},
-    {id:'wsif-equity',cat:'equity',name:'WSIF Equity Long-Short',amc:'The Wealth Company MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:3.87}},
-    {id:'wsif-ex-top-100',cat:'ex100',name:'WSIF Equity Ex-Top 100',amc:'The Wealth Company MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:4.1}},
-    {id:'arthaya-equity',cat:'equity',name:'Arthaya Equity Long-Short',amc:'Union MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:2.49}},
+    {id:'isif-hybrid',cat:'hybrid',name:'iSIF Hybrid Long-Short',amc:'ICICI Prudential MF',tfs:78,tfsCls:'tfs-buy',v:'★ Buy',vCls:'v-buy',link:'funds/isif-hybrid.html',seed:{m1:1.55,m3:4.08,aum:844,risk:5,ter:2.64}},
+    {id:'altiva-hybrid',cat:'hybrid',name:'Altiva Hybrid Long-Short',amc:'Edelweiss MF',tfs:76,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:'funds/altiva-hybrid.html',seed:{m1:1.52,m3:4.01,aum:4466,risk:1,ter:2.18}},
+    {id:'magnum-hybrid',cat:'hybrid',name:'Magnum Hybrid Long-Short',amc:'SBI MF',tfs:75,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:'funds/magnum-hybrid.html',seed:{m1:0.9,m3:2.09,aum:3462,risk:1,ter:2.06}},
+    {id:'isif-equity-ex-top-100',cat:'ex100',name:'iSIF Equity Ex-Top 100 LS',amc:'ICICI Prudential MF',tfs:74,tfsCls:'tfs-buy',v:'★ Buy (sat.)',vCls:'v-buy',link:'funds/isif-equity-ex-top-100.html',seed:{m1:0.82,m3:4.89,aum:1707,risk:5,ter:2.86}},
+    {id:'titanium-hybrid',cat:'hybrid',name:'Titanium Hybrid Long-Short',amc:'Tata MF',tfs:70,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:1.08,m3:2.13,aum:483,risk:5,ter:2.53}},
+    {id:'dynasif-equity',cat:'equity',name:'DynaSIF Equity Long-Short',amc:'360 ONE Asset',tfs:70,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:0.48,m3:3.18,aum:277,risk:5,ter:3.68}},
+    {id:'apex-hybrid',cat:'hybrid',name:'Apex Hybrid Long-Short',amc:'Aditya Birla SL MF',tfs:68,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:1.1,m3:null,aum:76,risk:2,ter:4.15}},
+    {id:'arudha-hybrid',cat:'hybrid',name:'Arudha Hybrid Long-Short',amc:'Bandhan MF',tfs:66,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:0.75,m3:1.43,aum:130,risk:1,ter:0.73}},
+    {id:'dynasif-aaa',cat:'aaa',name:'DynaSIF Active Asset Allocator',amc:'360 ONE Asset',tfs:65,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:-0.35,m3:null,aum:195,risk:3,ter:2.67}},
+    {id:'qsif-hybrid',cat:'hybrid',name:'qSIF Hybrid Long-Short',amc:'Quant MF',tfs:64,tfsCls:'tfs-hold',v:'Hold',vCls:'v-hold',link:null,seed:{m1:0.24,m3:5.74,aum:158,risk:3,ter:2.86}},
+    {id:'qsif-equity',cat:'equity',name:'qSIF Equity Long-Short',amc:'Quant MF',tfs:62,tfsCls:'tfs-hold',v:'Hold',vCls:'v-hold',link:null,seed:{m1:3.07,m3:10.37,aum:484,risk:4,ter:2.99}},
+    {id:'diviniti',cat:'equity',name:'Diviniti Equity Long-Short',amc:'ITI MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:0.06,m3:-3.98,aum:402,risk:3,ter:3.34}},
+    {id:'qsif-ex-top-100',cat:'ex100',name:'qSIF Equity Ex-Top 100',amc:'Quant MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:1.32,m3:11.52,aum:233,risk:4,ter:2.68}},
+    {id:'qsif-aaa',cat:'aaa',name:'qSIF Active Asset Allocator',amc:'Quant MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:2.02,m3:null,aum:64,risk:3,ter:3.19}},
+    {id:'titanium-equity',cat:'equity',name:'Titanium Equity Long-Short',amc:'Tata MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:4.09}},
+    {id:'arudha-equity',cat:'equity',name:'Arudha Equity Long-Short',amc:'Bandhan MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:0.17,m3:null,aum:81,risk:5,ter:2.43}},
+    {id:'sapphire',cat:'equity',name:'Sapphire Equity Long-Short',amc:'Franklin Templeton',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:1.08,m3:null,aum:null,risk:5,ter:3.9}},
+    {id:'wsif-equity',cat:'equity',name:'WSIF Equity Long-Short',amc:'The Wealth Company MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:1.45,m3:null,aum:null,risk:5,ter:6.67}},
+    {id:'wsif-ex-top-100',cat:'ex100',name:'WSIF Equity Ex-Top 100',amc:'The Wealth Company MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:1.92,m3:null,aum:null,risk:5,ter:6.64}},
+    {id:'arthaya-equity',cat:'equity',name:'Arthaya Equity Long-Short',amc:'Union MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:117,risk:1,ter:3.14}},
     {id:'altiva-ex-top-100',cat:'ex100',name:'Altiva Equity Ex-Top 100 LS',amc:'Edelweiss MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:null}},
-    {id:'isif-equity',cat:'equity',name:'iSIF Equity Long-Short',amc:'ICICI Prudential MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:null}},
-    {id:'isif-aaa',cat:'aaa',name:'iSIF Active Asset Allocator',amc:'ICICI Prudential MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:null}},
-    {id:'platinum-hybrid',cat:'hybrid',name:'Platinum Hybrid Long-Short',amc:'Mirae Asset MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:2,ter:null}},
-    {id:'qsif-sector-rotation',cat:'sector',name:'qSIF Sector Rotation LS',amc:'Quant MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:2.48}}
+    {id:'isif-equity',cat:'equity',name:'iSIF Equity Long-Short',amc:'ICICI Prudential MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:2.46}},
+    {id:'isif-aaa',cat:'aaa',name:'iSIF Active Asset Allocator',amc:'ICICI Prudential MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:2.17}},
+    {id:'platinum-hybrid',cat:'hybrid',name:'Platinum Hybrid Long-Short',amc:'Mirae Asset MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:2,ter:1.53}},
+    {id:'qsif-sector-rotation',cat:'sector',name:'qSIF Sector Rotation LS',amc:'Quant MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:3.46}}
   ];
 
   // working dataset = metadata + live/seed values

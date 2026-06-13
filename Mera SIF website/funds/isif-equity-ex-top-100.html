@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>iSIF Equity Ex-Top 100 LS Review — ICICI Pru SMID Long-Short SIF | Mera SIF</title>
-<meta name="description" content="Detailed review of ICICI Prudential iSIF Equity Ex-Top 100 Long-Short — India's largest SMID equity SIF at ₹1,535 Cr AUM. Trustner Fund Score 74 / BUY (satellite). Pillar breakdown, recovery from March 2026 crash.">
+<meta name="description" content="Detailed review of ICICI Prudential iSIF Equity Ex-Top 100 Long-Short — India's largest SMID equity SIF at ₹1,707 Cr AUM. Trustner Fund Score 74 / BUY (satellite). Pillar breakdown, recovery from March 2026 crash.">
 <link rel="canonical" href="https://www.merasif.com/funds/isif-equity-ex-top-100.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -148,11 +148,11 @@
 <section class="keystats">
   <div class="container">
     <div class="ks-grid">
-      <div class="ks-item"><div class="ks-label">1M Return</div><div class="ks-value down">▼ 0.20%</div><div class="ks-sub">Value Research · 9 Jun 26</div></div>
-      <div class="ks-item"><div class="ks-label">3M Return</div><div class="ks-value up">▲ 1.55%</div><div class="ks-sub">Regular plan</div></div>
-      <div class="ks-item"><div class="ks-label">AUM</div><div class="ks-value">₹1,535 Cr</div><div class="ks-sub">Net assets (VR)</div></div>
-      <div class="ks-item"><div class="ks-label">Risk Band</div><div class="ks-value">5</div><div class="ks-sub">VR risk level</div></div>
-      <div class="ks-item"><div class="ks-label">Expense Ratio</div><div class="ks-value">2.55%</div><div class="ks-sub">Regular plan TER</div></div>
+      <div class="ks-item"><div class="ks-label">1M Return</div><div class="ks-value up" id="ksM1">▲ 0.82%</div><div class="ks-sub">Value Research · 13 Jun 26</div></div>
+      <div class="ks-item"><div class="ks-label">3M Return</div><div class="ks-value up" id="ksM3">▲ 4.89%</div><div class="ks-sub">Regular plan</div></div>
+      <div class="ks-item"><div class="ks-label">AUM</div><div class="ks-value" id="ksAum">₹1,707 Cr</div><div class="ks-sub">Net assets (VR)</div></div>
+      <div class="ks-item"><div class="ks-label">Risk Band</div><div class="ks-value" id="ksRisk">5</div><div class="ks-sub">VR risk level</div></div>
+      <div class="ks-item"><div class="ks-label">Expense Ratio</div><div class="ks-value" id="ksTer">2.86%</div><div class="ks-sub">Regular plan TER</div></div>
       <div class="ks-item"><div class="ks-label">Min Investment</div><div class="ks-value">₹10L</div><div class="ks-sub">Aggregated PAN basis</div></div>
     </div>
   </div>
@@ -168,10 +168,10 @@
   .perf-sub{font-size:11.5px;color:var(--gray-500);margin-top:4px}
   .perf-note{font-size:12px;color:var(--gray-500);font-style:italic;margin-top:16px}
 </style>
-<section class="bg-light" id="navHist" data-fund="FID">
+<section class="bg-light" id="navHist" data-fund="isif-equity-ex-top-100">
   <div class="container">
     <h2 style="font-family:'Fraunces',Georgia,serif;font-size:30px;font-weight:700;color:var(--navy);letter-spacing:-.6px;margin-bottom:8px">Performance &amp; key facts</h2>
-    <p class="section-lead">Regular-Growth plan, sourced from <strong>Value Research</strong> (SIF screener) as of 9 Jun 2026. We publish only officially-disclosed figures &mdash; per-unit NAV and since-inception returns will appear once an official daily NAV feed is connected. We never show indicative numbers.</p>
+    <p class="section-lead">Per-unit NAV and since-inception are now sourced live from <strong>AMFI&#39;s official SIF NAV feed</strong> (Regular-Growth, updated daily); 1M / 3M returns, AUM, risk band and TER from <strong>Value Research</strong>. Only officially-sourced data &mdash; we never show indicative numbers.</p>
     <div class="perf-wrap" id="perfGrid"><div class="perf-card"><div class="perf-k">Loading&hellip;</div></div></div>
     <p class="perf-note" id="perfNote"></p>
   </div>
@@ -182,12 +182,12 @@
   function ret(label,v,sub){var cls='',txt='—';if(v!=null&&!isNaN(v)){var n=+v;cls=n>0?'up':(n<0?'down':'');txt=(n>0?'▲ ':(n<0?'▼ ':''))+Math.abs(n).toFixed(2)+'%';}return '<div class="perf-card"><div class="perf-k">'+label+'</div><div class="perf-v '+cls+'">'+txt+'</div><div class="perf-sub">'+sub+'</div></div>';}
   function card(label,val,sub){return '<div class="perf-card"><div class="perf-k">'+label+'</div><div class="perf-v">'+val+'</div><div class="perf-sub">'+sub+'</div></div>';}
   fetch('../sif-nav.php?fund='+encodeURIComponent(id),{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){
-    if(d.error) throw 0;
+    if(d.error) throw 0;var K=function(i,h,c){var e=document.getElementById(i);if(e){e.innerHTML=h;e.className='ks-value'+(c?' '+c:'');}};var C=function(v){if(v==null||isNaN(v))return['—',''];var n=+v;return[(n>0?'▲ ':(n<0?'▼ ':''))+Math.abs(n).toFixed(2)+'%',n>0?'up':(n<0?'down':'')];};var _a=C(d.m1),_b=C(d.m3);K('ksM1',_a[0],_a[1]);K('ksM3',_b[0],_b[1]);K('ksAum',d.aum!=null?'₹'+Number(d.aum).toLocaleString('en-IN')+' Cr':'—');K('ksRisk',d.risk!=null?String(d.risk):'—');K('ksTer',d.ter!=null?Number(d.ter).toFixed(2)+'%':'—');
     var aum=d.aum!=null?'₹'+Number(d.aum).toLocaleString('en-IN')+' Cr':'—';
     var risk=d.risk!=null?String(d.risk):'—';
     var ter=d.ter!=null?Number(d.ter).toFixed(2)+'%':'—';
-    document.getElementById('perfGrid').innerHTML=ret('1-Month',d.m1,'Regular plan')+ret('3-Month',d.m3,'Regular plan')+card('AUM',aum,'Net assets')+card('Risk Band',risk,'VR risk level')+card('Expense Ratio',ter,'Regular plan TER');
-    document.getElementById('perfNote').innerHTML='Source: Value Research SIF screener, '+(d.asOf||'')+' · Regular-Growth plan. Returns absolute (point-to-point). '+((d.source==='amfi'||d.source==='live')?'NAV on live official feed.':'NAV &amp; since-inception shown only once an official NAV feed is connected — we never display indicative values.');
+    var navTxt=d.nav!=null?'₹'+((+d.nav)>=100?(+d.nav).toFixed(2):(+d.nav).toFixed(4).replace(/0+$/,'').replace(/\.$/,'')):'—';var navSub=(d.source==='amfi'||d.source==='live')?('Official AMFI · '+(d.navDate||'')):'Awaiting feed';document.getElementById('perfGrid').innerHTML=card('NAV',navTxt,navSub)+ret('Since launch',d.si,'vs ₹'+(d.face||10)+' face')+ret('1-Month',d.m1,'Regular plan')+ret('3-Month',d.m3,'Regular plan')+card('AUM',aum,'Net assets')+card('Risk',risk,'VR level')+card('TER',ter,'Regular plan');
+    document.getElementById('perfNote').innerHTML='NAV &amp; since-inception: official AMFI SIF NAV feed (Regular-Growth, updated daily). 1M/3M, AUM, risk &amp; TER: Value Research, '+(d.vrAsOf||'')+'. Returns absolute (point-to-point). We never display indicative values.';
   }).catch(function(){document.getElementById('perfNote').textContent='Live data reconnecting…';});
 })();
 </script>
@@ -207,13 +207,13 @@
 
     <div class="pillars">
 
-      <div class="pillar"><div class="p-head"><div class="p-name">P1 · Manager</div><div class="p-score">16<sub>/20</sub></div></div><div class="p-title">Manager Pedigree</div><div class="p-bar"><div class="p-bar-fill" style="width:80%"></div></div><div class="p-body">SMID specialist Mittul Kalawadia leads. 18+ years at ICICI Pru, runs the Smallcap and Midcap MFs (both top-decile across 3- and 5-year horizons). Co-PM Sankaran Naren oversees the short overlay strategy at the platform level.</div></div>
+      <div class="pillar"><div class="p-head"><div class="p-name">P1 · Manager</div><div class="p-score">16<sub>/20</sub></div></div><div class="p-title">Manager Pedigree</div><div class="p-bar"><div class="p-bar-fill" style="width:80%"></div></div><div class="p-body">Run by ICICI Pru's SMID desk with Sankaran Naren overseeing the strategy at the platform level — the same research engine behind the house's top-decile small- and mid-cap franchises. (Verify current named managers in the scheme SID.)</div></div>
 
       <div class="pillar"><div class="p-head"><div class="p-name">P2 · Strategy</div><div class="p-score">12<sub>/15</sub></div></div><div class="p-title">Strategy Coherence</div><div class="p-bar"><div class="p-bar-fill" style="width:80%"></div></div><div class="p-body">≥65% in SMID (rank &gt;100 by market cap) + up to 25% short via index/stock F&amp;O. The short side is mostly Nifty Midcap 150 futures or Nifty Smallcap 100 futures, hedging market-beta during stress.</div></div>
 
       <div class="pillar"><div class="p-head"><div class="p-name">P3 · Platform</div><div class="p-score">14<sub>/15</sub></div></div><div class="p-title">AMC Platform</div><div class="p-bar"><div class="p-bar-fill" style="width:93%"></div></div><div class="p-body">ICICI Pru — same institutional bench as iSIF Hybrid. Research coverage on 300+ SMID names. Risk systems that can handle a fast-moving SMID book without operational issues.</div></div>
 
-      <div class="pillar"><div class="p-head"><div class="p-name">P4 · Cost &amp; Liquidity</div><div class="p-score">7<sub>/10</sub></div></div><div class="p-title">Cost &amp; Liquidity</div><div class="p-bar"><div class="p-bar-fill" style="width:70%"></div></div><div class="p-body">Direct plan TER ~1.05% (higher than hybrid SIFs, reflecting SMID research cost). Daily liquidity, T+2 redemption, 1% exit load &lt;365 days.</div></div>
+      <div class="pillar"><div class="p-head"><div class="p-name">P4 · Cost &amp; Liquidity</div><div class="p-score">7<sub>/10</sub></div></div><div class="p-title">Cost &amp; Liquidity</div><div class="p-bar"><div class="p-bar-fill" style="width:70%"></div></div><div class="p-body">Regular-plan TER 2.86% (Value Research; higher than hybrid SIFs, reflecting SMID research cost). Daily liquidity, T+2 redemption, 1% exit load &lt;365 days.</div></div>
 
       <div class="pillar"><div class="p-head"><div class="p-name">P5 · Risk Architecture</div><div class="p-score">10<sub>/15</sub></div></div><div class="p-title">Risk Architecture</div><div class="p-bar"><div class="p-bar-fill" style="width:67%"></div></div><div class="p-body">Value Research risk Level 5 (the highest) — realised volatility is high. Its drawdown in the early-2026 SMID correction showed the short overlay reduces, but does not eliminate, SMID beta. Position-size appropriately.</div></div>
 
@@ -232,13 +232,13 @@
 
     <div class="strat-grid">
       <div class="strat-body">
-        <p><strong>The long book is 80-90% in SMID names ranked beyond Top 100</strong> by market cap. Mittul Kalawadia runs a concentrated portfolio of 40-50 high-conviction names, leveraging ICICI Pru's deep SMID research coverage.</p>
+        <p><strong>The long book is 80-90% in SMID names ranked beyond Top 100</strong> by market cap. The fund runs a concentrated portfolio of 40-50 high-conviction names, leveraging ICICI Pru's deep SMID research coverage.</p>
 
         <p><strong>The short overlay is 15-25% gross.</strong> Predominantly Nifty Midcap 150 and Smallcap 100 futures, designed to hedge market-beta during stress rather than express stock-specific bear views. During Mar 2026 correction, the short book contributed ~3-4 percentage points of relative outperformance.</p>
 
         <p><strong>The early months tested the design.</strong> Launched in early 2026, the fund ran straight into a sharp SMID correction. The drawdown reflects SMID beta; the thesis rests on the long book being high-quality SMID with structural earnings tailwinds as the cycle turns.</p>
 
-        <p><strong>At ₹1,535 Cr AUM, this is the largest equity-oriented SIF in India.</strong> Capacity for another ₹1,500-2,000 Cr before SMID liquidity becomes a concern. ICICI Pru has signalled the fund will soft-close before reaching ₹3,000 Cr.</p>
+        <p><strong>At ₹1,707 Cr AUM, this is the largest equity-oriented SIF in India.</strong> Capacity for another ₹1,500-2,000 Cr before SMID liquidity becomes a concern. ICICI Pru has signalled the fund will soft-close before reaching ₹3,000 Cr.</p>
       </div>
 
       <div class="strat-side">
@@ -248,9 +248,9 @@
           <dt>Short overlay</dt><dd>Up to 25% via F&amp;O<br><em>Mostly Nifty Midcap / Smallcap futures</em></dd>
           <dt>Stock count</dt><dd>40-50 names typically</dd>
           <dt>Benchmark</dt><dd>Nifty Midcap 150 TRI</dd>
-          <dt>AMFI Risk Band</dt><dd>Band 4 — Moderately High</dd>
-          <dt>Direct plan TER</dt><dd>~1.05%</dd>
-          <dt>Regular plan TER</dt><dd>~1.75%</dd>
+          <dt>Risk Band (VR)</dt><dd>Level 5 — High</dd>
+          <dt>Expense ratio</dt><dd>2.86% <em>(Regular plan · Value Research)</em></dd>
+          <dt>Redemption</dt><dd>Daily</dd>
           <dt>Min investment</dt><dd>₹10 lakh (PAN-level)</dd>
           <dt>Liquidity</dt><dd>Daily NAV, T+2 redemption</dd>
           <dt>Exit load</dt><dd>1% if redeemed &lt;365 days</dd>
@@ -269,7 +269,7 @@
       <div class="tv-body">
         <p>iSIF Equity Ex-Top 100 is the SIF we recommend as a high-conviction satellite — not a core holding.</p>
         <p>Early since-inception numbers are misleading for this fund — they capture a launch straight into a sharp SMID correction. The more useful signals are the manager's long-run SMID record and the quality of the current book, not the first few months of NAV.</p>
-        <p>Mittul Kalawadia's SMID track record at ICICI Pru is among the best in India. His Smallcap Fund and Midcap Fund have both delivered top-decile returns over 3- and 5-year windows. The SIF wrapper gives him 25% short capacity that he didn't have in those vehicles — useful when valuations get stretched.</p>
+        <p>ICICI Pru's SMID franchise is among the best in India — its small- and mid-cap funds have delivered top-decile returns over 3- and 5-year windows. The SIF wrapper adds 25% short capacity those vehicles never had — useful when valuations get stretched.</p>
         <p>Sized at 4-7% of net worth, this fund can materially lift portfolio IRR over a 5-7 year horizon. Sized above 10%, the drawdown risk becomes uncomfortable. Discipline on position sizing is the entire game here.</p>
       </div>
       <div class="tv-attrib">— Trustner Research Desk · <em>Note dated 28 May 2026</em></div>
@@ -316,11 +316,11 @@
       <tbody>
         <tr class="subject"><td>TFS Score</td><td>74 ★ BUY (sat.)</td><td>Mon-ID</td><td>Mon-ID</td></tr>
         <tr><td>AMC</td><td><strong>ICICI Prudential</strong></td><td>Quant</td><td>The Wealth Company</td></tr>
-        <tr><td>Lead PM</td><td>Mittul Kalawadia</td><td>Sandeep Tandon</td><td>(Multiple)</td></tr>
+        <tr><td>Lead PM</td><td>ICICI Pru SMID desk</td><td>Sandeep Tandon</td><td>(Multiple)</td></tr>
         <tr><td>Launched</td><td>Jan 2026</td><td>Jan 2026</td><td>May 2026 (new)</td></tr>
         <tr><td>Approach</td><td>Fundamental SMID + short hedge</td><td>Systematic VLRT</td><td>Long-biased SMID</td></tr>
         <tr><td class="num">1M return (VR)</td><td class="num"><strong>−0.20%</strong></td><td class="num">−1.80%</td><td class="num">—</td></tr>
-        <tr><td class="num">AUM</td><td class="num"><strong>₹1,535 Cr</strong></td><td class="num">₹170 Cr</td><td class="num">Data gap</td></tr>
+        <tr><td class="num">AUM</td><td class="num"><strong>₹1,707 Cr</strong></td><td class="num">₹170 Cr</td><td class="num">Data gap</td></tr>
         <tr><td>Best fit</td><td>Satellite SMID alpha</td><td>Quant overlay seekers</td><td>New AMC bet (Wait)</td></tr>
       </tbody>
     </table>
@@ -336,7 +336,7 @@
     <div class="risks">
       <div class="risk"><div class="risk-title">⚠ Prolonged SMID drawdown</div><div class="risk-body">If the SMID cycle extends for another 6-12 months of correction, this fund will continue to drag on portfolio NAV. Investors need conviction to hold through.</div></div>
       <div class="risk"><div class="risk-title">⚠ Soft close timing</div><div class="risk-body">ICICI Pru has signalled soft close near ₹3,000 Cr. If AUM races past this number without slowdown, position sizing and exit liquidity may compress.</div></div>
-      <div class="risk"><div class="risk-title">⚠ Manager-key risk</div><div class="risk-body">Mittul Kalawadia is the SMID franchise at ICICI Pru. Any move would weaken the structural edge — ICICI's other SMID managers are competent but not at his tier.</div></div>
+      <div class="risk"><div class="risk-title">⚠ Manager-key risk</div><div class="risk-body">The SMID desk's key people are the franchise. Any senior exit would weaken the structural edge — monitor SID updates for manager changes.</div></div>
       <div class="risk"><div class="risk-title">⚠ SEBI re-categorisation</div><div class="risk-body">SEBI is reviewing how Equity Ex-Top 100 LS is benchmarked. A change to "must use Nifty 500 LO-MO" benchmark would reduce comparability to peer SMID strategies.</div></div>
     </div>
   </div>

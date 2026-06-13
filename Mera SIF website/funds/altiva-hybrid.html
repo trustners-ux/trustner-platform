@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Altiva Hybrid Long-Short Review — Edelweiss MF Best-Performing SIF | Mera SIF</title>
-<meta name="description" content="Detailed review of Edelweiss Altiva Hybrid Long-Short Fund — an arbitrage-led hybrid SIF with the lowest TER in our hybrid coverage. Trustner Fund Score 76 / ACCUMULATE. Pillar breakdown with real returns and AUM (Value Research, Regular plan).">
+<meta name="description" content="Detailed review of Edelweiss Altiva Hybrid Long-Short Fund — India's first and largest hybrid SIF. Trustner Fund Score 76 / ACCUMULATE. Pillar breakdown with real returns and AUM (Value Research, Regular plan).">
 <link rel="canonical" href="https://www.merasif.com/funds/altiva-hybrid.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -130,8 +130,8 @@
     <div class="fh-grid">
       <div>
         <h1 class="fh-title">Altiva Hybrid Long-Short Fund</h1>
-        <div class="fh-amc">By <strong>Edelweiss Mutual Fund</strong> · Lead PM Bhavesh Jain · Launched Oct 2025</div>
-        <p class="fh-tagline">An arbitrage-led hybrid SIF built for stability — covered calls, cash-futures and merger arbitrage over a conservative large-cap sleeve and AAA debt. <strong style="color:#fff">+2.87% over 3 months</strong> (Value Research, Regular plan), at the lowest TER in our hybrid coverage.</p>
+        <div class="fh-amc">By <strong>Edelweiss Mutual Fund</strong> · PMs Bhavesh Jain &amp; Bharat Lahoti (equity), Dhawal Dalal (debt) · Launched Oct 2025</div>
+        <p class="fh-tagline">An arbitrage-led hybrid SIF built for stability — covered calls, cash-futures and merger arbitrage over a conservative large-cap sleeve and AAA debt. <strong style="color:#fff">+4.01% over 3 months</strong> (Value Research, Regular plan) — among the steadiest profiles in the category (VR risk level 1).</p>
         <div class="fh-badges">
           <span class="fh-badge cat">Hybrid Long-Short</span>
           <span class="fh-badge regulated">SEBI Reg · ₹10L min · Daily liquidity</span>
@@ -151,11 +151,11 @@
 <section class="keystats">
   <div class="container">
     <div class="ks-grid">
-      <div class="ks-item"><div class="ks-label">1M Return</div><div class="ks-value up">▲ 0.44%</div><div class="ks-sub">Value Research · 9 Jun 26</div></div>
-      <div class="ks-item"><div class="ks-label">3M Return</div><div class="ks-value up">▲ 2.87%</div><div class="ks-sub">Regular plan</div></div>
-      <div class="ks-item"><div class="ks-label">AUM</div><div class="ks-value">₹3,761 Cr</div><div class="ks-sub">Net assets (VR)</div></div>
-      <div class="ks-item"><div class="ks-label">Risk Band</div><div class="ks-value">2</div><div class="ks-sub">VR risk level</div></div>
-      <div class="ks-item"><div class="ks-label">Expense Ratio</div><div class="ks-value">1.81%</div><div class="ks-sub">Regular plan TER</div></div>
+      <div class="ks-item"><div class="ks-label">1M Return</div><div class="ks-value up" id="ksM1">▲ 1.52%</div><div class="ks-sub">Value Research · 13 Jun 26</div></div>
+      <div class="ks-item"><div class="ks-label">3M Return</div><div class="ks-value up" id="ksM3">▲ 4.01%</div><div class="ks-sub">Regular plan</div></div>
+      <div class="ks-item"><div class="ks-label">AUM</div><div class="ks-value" id="ksAum">₹4,466 Cr</div><div class="ks-sub">Net assets (VR)</div></div>
+      <div class="ks-item"><div class="ks-label">Risk Band</div><div class="ks-value" id="ksRisk">1</div><div class="ks-sub">VR risk level</div></div>
+      <div class="ks-item"><div class="ks-label">Expense Ratio</div><div class="ks-value" id="ksTer">2.18%</div><div class="ks-sub">Regular plan TER</div></div>
       <div class="ks-item"><div class="ks-label">Min Investment</div><div class="ks-value">₹10L</div><div class="ks-sub">Aggregated PAN basis</div></div>
     </div>
   </div>
@@ -171,10 +171,10 @@
   .perf-sub{font-size:11.5px;color:var(--gray-500);margin-top:4px}
   .perf-note{font-size:12px;color:var(--gray-500);font-style:italic;margin-top:16px}
 </style>
-<section class="bg-light" id="navHist" data-fund="FID">
+<section class="bg-light" id="navHist" data-fund="altiva-hybrid">
   <div class="container">
     <h2 style="font-family:'Fraunces',Georgia,serif;font-size:30px;font-weight:700;color:var(--navy);letter-spacing:-.6px;margin-bottom:8px">Performance &amp; key facts</h2>
-    <p class="section-lead">Regular-Growth plan, sourced from <strong>Value Research</strong> (SIF screener) as of 9 Jun 2026. We publish only officially-disclosed figures &mdash; per-unit NAV and since-inception returns will appear once an official daily NAV feed is connected. We never show indicative numbers.</p>
+    <p class="section-lead">Per-unit NAV and since-inception are now sourced live from <strong>AMFI&#39;s official SIF NAV feed</strong> (Regular-Growth, updated daily); 1M / 3M returns, AUM, risk band and TER from <strong>Value Research</strong>. Only officially-sourced data &mdash; we never show indicative numbers.</p>
     <div class="perf-wrap" id="perfGrid"><div class="perf-card"><div class="perf-k">Loading&hellip;</div></div></div>
     <p class="perf-note" id="perfNote"></p>
   </div>
@@ -185,12 +185,12 @@
   function ret(label,v,sub){var cls='',txt='—';if(v!=null&&!isNaN(v)){var n=+v;cls=n>0?'up':(n<0?'down':'');txt=(n>0?'▲ ':(n<0?'▼ ':''))+Math.abs(n).toFixed(2)+'%';}return '<div class="perf-card"><div class="perf-k">'+label+'</div><div class="perf-v '+cls+'">'+txt+'</div><div class="perf-sub">'+sub+'</div></div>';}
   function card(label,val,sub){return '<div class="perf-card"><div class="perf-k">'+label+'</div><div class="perf-v">'+val+'</div><div class="perf-sub">'+sub+'</div></div>';}
   fetch('../sif-nav.php?fund='+encodeURIComponent(id),{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){
-    if(d.error) throw 0;
+    if(d.error) throw 0;var K=function(i,h,c){var e=document.getElementById(i);if(e){e.innerHTML=h;e.className='ks-value'+(c?' '+c:'');}};var C=function(v){if(v==null||isNaN(v))return['—',''];var n=+v;return[(n>0?'▲ ':(n<0?'▼ ':''))+Math.abs(n).toFixed(2)+'%',n>0?'up':(n<0?'down':'')];};var _a=C(d.m1),_b=C(d.m3);K('ksM1',_a[0],_a[1]);K('ksM3',_b[0],_b[1]);K('ksAum',d.aum!=null?'₹'+Number(d.aum).toLocaleString('en-IN')+' Cr':'—');K('ksRisk',d.risk!=null?String(d.risk):'—');K('ksTer',d.ter!=null?Number(d.ter).toFixed(2)+'%':'—');
     var aum=d.aum!=null?'₹'+Number(d.aum).toLocaleString('en-IN')+' Cr':'—';
     var risk=d.risk!=null?String(d.risk):'—';
     var ter=d.ter!=null?Number(d.ter).toFixed(2)+'%':'—';
-    document.getElementById('perfGrid').innerHTML=ret('1-Month',d.m1,'Regular plan')+ret('3-Month',d.m3,'Regular plan')+card('AUM',aum,'Net assets')+card('Risk Band',risk,'VR risk level')+card('Expense Ratio',ter,'Regular plan TER');
-    document.getElementById('perfNote').innerHTML='Source: Value Research SIF screener, '+(d.asOf||'')+' · Regular-Growth plan. Returns absolute (point-to-point). '+((d.source==='amfi'||d.source==='live')?'NAV on live official feed.':'NAV &amp; since-inception shown only once an official NAV feed is connected — we never display indicative values.');
+    var navTxt=d.nav!=null?'₹'+((+d.nav)>=100?(+d.nav).toFixed(2):(+d.nav).toFixed(4).replace(/0+$/,'').replace(/\.$/,'')):'—';var navSub=(d.source==='amfi'||d.source==='live')?('Official AMFI · '+(d.navDate||'')):'Awaiting feed';document.getElementById('perfGrid').innerHTML=card('NAV',navTxt,navSub)+ret('Since launch',d.si,'vs ₹'+(d.face||10)+' face')+ret('1-Month',d.m1,'Regular plan')+ret('3-Month',d.m3,'Regular plan')+card('AUM',aum,'Net assets')+card('Risk',risk,'VR level')+card('TER',ter,'Regular plan');
+    document.getElementById('perfNote').innerHTML='NAV &amp; since-inception: official AMFI SIF NAV feed (Regular-Growth, updated daily). 1M/3M, AUM, risk &amp; TER: Value Research, '+(d.vrAsOf||'')+'. Returns absolute (point-to-point). We never display indicative values.';
   }).catch(function(){document.getElementById('perfNote').textContent='Live data reconnecting…';});
 })();
 </script>
@@ -201,15 +201,15 @@
     <p class="section-lead">Altiva's score is built on <strong>strategy coherence, low-correlation track record</strong>, and <strong>capital protection through the March 2026 mid-cap crash</strong>. The cost & liquidity score is the highest in the category. Track record is still the only structural cap.</p>
     <div class="pillars">
 
-      <div class="pillar"><div class="p-head"><div class="p-name">P1 · Manager</div><div class="p-score">16<sub>/20</sub></div></div><div class="p-title">Manager Pedigree</div><div class="p-bar"><div class="p-bar-fill" style="width:80%"></div></div><div class="p-body">Bhavesh Jain has been with Edelweiss MF since 2009, building the firm's arbitrage and balanced advantage franchise. Co-PM Bharat Lahoti handles the equity sleeve, brings 15+ years across Edelweiss PMS and AIF strategies.</div></div>
+      <div class="pillar"><div class="p-head"><div class="p-name">P1 · Manager</div><div class="p-score">16<sub>/20</sub></div></div><div class="p-title">Manager Pedigree</div><div class="p-bar"><div class="p-bar-fill" style="width:80%"></div></div><div class="p-body">Bhavesh Jain (16+ years, architect of Edelweiss's risk-adjusted-returns and arbitrage franchise) and Bharat Lahoti (18 years across portfolio management and macro/sector research, ex-global hedge fund) run the equity sleeve; Dhawal Dalal (28 years) anchors debt, with Pranavi Kulkarni; Amit Vora covers overseas.</div></div>
 
       <div class="pillar"><div class="p-head"><div class="p-name">P2 · Strategy</div><div class="p-score">13<sub>/15</sub></div></div><div class="p-title">Strategy Coherence</div><div class="p-bar"><div class="p-bar-fill" style="width:87%"></div></div><div class="p-body">Net equity band of 25-65%. Arbitrage forms the bedrock — covered calls, cash-futures, and merger arb. The unhedged equity sleeve is conservatively positioned in large caps. Closest to a "next-gen BAF" in design philosophy.</div></div>
 
       <div class="pillar"><div class="p-head"><div class="p-name">P3 · Platform</div><div class="p-score">12<sub>/15</sub></div></div><div class="p-title">AMC Platform</div><div class="p-bar"><div class="p-bar-fill" style="width:80%"></div></div><div class="p-body">Edelweiss AMC is mid-sized (~₹1.1 lakh Cr AUM) but punches above its weight. Strong BAF and arbitrage franchise. Risk and operations systems are institutional grade. The lower score reflects scale, not quality.</div></div>
 
-      <div class="pillar"><div class="p-head"><div class="p-name">P4 · Cost &amp; Liquidity</div><div class="p-score">9<sub>/10</sub></div></div><div class="p-title">Cost &amp; Liquidity</div><div class="p-bar"><div class="p-bar-fill" style="width:90%"></div></div><div class="p-body">Direct plan TER ~0.85% (lowest among hybrid SIFs we cover). Daily liquidity. No exit load after 12 months. Materially cheaper than the average Cat-III AIF doing similar things.</div></div>
+      <div class="pillar"><div class="p-head"><div class="p-name">P4 · Cost &amp; Liquidity</div><div class="p-score">9<sub>/10</sub></div></div><div class="p-title">Cost &amp; Liquidity</div><div class="p-bar"><div class="p-bar-fill" style="width:90%"></div></div><div class="p-body">Regular-plan TER 2.18% (Value Research). Twice-weekly redemption. Materially cheaper than the average Cat-III AIF doing similar things.</div></div>
 
-      <div class="pillar"><div class="p-head"><div class="p-name">P5 · Risk Architecture</div><div class="p-score">13<sub>/15</sub></div></div><div class="p-title">Risk Architecture</div><div class="p-bar"><div class="p-bar-fill" style="width:87%"></div></div><div class="p-body">AMFI Risk Band 2 — Moderately Low. The arbitrage bedrock kept the fund flat-to-positive through the March crash. The single best capital-protection record in the live SIF universe.</div></div>
+      <div class="pillar"><div class="p-head"><div class="p-name">P5 · Risk Architecture</div><div class="p-score">13<sub>/15</sub></div></div><div class="p-title">Risk Architecture</div><div class="p-bar"><div class="p-bar-fill" style="width:87%"></div></div><div class="p-body">Risk band 1 — Low (Value Research), the lowest rating in the category. The arbitrage bedrock gives it the steadiest profile in the live SIF universe.</div></div>
 
       <div class="pillar"><div class="p-head"><div class="p-name">P6 · Track Record</div><div class="p-score">8<sub>/15</sub></div></div><div class="p-title">Track Record</div><div class="p-bar"><div class="p-bar-fill" style="width:53%"></div></div><div class="p-body">7 months live — longest in the SIF universe. We give partial credit for navigating the March correction with positive returns. Full credit requires 24 months and a complete cycle.</div></div>
 
@@ -243,9 +243,9 @@
           <dt>Unhedged equity</dt><dd>25-35% (large cap dominant)</dd>
           <dt>Debt allocation</dt><dd>20-30% (AAA, 1-3 yr)</dd>
           <dt>Short instruments</dt><dd>Index &amp; stock F&amp;O<br><em>Net short capped &lt;20%</em></dd>
-          <dt>AMFI Risk Band</dt><dd>Band 2 — Moderately Low</dd>
-          <dt>Direct plan TER</dt><dd>~0.85% (category lowest)</dd>
-          <dt>Regular plan TER</dt><dd>~1.55%</dd>
+          <dt>Risk Band (VR)</dt><dd>Level 1 — Low</dd>
+          <dt>Expense ratio</dt><dd>2.18% <em>(Regular plan · Value Research)</em></dd>
+          <dt>Redemption</dt><dd>Twice weekly</dd>
           <dt>Min investment</dt><dd>₹10 lakh (PAN-level)</dd>
           <dt>Liquidity</dt><dd>Daily NAV, T+2 redemption</dd>
           <dt>Exit load</dt><dd>1% if redeemed within 365 days</dd>
@@ -310,11 +310,11 @@
       <tbody>
         <tr class="subject"><td>TFS Score</td><td>76 ACCUMULATE</td><td>78 ★ BUY</td><td>75 ACCUMULATE</td></tr>
         <tr><td>AMC</td><td>Edelweiss</td><td>ICICI Prudential</td><td>SBI</td></tr>
-        <tr><td>Lead PM</td><td>Bhavesh Jain</td><td>Sankaran Naren</td><td>R Srinivasan</td></tr>
+        <tr><td>Lead PM</td><td>Jain / Lahoti / Dalal</td><td>Sankaran Naren</td><td>R Srinivasan</td></tr>
         <tr><td>Launched</td><td><strong>Oct 2025 (longest)</strong></td><td>Jan 2026</td><td>Oct 2025</td></tr>
         <tr><td>Net equity range</td><td>25% to 65%</td><td>−7.5% to +75%</td><td>30% to 70%</td></tr>
-        <tr><td class="num">AUM</td><td class="num">₹3,761 Cr</td><td class="num">₹803 Cr</td><td class="num"><strong>₹3,462 Cr</strong></td></tr>
-        <tr><td class="num">Direct TER</td><td class="num"><strong>~0.85%</strong></td><td class="num">~0.90%</td><td class="num">~0.95%</td></tr>
+        <tr><td class="num">AUM</td><td class="num">₹4,466 Cr</td><td class="num">₹844 Cr</td><td class="num"><strong>₹3,462 Cr</strong></td></tr>
+        <tr><td class="num">TER (Regular)</td><td class="num"><strong>2.18%</strong></td><td class="num">2.64%</td><td class="num">2.06%</td></tr>
         <tr><td>Best fit</td><td>Conservative HNI / arbitrage replacement</td><td>Contrarian / unconstrained</td><td>Mass-affluent core</td></tr>
       </tbody>
     </table>

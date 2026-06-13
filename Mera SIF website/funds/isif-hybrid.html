@@ -182,11 +182,11 @@
 <section class="keystats">
   <div class="container">
     <div class="ks-grid">
-      <div class="ks-item"><div class="ks-label">1M Return</div><div class="ks-value down">▼ 0.84%</div><div class="ks-sub">Value Research · 9 Jun 26</div></div>
-      <div class="ks-item"><div class="ks-label">3M Return</div><div class="ks-value up">▲ 0.12%</div><div class="ks-sub">Regular plan</div></div>
-      <div class="ks-item"><div class="ks-label">AUM</div><div class="ks-value">₹803 Cr</div><div class="ks-sub">Net assets (VR)</div></div>
-      <div class="ks-item"><div class="ks-label">Risk Band</div><div class="ks-value">5</div><div class="ks-sub">VR risk level</div></div>
-      <div class="ks-item"><div class="ks-label">Expense Ratio</div><div class="ks-value">2.53%</div><div class="ks-sub">Regular plan TER</div></div>
+      <div class="ks-item"><div class="ks-label">1M Return</div><div class="ks-value up" id="ksM1">▲ 1.55%</div><div class="ks-sub">Value Research · 13 Jun 26</div></div>
+      <div class="ks-item"><div class="ks-label">3M Return</div><div class="ks-value up" id="ksM3">▲ 4.08%</div><div class="ks-sub">Regular plan</div></div>
+      <div class="ks-item"><div class="ks-label">AUM</div><div class="ks-value" id="ksAum">₹844 Cr</div><div class="ks-sub">Net assets (VR)</div></div>
+      <div class="ks-item"><div class="ks-label">Risk Band</div><div class="ks-value" id="ksRisk">5</div><div class="ks-sub">VR risk level</div></div>
+      <div class="ks-item"><div class="ks-label">Expense Ratio</div><div class="ks-value" id="ksTer">2.64%</div><div class="ks-sub">Regular plan TER</div></div>
       <div class="ks-item"><div class="ks-label">Min Investment</div><div class="ks-value">₹10L</div><div class="ks-sub">Aggregated PAN basis</div></div>
     </div>
   </div>
@@ -202,10 +202,10 @@
   .perf-sub{font-size:11.5px;color:var(--gray-500);margin-top:4px}
   .perf-note{font-size:12px;color:var(--gray-500);font-style:italic;margin-top:16px}
 </style>
-<section class="bg-light" id="navHist" data-fund="FID">
+<section class="bg-light" id="navHist" data-fund="isif-hybrid">
   <div class="container">
     <h2 style="font-family:'Fraunces',Georgia,serif;font-size:30px;font-weight:700;color:var(--navy);letter-spacing:-.6px;margin-bottom:8px">Performance &amp; key facts</h2>
-    <p class="section-lead">Regular-Growth plan, sourced from <strong>Value Research</strong> (SIF screener) as of 9 Jun 2026. We publish only officially-disclosed figures &mdash; per-unit NAV and since-inception returns will appear once an official daily NAV feed is connected. We never show indicative numbers.</p>
+    <p class="section-lead">Per-unit NAV and since-inception are now sourced live from <strong>AMFI&#39;s official SIF NAV feed</strong> (Regular-Growth, updated daily); 1M / 3M returns, AUM, risk band and TER from <strong>Value Research</strong>. Only officially-sourced data &mdash; we never show indicative numbers.</p>
     <div class="perf-wrap" id="perfGrid"><div class="perf-card"><div class="perf-k">Loading&hellip;</div></div></div>
     <p class="perf-note" id="perfNote"></p>
   </div>
@@ -216,12 +216,12 @@
   function ret(label,v,sub){var cls='',txt='—';if(v!=null&&!isNaN(v)){var n=+v;cls=n>0?'up':(n<0?'down':'');txt=(n>0?'▲ ':(n<0?'▼ ':''))+Math.abs(n).toFixed(2)+'%';}return '<div class="perf-card"><div class="perf-k">'+label+'</div><div class="perf-v '+cls+'">'+txt+'</div><div class="perf-sub">'+sub+'</div></div>';}
   function card(label,val,sub){return '<div class="perf-card"><div class="perf-k">'+label+'</div><div class="perf-v">'+val+'</div><div class="perf-sub">'+sub+'</div></div>';}
   fetch('../sif-nav.php?fund='+encodeURIComponent(id),{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){
-    if(d.error) throw 0;
+    if(d.error) throw 0;var K=function(i,h,c){var e=document.getElementById(i);if(e){e.innerHTML=h;e.className='ks-value'+(c?' '+c:'');}};var C=function(v){if(v==null||isNaN(v))return['—',''];var n=+v;return[(n>0?'▲ ':(n<0?'▼ ':''))+Math.abs(n).toFixed(2)+'%',n>0?'up':(n<0?'down':'')];};var _a=C(d.m1),_b=C(d.m3);K('ksM1',_a[0],_a[1]);K('ksM3',_b[0],_b[1]);K('ksAum',d.aum!=null?'₹'+Number(d.aum).toLocaleString('en-IN')+' Cr':'—');K('ksRisk',d.risk!=null?String(d.risk):'—');K('ksTer',d.ter!=null?Number(d.ter).toFixed(2)+'%':'—');
     var aum=d.aum!=null?'₹'+Number(d.aum).toLocaleString('en-IN')+' Cr':'—';
     var risk=d.risk!=null?String(d.risk):'—';
     var ter=d.ter!=null?Number(d.ter).toFixed(2)+'%':'—';
-    document.getElementById('perfGrid').innerHTML=ret('1-Month',d.m1,'Regular plan')+ret('3-Month',d.m3,'Regular plan')+card('AUM',aum,'Net assets')+card('Risk Band',risk,'VR risk level')+card('Expense Ratio',ter,'Regular plan TER');
-    document.getElementById('perfNote').innerHTML='Source: Value Research SIF screener, '+(d.asOf||'')+' · Regular-Growth plan. Returns absolute (point-to-point). '+((d.source==='amfi'||d.source==='live')?'NAV on live official feed.':'NAV &amp; since-inception shown only once an official NAV feed is connected — we never display indicative values.');
+    var navTxt=d.nav!=null?'₹'+((+d.nav)>=100?(+d.nav).toFixed(2):(+d.nav).toFixed(4).replace(/0+$/,'').replace(/\.$/,'')):'—';var navSub=(d.source==='amfi'||d.source==='live')?('Official AMFI · '+(d.navDate||'')):'Awaiting feed';document.getElementById('perfGrid').innerHTML=card('NAV',navTxt,navSub)+ret('Since launch',d.si,'vs ₹'+(d.face||10)+' face')+ret('1-Month',d.m1,'Regular plan')+ret('3-Month',d.m3,'Regular plan')+card('AUM',aum,'Net assets')+card('Risk',risk,'VR level')+card('TER',ter,'Regular plan');
+    document.getElementById('perfNote').innerHTML='NAV &amp; since-inception: official AMFI SIF NAV feed (Regular-Growth, updated daily). 1M/3M, AUM, risk &amp; TER: Value Research, '+(d.vrAsOf||'')+'. Returns absolute (point-to-point). We never display indicative values.';
   }).catch(function(){document.getElementById('perfNote').textContent='Live data reconnecting…';});
 })();
 </script>
@@ -239,9 +239,9 @@
 
       <div class="pillar"><div class="p-head"><div class="p-name">Pillar 3 · Platform</div><div class="p-score">14<sub>/15</sub></div></div><div class="p-title">AMC Platform</div><div class="p-bar"><div class="p-bar-fill" style="width:93%"></div></div><div class="p-body">ICICI Pru runs ₹8.5+ lakh crore AUM with one of India's deepest research benches and best-in-class risk systems. The platform that survived the Franklin debt crisis without a single yield blow-up.</div></div>
 
-      <div class="pillar"><div class="p-head"><div class="p-name">Pillar 4 · Cost & Liquidity</div><div class="p-score">8<sub>/10</sub></div></div><div class="p-title">Cost &amp; Liquidity</div><div class="p-bar"><div class="p-bar-fill" style="width:80%"></div></div><div class="p-body">Regular-plan TER 2.53%, Direct ~1.05% (Value Research). Daily liquidity, T+2 redemption, typical 1-year exit load. Still structured below the all-in cost of a Cat-III AIF (management fee + ~20% performance fee).</div></div>
+      <div class="pillar"><div class="p-head"><div class="p-name">Pillar 4 · Cost & Liquidity</div><div class="p-score">8<sub>/10</sub></div></div><div class="p-title">Cost &amp; Liquidity</div><div class="p-bar"><div class="p-bar-fill" style="width:80%"></div></div><div class="p-body">Regular-plan TER 2.64% (Value Research). Daily liquidity, T+2 redemption, typical 1-year exit load. Still structured below the all-in cost of a Cat-III AIF (management fee + ~20% performance fee).</div></div>
 
-      <div class="pillar"><div class="p-head"><div class="p-name">Pillar 5 · Risk Architecture</div><div class="p-score">12<sub>/15</sub></div></div><div class="p-title">Risk Architecture</div><div class="p-bar"><div class="p-bar-fill" style="width:80%"></div></div><div class="p-body">AMFI Risk Band 4 (Moderately High). Short side via index/stock derivatives with strict notional caps. Naren's bias toward contrarian positioning has historically reduced downside vs a 50:50 equity-debt benchmark.</div></div>
+      <div class="pillar"><div class="p-head"><div class="p-name">Pillar 5 · Risk Architecture</div><div class="p-score">12<sub>/15</sub></div></div><div class="p-title">Risk Architecture</div><div class="p-bar"><div class="p-bar-fill" style="width:80%"></div></div><div class="p-body">Risk band 5 (Value Research). Short side via index/stock derivatives with strict notional caps. Naren's bias toward contrarian positioning has historically reduced downside vs a 50:50 equity-debt benchmark.</div></div>
 
       <div class="pillar"><div class="p-head"><div class="p-name">Pillar 6 · Track Record</div><div class="p-score">5<sub>/15</sub></div></div><div class="p-title">Track Record</div><div class="p-bar"><div class="p-bar-fill" style="width:33%"></div></div><div class="p-body">The single structural weakness: 4 months live. The March 2026 drawdown is the only stress data point so far. We score Naren's BAF/MAA track record as a strong proxy but cannot give full credit until 12 months of SIF-specific data.</div></div>
 
@@ -275,9 +275,9 @@
           <dt>Debt allocation</dt><dd>25-95% (variable)<br><em>Predominantly AAA &amp; AA+ corporates, 2-4 yr duration</em></dd>
           <dt>Short instruments</dt><dd>Index &amp; stock F&amp;O<br><em>Gross exposure capped &lt;200%</em></dd>
           <dt>Benchmark</dt><dd>CRISIL Hybrid 50+50 LO-MO</dd>
-          <dt>AMFI Risk Band</dt><dd>Band 4 — Moderately High</dd>
-          <dt>Direct plan TER</dt><dd>~0.90%</dd>
-          <dt>Regular plan TER</dt><dd>~1.60%</dd>
+          <dt>Risk Band (VR)</dt><dd>Level 5 — High</dd>
+          <dt>Expense ratio</dt><dd>2.64% <em>(Regular plan · Value Research)</em></dd>
+          <dt>Redemption</dt><dd>Daily</dd>
           <dt>Min investment</dt><dd>₹10 lakh (PAN-level)</dd>
           <dt>Liquidity</dt><dd>Daily NAV, T+2 redemption</dd>
           <dt>Exit load</dt><dd>1% if redeemed within 365 days</dd>
@@ -297,7 +297,7 @@
         <p>iSIF Hybrid is the fund we recommend HNIs evaluate <em>first</em> when considering a SIF allocation. Three reasons.</p>
         <p>One — the strategy mandate is genuinely differentiated. Most Hybrid LS SIFs are arbitrage-plus-debt with a small unhedged sleeve; they will behave like a BAF on slow days and a debt fund on bad days. iSIF Hybrid is the one fund in the category that can take a genuine contrarian view — short at peaks, long at bottoms — within an equity-taxation wrapper.</p>
         <p>Two — Sankaran Naren has done this before. His MAA and BAF tenures show a manager who is comfortable being unfashionable. That temperament matters more than any quantitative pitch deck.</p>
-        <p>Three — at ₹803 Cr, the fund is large enough to matter to ICICI Pru but small enough that opportunistic positioning is still scalable. The next ₹2,000 Cr of inflows will not impair the strategy.</p>
+        <p>Three — at ₹844 Cr, the fund is large enough to matter to ICICI Pru but small enough that opportunistic positioning is still scalable. The next ₹2,000 Cr of inflows will not impair the strategy.</p>
         <p>A modest early drawdown would not be a thesis problem — it is the cost of launching weeks before a mid-cap correction. For clients whose risk appetite matches the fund's risk band, we view the entry point constructively.</p>
       </div>
       <div class="tv-attrib">— Trustner Research Desk · <em>Note dated 28 May 2026</em></div>
@@ -351,7 +351,7 @@
         <tr><td>Lead PM</td><td>Sankaran Naren</td><td>Bhavesh Jain</td><td>R Srinivasan</td></tr>
         <tr><td>Launched</td><td>Jan 2026</td><td>Oct 2025</td><td>Oct 2025</td></tr>
         <tr><td>Net equity range</td><td><strong>−7.5% to +75%</strong></td><td>25% to 65%</td><td>30% to 70%</td></tr>
-        <tr><td class="num">AUM</td><td class="num">₹803 Cr</td><td class="num">₹3,761 Cr</td><td class="num"><strong>₹3,462 Cr</strong></td></tr>
+        <tr><td class="num">AUM</td><td class="num">₹844 Cr</td><td class="num">₹4,466 Cr</td><td class="num"><strong>₹3,462 Cr</strong></td></tr>
         <tr><td>Best fit</td><td>Contrarian / unconstrained</td><td>Income-tilt hybrid</td><td>Mass-affluent core</td></tr>
       </tbody>
     </table>
