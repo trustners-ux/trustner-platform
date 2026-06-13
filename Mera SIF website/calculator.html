@@ -55,6 +55,14 @@
   .preset-btn{padding:7px 14px;background:#fff;border:1px solid var(--gray-300);border-radius:30px;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer;transition:var(--transition);font-family:inherit}
   .preset-btn:hover{border-color:var(--royal);color:var(--royal)}
   .preset-btn.active{background:var(--gradient-cyan);color:#fff;border-color:transparent}
+
+  .regime-toggle{display:flex;gap:0;border:1px solid var(--gray-300);border-radius:10px;overflow:hidden;background:var(--gray-50)}
+  .regime-opt{flex:1;padding:10px 12px;background:transparent;border:none;font-family:inherit;font-size:13px;font-weight:700;color:var(--gray-600);cursor:pointer;transition:var(--transition)}
+  .regime-opt:first-child{border-right:1px solid var(--gray-300)}
+  .regime-opt:hover{color:var(--navy)}
+  .regime-opt.active{background:var(--gradient-cyan);color:#fff}
+  .regime-note{font-size:11px;color:var(--gray-500);margin-top:6px;line-height:1.5}
+  .regime-note strong{color:var(--navy)}
 </style>
 </head>
 <body>
@@ -83,7 +91,7 @@
   <div class="container">
     <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">›</span><span>Tax Calculator</span></div>
     <h1>The Real Cost of <span style="background:linear-gradient(135deg,#22D3EE 0%,#3B82F6 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">Tax</span> on Your HNI Portfolio</h1>
-    <p>Move the sliders. See exactly how much more wealth SIF preserves vs PMS and AIF Cat-III on your specific corpus, return assumption, and tax bracket. Most investors are shocked by the gap.</p>
+    <p>Move the sliders, pick your tax regime (new or old, FY 2026-27), and see exactly how much more wealth SIF preserves vs PMS and AIF Cat-III on your specific corpus and return assumption. Most investors are shocked by the gap.</p>
   </div>
 </section>
 
@@ -120,14 +128,17 @@
         </div>
 
         <div class="calc-input-row">
-          <div class="calc-input-label">Your tax bracket</div>
-          <select id="bracket">
-            <option value="20">20% (income ₹5–10 L)</option>
-            <option value="30">30% (income ₹10–50 L)</option>
-            <option value="34" selected>34% (income ₹50L–1 Cr · 10% surcharge)</option>
-            <option value="39">39% (income ₹1–5 Cr · 25% surcharge)</option>
-            <option value="42.74">42.74% (income &gt;₹5 Cr · 37% surcharge + cess)</option>
-          </select>
+          <div class="calc-input-label">Income-tax regime</div>
+          <div class="regime-toggle" id="regimeToggle">
+            <button type="button" class="regime-opt active" data-regime="new">New regime</button>
+            <button type="button" class="regime-opt" data-regime="old">Old regime</button>
+          </div>
+          <div class="regime-note" id="regimeNote"><strong>New regime is the default</strong> (FY 2026-27). Surcharge is capped at 25%, so the top marginal rate is <strong>39%</strong> — the 42.74% rate only applies under the old regime.</div>
+        </div>
+
+        <div class="calc-input-row">
+          <div class="calc-input-label">Your effective tax rate <span class="calc-value" style="font-size:11px;font-weight:600;color:var(--gray-500)">incl. surcharge + 4% cess</span></div>
+          <select id="bracket"></select>
         </div>
 
         <div class="calc-input-row">
@@ -141,7 +152,7 @@
         </div>
 
         <div style="font-size:11px;color:var(--gray-500);background:var(--gray-50);padding:10px 12px;border-radius:8px;line-height:1.55;margin-top:8px">
-          <strong>Note:</strong> Calculator assumes the entire holding period is taxed once at exit (LTCG for SIF/MF; slab/business income for PMS/AIF Cat-III at fund level). PMS performance fee assumed 1.5% mgmt + 15% on returns &gt;6% hurdle. AIF Cat-III TER assumed 2% + 15% perf. Real outcomes vary with churn, cess, and structure.
+          <strong>Note:</strong> Effective tax rates reflect FY 2026-27 — base slab + surcharge + 4% cess. Under the <strong>new regime</strong> surcharge is capped at 25% (top rate 39%); the 42.74% rate applies only under the <strong>old regime</strong>. Calculator assumes the entire holding period is taxed once at exit (12.5% LTCG for SIF/MF; slab/business income for PMS &amp; AIF Cat-III at the fund level). PMS: 1.5% mgmt + 15% perf over a 6% hurdle. AIF Cat-III: 2% mgmt + 15% perf. Real outcomes vary with churn, fund-specific TER, and structure.
         </div>
       </div>
 
@@ -162,7 +173,7 @@
           </div>
           <div class="calc-result-bar"><div class="calc-result-bar-fill" id="sifBar" style="width:100%"></div></div>
           <div style="font-size:12px;color:var(--gray-600);margin-top:10px">
-            <strong style="color:var(--royal)">Tax wrapper:</strong> 12.5% LTCG · <strong style="color:var(--royal)">TER:</strong> ~0.4–1.0% · <strong style="color:var(--royal)">Performance fee:</strong> none
+            <strong style="color:var(--royal)">Tax wrapper:</strong> 12.5% LTCG · <strong style="color:var(--royal)">TER:</strong> varies by fund (<a href="fund-universe.html" style="color:var(--royal)">see live</a>) · <strong style="color:var(--royal)">Performance fee:</strong> none
           </div>
         </div>
 
@@ -257,17 +268,20 @@
       <h2 style="margin-top:0">How we calculate this</h2>
       <p>The four wrappers carry materially different tax and cost structures. Here is exactly how each post-tax CAGR is computed:</p>
       <ul>
-        <li><strong>SIF (equity / hybrid ≥65% eq):</strong> 12.5% LTCG on gains held &gt;12 months. TER ~0.6% (regular plan, average across live SIFs). No performance fee.</li>
-        <li><strong>SIF (hybrid &lt;65% eq):</strong> 12.5% LTCG on gains held &gt;24 months. TER ~0.5%. No performance fee.</li>
-        <li><strong>SIF (debt):</strong> Slab-rate tax. TER ~0.4%.</li>
-        <li><strong>Mutual Fund:</strong> 12.5% LTCG (equity ≥65%, &gt;12 mo). TER ~1.5% (regular plan equity MF average).</li>
-        <li><strong>PMS:</strong> Gains taxed at slab rate as business income. 1.5% management fee + 15% performance fee on returns above 6% hurdle.</li>
-        <li><strong>AIF Cat-III:</strong> Fund-level taxation at slab rate. 2% management + 15% performance fee on entire return.</li>
+        <li><strong>SIF (equity / hybrid ≥65% eq):</strong> 12.5% LTCG on gains held &gt;12 months. No performance fee. Regular-plan TER varies by fund — see the live figure on the <a href="fund-universe.html">Fund Universe</a> page (the model uses a representative, competitively-priced level).</li>
+        <li><strong>SIF (hybrid &lt;65% eq):</strong> 12.5% LTCG on gains held &gt;24 months. No performance fee.</li>
+        <li><strong>SIF (debt):</strong> Slab-rate tax (same treatment in both regimes for an HNI).</li>
+        <li><strong>Mutual Fund:</strong> 12.5% LTCG (equity ≥65%, &gt;12 mo). Regular-plan equity-MF TER ~1.5–2%. Same tax bucket as an equity SIF — the trade-off is no long-short capability.</li>
+        <li><strong>PMS:</strong> Gains taxed at slab rate as business income. 1.5% management fee + 15% performance fee on returns above a 6% hurdle.</li>
+        <li><strong>AIF Cat-III:</strong> Fund-level taxation at slab + surcharge. 2% management + 15% performance fee on the entire return.</li>
       </ul>
       <p>The formula assumes a single hold-and-exit at the end of the period. Real portfolios churn — which makes the wrapper differential <em>more</em> pronounced for slab-rate vehicles, not less. Calculator output is illustrative; actual outcomes depend on fund-specific cost, churn, sequence of returns, and individual tax circumstances.</p>
 
+      <h3>Which tax regime — and why it matters here</h3>
+      <p>India's <strong>new tax regime is the default since FY 2023-24</strong>, and most HNIs are now on it. The single difference that matters for this calculator is the <strong>surcharge cap</strong>: under the new regime the maximum surcharge is <strong>25%</strong>, so the top marginal rate is <strong>39%</strong> (30% × 1.25 × 1.04 cess). The old regime retains a 37% surcharge band above ₹5 crore of income, taking the top rate to <strong>42.74%</strong>. Toggle the regime above to apply the correct effective rate to the slab-taxed vehicles (PMS, AIF Cat-III); SIF and MF are 12.5% LTCG regardless of regime.</p>
+
       <h3>Why the gap is structural</h3>
-      <p>SIFs inherit Section 10(23D) fund-level tax exemption — gains compound untaxed inside the fund and are only taxed at investor-level redemption at LTCG rates. PMS gains are pass-through at slab. AIF Cat-III is taxed at the fund level at slab plus surcharge. Over a 10-year hold for a top-bracket investor, that single regulatory difference compounds to ₹70–80 lakh per crore of allocation.</p>
+      <p>SIFs inherit Section 10(23D) fund-level tax exemption — gains compound untaxed inside the fund and are only taxed at investor-level redemption at LTCG rates. PMS gains are pass-through at slab. AIF Cat-III is taxed at the fund level at slab plus surcharge. Over a 10-year hold for a top-bracket investor, that single regulatory difference can compound to roughly ₹70–80 lakh per crore of allocation — the exact figure depends on your regime, bracket and the funds chosen. This is an illustrative model, not a forecast.</p>
     </div>
 
     <div class="callout callout-warning reveal mt-6">
@@ -346,10 +360,41 @@
   };
   const fmtPct = n => n.toFixed(1) + '%';
 
+  // Effective marginal rates (base slab + surcharge + 4% cess), FY 2026-27.
+  // New regime caps surcharge at 25% (top 39%); old regime keeps the 37% band (top 42.74%).
+  const BRACKETS = {
+    new: [
+      { v: '31.2',  t: '31.2% — taxable income ₹10L–50L' },
+      { v: '34.32', t: '34.32% — ₹50L–1 Cr (10% surcharge)' },
+      { v: '35.88', t: '35.88% — ₹1–2 Cr (15% surcharge)' },
+      { v: '39',    t: '39% — above ₹2 Cr (surcharge capped at 25%)' }
+    ],
+    old: [
+      { v: '31.2',  t: '31.2% — taxable income ₹10L–50L' },
+      { v: '34.32', t: '34.32% — ₹50L–1 Cr (10% surcharge)' },
+      { v: '35.88', t: '35.88% — ₹1–2 Cr (15% surcharge)' },
+      { v: '39',    t: '39% — ₹2–5 Cr (25% surcharge)' },
+      { v: '42.74', t: '42.74% — above ₹5 Cr (37% surcharge)' }
+    ]
+  };
+  let regime = 'new';
+
+  function setRegime(rg) {
+    regime = (rg === 'old') ? 'old' : 'new';
+    document.querySelectorAll('.regime-opt').forEach(b => b.classList.toggle('active', b.dataset.regime === regime));
+  }
+  function populateBrackets(rg, desired) {
+    const sel = $('bracket');
+    const list = BRACKETS[rg] || BRACKETS.new;
+    const want = (desired != null) ? String(desired) : sel.value;
+    sel.innerHTML = list.map(o => '<option value="' + o.v + '">' + o.t + '</option>').join('');
+    sel.value = list.some(o => o.v === want) ? want : list[list.length - 1].v;
+  }
+
   const presets = {
-    emerging: { amount: 30, cagr: 11, years: 7, bracket: '30', sifType: 'hybrid_high' },
-    hni: { amount: 100, cagr: 12, years: 10, bracket: '34', sifType: 'hybrid_high' },
-    ultra: { amount: 500, cagr: 14, years: 15, bracket: '42.74', sifType: 'equity' }
+    emerging: { amount: 30, cagr: 11, years: 7, regime: 'new', bracket: '31.2', sifType: 'hybrid_high' },
+    hni: { amount: 100, cagr: 12, years: 10, regime: 'new', bracket: '35.88', sifType: 'hybrid_high' },
+    ultra: { amount: 500, cagr: 14, years: 15, regime: 'new', bracket: '39', sifType: 'equity' }
   };
 
   function applyPreset(name) {
@@ -357,8 +402,9 @@
     $('amount').value = p.amount;
     $('cagr').value = p.cagr;
     $('years').value = p.years;
-    $('bracket').value = p.bracket;
     $('sifType').value = p.sifType;
+    setRegime(p.regime || 'new');
+    populateBrackets(regime, p.bracket);
     document.querySelectorAll('.preset-btn').forEach(b => b.classList.toggle('active', b.dataset.preset === name));
     update();
   }
@@ -381,7 +427,8 @@
 
     // ---- SIF ----
     // TER drag (approx 0.6% for equity/hybrid >=65, 0.5% for hybrid <65, 0.4% debt)
-    const sifTER = sifType === 'debt' ? 0.004 : sifType === 'hybrid_low' ? 0.005 : 0.006;
+    // Representative Regular-plan TERs (current SIF range; competitively-priced level per type)
+    const sifTER = sifType === 'debt' ? 0.010 : sifType === 'hybrid_low' ? 0.014 : sifType === 'equity' ? 0.018 : 0.015;
     const sifNetCagr = cagr - sifTER;
     const sifGross = principal * Math.pow(1 + sifNetCagr, years);
     const sifGain = sifGross - principal;
@@ -462,6 +509,17 @@
   document.querySelectorAll('.preset-btn').forEach(b => {
     b.addEventListener('click', () => applyPreset(b.dataset.preset));
   });
+  document.querySelectorAll('.regime-opt').forEach(b => {
+    b.addEventListener('click', () => {
+      setRegime(b.dataset.regime);
+      populateBrackets(regime);   // preserves current rate if it exists in the new regime
+      update();
+    });
+  });
+
+  // init — new regime is the default; seed the HNI default bracket
+  setRegime('new');
+  populateBrackets('new', '35.88');
   update();
 })();
 </script>
