@@ -54,6 +54,12 @@
   .aum{font-size:13px;font-weight:700;color:var(--gray-700)}
   .gap{color:var(--gray-400);font-style:italic;font-weight:500;font-size:12px}
 
+  .cat-group td{background:linear-gradient(90deg,var(--navy),#16305c);padding:11px 16px}
+  .cat-group-name{font-size:13px;font-weight:800;color:#fff;letter-spacing:.3px}
+  .cat-group-count{display:inline-block;font-size:10.5px;font-weight:700;color:#fff;background:rgba(255,255,255,.18);border-radius:10px;padding:2px 9px;margin-left:10px}
+  .cat-group-bench{font-size:11px;color:rgba(255,255,255,.62);float:right;font-weight:600;margin-top:3px}
+  @media(max-width:700px){.cat-group-bench{display:none}}
+
   .tfs-pill{display:inline-flex;align-items:center;justify-content:center;width:40px;height:28px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:800;letter-spacing:-.2px}
   .tfs-buy{background:linear-gradient(135deg,#10B981,#059669);color:#fff}
   .tfs-acc{background:linear-gradient(135deg,#3B82F6,#1E40AF);color:#fff}
@@ -225,8 +231,8 @@
   <div class="container">
     <div style="display:flex;justify-content:space-between;align-items:end;flex-wrap:wrap;gap:14px;margin-bottom:8px">
       <div>
-        <h2 style="font-size:22px;font-weight:800;color:var(--navy);letter-spacing:-.4px">Every live SIF · ranked by Trustner Fund Score</h2>
-        <p style="font-size:14px;color:var(--gray-600);margin-top:4px">Click "Discuss" for a 1:1 with a Trustner relationship manager on any fund. Returns are absolute (point-to-point), Regular-Growth plan.</p>
+        <h2 style="font-size:22px;font-weight:800;color:var(--navy);letter-spacing:-.4px">Every live SIF · grouped by category, ranked by Trustner Fund Score</h2>
+        <p style="font-size:14px;color:var(--gray-600);margin-top:4px">Sectioned by SEBI strategy category, each fund shown with its launch date. Use the chips to focus a category. Returns are absolute (point-to-point), Regular-Growth plan. Click "Discuss" for a 1:1 with a Trustner relationship manager.</p>
       </div>
       <div style="display:flex;gap:8px;align-items:center;font-size:12px;color:var(--gray-500)">
         <span>Sort:</span>
@@ -281,6 +287,46 @@
     </p>
   </div>
 </section>
+
+<!-- HOW TO READ + BENCHMARKS -->
+<section class="bg-light">
+  <div class="container">
+    <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:28px;align-items:start" class="htr-grid">
+      <div>
+        <h2 style="font-size:22px;font-weight:800;color:var(--navy);letter-spacing:-.4px;margin-bottom:6px">How to read SIF returns</h2>
+        <p style="font-size:14px;color:var(--gray-600);line-height:1.7;margin-bottom:14px">A young category needs the right lens. Three rules our desk applies before reading any SIF number:</p>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="background:#fff;border:1px solid var(--gray-200);border-radius:12px;padding:16px 18px">
+            <div style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:4px">1 · Read returns against the launch date</div>
+            <div style="font-size:13.5px;color:var(--gray-700);line-height:1.6">Most SIFs launched between Oct 2025 and Jun 2026, so a "since-inception" figure covers a different market window for each fund. A +6% SI from October is not comparable to +6% from March. We show the <strong>launch month next to every fund</strong> so the number has context.</div>
+          </div>
+          <div style="background:#fff;border:1px solid var(--gray-200);border-radius:12px;padding:16px 18px">
+            <div style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:4px">2 · Judge a fund vs its benchmark, not the category average</div>
+            <div style="font-size:13.5px;color:var(--gray-700);line-height:1.6">During the early-2026 correction the gap between the best and worst Hybrid Long-Short SIF was several percentage points — category averages hide the real manager-quality gap. The honest comparison is <strong>each fund vs its own SEBI-disclosed benchmark</strong> over the same window.</div>
+          </div>
+          <div style="background:#fff;border:1px solid var(--gray-200);border-radius:12px;padding:16px 18px">
+            <div style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:4px">3 · Cost and structure compound</div>
+            <div style="font-size:13.5px;color:var(--gray-700);line-height:1.6">Two SIFs with the same gross return diverge over time on TER and tax bucket. Check the <strong>TER column</strong> and run your own numbers in the <a href="calculator.html" style="color:var(--royal);font-weight:700">tax calculator</a>.</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="background:#0A1628;color:#fff;border-radius:16px;padding:24px">
+          <div style="font-size:11px;font-weight:800;color:var(--gold-light);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">Benchmark map · by category</div>
+          <div style="display:flex;flex-direction:column;gap:12px;font-size:13px">
+            <div><div style="font-weight:700">Hybrid Long-Short</div><div style="color:rgba(255,255,255,.65)">Nifty 50 Hybrid Composite Debt (per SID)</div></div>
+            <div><div style="font-weight:700">Equity Long-Short</div><div style="color:rgba(255,255,255,.65)">Nifty 500 TRI</div></div>
+            <div><div style="font-weight:700">Equity Ex-Top 100 LS</div><div style="color:rgba(255,255,255,.65)">Nifty MidSmallcap 400 TRI</div></div>
+            <div><div style="font-weight:700">Active Asset Allocator</div><div style="color:rgba(255,255,255,.65)">Dynamic multi-asset (per SID)</div></div>
+            <div><div style="font-weight:700">Sector Rotation</div><div style="color:rgba(255,255,255,.65)">Nifty 500 TRI (per SID)</div></div>
+          </div>
+          <p style="font-size:11px;color:rgba(255,255,255,.5);margin-top:16px;line-height:1.5">Benchmarks per each scheme's SEBI Scheme Information Document. Live benchmark returns are on our roadmap; for now use these to frame each fund's alpha.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<style>@media(max-width:760px){.htr-grid{grid-template-columns:1fr !important}}</style>
 
 <!-- WHAT YOU GET CALLOUT -->
 <section class="bg-light">
@@ -368,31 +414,31 @@
   // seed values here are the fallback shown if the engine is unreachable.
   var TAG = {hybrid:'Hybrid LS', equity:'Equity LS', ex100:'Equity Ex-Top 100 LS', aaa:'Active Asset Allocator', sector:'Sector Rotation LS'};
   var FUNDS = [
-    {id:'isif-hybrid',cat:'hybrid',name:'iSIF Hybrid Long-Short',amc:'ICICI Prudential MF',tfs:78,tfsCls:'tfs-buy',v:'★ Buy',vCls:'v-buy',link:'funds/isif-hybrid.html',seed:{m1:1.55,m3:4.08,aum:844,risk:5,ter:2.64}},
-    {id:'altiva-hybrid',cat:'hybrid',name:'Altiva Hybrid Long-Short',amc:'Edelweiss MF',tfs:76,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:'funds/altiva-hybrid.html',seed:{m1:1.52,m3:4.01,aum:4466,risk:1,ter:2.18}},
-    {id:'magnum-hybrid',cat:'hybrid',name:'Magnum Hybrid Long-Short',amc:'SBI MF',tfs:75,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:'funds/magnum-hybrid.html',seed:{m1:0.9,m3:2.09,aum:3462,risk:1,ter:2.06}},
-    {id:'isif-equity-ex-top-100',cat:'ex100',name:'iSIF Equity Ex-Top 100 LS',amc:'ICICI Prudential MF',tfs:74,tfsCls:'tfs-buy',v:'★ Buy (sat.)',vCls:'v-buy',link:'funds/isif-equity-ex-top-100.html',seed:{m1:0.82,m3:4.89,aum:1707,risk:5,ter:2.86}},
-    {id:'titanium-hybrid',cat:'hybrid',name:'Titanium Hybrid Long-Short',amc:'Tata MF',tfs:70,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:1.08,m3:2.13,aum:483,risk:5,ter:2.53}},
-    {id:'dynasif-equity',cat:'equity',name:'DynaSIF Equity Long-Short',amc:'360 ONE Asset',tfs:70,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:0.48,m3:3.18,aum:277,risk:5,ter:3.68}},
-    {id:'apex-hybrid',cat:'hybrid',name:'Apex Hybrid Long-Short',amc:'Aditya Birla SL MF',tfs:68,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:1.1,m3:null,aum:76,risk:2,ter:4.15}},
-    {id:'arudha-hybrid',cat:'hybrid',name:'Arudha Hybrid Long-Short',amc:'Bandhan MF',tfs:66,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:0.75,m3:1.43,aum:130,risk:1,ter:0.73}},
-    {id:'dynasif-aaa',cat:'aaa',name:'DynaSIF Active Asset Allocator',amc:'360 ONE Asset',tfs:65,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:-0.35,m3:null,aum:195,risk:3,ter:2.67}},
-    {id:'qsif-hybrid',cat:'hybrid',name:'qSIF Hybrid Long-Short',amc:'Quant MF',tfs:64,tfsCls:'tfs-hold',v:'Hold',vCls:'v-hold',link:null,seed:{m1:0.24,m3:5.74,aum:158,risk:3,ter:2.86}},
-    {id:'qsif-equity',cat:'equity',name:'qSIF Equity Long-Short',amc:'Quant MF',tfs:62,tfsCls:'tfs-hold',v:'Hold',vCls:'v-hold',link:null,seed:{m1:3.07,m3:10.37,aum:484,risk:4,ter:2.99}},
-    {id:'diviniti',cat:'equity',name:'Diviniti Equity Long-Short',amc:'ITI MF',tfs:57,tfsCls:'tfs-hold',v:'Hold',vCls:'v-hold',link:null,seed:{m1:0.06,m3:-3.98,aum:402,risk:3,ter:3.34}},
-    {id:'qsif-ex-top-100',cat:'ex100',name:'qSIF Equity Ex-Top 100',amc:'Quant MF',tfs:63,tfsCls:'tfs-hold',v:'Hold',vCls:'v-hold',link:null,seed:{m1:1.32,m3:11.52,aum:233,risk:4,ter:2.68}},
-    {id:'qsif-aaa',cat:'aaa',name:'qSIF Active Asset Allocator',amc:'Quant MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:2.02,m3:null,aum:64,risk:3,ter:3.19}},
-    {id:'titanium-equity',cat:'equity',name:'Titanium Equity Long-Short',amc:'Tata MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:4.09}},
-    {id:'arudha-equity',cat:'equity',name:'Arudha Equity Long-Short',amc:'Bandhan MF',tfs:61,tfsCls:'tfs-hold',v:'Hold',vCls:'v-hold',link:null,seed:{m1:0.17,m3:null,aum:81,risk:5,ter:2.43}},
-    {id:'sapphire',cat:'equity',name:'Sapphire Equity Long-Short',amc:'Franklin Templeton',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:1.08,m3:null,aum:null,risk:5,ter:3.9}},
-    {id:'wsif-equity',cat:'equity',name:'WSIF Equity Long-Short',amc:'The Wealth Company MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:1.45,m3:null,aum:null,risk:5,ter:6.67}},
-    {id:'wsif-ex-top-100',cat:'ex100',name:'WSIF Equity Ex-Top 100',amc:'The Wealth Company MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:1.92,m3:null,aum:null,risk:5,ter:6.64}},
-    {id:'arthaya-equity',cat:'equity',name:'Arthaya Equity Long-Short',amc:'Union MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:117,risk:1,ter:3.14}},
-    {id:'altiva-ex-top-100',cat:'ex100',name:'Altiva Equity Ex-Top 100 LS',amc:'Edelweiss MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:null}},
-    {id:'isif-equity',cat:'equity',name:'iSIF Equity Long-Short',amc:'ICICI Prudential MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:2.46}},
-    {id:'isif-aaa',cat:'aaa',name:'iSIF Active Asset Allocator',amc:'ICICI Prudential MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:2.17}},
-    {id:'platinum-hybrid',cat:'hybrid',name:'Platinum Hybrid Long-Short',amc:'Mirae Asset MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:2,ter:1.53}},
-    {id:'qsif-sector-rotation',cat:'sector',name:'qSIF Sector Rotation LS',amc:'Quant MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:3.46}}
+    {id:'isif-hybrid',incept:'2026-02-04',cat:'hybrid',name:'iSIF Hybrid Long-Short',amc:'ICICI Prudential MF',tfs:78,tfsCls:'tfs-buy',v:'★ Buy',vCls:'v-buy',link:'funds/isif-hybrid.html',seed:{m1:1.55,m3:4.08,aum:844,risk:5,ter:2.64}},
+    {id:'altiva-hybrid',incept:'2025-10-22',cat:'hybrid',name:'Altiva Hybrid Long-Short',amc:'Edelweiss MF',tfs:76,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:'funds/altiva-hybrid.html',seed:{m1:1.52,m3:4.01,aum:4466,risk:1,ter:2.18}},
+    {id:'magnum-hybrid',incept:'2025-10-20',cat:'hybrid',name:'Magnum Hybrid Long-Short',amc:'SBI MF',tfs:75,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:'funds/magnum-hybrid.html',seed:{m1:0.9,m3:2.09,aum:3462,risk:1,ter:2.06}},
+    {id:'isif-equity-ex-top-100',incept:'2026-02-04',cat:'ex100',name:'iSIF Equity Ex-Top 100 LS',amc:'ICICI Prudential MF',tfs:74,tfsCls:'tfs-buy',v:'★ Buy (sat.)',vCls:'v-buy',link:'funds/isif-equity-ex-top-100.html',seed:{m1:0.82,m3:4.89,aum:1707,risk:5,ter:2.86}},
+    {id:'titanium-hybrid',incept:'2025-12-11',cat:'hybrid',name:'Titanium Hybrid Long-Short',amc:'Tata MF',tfs:70,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:1.08,m3:2.13,aum:483,risk:5,ter:2.53}},
+    {id:'dynasif-equity',incept:'2026-02-25',cat:'equity',name:'DynaSIF Equity Long-Short',amc:'360 ONE Asset',tfs:70,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:0.48,m3:3.18,aum:277,risk:5,ter:3.68}},
+    {id:'apex-hybrid',incept:'2026-03-25',cat:'hybrid',name:'Apex Hybrid Long-Short',amc:'Aditya Birla SL MF',tfs:68,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:1.1,m3:null,aum:76,risk:2,ter:4.15}},
+    {id:'arudha-hybrid',incept:'2026-01-28',cat:'hybrid',name:'Arudha Hybrid Long-Short',amc:'Bandhan MF',tfs:66,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:0.75,m3:1.43,aum:130,risk:1,ter:0.73}},
+    {id:'dynasif-aaa',incept:'2026-03-25',cat:'aaa',name:'DynaSIF Active Asset Allocator',amc:'360 ONE Asset',tfs:65,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:-0.35,m3:null,aum:195,risk:3,ter:2.67}},
+    {id:'qsif-hybrid',incept:'2025-10-15',cat:'hybrid',name:'qSIF Hybrid Long-Short',amc:'Quant MF',tfs:64,tfsCls:'tfs-hold',v:'Hold',vCls:'v-hold',link:null,seed:{m1:0.24,m3:5.74,aum:158,risk:3,ter:2.86}},
+    {id:'qsif-equity',incept:'2025-10-07',cat:'equity',name:'qSIF Equity Long-Short',amc:'Quant MF',tfs:62,tfsCls:'tfs-hold',v:'Hold',vCls:'v-hold',link:null,seed:{m1:3.07,m3:10.37,aum:484,risk:4,ter:2.99}},
+    {id:'diviniti',incept:'2025-12-01',cat:'equity',name:'Diviniti Equity Long-Short',amc:'ITI MF',tfs:57,tfsCls:'tfs-hold',v:'Hold',vCls:'v-hold',link:null,seed:{m1:0.06,m3:-3.98,aum:402,risk:3,ter:3.34}},
+    {id:'qsif-ex-top-100',incept:'2025-11-12',cat:'ex100',name:'qSIF Equity Ex-Top 100',amc:'Quant MF',tfs:63,tfsCls:'tfs-hold',v:'Hold',vCls:'v-hold',link:null,seed:{m1:1.32,m3:11.52,aum:233,risk:4,ter:2.68}},
+    {id:'qsif-aaa',incept:'2026-04-21',cat:'aaa',name:'qSIF Active Asset Allocator',amc:'Quant MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:2.02,m3:null,aum:64,risk:3,ter:3.19}},
+    {id:'titanium-equity',incept:'2026-05-14',cat:'equity',name:'Titanium Equity Long-Short',amc:'Tata MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:4.09}},
+    {id:'arudha-equity',incept:'2026-03-24',cat:'equity',name:'Arudha Equity Long-Short',amc:'Bandhan MF',tfs:61,tfsCls:'tfs-hold',v:'Hold',vCls:'v-hold',link:null,seed:{m1:0.17,m3:null,aum:81,risk:5,ter:2.43}},
+    {id:'sapphire',incept:'2026-04-29',cat:'equity',name:'Sapphire Equity Long-Short',amc:'Franklin Templeton',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:1.08,m3:null,aum:null,risk:5,ter:3.9}},
+    {id:'wsif-equity',incept:'2026-05-06',cat:'equity',name:'WSIF Equity Long-Short',amc:'The Wealth Company MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:1.45,m3:null,aum:null,risk:5,ter:6.67}},
+    {id:'wsif-ex-top-100',incept:'2026-05-06',cat:'ex100',name:'WSIF Equity Ex-Top 100',amc:'The Wealth Company MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:1.92,m3:null,aum:null,risk:5,ter:6.64}},
+    {id:'arthaya-equity',incept:'2026-05-25',cat:'equity',name:'Arthaya Equity Long-Short',amc:'Union MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:117,risk:1,ter:3.14}},
+    {id:'altiva-ex-top-100',incept:'2026-06-08',cat:'ex100',name:'Altiva Equity Ex-Top 100 LS',amc:'Edelweiss MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:null}},
+    {id:'isif-equity',incept:'2026-06-05',cat:'equity',name:'iSIF Equity Long-Short',amc:'ICICI Prudential MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:2.46}},
+    {id:'isif-aaa',incept:'2026-06-05',cat:'aaa',name:'iSIF Active Asset Allocator',amc:'ICICI Prudential MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:2.17}},
+    {id:'platinum-hybrid',incept:'2026-06-09',cat:'hybrid',name:'Platinum Hybrid Long-Short',amc:'Mirae Asset MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:2,ter:1.53}},
+    {id:'qsif-sector-rotation',incept:'2026-05-15',cat:'sector',name:'qSIF Sector Rotation LS',amc:'Quant MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:3.46}}
   ];
 
   // working dataset = metadata + live/seed values
@@ -440,9 +486,11 @@
     var cls = f.link ? 'row-action' : 'row-action subtle';
     return '<a href="contact.html?fund='+f.id+'" class="'+cls+'">Discuss</a>';
   }
+  function fmtIncept(s){ if(!s) return ''; var d=new Date(s+'T00:00:00'); return isNaN(d)?'':d.toLocaleDateString('en-IN',{month:'short',year:'numeric'}); }
   function nameTxt(f){
     var nm = f.link ? '<a href="'+f.link+'">'+f.name+'</a>' : f.name;
-    return '<div class="fname"><div class="fname-main">'+nm+'</div><div class="fname-amc">'+f.amc+'</div><span class="fname-tag '+f.cat+'">'+TAG[f.cat]+'</span></div>';
+    var launch = f.incept ? ' · <span style="color:var(--gray-400)">Launched '+fmtIncept(f.incept)+'</span>' : '';
+    return '<div class="fname"><div class="fname-main">'+nm+'</div><div class="fname-amc">'+f.amc+launch+'</div><span class="fname-tag '+f.cat+'">'+TAG[f.cat]+'</span></div>';
   }
 
   function sortVal(d){
@@ -451,28 +499,51 @@
     return (sortKey==='ter') ? -Number(v) : Number(v);
   }
 
+  // Category-wise sections (fixed order), each mapped to its SEBI-disclosed benchmark family.
+  var CATORDER = [
+    ['hybrid','Hybrid Long-Short','Benchmark: Nifty 50 Hybrid Composite Debt (per SID)'],
+    ['equity','Equity Long-Short','Benchmark: Nifty 500 TRI'],
+    ['ex100','Equity Ex-Top 100 Long-Short','Benchmark: Nifty MidSmallcap 400 TRI'],
+    ['aaa','Active Asset Allocator','Benchmark: dynamic multi-asset (per SID)'],
+    ['sector','Sector Rotation','Benchmark: Nifty 500 TRI (per SID)']
+  ];
+  var NCOLS = 13;
+
+  function rowHtml(d){
+    var f = d.meta;
+    return '<tr class="fund-row">'
+      + '<td>'+nameTxt(f)+'</td>'
+      + '<td class="num">'+navTxt(d)+'</td>'
+      + '<td class="num">'+chg(d.d1)+'</td>'
+      + '<td class="num">'+chg(d.d5)+'</td>'
+      + '<td class="num">'+chg(d.m1)+'</td>'
+      + '<td class="num">'+chg(d.m3)+'</td>'
+      + '<td class="num">'+chg(d.si)+'</td>'
+      + '<td class="num">'+aumTxt(d.aum)+'</td>'
+      + '<td class="num">'+riskTxt(d.risk)+'</td>'
+      + '<td class="num">'+terTxt(d.ter)+'</td>'
+      + '<td class="num">'+tfsTxt(f)+'</td>'
+      + '<td class="num"><span class="verdict '+f.vCls+'">'+f.v+'</span></td>'
+      + '<td>'+actionTxt(f)+'</td>'
+      + '</tr>';
+  }
+
   function render(){
-    var rows = DATA
-      .filter(function(d){ return activeCat==='all' || d.meta.cat===activeCat; })
-      .sort(function(a,b){ return sortVal(b)-sortVal(a); });
-    body.innerHTML = rows.map(function(d){
-      var f = d.meta;
-      return '<tr class="fund-row">'
-        + '<td>'+nameTxt(f)+'</td>'
-        + '<td class="num">'+navTxt(d)+'</td>'
-        + '<td class="num">'+chg(d.d1)+'</td>'
-        + '<td class="num">'+chg(d.d5)+'</td>'
-        + '<td class="num">'+chg(d.m1)+'</td>'
-        + '<td class="num">'+chg(d.m3)+'</td>'
-        + '<td class="num">'+chg(d.si)+'</td>'
-        + '<td class="num">'+aumTxt(d.aum)+'</td>'
-        + '<td class="num">'+riskTxt(d.risk)+'</td>'
-        + '<td class="num">'+terTxt(d.ter)+'</td>'
-        + '<td class="num">'+tfsTxt(f)+'</td>'
-        + '<td class="num"><span class="verdict '+f.vCls+'">'+f.v+'</span></td>'
-        + '<td>'+actionTxt(f)+'</td>'
-        + '</tr>';
-    }).join('');
+    var html = '';
+    CATORDER.forEach(function(c){
+      var cat = c[0];
+      if(activeCat !== 'all' && activeCat !== cat) return;
+      var rows = DATA.filter(function(d){ return d.meta.cat===cat; })
+                     .sort(function(a,b){ return sortVal(b)-sortVal(a); });
+      if(!rows.length) return;
+      html += '<tr class="cat-group"><td colspan="'+NCOLS+'">'
+            + '<span class="cat-group-name">'+c[1]+'</span>'
+            + '<span class="cat-group-count">'+rows.length+' fund'+(rows.length>1?'s':'')+'</span>'
+            + '<span class="cat-group-bench">'+c[2]+'</span>'
+            + '</td></tr>';
+      html += rows.map(rowHtml).join('');
+    });
+    body.innerHTML = html;
   }
 
   // initial render with seed values
