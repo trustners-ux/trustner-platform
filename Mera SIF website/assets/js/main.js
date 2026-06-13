@@ -102,8 +102,31 @@
   });
 
   // ==========================================================
-  // Contact form (simple WhatsApp/email handoff — no backend)
+  // Lead capture — server-side first (sif-lead.php), WhatsApp second.
+  // The lead is persisted on our server the moment Submit is clicked,
+  // so it is never lost even if the WhatsApp handoff is abandoned.
   // ==========================================================
+  function msifLeadEndpoint() {
+    // works from root pages and /funds/ subpages alike
+    return (location.pathname.indexOf('/funds/') !== -1 ? '../' : '') + 'sif-lead.php';
+  }
+
+  // Global helper other pages (quiz, calculator) can call.
+  window.msifLead = function (payload, cb) {
+    try {
+      payload = payload || {};
+      payload.source = payload.source || (location.pathname + location.search);
+      fetch(msifLeadEndpoint(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        keepalive: true
+      }).then(function (r) { return r.json(); })
+        .then(function (j) { if (cb) cb(!!(j && j.ok)); })
+        .catch(function () { if (cb) cb(false); });
+    } catch (err) { if (cb) cb(false); }
+  };
+
   const form = document.querySelector('[data-lead-form]');
   if (form) {
     form.addEventListener('submit', function (e) {
@@ -112,14 +135,24 @@
       const name = (data.get('name') || '').toString().trim();
       const phone = (data.get('phone') || '').toString().trim();
       const email = (data.get('email') || '').toString().trim();
+      const city = (data.get('city') || '').toString().trim();
       const investment = (data.get('investment') || '').toString().trim();
       const message = (data.get('message') || '').toString().trim();
+      const website = (data.get('website') || '').toString(); // honeypot
 
       if (!name || !phone) {
         alert('Please share your name and phone number so we can reach you.');
         return;
       }
 
+      // 1) capture on our server immediately (never lose the lead)
+      window.msifLead({
+        name: name, phone: phone, email: email, city: city,
+        investment: investment, message: message, website: website,
+        fund: new URLSearchParams(location.search).get('fund') || ''
+      });
+
+      // 2) warm WhatsApp handoff (visitor reviews & sends)
       const lines = [
         'Hello Trustner — I am interested in learning about SIF investing.',
         '',
@@ -133,13 +166,21 @@
       const wa = 'https://wa.me/916003903737?text=' + encodeURIComponent(lines);
       window.open(wa, '_blank');
 
-      // Optional: show success state inline
       const success = form.querySelector('[data-form-success]');
       if (success) {
         success.style.display = 'block';
         form.querySelectorAll('input,select,textarea,button').forEach(function (el) { el.disabled = true; });
       }
     });
+
+    // "Discuss" buttons land here as contact.html?fund=<id> — prefill the message
+    const fundParam = new URLSearchParams(location.search).get('fund');
+    if (fundParam) {
+      const ta = form.querySelector('textarea[name="message"]');
+      if (ta && !ta.value) {
+        ta.value = 'I would like to discuss the "' + fundParam.replace(/-/g, ' ') + '" SIF for my portfolio.';
+      }
+    }
   }
 
   // ==========================================================

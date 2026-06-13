@@ -221,7 +221,7 @@
     var risk=d.risk!=null?String(d.risk):'—';
     var ter=d.ter!=null?Number(d.ter).toFixed(2)+'%':'—';
     document.getElementById('perfGrid').innerHTML=ret('1-Month',d.m1,'Regular plan')+ret('3-Month',d.m3,'Regular plan')+card('AUM',aum,'Net assets')+card('Risk Band',risk,'VR risk level')+card('Expense Ratio',ter,'Regular plan TER');
-    document.getElementById('perfNote').innerHTML='Source: Value Research SIF screener, '+(d.asOf||'')+' · Regular-Growth plan. Returns absolute (point-to-point). '+(d.source==='live'?'NAV on live official feed.':'NAV &amp; since-inception shown only once an official NAV feed is connected — we never display indicative values.');
+    document.getElementById('perfNote').innerHTML='Source: Value Research SIF screener, '+(d.asOf||'')+' · Regular-Growth plan. Returns absolute (point-to-point). '+((d.source==='amfi'||d.source==='live')?'NAV on live official feed.':'NAV &amp; since-inception shown only once an official NAV feed is connected — we never display indicative values.');
   }).catch(function(){document.getElementById('perfNote').textContent='Live data reconnecting…';});
 })();
 </script>

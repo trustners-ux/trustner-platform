@@ -41,6 +41,7 @@
   .fname-tag.equity{background:rgba(30,64,175,.1);color:var(--royal)}
   .fname-tag.ex100{background:rgba(232,85,58,.1);color:var(--secondary)}
   .fname-tag.aaa{background:rgba(6,182,212,.12);color:#0E7490}
+  .fname-tag.sector{background:rgba(212,160,23,.14);color:var(--gold)}
 
   .nav-cell{font-size:15px;font-weight:800;color:var(--navy);letter-spacing:-.3px;display:inline-flex;align-items:center;gap:6px}
   .live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulseDot 2s ease-in-out infinite}
@@ -125,7 +126,7 @@
   <div class="container">
     <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">›</span><span>Fund Universe</span></div>
     <h1>The <span style="background:linear-gradient(135deg,#22D3EE 0%,#3B82F6 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">Live SIF Universe</span></h1>
-    <p>Every Specialized Investment Fund in India, with <strong>1M &amp; 3M returns, AUM, risk band and TER sourced from Value Research</strong> (Regular-Growth plan, 9 Jun 2026), alongside our proprietary Trustner Fund Score. We show only officially-sourced data — per-unit NAV and since-inception returns appear once an official NAV feed is connected.</p>
+    <p>Every live Specialized Investment Fund in India with its <strong>official AMFI NAV, updated daily</strong> (Regular-Growth plan), exact since-inception return, plus 1M &amp; 3M returns, AUM, risk band and TER from Value Research — alongside our proprietary Trustner Fund Score. 1D/5D returns build automatically from the official daily history. Only officially-sourced data, always.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">
       <a href="report.html" class="btn btn-gold btn-sm">📊 Read the H1 2026 Coverage Report</a>
       <a href="suitability.html" class="btn btn-secondary btn-sm">Take the Suitability Quiz →</a>
@@ -137,8 +138,8 @@
 <section class="compact bg-light" style="padding:24px 0">
   <div class="container">
     <div class="grid-4 reveal">
-      <div class="stat-card"><div class="stat-value">20</div><div class="stat-label">SIFs we cover</div></div>
-      <div class="stat-card"><div class="stat-value">12</div><div class="stat-label">AMCs covered</div></div>
+      <div class="stat-card"><div class="stat-value">25</div><div class="stat-label">Live SIFs we cover</div></div>
+      <div class="stat-card"><div class="stat-value">13</div><div class="stat-label">AMCs live</div></div>
       <div class="stat-card"><div class="stat-value">₹11,766<span class="unit">Cr</span></div><div class="stat-label">Combined AUM, disclosed (VR)</div></div>
       <div class="stat-card"><div class="stat-value">+9.9<span class="unit">%</span></div><div class="stat-label">Best 3M return (qSIF Ex-100)</div></div>
     </div>
@@ -241,11 +242,12 @@
 
     <!-- FILTER CHIPS -->
     <div class="fcat-bar">
-      <button class="fcat active" data-cat="all">All <span class="count">20</span></button>
-      <button class="fcat" data-cat="hybrid">Hybrid LS <span class="count">7</span></button>
-      <button class="fcat" data-cat="equity">Equity LS <span class="count">8</span></button>
-      <button class="fcat" data-cat="ex100">Equity Ex-Top 100 LS <span class="count">3</span></button>
-      <button class="fcat" data-cat="aaa">Active Asset Allocator <span class="count">2</span></button>
+      <button class="fcat active" data-cat="all">All <span class="count">25</span></button>
+      <button class="fcat" data-cat="hybrid">Hybrid LS <span class="count">8</span></button>
+      <button class="fcat" data-cat="equity">Equity LS <span class="count">9</span></button>
+      <button class="fcat" data-cat="ex100">Equity Ex-Top 100 LS <span class="count">4</span></button>
+      <button class="fcat" data-cat="aaa">Active Asset Allocator <span class="count">3</span></button>
+      <button class="fcat" data-cat="sector">Sector Rotation <span class="count">1</span></button>
     </div>
 
     <!-- DATA TABLE -->
@@ -253,9 +255,13 @@
       <table class="fund-table">
         <thead>
           <tr>
-            <th style="width:28%">Fund</th>
+            <th style="width:22%">Fund</th>
+            <th class="num">NAV</th>
+            <th class="num">1D</th>
+            <th class="num">5D</th>
             <th class="num">1M</th>
             <th class="num">3M</th>
+            <th class="num">SI</th>
             <th class="num">AUM</th>
             <th class="num">Risk</th>
             <th class="num">TER</th>
@@ -269,7 +275,7 @@
     </div>
 
     <p style="font-size:12px;color:var(--gray-500);margin-top:14px;font-style:italic">
-      <strong>Every figure here is real and sourced.</strong> 1M and 3M returns, AUM, risk band and expense ratio are the <strong>Regular-Growth plan</strong> figures published by <strong>Value Research</strong> (SIF screener), as of 9 Jun 2026. We deliberately do <strong>not</strong> show per-unit NAV, since-inception or 1D/5D returns — no official public SIF NAV feed exists yet, and as an ethical firm we never display indicative or estimated numbers. Those columns will appear automatically the moment an official daily NAV feed (RTA / data vendor) is connected. <strong>TFS</strong> is the Trustner Research Desk's proprietary qualitative view, reviewed monthly — read the <a href="report.html#sec9" style="color:var(--royal);font-weight:600">full TFS methodology</a>.
+      <strong>Every figure here is real and sourced.</strong> <strong>NAV</strong> is the official AMFI SIF NAV (Regular-Growth plan), refreshed daily from AMFI&#39;s SIF NAV service; <strong>SI</strong> is exact — NAV vs the fund&#39;s NFO face value (₹10; ₹1,000 for Diviniti and Sapphire). <strong>1D/5D</strong> compute from our archive of official daily NAVs and appear as the archive builds (1D from the second trading day onward). <strong>1M &amp; 3M returns, AUM, risk band and TER</strong> are Regular-plan figures from <strong>Value Research</strong> (SIF screener) until the official archive spans those windows, after which they switch to official-NAV computations automatically. We never display indicative or estimated numbers. <strong>TFS</strong> is the Trustner Research Desk&#39;s proprietary qualitative view, reviewed monthly — read the <a href="report.html#sec9" style="color:var(--royal);font-weight:600">full TFS methodology</a>.
     </p>
   </div>
 </section>
@@ -358,7 +364,7 @@
 (function(){
   // Per-fund metadata (the editorial layer). NAV/returns/AUM come from sif-nav.php;
   // seed values here are the fallback shown if the engine is unreachable.
-  var TAG = {hybrid:'Hybrid LS', equity:'Equity LS', ex100:'Equity Ex-Top 100 LS', aaa:'Active Asset Allocator'};
+  var TAG = {hybrid:'Hybrid LS', equity:'Equity LS', ex100:'Equity Ex-Top 100 LS', aaa:'Active Asset Allocator', sector:'Sector Rotation LS'};
   var FUNDS = [
     {id:'isif-hybrid',cat:'hybrid',name:'iSIF Hybrid Long-Short',amc:'ICICI Prudential MF',tfs:78,tfsCls:'tfs-buy',v:'★ Buy',vCls:'v-buy',link:'funds/isif-hybrid.html',seed:{m1:-0.84,m3:0.12,aum:803,risk:5,ter:2.53}},
     {id:'altiva-hybrid',cat:'hybrid',name:'Altiva Hybrid Long-Short',amc:'Edelweiss MF',tfs:76,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:'funds/altiva-hybrid.html',seed:{m1:0.44,m3:2.87,aum:3761,risk:2,ter:1.81}},
@@ -379,12 +385,18 @@
     {id:'sapphire',cat:'equity',name:'Sapphire Equity Long-Short',amc:'Franklin Templeton',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:-3.89,m3:null,aum:null,risk:5,ter:3.9}},
     {id:'wsif-equity',cat:'equity',name:'WSIF Equity Long-Short',amc:'The Wealth Company MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:3.87}},
     {id:'wsif-ex-top-100',cat:'ex100',name:'WSIF Equity Ex-Top 100',amc:'The Wealth Company MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:4.1}},
-    {id:'union-equity',cat:'equity',name:'Union Equity Long-Short SIF',amc:'Union MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:null,ter:null}}
+    {id:'arthaya-equity',cat:'equity',name:'Arthaya Equity Long-Short',amc:'Union MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:2.49}},
+    {id:'altiva-ex-top-100',cat:'ex100',name:'Altiva Equity Ex-Top 100 LS',amc:'Edelweiss MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:null}},
+    {id:'isif-equity',cat:'equity',name:'iSIF Equity Long-Short',amc:'ICICI Prudential MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:null}},
+    {id:'isif-aaa',cat:'aaa',name:'iSIF Active Asset Allocator',amc:'ICICI Prudential MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:null}},
+    {id:'platinum-hybrid',cat:'hybrid',name:'Platinum Hybrid Long-Short',amc:'Mirae Asset MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:2,ter:null}},
+    {id:'qsif-sector-rotation',cat:'sector',name:'qSIF Sector Rotation LS',amc:'Quant MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:2.48}}
   ];
 
   // working dataset = metadata + live/seed values
   var DATA = FUNDS.map(function(f){
-    return {meta:f, m1:f.seed.m1, m3:f.seed.m3, aum:f.seed.aum, risk:f.seed.risk, ter:f.seed.ter, source:'disclosed'};
+    return {meta:f, nav:null, navDate:null, d1:null, d5:null, si:null,
+            m1:f.seed.m1, m3:f.seed.m3, aum:f.seed.aum, risk:f.seed.risk, ter:f.seed.ter, source:'vr'};
   });
 
   var body = document.getElementById('fundBody');
@@ -398,6 +410,12 @@
     if(n>0)  return '<span class="change up">▲ '+n.toFixed(2)+'%</span>';
     if(n<0)  return '<span class="change down">▼ '+Math.abs(n).toFixed(2)+'%</span>';
     return '<span class="change flat">0.00%</span>';
+  }
+  function navTxt(d){
+    if(d.nav===null||d.nav===undefined) return '<span class="gap">—</span>';
+    var dot = d.source==='amfi' ? '<span class="live-dot" title="Official AMFI NAV"></span>' : '';
+    var v = Number(d.nav);
+    return '<span class="nav-cell">'+dot+'₹'+(v>=100?v.toFixed(2):v.toFixed(4).replace(/0+$/,'').replace(/\.$/,''))+'</span>';
   }
   function aumTxt(a){
     if(a===null||a===undefined) return '<span class="gap">—</span>';
@@ -439,8 +457,12 @@
       var f = d.meta;
       return '<tr class="fund-row">'
         + '<td>'+nameTxt(f)+'</td>'
+        + '<td class="num">'+navTxt(d)+'</td>'
+        + '<td class="num">'+chg(d.d1)+'</td>'
+        + '<td class="num">'+chg(d.d5)+'</td>'
         + '<td class="num">'+chg(d.m1)+'</td>'
         + '<td class="num">'+chg(d.m3)+'</td>'
+        + '<td class="num">'+chg(d.si)+'</td>'
         + '<td class="num">'+aumTxt(d.aum)+'</td>'
         + '<td class="num">'+riskTxt(d.risk)+'</td>'
         + '<td class="num">'+terTxt(d.ter)+'</td>'

@@ -221,6 +221,18 @@
           </div>
         </div>
 
+        <div id="quizLeadCard" style="background:linear-gradient(135deg,#0A1628,#1A3155);border-radius:14px;padding:22px 24px;margin-bottom:18px;color:#fff">
+          <div style="font-size:11px;font-weight:800;color:var(--gold-light);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Get your personalised allocation</div>
+          <div style="font-size:14px;color:rgba(255,255,255,.85);line-height:1.55;margin-bottom:14px">Share your name and WhatsApp number — a Trustner advisor will map this score against the live SIF universe and send you a personalised allocation note. Free, within one business day.</div>
+          <form id="quizLeadForm" style="display:flex;gap:10px;flex-wrap:wrap">
+            <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;width:0;height:0;opacity:0" aria-hidden="true">
+            <input type="text" id="qlName" placeholder="Your name" required style="flex:1;min-width:150px;padding:11px 14px;border-radius:9px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font-family:inherit;font-size:13.5px">
+            <input type="tel" id="qlPhone" placeholder="WhatsApp number" required pattern="[0-9+\s\-]{8,15}" style="flex:1;min-width:150px;padding:11px 14px;border-radius:9px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font-family:inherit;font-size:13.5px">
+            <button type="submit" class="btn btn-gold" style="white-space:nowrap">Send me my allocation →</button>
+          </form>
+          <div id="qlDone" style="display:none;font-size:14px;font-weight:700;color:#34D399;margin-top:6px">✓ Received — your score and inputs are with the Trustner desk. We&#39;ll WhatsApp you within one business day.</div>
+        </div>
+
         <div class="result-cta" style="text-align:center;display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
           <a href="contact.html" class="btn btn-primary btn-lg">Book my 1:1 consultation →</a>
           <a href="#" id="whatsappBtn" target="_blank" rel="noopener" class="btn btn-whatsapp btn-lg">
@@ -382,6 +394,22 @@
     // WhatsApp message construction
     const waMsg = encodeURIComponent(`Hello Trustner — I just completed the SIF Suitability Quiz on MeraSIF.com.\n\nMy fit score: ${score}/100 (${headline})\nCorpus: ${corpusVal}\nHorizon: ${horizonVal}\nObjective: ${objectiveVal}\n\nI'd like to discuss whether SIF fits my portfolio. Please call me back.`);
     $('whatsappBtn').href = 'https://wa.me/916003903737?text=' + waMsg;
+
+    // lead capture — score + inputs go to the Trustner desk on submit
+    var qlf = document.getElementById('quizLeadForm');
+    if (qlf && !qlf.dataset.wired) {
+      qlf.dataset.wired = '1';
+      qlf.addEventListener('submit', function(ev){
+        ev.preventDefault();
+        var nm = document.getElementById('qlName').value.trim();
+        var ph = document.getElementById('qlPhone').value.trim();
+        if(!nm || !ph) return;
+        var quizSummary = 'Score '+score+'/100 ('+headline+') | Corpus: '+corpusVal+' | Horizon: '+horizonVal+' | Objective: '+objectiveVal;
+        if (window.msifLead) window.msifLead({name:nm, phone:ph, quiz:quizSummary, message:'Suitability quiz lead — wants personalised allocation.', website:qlf.querySelector('[name=website]').value});
+        qlf.style.display='none';
+        document.getElementById('qlDone').style.display='block';
+      });
+    }
 
     $('quizForm').style.display = 'none';
     $('quizResult').classList.add('active');

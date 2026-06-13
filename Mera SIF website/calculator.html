@@ -230,7 +230,14 @@
           <div class="calc-summary-text" id="summaryText">
             That's how much more wealth SIF preserves vs an equivalent AIF Cat-III over your selected holding period — purely from tax + cost arbitrage. No magic. Just the right wrapper.
           </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px">
+          <form id="calcLeadForm" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:12px;padding:14px">
+            <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;width:0;height:0;opacity:0" aria-hidden="true">
+            <input type="text" id="clName" placeholder="Your name" required style="flex:1;min-width:140px;padding:10px 13px;border-radius:9px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;font-family:inherit;font-size:13px">
+            <input type="tel" id="clPhone" placeholder="WhatsApp number" required pattern="[0-9+\s\-]{8,15}" style="flex:1;min-width:140px;padding:10px 13px;border-radius:9px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;font-family:inherit;font-size:13px">
+            <button type="submit" class="btn btn-gold" style="white-space:nowrap">WhatsApp me this analysis →</button>
+            <div id="clDone" style="display:none;width:100%;font-size:13.5px;font-weight:700;color:#34D399">✓ Sent to the Trustner desk — and your WhatsApp is opening with the full comparison.</div>
+          </form>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
             <a href="contact.html" class="btn btn-primary">Get a personalised SIF shortlist</a>
             <a href="https://wa.me/916003903737?text=Hello%20Trustner%20%E2%80%94%20I%20just%20used%20your%20SIF%20calculator%20and%20want%20to%20discuss%20my%20portfolio." target="_blank" rel="noopener" class="btn btn-whatsapp">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.768.967-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>
@@ -456,6 +463,24 @@
     b.addEventListener('click', () => applyPreset(b.dataset.preset));
   });
   update();
+})();
+</script>
+<script>
+(function(){
+  var f=document.getElementById('calcLeadForm'); if(!f) return;
+  f.addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var nm=document.getElementById('clName').value.trim();
+    var ph=document.getElementById('clPhone').value.trim();
+    if(!nm||!ph) return;
+    function t(id){var el=document.getElementById(id);return el?el.textContent.trim():'';}
+    var summary='SIF: '+t('sifCorpus')+' | MF: '+t('mfCorpus')+' | PMS: '+t('pmsCorpus')+' | AIF: '+t('aifCorpus')+' | SIF advantage: '+t('summaryAmount');
+    if(window.msifLead) window.msifLead({name:nm, phone:ph, calc:summary, message:'Calculator lead — wants the comparison discussed.', website:f.querySelector('[name=website]').value});
+    var wa='https://wa.me/916003903737?text='+encodeURIComponent('Hello Trustner — I ran the SIF calculator on MeraSIF.com.\n\nName: '+nm+'\n'+summary.replace(/ \| /g,'\n')+"\n\nPlease call me back to discuss.");
+    window.open(wa,'_blank');
+    f.querySelectorAll('input,button').forEach(function(el){el.disabled=true;});
+    document.getElementById('clDone').style.display='block';
+  });
 })();
 </script>
 </body>

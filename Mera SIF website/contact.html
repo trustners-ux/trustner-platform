@@ -63,9 +63,11 @@
       <!-- LEAD FORM -->
       <div class="form-card reveal">
         <h2 style="font-size:24px;font-weight:800;color:var(--navy);letter-spacing:-.4px;margin-bottom:8px">Send us a quick note</h2>
-        <p style="font-size:14px;color:var(--gray-600);margin-bottom:24px;line-height:1.6">Share a few details and we'll route your enquiry to the right Trustner advisor. Submitting this form opens WhatsApp with your message pre-filled — you can review before sending.</p>
+        <p style="font-size:14px;color:var(--gray-600);margin-bottom:24px;line-height:1.6">Share a few details and we'll route your enquiry to the right Trustner advisor. Your enquiry reaches our desk the moment you submit — and WhatsApp opens with your message pre-filled so you can also chat with us directly.</p>
 
         <form data-lead-form>
+          <!-- honeypot: humans never see this; bots fill it -->
+          <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;height:0;width:0;opacity:0" aria-hidden="true">
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Full Name <span class="required">*</span></label>
@@ -121,7 +123,7 @@
           </div>
 
           <div class="form-success" data-form-success>
-            ✓ Thanks — your message has been opened in WhatsApp. A Trustner advisor will respond within one business day.
+            ✓ Thanks — your enquiry has reached the Trustner desk (and WhatsApp opened with your message, if you'd like to chat now). An advisor will respond within one business day.
           </div>
         </form>
 
