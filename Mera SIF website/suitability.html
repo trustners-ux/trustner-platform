@@ -81,7 +81,7 @@
       <li><a href="report.html">Report</a></li>
       <li><a href="insights.html">Insights</a></li>
       <li><a href="faq.html">FAQ</a></li>
-      <li><a href="contact.html" class="nav-cta">Talk to an Advisor</a></li>
+      <li><a href="contact.html" class="nav-cta">Talk to Our Team</a></li>
     </ul>
   </div>
 </nav>
@@ -210,20 +210,20 @@
           <h3>Suggested SIF allocation framework</h3>
           <div id="allocationContent"></div>
           <div style="margin-top:14px;font-size:11px;color:var(--gray-500);font-style:italic">
-            Illustrative framework only — final allocation depends on a 1:1 portfolio review with your Trustner advisor.
+            Illustrative framework only — final allocation depends on a 1:1 portfolio review with your Trustner relationship manager.
           </div>
         </div>
 
         <div style="background:#FFF7ED;border:1px solid #FCD34D;border-radius:12px;padding:18px 22px;margin-bottom:18px">
           <div style="font-size:13px;color:var(--amber);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">📌 Important</div>
           <div style="font-size:14px;color:var(--gray-700);line-height:1.6">
-            This is an educational framework, <strong>not a recommendation</strong>. The next step is a 20-minute consultation with a Trustner advisor who'll map your specific risk profile, existing portfolio, and tax situation against the live SIF universe. Free. No obligation.
+            This is an educational framework, <strong>not a recommendation</strong>. The next step is a 20-minute consultation with a Trustner relationship manager who'll map your specific risk profile, existing portfolio, and tax situation against the live SIF universe. Free. No obligation.
           </div>
         </div>
 
         <div id="quizLeadCard" style="background:linear-gradient(135deg,#0A1628,#1A3155);border-radius:14px;padding:22px 24px;margin-bottom:18px;color:#fff">
           <div style="font-size:11px;font-weight:800;color:var(--gold-light);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Get your personalised allocation</div>
-          <div style="font-size:14px;color:rgba(255,255,255,.85);line-height:1.55;margin-bottom:14px">Share your name and WhatsApp number — a Trustner advisor will map this score against the live SIF universe and send you a personalised allocation note. Free, within one business day.</div>
+          <div style="font-size:14px;color:rgba(255,255,255,.85);line-height:1.55;margin-bottom:14px">Share your name and WhatsApp number — a Trustner relationship manager will map this score against the live SIF universe and send you a personalised allocation note. Free, within one business day.</div>
           <form id="quizLeadForm" style="display:flex;gap:10px;flex-wrap:wrap">
             <input type="text" name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;width:0;height:0;opacity:0" aria-hidden="true">
             <input type="text" id="qlName" placeholder="Your name" required style="flex:1;min-width:150px;padding:11px 14px;border-radius:9px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font-family:inherit;font-size:13.5px">
@@ -237,7 +237,7 @@
           <a href="contact.html" class="btn btn-primary btn-lg">Book my 1:1 consultation →</a>
           <a href="#" id="whatsappBtn" target="_blank" rel="noopener" class="btn btn-whatsapp btn-lg">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.768.967-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/></svg>
-            Share results with advisor
+            Share results with our team
           </a>
         </div>
 
@@ -297,7 +297,7 @@
     </div>
     <div class="footer-disclaimers">
       <div class="risk-banner">Mutual Fund and SIF investments are subject to market risks. Read all scheme-related documents carefully before investing.</div>
-      <p class="disc-block"><strong>Suitability quiz disclaimer:</strong> The fit score and model allocation are educational frameworks only. They do not constitute investment advice. Final investment decisions should be made after a 1:1 consultation with a qualified advisor.</p>
+      <p class="disc-block"><strong>Suitability quiz disclaimer:</strong> The fit score and model allocation are educational frameworks only. They do not constitute investment advice. Final investment decisions should be made after a 1:1 consultation with a SEBI-registered investment adviser.</p>
     </div>
     <div class="footer-bottom">
       <div>&copy; <span data-year>2026</span> Trustner Asset Services Pvt. Ltd. All rights reserved.</div>
@@ -354,7 +354,7 @@
 
     let tier, tierColor, headline, tagline;
     if (score >= 80) { tier = 'strong'; tierColor = 'var(--green)'; headline = '✓ Strong SIF Fit'; tagline = "You're in the SIF sweet spot. Multiple strategies will fit your profile and your tax bracket means the post-tax delta vs PMS/AIF is at its largest. Time to talk specifics."; }
-    else if (score >= 60) { tier = 'fit'; tierColor = 'var(--royal)'; headline = '✓ Good SIF Fit'; tagline = "SIF makes sense as part of your allocation. Your profile points to specific strategy categories — your advisor can match you to the right 1-2 funds."; }
+    else if (score >= 60) { tier = 'fit'; tierColor = 'var(--royal)'; headline = '✓ Good SIF Fit'; tagline = "SIF makes sense as part of your allocation. Your profile points to specific strategy categories — our team can match you to the right 1-2 funds."; }
     else if (score >= 40) { tier = 'partial'; tierColor = 'var(--amber)'; headline = '~ Partial Fit · Worth a Conversation'; tagline = "SIF could work for a portion of your portfolio, but the answer depends on your specific situation. A 20-minute call will give clarity."; }
     else { tier = 'poor'; tierColor = 'var(--red)'; headline = "SIF Probably Isn't the Right Tool"; tagline = "Based on your inputs, mutual funds (or holding off entirely until your corpus / horizon grows) is likely a better fit. We'll happily explain why."; }
 
