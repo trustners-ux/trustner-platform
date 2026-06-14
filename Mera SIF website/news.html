@@ -154,7 +154,7 @@
     if(data&&data.items&&data.items.length){
       render(data.items);
       document.getElementById('newsHeading').textContent='Latest headlines · '+data.items.length+' stories';
-      if(data.updated) document.getElementById('newsUpdated').textContent='Updated '+timeAgo(data.updated);
+      if(data.updated) document.getElementById('newsUpdated').textContent='Checked '+timeAgo(data.updated);
     } else { render(fallback); }
   }).catch(function(){ render(fallback); });
 })();

@@ -12,9 +12,10 @@ header('Cache-Control: public, max-age=1800');
 
 $CACHE = __DIR__ . '/sif-news-cache.json';
 $TTL   = 6 * 3600; // 6 hours
+$isCli = (PHP_SAPI === 'cli'); // cron runs `php sif-news.php` — must always re-fetch so the feed self-refreshes on schedule, not only when a visitor happens to trigger it
 
-// Serve fresh cache if still valid
-if (file_exists($CACHE) && (time() - filemtime($CACHE)) < $TTL) {
+// Serve fresh cache if still valid. CLI (cron) and ?force always re-fetch.
+if (!$isCli && !isset($_GET['force']) && file_exists($CACHE) && (time() - filemtime($CACHE)) < $TTL) {
     echo file_get_contents($CACHE);
     exit;
 }

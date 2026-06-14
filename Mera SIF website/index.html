@@ -655,7 +655,7 @@ document.addEventListener('DOMContentLoaded', function(){
         <span class="section-eyebrow">Live coverage</span>
         <h2 class="section-title" style="margin-bottom:0">SIF in the news</h2>
       </div>
-      <span class="news-live"><span class="nl-dot"></span>Auto-updated</span>
+      <span class="news-live" id="newsLive"><span class="nl-dot"></span>Auto-updated</span>
     </div>
     <p class="section-subtitle reveal" style="text-align:left;margin:10px 0 0;max-width:680px">The latest headlines on Specialized Investment Funds from across India's financial press — refreshed automatically every few hours.</p>
 
@@ -1029,8 +1029,10 @@ document.addEventListener('DOMContentLoaded', function(){
       if(data && data.items && data.items.length >= 3){
         render(data.items.slice(0,10));
         if(data.updated){
+          var live = document.getElementById('newsLive');
+          if(live){ live.innerHTML = '<span class="nl-dot"></span>Checked '+timeAgo(data.updated); }
           var foot = document.getElementById('newsFoot');
-          if(foot){ foot.insertAdjacentHTML('afterbegin','<strong>Updated '+timeAgo(data.updated)+'.</strong> '); }
+          if(foot){ foot.insertAdjacentHTML('afterbegin','<strong>Last checked '+timeAgo(data.updated)+'.</strong> '); }
         }
       } else {
         render(fallback);
