@@ -148,6 +148,32 @@ function build($id, $f, &$hist, $bySd) {
     return $rec;
 }
 
+// ---------- all-fund NAV history series (powers the multi-fund chart + monthly heatmap) ----------
+// Returns each fund's full archive of official daily NAVs. Grows automatically as the
+// 6 AM cron accrues each trading day. Monthly returns (heatmap) are derived client-side
+// from month-boundary NAVs in these series. Also accepts a backfill ingest (see below).
+if (isset($_GET['series'])) {
+    $series_out = array();
+    foreach ($funds as $id => $f) {
+        if ($id === '_comment') continue;
+        $rec = build($id, $f, $hist, $bySd);
+        $series_out[$id] = array(
+            'name'   => $f['name'],
+            'cat'    => $f['cat'],
+            'face'   => isset($f['face']) ? floatval($f['face']) : 10,
+            'incept' => $f['incept'] ?? null,
+            'history'=> $rec['_series'],   // [{d:'YYYY-MM-DD', nav:float}, ...] sorted
+        );
+    }
+    @file_put_contents($HIST_FILE, json_encode($hist, JSON_UNESCAPED_SLASHES));
+    echo json_encode(array(
+        'updated' => date('c'),
+        'note'    => 'Official AMFI NAV archive (Regular-Growth). Accrues one point per trading day from 13 Jun 2026 onward.',
+        'funds'   => $series_out,
+    ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 // ---------- single fund (with history) ----------
 if ($wantFund) {
     if (empty($funds[$wantFund])) { echo json_encode(array('error' => 'unknown-fund')); exit; }
