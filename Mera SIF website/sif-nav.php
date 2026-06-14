@@ -32,7 +32,7 @@ $isCli = (PHP_SAPI === 'cli');   // cron runs `php sif-nav.php` — must ALWAYS 
 
 // Serve cache only for web hits within TTL. CLI (cron) and ?force always rebuild,
 // so the daily official-NAV snapshot is reliably appended to sif-nav-history.json.
-if (!$wantFund && !$isCli && !isset($_GET['force']) && file_exists($CACHE_FILE) && (time() - filemtime($CACHE_FILE)) < $CACHE_TTL) {
+if (!$wantFund && !isset($_GET['series']) && !$isCli && !isset($_GET['force']) && file_exists($CACHE_FILE) && (time() - filemtime($CACHE_FILE)) < $CACHE_TTL) {
     echo file_get_contents($CACHE_FILE);
     exit;
 }
