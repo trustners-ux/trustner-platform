@@ -32,7 +32,7 @@ $isCli = (PHP_SAPI === 'cli');   // cron runs `php sif-nav.php` — must ALWAYS 
 
 // Serve cache only for web hits within TTL. CLI (cron) and ?force always rebuild,
 // so the daily official-NAV snapshot is reliably appended to sif-nav-history.json.
-if (!$wantFund && !isset($_GET['series']) && !$isCli && !isset($_GET['force']) && file_exists($CACHE_FILE) && (time() - filemtime($CACHE_FILE)) < $CACHE_TTL) {
+if (!$wantFund && !isset($_GET['series']) && !isset($_GET['newfunds']) && !$isCli && !isset($_GET['force']) && file_exists($CACHE_FILE) && (time() - filemtime($CACHE_FILE)) < $CACHE_TTL) {
     echo file_get_contents($CACHE_FILE);
     exit;
 }
@@ -146,6 +146,45 @@ function build($id, $f, &$hist, $bySd) {
     $rec['points'] = count($series);
     $rec['_series'] = $series;
     return $rec;
+}
+
+// ---------- new-fund detection (powers the weekly auto-update agent) ----------
+// Lists SIF scheme codes present in the official AMFI SIF NAV feed (Regular-Growth)
+// that are NOT yet in our tracker — i.e. funds that have launched since our last
+// data refresh. Lets the weekly agent surface/add new SIFs automatically.
+if (isset($_GET['newfunds'])) {
+    $known = array();
+    foreach ($funds as $id => $f) {
+        if ($id === '_comment') continue;
+        if (!empty($f['sd'])) $known[$f['sd']] = true;
+    }
+    $new = array();
+    if ($amfi && !empty($amfi['data'])) {
+        foreach ($amfi['data'] as $t) foreach (($t['categories'] ?? array()) as $c)
+            foreach (($c['groups'] ?? array()) as $g) foreach (($g['schemes'] ?? array()) as $s) {
+                $sd = isset($s['Sd_Id']) ? $s['Sd_Id'] : '';
+                $navname = isset($s['NavName']) ? $s['NavName'] : '';
+                if ($sd === '' || isset($known[$sd]) || isset($new[$sd])) continue;
+                // match the Regular-Growth row our tracker uses (one per fund)
+                if (stripos($navname, 'regular') === false || stripos($navname, 'growth') === false) continue;
+                $new[$sd] = array(
+                    'sd'       => $sd,
+                    'sif'      => isset($g['SIFName']) ? $g['SIFName'] : '',
+                    'category' => isset($s['category']) ? $s['category'] : '',
+                    'navName'  => $navname,
+                    'nav'      => isset($s['NetAssetValue']) ? floatval($s['NetAssetValue']) : null,
+                    'navDate'  => isset($s['Date']) ? $s['Date'] : '',
+                );
+            }
+    }
+    echo json_encode(array(
+        'checked'  => date('c'),
+        'tracked'  => count($known),
+        'newCount' => count($new),
+        'newFunds' => array_values($new),
+        'note'     => 'Official AMFI SIF scheme codes (Regular-Growth) not yet in our tracker. The weekly SIF-industry agent reviews and adds these.',
+    ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    exit;
 }
 
 // ---------- all-fund NAV history series (powers the multi-fund chart + monthly heatmap) ----------
