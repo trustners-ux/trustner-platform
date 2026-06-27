@@ -42,17 +42,22 @@ export function TurnstileWidget({
     const ensureScript = () =>
       new Promise<void>((resolve) => {
         if (window.turnstile) return resolve();
-        const existing = document.querySelector<HTMLScriptElement>(`script[src="${SCRIPT_SRC}"]`);
-        if (existing) {
-          existing.addEventListener('load', () => resolve(), { once: true });
-          return;
+        if (!document.querySelector<HTMLScriptElement>(`script[src="${SCRIPT_SRC}"]`)) {
+          const s = document.createElement('script');
+          s.src = SCRIPT_SRC;
+          s.async = true;
+          s.defer = true;
+          document.head.appendChild(s);
         }
-        const s = document.createElement('script');
-        s.src = SCRIPT_SRC;
-        s.async = true;
-        s.defer = true;
-        s.addEventListener('load', () => resolve(), { once: true });
-        document.head.appendChild(s);
+        // Poll for readiness instead of relying on the script's `load` event:
+        // when another widget already injected the script, its load event may
+        // have fired before this listener could attach, leaving window.turnstile
+        // present but render() never called (widget silently never appears).
+        const startedAt = Date.now();
+        const iv = setInterval(() => {
+          if (window.turnstile) { clearInterval(iv); resolve(); }
+          else if (Date.now() - startedAt > 15000) { clearInterval(iv); }
+        }, 100);
       });
 
     ensureScript().then(() => {
