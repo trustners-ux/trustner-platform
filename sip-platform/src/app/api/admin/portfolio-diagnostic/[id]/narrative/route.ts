@@ -18,6 +18,7 @@ import { verifyToken, COOKIE_NAME } from '@/lib/auth/jwt';
 import { verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 import { getSupabaseAdmin } from '@/lib/db/supabase';
 import { getOrGenerateNarrative, type NarrativeJSON } from '@/lib/portfolio-diagnostic/narrative-engine';
+import { isPdRunInScope } from '@/lib/portfolio-diagnostic/run-scope';
 
 // Opus 4.7 with adaptive thinking on a 10-15 holding family takes 50-90 sec
 // uncached. We need headroom over the typical 60 sec Vercel default — set
@@ -53,6 +54,14 @@ export async function GET(
   const supabase = getSupabaseAdmin();
   if (!supabase) {
     return NextResponse.json({ error: 'Database unavailable' }, { status: 500 });
+  }
+
+  // PRIVACY GATE (audit P0-4) — narrative belongs to a specific RM's client.
+  if (!(await isPdRunInScope(supabase, numericId, { employeeEmail: email }))) {
+    return NextResponse.json(
+      { error: 'You do not have access to this diagnostic — it belongs to another relationship manager.' },
+      { status: 403 }
+    );
   }
 
   // Fetch existing
@@ -133,6 +142,14 @@ export async function PATCH(
   const supabase = getSupabaseAdmin();
   if (!supabase) {
     return NextResponse.json({ error: 'Database unavailable' }, { status: 500 });
+  }
+
+  // PRIVACY GATE (audit P0-4) — only edit a narrative within the actor's scope.
+  if (!(await isPdRunInScope(supabase, numericId, { employeeEmail: email }))) {
+    return NextResponse.json(
+      { error: 'You do not have access to this diagnostic — it belongs to another relationship manager.' },
+      { status: 403 }
+    );
   }
 
   // Look up actor — for audit attribution. Admin-token users (Sangeeta /

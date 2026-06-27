@@ -68,14 +68,28 @@ export default function PrivacyPage() {
           <ul>
             <li><strong>Google LLC</strong> (as Data Processor for analytics, only if you consent) — servers located in the US/EU</li>
             <li><strong>Resend / email service providers</strong> — to deliver OTPs and transactional emails you request</li>
+            <li><strong>Anthropic PBC</strong> (as Data Processor for AI-assisted features) — when you upload a document for
+              KYC or portfolio analysis, or we generate a written report for you, the relevant content may be processed
+              on Anthropic&apos;s servers in the United States solely to provide that feature</li>
             <li><strong>Regulators and law enforcement</strong> — where required under applicable law, SEBI, or AMFI rules</li>
           </ul>
 
           <h2>Cross-Border Data Transfer</h2>
           <p>
-            If you consent to analytics, some anonymized data may be transferred to servers of Google LLC outside India,
-            in compliance with Section 16 of the DPDP Act. We do not transfer any other personal data outside India without
-            a lawful basis.
+            Some personal data is processed outside India by our data processors, under Section 16 of the DPDP Act and
+            with appropriate safeguards. Specifically:
+          </p>
+          <ul>
+            <li><strong>Analytics</strong> (Google LLC — US/EU): only anonymized data, and only if you consent to analytics.</li>
+            <li><strong>Transactional email</strong> (Resend): the email address and content needed to deliver the OTPs and
+              notifications you request.</li>
+            <li><strong>AI-assisted document reading &amp; report drafting</strong> (Anthropic PBC — United States): when you
+              upload a KYC/portfolio document or we prepare a report, the relevant content may be processed in the US solely
+              to provide that feature. This data is not used to train third-party AI models.</li>
+          </ul>
+          <p>
+            We do not transfer your personal data outside India for any purpose other than those listed above, and never
+            sell or rent it.
           </p>
 
           <h2>Data Retention</h2>
@@ -121,9 +135,12 @@ export default function PrivacyPage() {
 
           <h2>Grievance Officer / Contact</h2>
           <p>
-            For privacy-related concerns, data rights requests, or complaints:
+            Under the DPDP Act 2023, our designated Grievance Officer for privacy-related
+            concerns, data-rights requests, and complaints is:
           </p>
           <ul>
+            <li><strong>Name:</strong> Ms. Vinita Kabra</li>
+            <li><strong>Designation:</strong> Company Secretary &amp; Compliance Officer</li>
             <li><strong>Email:</strong> {COMPANY.contact.grievanceEmail || COMPANY.contact.email}</li>
             <li><strong>Phone:</strong> {COMPANY.contact.phoneDisplay}</li>
             <li><strong>Address:</strong> {COMPANY.address.full}</li>

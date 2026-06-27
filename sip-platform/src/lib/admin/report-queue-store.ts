@@ -3,14 +3,28 @@
  * Each report has 3 blobs: queue/{id}.json, pdfs/{id}.pdf, data/{id}.json
  */
 
+import { randomBytes } from 'crypto';
 import { put, list } from '@vercel/blob';
+import { readPrivateJson } from '@/lib/blob/private-store';
 import type { ReportQueueEntry, ReportStatus } from '@/types/report-queue';
 import type { FinancialPlanningData } from '@/types/financial-planning';
 
+// ─── PII blobs are PRIVATE (audit P0-1) ───
+// The queue metadata (name/email/phone/scores) and the planning DATA json hold
+// client PII and are read only server-side, so they are stored `access:'private'`.
+// The PDF stays public — its URL is emailed to the client — but at an
+// unguessable id so it is a capability URL, and its private DATA twin can no
+// longer be reached by swapping the path. Reads try the private object first
+// and fall back ONCE to a legacy public object (then the next write converts it).
+
 // ─── ID Generator ───
 function generateReportId(): string {
+  // The PDF blob stays public (its URL is emailed to the client), so the id is
+  // the ONLY thing guarding that report. It must be a true capability token —
+  // 16 CSPRNG bytes (128 bits), not Math.random (audit P0-1). The ts prefix is
+  // kept only for human-readable sortability, not as a secret.
   const ts = Date.now();
-  const rand = Math.random().toString(36).substring(2, 8);
+  const rand = randomBytes(16).toString('hex');
   return `rpt-${ts}-${rand}`;
 }
 
@@ -44,14 +58,14 @@ export async function createReportQueueEntry(
     contentType: 'application/pdf',
   });
 
-  // Upload planning data to Blob
+  // Upload planning data to Blob — PRIVATE (client PII, server-read only).
   const dataBlob = await put(
     `reports/data/${id}.json`,
     JSON.stringify(planningData),
     {
-      access: 'public',
+      access: 'private',
       addRandomSuffix: false,
-    allowOverwrite: true,
+      allowOverwrite: true,
       contentType: 'application/json',
     }
   );
@@ -91,9 +105,9 @@ export async function createReportQueueEntry(
     lastReminderAt: null,
   };
 
-  // Upload queue entry JSON
+  // Upload queue entry JSON — PRIVATE (holds client name/email/phone/scores).
   await put(`reports/queue/${id}.json`, JSON.stringify(entry), {
-    access: 'public',
+    access: 'private',
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: 'application/json',
@@ -121,10 +135,13 @@ export async function getReportQueue(filter?: {
 
     for (const blob of result.blobs) {
       try {
-        const res = await fetch(blob.url);
-        if (!res.ok) continue;
-        const entry = (await res.json()) as ReportQueueEntry;
-        entries.push(entry);
+        // PRIVATE read first; fall back ONCE to a legacy public object.
+        let entry = await readPrivateJson<ReportQueueEntry>(blob.pathname);
+        if (!entry) {
+          const res = await fetch(blob.url);
+          if (res.ok) entry = (await res.json()) as ReportQueueEntry;
+        }
+        if (entry) entries.push(entry);
       } catch {
         console.error(`[ReportQueue] Failed to parse ${blob.pathname}`);
       }
@@ -164,15 +181,15 @@ export async function getReportEntry(
   id: string
 ): Promise<ReportQueueEntry | null> {
   try {
-    const result = await list({ prefix: `reports/queue/${id}.json`, limit: 1 });
-    if (result.blobs.length === 0) return null;
+    // PRIVATE read with useCache:false → always fresh from origin (this also
+    // removes the CDN-stale-read problem the old public+cache-buster path had).
+    const path = `reports/queue/${id}.json`;
+    const priv = await readPrivateJson<ReportQueueEntry>(path);
+    if (priv) return priv;
 
-    // CRITICAL: cache: 'no-store' + cache-buster to bypass both the platform
-    // fetch cache and the Vercel Blob CDN edge cache. Without this, after
-    // updateReportEntry writes new JSON to the same path, the next fetch
-    // returns the previously-cached JSON for up to 1 year — silently
-    // serving the OLD pdfBlobUrl and OLD totalScore even though the entry
-    // was correctly updated server-side.
+    // Transitional fallback: a legacy PUBLIC queue blob from before the fix.
+    const result = await list({ prefix: path, limit: 1 });
+    if (result.blobs.length === 0) return null;
     const bust = `?t=${Date.now()}`;
     const res = await fetch(result.blobs[0].url + bust, { cache: 'no-store' });
     if (!res.ok) return null;
@@ -193,15 +210,13 @@ export async function updateReportEntry(
 
   const updated: ReportQueueEntry = { ...entry, ...updates, id: entry.id };
 
-  // cacheControlMaxAge: 30 → CDN re-validates every 30s instead of
-  // holding the JSON for the 1-year default. Combined with the
-  // no-store/cache-buster on reads, this gives near-immediate consistency.
+  // PRIVATE (audit P0-1). Private reads use useCache:false so updates are seen
+  // immediately without the old CDN cache-control dance.
   await put(`reports/queue/${id}.json`, JSON.stringify(updated), {
-    access: 'public',
+    access: 'private',
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: 'application/json',
-    cacheControlMaxAge: 30,
   });
 
   return updated;
@@ -212,13 +227,14 @@ export async function getReportPlanningData(
   id: string
 ): Promise<FinancialPlanningData | null> {
   try {
-    const result = await list({ prefix: `reports/data/${id}.json`, limit: 1 });
-    if (result.blobs.length === 0) return null;
+    // PRIVATE read (useCache:false → fresh, so scenario overrides apply at once).
+    const path = `reports/data/${id}.json`;
+    const priv = await readPrivateJson<FinancialPlanningData>(path);
+    if (priv) return priv;
 
-    // Cache-buster + no-store to bypass BOTH the platform fetch cache and
-    // the Vercel Blob CDN edge cache. The blob URL stays the same across
-    // overwrites (no random suffix), so without this the read returns
-    // pre-Apply JSON for hours, silently ignoring the scenario override.
+    // Transitional fallback: a legacy PUBLIC data blob from before the fix.
+    const result = await list({ prefix: path, limit: 1 });
+    if (result.blobs.length === 0) return null;
     const bust = `?t=${Date.now()}`;
     const res = await fetch(result.blobs[0].url + bust, { cache: 'no-store' });
     if (!res.ok) return null;
@@ -235,11 +251,10 @@ export async function saveReportPlanningData(
   data: FinancialPlanningData
 ): Promise<void> {
   await put(`reports/data/${id}.json`, JSON.stringify(data), {
-    access: 'public',
+    access: 'private',
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: 'application/json',
-    cacheControlMaxAge: 30,
   });
 }
 

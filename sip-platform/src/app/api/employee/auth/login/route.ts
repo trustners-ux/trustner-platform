@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyLogin } from '@/lib/employee/employee-auth';
 import { signEmployeeToken, verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 import { writeAuditLog } from '@/lib/dal/audit';
+import { rateLimit, clientIp } from '@/lib/security/rate-limit';
+
+// Brute-force / credential-stuffing defence (audit P0-3). Counts only FAILED
+// attempts, keyed by IP and by email. Best-effort per-region; upgrade to KV.
+const ipLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30 });
+const emailLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 8 });
 
 // Auth routes MUST always be dynamic + Node runtime + zero caching.
 // Without these, Vercel may reuse cached serverless bundles or stale blob
@@ -25,8 +31,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
+    const ip = clientIp(req);
+    const normalisedEmail = String(email).trim().toLowerCase();
+    const ipKey = `login:emp:ip:${ip}`;
+    const emailKey = `login:emp:email:${normalisedEmail}`;
+    if (ipLimiter.peek(ipKey).remaining <= 0 || emailLimiter.peek(emailKey).remaining <= 0) {
+      return NextResponse.json(
+        { error: 'Too many failed attempts. Please try again in a few minutes.' },
+        { status: 429, headers: { 'Retry-After': '900' } }
+      );
+    }
+
     const result = await verifyLogin(email, password);
     if (!result.success || !result.employee) {
+      ipLimiter.check(ipKey);
+      emailLimiter.check(emailKey);
       return NextResponse.json({ error: result.error || 'Login failed' }, { status: 401 });
     }
 

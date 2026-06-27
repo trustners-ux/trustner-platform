@@ -25,6 +25,7 @@ import {
   DELIVERABLE_OPTIONS,
   type DeliverableId,
 } from '@/lib/portfolio-diagnostic/send-client-share-email';
+import { isPdRunInScope } from '@/lib/portfolio-diagnostic/run-scope';
 
 // Tokens expire 90 days from issue. Long enough for a slow-to-respond
 // client to still open the report; short enough that abandoned links
@@ -66,6 +67,14 @@ export async function POST(
   const supabase = getSupabaseAdmin();
   if (!supabase) {
     return NextResponse.json({ error: 'Database unavailable' }, { status: 500 });
+  }
+
+  // PRIVACY GATE (audit P0-4) — never share another RM's client report.
+  if (!(await isPdRunInScope(supabase, parseInt(id, 10), { employeeEmail }))) {
+    return NextResponse.json(
+      { error: 'You do not have access to this diagnostic — it belongs to another relationship manager.' },
+      { status: 403 }
+    );
   }
 
   // Resolve actor

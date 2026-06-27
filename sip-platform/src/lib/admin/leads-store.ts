@@ -1,6 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { put, list } from '@vercel/blob';
+import { readPrivateJson } from '@/lib/blob/private-store';
 
 export type LeadStatus = 'new' | 'contacted' | 'follow-up' | 'converted' | 'archived';
 
@@ -32,11 +33,17 @@ function getLeadsFilePath(): string {
 export async function getLeads(): Promise<StoredLead[]> {
   try {
     if (isProduction) {
-      // Use Vercel Blob in production (persistent storage)
+      // Lead PII lives in a PRIVATE blob (audit P0-1). Read it authenticated.
+      const priv = await readPrivateJson<StoredLead[]>(BLOB_KEY);
+      if (priv) return priv;
+      // Transitional: a pre-existing PUBLIC leads blob from before the fix.
+      // Read it once, then self-heal by re-saving as private below.
       const result = await list({ prefix: 'leads/leads', limit: 1 });
       if (result.blobs.length > 0) {
         const res = await fetch(result.blobs[0].url);
-        return (await res.json()) as StoredLead[];
+        const legacy = (await res.json()) as StoredLead[];
+        try { await saveLeads(legacy); } catch { /* best-effort conversion */ }
+        return legacy;
       }
       return [];
     } else {
@@ -52,9 +59,9 @@ export async function getLeads(): Promise<StoredLead[]> {
 
 async function saveLeads(leads: StoredLead[]): Promise<void> {
   if (isProduction) {
-    // Save to Vercel Blob (persistent, survives cold starts)
+    // Save to Vercel Blob as a PRIVATE object (PII — audit P0-1).
     await put(BLOB_KEY, JSON.stringify(leads, null, 2), {
-      access: 'public',
+      access: 'private',
       addRandomSuffix: false,
       allowOverwrite: true,
     });

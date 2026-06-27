@@ -12,6 +12,7 @@ import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '@/lib/auth/jwt';
 import { verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 import { getSupabaseAdmin } from '@/lib/db/supabase';
+import { isPdRunInScope } from '@/lib/portfolio-diagnostic/run-scope';
 
 interface CommentBody {
   commentText: string;
@@ -39,6 +40,14 @@ export async function POST(
   const supabase = getSupabaseAdmin();
   if (!supabase) {
     return NextResponse.json({ error: 'Database unavailable' }, { status: 500 });
+  }
+
+  // PRIVACY GATE (audit P0-4) — no cross-tenant comments on another RM's run.
+  if (!(await isPdRunInScope(supabase, parseInt(id, 10), { employeeEmail: email }))) {
+    return NextResponse.json(
+      { error: 'You do not have access to this diagnostic — it belongs to another relationship manager.' },
+      { status: 403 }
+    );
   }
 
   const { data: emp } = await supabase

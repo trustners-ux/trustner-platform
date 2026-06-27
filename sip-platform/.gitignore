@@ -20,3 +20,6 @@ out/
 
 # local data
 data/leads.json
+
+# Security audit reports (contain live vuln details)
+_security/

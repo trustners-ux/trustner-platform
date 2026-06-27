@@ -68,8 +68,10 @@ export async function getVisibleEmployeeIds(
 
   const scope = actor.visibilityScope ?? (await loadActorScope(actor.employeeId));
 
+  let base: ResolvedScope;
   switch (scope) {
     case 'firm':
+      // Firm scope already sees everyone — explicit assignments are moot.
       return {
         scope: 'firm',
         employeeIds: [],
@@ -78,31 +80,66 @@ export async function getVisibleEmployeeIds(
       };
     case 'subtree': {
       const ids = await getDescendantEmployeeIds(actor.employeeId);
-      return {
+      base = {
         scope: 'subtree',
         employeeIds: ids,
         includeAll: false,
         reason: `role-grants-subtree-(${ids.length} employees)`,
       };
+      break;
     }
     case 'direct_reports': {
       const direct = await getDirectReportIds(actor.employeeId);
-      return {
+      base = {
         scope: 'direct_reports',
         employeeIds: [actor.employeeId, ...direct],
         includeAll: false,
         reason: `role-grants-direct-reports-(${direct.length} reports)`,
       };
+      break;
     }
     case 'own':
     default:
-      return {
+      base = {
         scope: 'own',
         employeeIds: [actor.employeeId],
         includeAll: false,
         reason: 'role-grants-own-only',
       };
+      break;
   }
+
+  // ── Explicit PD review assignments (Phase-2 fine-grained oversight) ──
+  // A reviewer (e.g. CA Ishika) can be granted visibility of specific people
+  // who do NOT report up through them in the HR tree. Additive only — widens
+  // the visible set, never narrows it. (pd_review_assignments, migration 045.)
+  const assigned = await getPdAssignedSubjectIds(actor.employeeId);
+  if (assigned.length > 0) {
+    const merged = Array.from(new Set([...base.employeeIds, ...assigned]));
+    return {
+      ...base,
+      employeeIds: merged,
+      reason: `${base.reason}+pd-assigned-(${assigned.length})`,
+    };
+  }
+  return base;
+}
+
+/**
+ * Subjects this reviewer is explicitly assigned to oversee in the PD
+ * (pd_review_assignments). Returns [] if the table is absent or empty so a
+ * partial rollout never breaks visibility resolution.
+ */
+export async function getPdAssignedSubjectIds(reviewerId: number): Promise<number[]> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('pd_review_assignments')
+    .select('subject_employee_id')
+    .eq('reviewer_employee_id', reviewerId)
+    .eq('is_active', true);
+  if (error || !data) return [];
+  return data.map((r) => r.subject_employee_id as number);
 }
 
 /**
