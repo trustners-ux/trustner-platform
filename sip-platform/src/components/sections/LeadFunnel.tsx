@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { TurnstileWidget } from '@/components/security/TurnstileWidget';
 import {
   CheckCircle2,
   Loader2,
@@ -34,6 +35,10 @@ const STORAGE_KEY = 'leadFunnelData';
 // Component
 // ---------------------------------------------------------------------------
 
+// Consent version — bump whenever the policy materially changes so we can
+// re-prompt existing leads.
+const CONSENT_VERSION = '2026-05-28';
+
 export function LeadFunnel({ isOpen, onClose }: LeadFunnelProps) {
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -44,6 +49,10 @@ export function LeadFunnel({ isOpen, onClose }: LeadFunnelProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  // DPDP §6 — explicit consent. Default UNCHECKED.
+  const [consent, setConsent] = useState(false);
+  // Turnstile CAPTCHA token — empty (and widget hidden) until keys are set.
+  const [turnstileToken, setTurnstileToken] = useState('');
 
   // OTP state
   const [otpSent, setOtpSent] = useState(false);
@@ -152,6 +161,9 @@ export function LeadFunnel({ isOpen, onClose }: LeadFunnelProps) {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       errs.email = 'Enter a valid email address';
     }
+    if (!consent) {
+      errs.consent = 'Please confirm you are 18+ and consent to be contacted.';
+    }
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -171,6 +183,12 @@ export function LeadFunnel({ isOpen, onClose }: LeadFunnelProps) {
           phoneVerified: otpVerified,
           step: 1,
           source: 'lead-funnel',
+          consent: {
+            given: consent,
+            version: CONSENT_VERSION,
+            timestamp: new Date().toISOString(),
+          },
+          turnstileToken,
         }),
       });
       const data = await res.json();
@@ -356,11 +374,40 @@ export function LeadFunnel({ isOpen, onClose }: LeadFunnelProps) {
             </div>
           </div>
 
+          {/* DPDP §6 consent — explicit, specific, unambiguous */}
+          <label className="mt-5 flex items-start gap-2.5 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={consent}
+              onChange={(e) => {
+                setConsent(e.target.checked);
+                if (e.target.checked && errors.consent) setErrors((er) => ({ ...er, consent: '' }));
+              }}
+              className="mt-0.5 h-4 w-4 rounded border-surface-300 text-brand focus:ring-2 focus:ring-brand/30"
+            />
+            <span className="text-[11px] leading-snug text-slate-500">
+              I am 18 years or older and consent to Trustner Asset Services
+              contacting me about mutual fund products and processing my
+              personal data per the{' '}
+              <a href="/privacy" target="_blank" rel="noopener" className="underline hover:text-brand">
+                Privacy Policy
+              </a>
+              . I understand I can withdraw consent at any time by writing to
+              wecare@trustner.in.
+            </span>
+          </label>
+          {errors.consent && (
+            <p className="text-xs text-negative mt-1.5">{errors.consent}</p>
+          )}
+
+          {/* Bot defence — renders nothing until Turnstile keys are set. */}
+          <TurnstileWidget onToken={setTurnstileToken} className="mt-3" />
+
           {/* Submit Button */}
           <button
             onClick={handleSubmit}
-            disabled={loading}
-            className="w-full mt-6 btn-primary py-3.5 text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-70"
+            disabled={loading || !consent}
+            className="w-full mt-4 btn-primary py-3.5 text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-70"
           >
             {loading ? (
               <>

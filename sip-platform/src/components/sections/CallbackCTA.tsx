@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { TurnstileWidget } from '@/components/security/TurnstileWidget';
 import { usePathname } from 'next/navigation';
 import { PhoneCall, X, CheckCircle2, Send, MapPin, User, Mail, MessageSquareText, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
@@ -51,6 +52,8 @@ export function CallbackCTA() {
   const [showButton, setShowButton] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
+  // Turnstile CAPTCHA token — empty (and widget hidden) until keys are set.
+  const [turnstileToken, setTurnstileToken] = useState('');
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -100,6 +103,7 @@ export function CallbackCTA() {
           goal: goalParts.join(' | '),
           source: 'callback-cta',
           step: 4,
+          turnstileToken,
         }),
       });
       setSubmitted(true);
@@ -291,6 +295,9 @@ export function CallbackCTA() {
                 className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm outline-none transition-colors resize-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
               />
             </div>
+
+            {/* Bot defence — renders nothing until Turnstile keys are set. */}
+            <TurnstileWidget onToken={setTurnstileToken} />
 
             {/* Submit */}
             <button

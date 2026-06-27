@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server';
 import { addLead, updateLeadByPhone } from '@/lib/admin/leads-store';
+import { rateLimit, clientIp } from '@/lib/security/rate-limit';
+import { verifyTurnstile } from '@/lib/security/turnstile';
+
+// Public unauthenticated endpoint — rate-limit per IP to prevent lead-stuffing
+// and Resend quota burn.
+const ipLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 10 });
 
 /** Escape user-supplied strings before interpolating into HTML email bodies */
 function esc(s: unknown): string {
@@ -13,6 +19,15 @@ function esc(s: unknown): string {
 
 export async function POST(request: Request) {
   try {
+    // Rate limit BEFORE parsing body
+    const ipCheck = ipLimiter.check(`lead:ip:${clientIp(request)}`);
+    if (!ipCheck.ok) {
+      return NextResponse.json(
+        { success: false, message: 'Too many requests. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(ipCheck.retryAfter) } }
+      );
+    }
+
     const body = await request.json();
     const {
       name,
@@ -26,6 +41,8 @@ export async function POST(request: Request) {
       remarks,
       phoneVerified,
       step,
+      consent,
+      turnstileToken,
       source = 'lead-modal',
     } = body;
 
@@ -38,6 +55,31 @@ export async function POST(request: Request) {
         { success: false, message: 'Name and phone are required' },
         { status: 400 }
       );
+    }
+
+    // DPDP §6 — for full submissions, require explicit consent.
+    // Partial autosaves don't trigger emails so they're exempt.
+    if (!isPartialSave && (!consent || consent.given !== true)) {
+      return NextResponse.json(
+        { success: false, message: 'Consent is required to submit this form.' },
+        { status: 400 }
+      );
+    }
+
+    // Bot defence (audit P1/P2). NO-OP until Turnstile keys are set, so this is
+    // safe to ship now. Gate every real human submission — i.e. anything that is
+    // not a partial autosave, OR any payload carrying explicit consent (the lead
+    // funnel posts step:1 + consent as its final submit). Pure autosaves never
+    // carry consent, so they stay exempt and aren't challenged mid-funnel.
+    const isConsentedSubmit = !!(consent && consent.given === true);
+    if (!isPartialSave || isConsentedSubmit) {
+      const captcha = await verifyTurnstile(turnstileToken, clientIp(request));
+      if (!captcha.ok) {
+        return NextResponse.json(
+          { success: false, message: 'Could not verify you are human. Please retry.' },
+          { status: 400 }
+        );
+      }
     }
 
     // Validate phone if provided
@@ -64,6 +106,15 @@ export async function POST(request: Request) {
     if (remarks) leadData.remarks = remarks;
     if (typeof phoneVerified === 'boolean') leadData.phoneVerified = phoneVerified;
     if (typeof step === 'number') leadData.step = step;
+    // DPDP §6 — persist consent record alongside the lead.
+    if (consent && consent.given === true) {
+      leadData.consent = {
+        given: true,
+        version: String(consent.version || 'unknown'),
+        timestamp: String(consent.timestamp || new Date().toISOString()),
+        ip: clientIp(request),
+      };
+    }
 
     // Send notification email via Resend — only for complete submissions (step 4 or legacy)
     if (!isPartialSave) {

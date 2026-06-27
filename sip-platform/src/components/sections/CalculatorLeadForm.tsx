@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Send, Loader2, CheckCircle2, MessageCircle, Phone, Mail, User, Sparkles } from 'lucide-react';
+import { TurnstileWidget } from '@/components/security/TurnstileWidget';
 
 interface CalculatorLeadFormProps {
   /** The calculator name — sent as `source` + `goal` to the lead API */
@@ -89,11 +90,20 @@ export function CalculatorLeadForm({
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // DPDP §6 — explicit, specific, unambiguous consent. Default UNCHECKED.
+  const [consent, setConsent] = useState(false);
+  // Turnstile CAPTCHA token (empty until the user solves it; stays empty — and
+  // the widget renders nothing — until Turnstile keys are configured).
+  const [turnstileToken, setTurnstileToken] = useState('');
 
   const theme = ACCENT_MAP[accent];
 
   const sanitizedPhone = phone.replace(/\D/g, '');
-  const canSubmit = name.trim().length >= 2 && sanitizedPhone.length === 10 && !submitting;
+  const canSubmit =
+    name.trim().length >= 2 &&
+    sanitizedPhone.length === 10 &&
+    consent &&
+    !submitting;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,6 +126,12 @@ export function CalculatorLeadForm({
           goal: calculatorName,
           remarks,
           source: `calc-${calculatorName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+          consent: {
+            given: consent,
+            version: '2026-05-28',
+            timestamp: new Date().toISOString(),
+          },
+          turnstileToken,
         }),
       });
 
@@ -241,6 +257,26 @@ export function CalculatorLeadForm({
                     {error}
                   </div>
                 )}
+
+                {/* DPDP §6 — explicit consent */}
+                <label className="flex items-start gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={consent}
+                    onChange={(e) => setConsent(e.target.checked)}
+                    className="mt-0.5 h-3.5 w-3.5 rounded border-surface-300 text-brand focus:ring-2 focus:ring-brand/30 shrink-0"
+                  />
+                  <span className="text-[10px] leading-snug text-slate-500">
+                    I am 18+ and consent to Trustner contacting me about MF
+                    products and processing my data per the{' '}
+                    <a href="/privacy" target="_blank" rel="noopener" className="underline hover:text-brand">
+                      Privacy Policy
+                    </a>.
+                  </span>
+                </label>
+
+                {/* Bot defence — renders nothing until Turnstile keys are set. */}
+                <TurnstileWidget onToken={setTurnstileToken} />
 
                 <button
                   type="submit"
