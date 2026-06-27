@@ -16,21 +16,40 @@ import { calculate5YearCashflow } from '@/lib/utils/cashflow-projection';
 import { calculateAllocationMatrix } from '@/lib/utils/allocation-matrix';
 import { createReportQueueEntry } from '@/lib/admin/report-queue-store';
 import { buildAdminReviewNotificationHTML } from '@/lib/utils/report-email-builders';
+import { rateLimit, clientIp } from '@/lib/security/rate-limit';
+import { verifyTurnstile } from '@/lib/security/turnstile';
 import { Resend } from 'resend';
 
 export const maxDuration = 60; // Allow up to 60s for full report generation
+
+// Report generation runs a Claude narrative (real $ cost) and the session
+// token check below is optional, so bound abuse by IP (audit P1 — unauth
+// compute). 12/hr is generous for a real human (who makes 1–2 reports).
+const ipLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 12 });
 
 const getSecret = () => new TextEncoder().encode(process.env.JWT_SECRET || 'dev-secret-change-in-production');
 
 export async function POST(request: Request) {
   try {
+    const rl = ipLimiter.check(`fp-report:ip:${clientIp(request)}`);
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: 'Too many report requests. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfter) } }
+      );
+    }
+
     // Verify session token
     const authHeader = request.headers.get('Authorization');
     const token = authHeader?.replace('Bearer ', '');
 
+    // Legit users reach this route only after passing the phone-OTP gate, which
+    // mints this session token. Track whether it's valid — see CAPTCHA note below.
+    let hasValidSession = false;
     if (token) {
       try {
         await jwtVerify(token, getSecret());
+        hasValidSession = true;
       } catch {
         if (process.env.NODE_ENV !== 'development') {
           return NextResponse.json({ error: 'Session expired. Please start over.' }, { status: 401 });
@@ -44,6 +63,22 @@ export async function POST(request: Request) {
 
     if (!data || !data.personalProfile?.fullName) {
       return NextResponse.json({ error: 'Invalid questionnaire data' }, { status: 400 });
+    }
+
+    // Bot defence (audit P1-9) — report generation runs a paid Claude narrative.
+    // Require EITHER a valid OTP session (which legit users always have) OR a
+    // CAPTCHA token. So OTP-verified users are never challenged — no widget is
+    // needed in the wizard — while a token-less direct POST (the real abuse path,
+    // which bypasses the client OTP gate) must pass Turnstile. NO-OP until keys
+    // are set, so safe to ship now.
+    if (!hasValidSession) {
+      const captcha = await verifyTurnstile(body.turnstileToken as string | undefined, clientIp(request));
+      if (!captcha.ok) {
+        return NextResponse.json(
+          { error: 'Could not verify you are human. Please retry.' },
+          { status: 400 }
+        );
+      }
     }
 
     const userName = data.personalProfile.fullName;
