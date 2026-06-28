@@ -18,6 +18,7 @@ const limiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 5 });
 
 const PAN_RE = /^[A-Z]{5}\d{4}[A-Z]$/;
 const DOB_RE = /^\d{4}-\d{2}-\d{2}$/;
+const BOID_RE = /^\d{16}$/;
 
 export async function POST(request: NextRequest) {
   const ip = clientIp(request);
@@ -37,6 +38,7 @@ export async function POST(request: NextRequest) {
 
   const pan = String(body.pan ?? '').trim().toUpperCase();
   const dob = String(body.dob ?? '').trim();
+  const boId = String(body.boId ?? '').replace(/\D/g, '');
   const name = String(body.name ?? '').trim();
   const mobile = String(body.mobile ?? '').replace(/\D/g, '');
   const consent = body.consent === true;
@@ -46,6 +48,9 @@ export async function POST(request: NextRequest) {
   }
   if (!DOB_RE.test(dob)) {
     return NextResponse.json({ success: false, message: 'Please enter your date of birth (YYYY-MM-DD).' }, { status: 400 });
+  }
+  if (!BOID_RE.test(boId)) {
+    return NextResponse.json({ success: false, message: 'Please enter your 16-digit CDSL Demat Account Number (BO ID).' }, { status: 400 });
   }
   if (!name || name.length < 2) {
     return NextResponse.json({ success: false, message: 'Please enter your name.' }, { status: 400 });
@@ -65,7 +70,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await cdslFetch(pan, dob);
+    const result = await cdslFetch(pan, dob, boId);
 
     return NextResponse.json({
       success: true,
@@ -80,8 +85,9 @@ export async function POST(request: NextRequest) {
           { status: 503 }
         );
       }
+      console.error('[portfolio-check/pan] CASParser error:', err.statusCode, err.responseBody);
       const parsed = tryParseJson(err.responseBody);
-      const msg = parsed?.message || parsed?.error || 'Could not fetch your CAS. Please check your PAN and date of birth, or upload your CAS PDF instead.';
+      const msg = parsed?.message || parsed?.error || parsed?.msg || 'Could not fetch your CAS. Please check your details, or upload your CAS PDF instead.';
       return NextResponse.json({ success: false, message: msg }, { status: 422 });
     }
     console.error('[portfolio-check/pan] CDSL fetch error:', err);

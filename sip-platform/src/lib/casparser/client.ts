@@ -100,11 +100,11 @@ export interface SmartParseResponse {
  * Step 1: Initiate CDSL CAS fetch — sends OTP to investor's registered mobile.
  * Returns a session_id for the verify step.
  */
-export async function cdslFetch(pan: string, dob: string): Promise<CdslFetchResponse> {
+export async function cdslFetch(pan: string, dob: string, boId: string): Promise<CdslFetchResponse> {
   const res = await fetch(`${BASE}/v4/cdsl/fetch`, {
     method: 'POST',
     headers: headers(),
-    body: JSON.stringify({ pan: pan.toUpperCase(), dob }),
+    body: JSON.stringify({ pan: pan.toUpperCase(), dob, bo_id: boId }),
   });
 
   if (!res.ok) {

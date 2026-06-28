@@ -32,6 +32,7 @@ export default function FreeCheckClient() {
   // PAN tab
   const [pan, setPan] = useState('');
   const [dob, setDob] = useState('');
+  const [boId, setBoId] = useState('');
   const [panStep, setPanStep] = useState<PanStep>('form');
   const [sessionId, setSessionId] = useState('');
   const [otp, setOtp] = useState('');
@@ -90,6 +91,7 @@ export default function FreeCheckClient() {
       return;
     }
     if (!dob) { setError('Please enter your date of birth.'); return; }
+    if (!/^\d{16}$/.test(boId)) { setError('Please enter your 16-digit CDSL Demat Account Number.'); return; }
 
     setBusy(true);
     setProgress('Connecting to CDSL… OTP will be sent to your registered mobile.');
@@ -97,7 +99,7 @@ export default function FreeCheckClient() {
       const res = await fetch('/api/portfolio-check/pan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pan, dob, name, mobile, consent }),
+        body: JSON.stringify({ pan, dob, boId, name, mobile, consent }),
       });
       const data = await res.json().catch(() => null);
 
@@ -267,6 +269,20 @@ export default function FreeCheckClient() {
                         />
                       </label>
                     </div>
+                    <label className="block">
+                      <span className="text-xs font-bold text-slate-600 uppercase tracking-wide">CDSL Demat Account Number (BO ID)</span>
+                      <input
+                        type="text"
+                        required
+                        value={boId}
+                        onChange={(e) => setBoId(e.target.value.replace(/\D/g, '').slice(0, 16))}
+                        placeholder="16-digit number (e.g. 1234567890123456)"
+                        inputMode="numeric"
+                        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-mono tracking-wide"
+                        maxLength={16}
+                      />
+                      <span className="text-[10px] text-slate-400 mt-0.5 block">Found on your demat statement, contract note, or broker login page</span>
+                    </label>
                     <p className="text-[11px] text-slate-400 leading-relaxed">
                       We&apos;ll fetch your Consolidated Account Statement (CAS) directly from CDSL. An OTP will be sent to your mobile number registered with your depository.
                     </p>
