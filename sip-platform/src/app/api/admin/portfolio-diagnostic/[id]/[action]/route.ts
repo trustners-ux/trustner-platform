@@ -16,10 +16,14 @@ import { verifyToken, COOKIE_NAME } from '@/lib/auth/jwt';
 import { verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 import { getSupabaseAdmin } from '@/lib/db/supabase';
 import type { WorkflowStatus, WorkflowAction } from '@/lib/portfolio-diagnostic/types';
+import { runPrePublishQa } from '@/lib/portfolio-diagnostic/qa';
+import { isPdRunInScope } from '@/lib/portfolio-diagnostic/run-scope';
 
 interface ActionBody {
   comment?: string;
   assigneeEmployeeId?: number;
+  /** For SUBMIT: 'self' = uploader reviews own work (needs can_review); 'senior' = route up. */
+  reviewMode?: 'self' | 'senior';
 }
 
 // Map URL slug → WorkflowAction enum + target status
@@ -55,6 +59,15 @@ export async function POST(
   const supabase = getSupabaseAdmin();
   if (!supabase) {
     return NextResponse.json({ error: 'Database unavailable' }, { status: 500 });
+  }
+
+  // PRIVACY GATE (audit P0-4) — a reviewer may only act on runs within their
+  // visibility scope, not any run by id (role permission alone is not enough).
+  if (!(await isPdRunInScope(supabase, parseInt(id, 10), { employeeEmail }))) {
+    return NextResponse.json(
+      { error: 'You do not have access to this diagnostic — it belongs to another relationship manager.' },
+      { status: 403 }
+    );
   }
 
   // Resolve actor's employees.id
@@ -121,6 +134,19 @@ export async function POST(
     return NextResponse.json({ error: 'Your role cannot review' }, { status: 403 });
   }
 
+  // ── Pre-publish QA gate ──────────────────────────────────────────────
+  // Last line of defence before a client sees a deliverable: block publish on
+  // hard issues (no risk profile / unscored holdings / prohibited terminology).
+  if (actionSlug === 'publish') {
+    const qa = await runPrePublishQa(supabase, parseInt(id, 10));
+    if (!qa.ready) {
+      return NextResponse.json(
+        { error: 'Pre-publish checks failed', blockers: qa.blockers, warnings: qa.warnings },
+        { status: 422 }
+      );
+    }
+  }
+
   // Build update
   const update: Record<string, unknown> = { status: actionDef.to };
   if (actionDef.to === 'APPROVED') {
@@ -134,19 +160,27 @@ export async function POST(
     // generation pipeline.
   }
   if (actionDef.to === 'SUBMITTED') {
-    // Auto-assign the next reviewer. Routing rules (in priority order):
-    //   1. If uploader is L5 (admin) — self-assign (admin can also review)
-    //   2. Find uploader's reporting manager who has canReview = true
-    //   3. Find the lowest-level employee with canReview = true,
-    //      preferring the one with smallest pending review queue
-    const assigneeId = await pickReviewer({
-      supabase,
-      uploaderEmployeeId: actorEmployeeId,
-      uploaderRoleName: role.name,
-    });
+    // Two submission modes (the uploader chooses on the edit page):
+    //   • reviewMode 'self'   — the uploader reviews their own work. Allowed
+    //       only if their PD role can_review (experienced pilots do). Assign the
+    //       reviewer to themselves and go straight to IN_REVIEW so they can
+    //       open it and Approve.
+    //   • reviewMode 'senior' (default) — route up via pickReviewer (reporting
+    //       manager who can review → else lowest-level reviewer).
+    const reviewMode = body?.reviewMode === 'self' ? 'self' : 'senior';
+    let assigneeId: number | null = null;
+    if (reviewMode === 'self' && role.can_review) {
+      assigneeId = actorEmployeeId;
+    } else {
+      assigneeId = await pickReviewer({
+        supabase,
+        uploaderEmployeeId: actorEmployeeId,
+        uploaderRoleName: role.name,
+      });
+    }
     if (assigneeId) {
       update.current_reviewer_employee_id = assigneeId;
-      // If we pick a reviewer, move directly to IN_REVIEW (skip the
+      // If we have a reviewer, move directly to IN_REVIEW (skip the
       // SUBMITTED-with-no-reviewer limbo state)
       update.status = 'IN_REVIEW';
     }

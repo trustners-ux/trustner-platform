@@ -27,6 +27,11 @@ import {
   ArrowRight,
   Star,
   RefreshCw,
+  Trash2,
+  RotateCcw,
+  ChevronDown,
+  Shield,
+  Layers,
 } from 'lucide-react';
 import type { WorkflowStatus } from '@/lib/portfolio-diagnostic/types';
 
@@ -60,6 +65,12 @@ interface DiagnosticListItem {
   updatedAt: string;
 }
 
+interface DeletedListItem extends DiagnosticListItem {
+  deletedAt: string | null;
+  deletedByName: string | null;
+  deletionReason: string | null;
+}
+
 interface CurrentEmployee {
   id: number;
   name: string;
@@ -87,6 +98,9 @@ export default function PortfolioDiagnosticDashboard() {
   const [approvedPending, setApprovedPending] = useState<DiagnosticListItem[]>([]);
   const [recent, setRecent] = useState<DiagnosticListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [binOpen, setBinOpen] = useState(false);
+  const [deletedItems, setDeletedItems] = useState<DeletedListItem[]>([]);
+  const [binLoading, setBinLoading] = useState(false);
 
   useEffect(() => {
     void loadDashboard();
@@ -113,6 +127,87 @@ export default function PortfolioDiagnosticDashboard() {
       // silent
     } finally {
       setLoading(false);
+    }
+  }
+
+  // Admin-only soft-delete. Removes the run from every queue (is_deleted=true)
+  // but nothing is physically deleted — fully recoverable + audit-logged. Used
+  // for duplicate or wrong-data captures (e.g. a double-imported family).
+  async function handleDelete(item: DiagnosticListItem) {
+    const ok = window.confirm(
+      `Delete the diagnostic for "${item.familyName}" (${item.documentId})?\n\n` +
+        `This removes it from all queues. It is a soft-delete — nothing is permanently lost ` +
+        `and an admin can recover it. The action is recorded in the audit log.`
+    );
+    if (!ok) return;
+    const reason = window.prompt(
+      'Reason for deleting (e.g. "duplicate import", "wrong data captured"):',
+      ''
+    );
+    if (reason === null) return; // cancelled the reason prompt
+    try {
+      const res = await fetch(`/api/admin/portfolio-diagnostic/${item.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: reason.trim() || null }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data?.error ?? 'Could not delete this diagnostic.');
+        return;
+      }
+      await loadDashboard();
+      if (binOpen) await loadDeleted();
+    } catch {
+      alert('Network error — could not delete this diagnostic.');
+    }
+  }
+
+  // Recycle bin — admin-only list of soft-deleted runs, with restore.
+  async function loadDeleted() {
+    setBinLoading(true);
+    try {
+      const res = await fetch('/api/admin/portfolio-diagnostic/deleted', {
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDeletedItems(data.items ?? []);
+      }
+    } catch {
+      // silent
+    } finally {
+      setBinLoading(false);
+    }
+  }
+
+  function toggleBin() {
+    const next = !binOpen;
+    setBinOpen(next);
+    if (next) void loadDeleted();
+  }
+
+  async function handleRestore(item: DeletedListItem) {
+    const ok = window.confirm(
+      `Restore the diagnostic for "${item.familyName}" (${item.documentId})?\n\n` +
+        `It will return to its previous status (${item.status}) and reappear in the queues. ` +
+        `The restore is recorded in the audit log.`
+    );
+    if (!ok) return;
+    try {
+      const res = await fetch(`/api/admin/portfolio-diagnostic/${item.id}/restore`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data?.error ?? 'Could not restore this diagnostic.');
+        return;
+      }
+      await Promise.all([loadDeleted(), loadDashboard()]);
+    } catch {
+      alert('Network error — could not restore this diagnostic.');
     }
   }
 
@@ -147,6 +242,8 @@ export default function PortfolioDiagnosticDashboard() {
   }
 
   const canUpload = employee.role.canUpload;
+  // Delete is admin-only (matches the DELETE endpoint's admin-token gate).
+  const isAdmin = employee.role.name === 'admin';
 
   return (
     <div className="space-y-6">
@@ -175,15 +272,45 @@ export default function PortfolioDiagnosticDashboard() {
           </p>
         </div>
 
-        {canUpload && (
-          <Link
-            href="/admin/portfolio-diagnostic/new"
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 transition"
-          >
-            <Plus className="h-4 w-4" />
-            New Diagnostic
-          </Link>
-        )}
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <Link
+              href="/admin/portfolio-diagnostic/oversight"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+            >
+              <Shield className="h-4 w-4" />
+              Oversight
+            </Link>
+          )}
+          {isAdmin && (
+            <Link
+              href="/admin/portfolio-diagnostic/insights"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+            >
+              <TrendingUp className="h-4 w-4" />
+              Insights
+            </Link>
+          )}
+          {canUpload && (
+            <Link
+              href="/admin/portfolio-diagnostic/holdings"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+              title="Upload AMC monthly portfolios to power stock-level look-through"
+            >
+              <Layers className="h-4 w-4" />
+              Holdings
+            </Link>
+          )}
+          {canUpload && (
+            <Link
+              href="/admin/portfolio-diagnostic/new"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 transition"
+            >
+              <Plus className="h-4 w-4" />
+              New Diagnostic
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* KPI Tiles */}
@@ -229,6 +356,8 @@ export default function PortfolioDiagnosticDashboard() {
           emptyState="No drafts. Click 'New Diagnostic' to start one."
           actionHref={(item) => `/admin/portfolio-diagnostic/${item.id}/edit`}
           actionLabel="Continue editing"
+          isAdmin={isAdmin}
+          onDelete={handleDelete}
         />
       )}
 
@@ -243,6 +372,8 @@ export default function PortfolioDiagnosticDashboard() {
           actionHref={(item) => `/admin/portfolio-diagnostic/${item.id}/review`}
           actionLabel="Open for review"
           urgent
+          isAdmin={isAdmin}
+          onDelete={handleDelete}
         />
       )}
 
@@ -257,6 +388,8 @@ export default function PortfolioDiagnosticDashboard() {
           actionHref={(item) => `/admin/portfolio-diagnostic/${item.id}/review`}
           actionLabel="Review & publish"
           accent="emerald"
+          isAdmin={isAdmin}
+          onDelete={handleDelete}
         />
       )}
 
@@ -270,7 +403,90 @@ export default function PortfolioDiagnosticDashboard() {
         actionHref={(item) => `/admin/portfolio-diagnostic/${item.id}/review`}
         actionLabel="View"
         accent="slate"
+        isAdmin={isAdmin}
+        onDelete={handleDelete}
       />
+
+      {/* Recycle Bin — admin-only recovery for soft-deleted runs */}
+      {isAdmin && (
+        <section className="rounded-lg border border-slate-200 bg-white">
+          <button
+            type="button"
+            onClick={toggleBin}
+            className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-slate-50/60 transition"
+          >
+            <div className="flex items-center gap-2">
+              <Trash2 className="h-4 w-4 text-slate-500" />
+              <div>
+                <h2 className="text-base font-semibold text-slate-900">Recycle Bin</h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Soft-deleted diagnostics. Restore any of them — nothing is permanently lost.
+                </p>
+              </div>
+            </div>
+            <ChevronDown
+              className={`h-4 w-4 text-slate-400 transition-transform ${binOpen ? 'rotate-180' : ''}`}
+            />
+          </button>
+
+          {binOpen && (
+            <div className="border-t border-slate-100">
+              {binLoading ? (
+                <div className="px-5 py-8 text-center text-sm text-slate-400">
+                  Loading deleted diagnostics…
+                </div>
+              ) : deletedItems.length === 0 ? (
+                <div className="px-5 py-8 text-center text-sm text-slate-400">
+                  The recycle bin is empty.
+                </div>
+              ) : (
+                <ul className="divide-y divide-slate-100">
+                  {deletedItems.map((item) => (
+                    <li key={item.id} className="px-5 py-3 flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-slate-900 truncate">
+                            {item.familyName}
+                          </span>
+                          <StatusBadge status={item.status} />
+                        </div>
+                        <div className="text-xs text-slate-500 mt-1 flex items-center gap-3 flex-wrap">
+                          <span className="font-mono">{item.documentId}</span>
+                          <span className="inline-flex items-center gap-1">
+                            <TrendingUp className="h-3 w-3" />
+                            {formatInr(item.currentValueInr)}
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            <Users className="h-3 w-3" />
+                            {item.numHoldings} holdings
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-rose-600">
+                            <Trash2 className="h-3 w-3" />
+                            {item.deletedAt ? formatRelative(item.deletedAt) : '—'}
+                            {item.deletedByName ? ` by ${item.deletedByName}` : ''}
+                          </span>
+                          {item.deletionReason && (
+                            <span className="italic">“{item.deletionReason}”</span>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRestore(item)}
+                        className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 transition"
+                        title="Restore this diagnostic"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        Restore
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Footer info */}
       <div className="text-xs text-slate-400 pt-4 border-t border-slate-200">
@@ -333,6 +549,8 @@ interface QueueSectionProps {
   actionLabel: string;
   urgent?: boolean;
   accent?: 'default' | 'emerald' | 'slate';
+  isAdmin?: boolean;
+  onDelete?: (item: DiagnosticListItem) => void;
 }
 
 function QueueSection({
@@ -345,6 +563,8 @@ function QueueSection({
   actionLabel,
   urgent,
   accent = 'default',
+  isAdmin,
+  onDelete,
 }: QueueSectionProps) {
   const accentBorder =
     accent === 'emerald'
@@ -372,8 +592,8 @@ function QueueSection({
       ) : (
         <ul className="divide-y divide-slate-100">
           {items.map((item) => (
-            <li key={item.id} className="px-5 py-3 hover:bg-slate-50/60 transition">
-              <Link href={actionHref(item)} className="flex items-center gap-4">
+            <li key={item.id} className="px-5 py-3 hover:bg-slate-50/60 transition flex items-center gap-2">
+              <Link href={actionHref(item)} className="flex flex-1 min-w-0 items-center gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-slate-900 truncate">
@@ -413,6 +633,17 @@ function QueueSection({
                   <ArrowRight className="h-3.5 w-3.5" />
                 </div>
               </Link>
+              {isAdmin && onDelete && (
+                <button
+                  type="button"
+                  onClick={() => onDelete(item)}
+                  title="Delete (admin) — soft-delete, recoverable, audit-logged"
+                  aria-label={`Delete diagnostic for ${item.familyName}`}
+                  className="flex-shrink-0 inline-flex items-center justify-center h-8 w-8 rounded-lg text-slate-400 hover:text-rose-700 hover:bg-rose-50 transition"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              )}
             </li>
           ))}
         </ul>

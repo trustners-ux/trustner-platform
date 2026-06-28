@@ -46,13 +46,19 @@ export const PERMISSION_MODULES = {
   user_management: { label: 'User Management', category: 'Admin', description: 'Add/remove users, change roles' },
   audit_log: { label: 'Audit Log', category: 'Admin', description: 'View system audit trail' },
   settings: { label: 'System Settings', category: 'Admin', description: 'Configure platform settings' },
+
+  // Portfolio Diagnostic — these two are BRIDGED to pd_employee_roles (the real
+  // PD access store), not the generic override table. The user-management API
+  // reads/writes them against the database so the toggle reflects live PD access.
+  pd_access: { label: 'Portfolio Diagnostic — Access', category: 'Portfolio Diagnostic', description: 'See & use the Portfolio Diagnostic tool (upload + prepare reviews)' },
+  pd_review: { label: 'Portfolio Diagnostic — Review & Approve', category: 'Portfolio Diagnostic', description: 'Review/approve their own or others’ diagnostics (else upload-only)' },
 } as const;
 
 export type PermissionKey = keyof typeof PERMISSION_MODULES;
 
 export const ALL_PERMISSION_KEYS = Object.keys(PERMISSION_MODULES) as PermissionKey[];
 
-export const PERMISSION_CATEGORIES = ['Content', 'Operations', 'People', 'Learning', 'Admin'] as const;
+export const PERMISSION_CATEGORIES = ['Content', 'Operations', 'People', 'Learning', 'Admin', 'Portfolio Diagnostic'] as const;
 export type PermissionCategory = typeof PERMISSION_CATEGORIES[number];
 
 export function getPermissionsByCategory(): Map<PermissionCategory, { key: PermissionKey; label: string; description: string }[]> {

@@ -1,5 +1,5 @@
 /**
- * Meeting Note — internal advisor brief.
+ * Meeting Note — internal RM brief.
  *
  * NOT for client circulation. Rendered as a compact A4 portrait PDF
  * with the central finding, top actions, anticipated Q&A, and tone
@@ -115,7 +115,7 @@ ${(narrative.topActions ?? []).map((a) => `<li>${escape(a)}</li>`).join('')}
 <div class="tone-box">${escape(narrative.toneNote)}</div>
 
 <h2 style="page-break-before: always;">Anticipated client questions — scripted answers</h2>
-<p style="font-size:8.5pt;color:#64748b;font-style:italic;">Use these verbatim or as starting points. They're written in the advisor's voice.</p>
+<p style="font-size:8.5pt;color:#64748b;font-style:italic;">Use these verbatim or as starting points. They're written in the RM's voice.</p>
 ${(narrative.anticipatedQA ?? [])
   .map(
     (qa) => `<div class="qa">

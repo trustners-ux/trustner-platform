@@ -101,7 +101,8 @@ export function calculateStepUpSIP(
   initialMonthly: number,
   annualStepUp: number,
   annualReturn: number,
-  years: number
+  years: number,
+  stepUpType: 'percentage' | 'amount' = 'percentage'
 ): StepUpSIPResult {
   const monthlyRate = annualReturn / 100 / 12;
   let totalInvested = 0;
@@ -124,7 +125,11 @@ export function calculateStepUpSIP(
       growthPercent: totalInvested > 0 ? Math.round(((futureValue - totalInvested) / totalInvested) * 100) : 0,
     });
 
-    currentMonthly = currentMonthly * (1 + annualStepUp / 100);
+    if (stepUpType === 'percentage') {
+      currentMonthly = currentMonthly * (1 + annualStepUp / 100);
+    } else {
+      currentMonthly = currentMonthly + annualStepUp;
+    }
   }
 
   return {
@@ -747,7 +752,8 @@ export function calculateStepUpSIPWithGrowth(
   annualStepUp: number,
   annualReturn: number,
   sipYears: number,
-  totalYears: number
+  totalYears: number,
+  stepUpType: 'percentage' | 'amount' = 'percentage'
 ): StepUpSIPResult & { growthBreakdown: (YearlyBreakdown & { monthlyAmount: number; phase: 'SIP' | 'Growth' })[] } {
   const monthlyRate = annualReturn / 100 / 12;
   let totalInvested = 0;
@@ -775,7 +781,11 @@ export function calculateStepUpSIPWithGrowth(
     yearlyBreakdown.push(row);
     growthBreakdown.push({ ...row, phase: 'SIP' });
 
-    currentMonthly = currentMonthly * (1 + annualStepUp / 100);
+    if (stepUpType === 'percentage') {
+      currentMonthly = currentMonthly * (1 + annualStepUp / 100);
+    } else {
+      currentMonthly = currentMonthly + annualStepUp;
+    }
   }
 
   // Phase 2: Growth-only period (corpus compounds, no new investment)

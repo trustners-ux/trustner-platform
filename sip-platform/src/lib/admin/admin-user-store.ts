@@ -4,6 +4,7 @@
  * On first load, seeds from env var if Blob doesn't exist (backward compatible).
  */
 
+import { randomInt } from 'crypto';
 import { put, list, del } from '@vercel/blob';
 import bcrypt from 'bcryptjs';
 import type { AdminUser, AdminRole } from '@/lib/auth/config';
@@ -253,16 +254,18 @@ export async function updateUserRole(
 // ─── Generate Secure Password ───
 
 export function generateSecurePassword(): string {
+  // CSPRNG (audit P1-3) — this becomes a real account credential emailed to a
+  // user, so it must not come from Math.random.
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
   const specials = '!@#$%&*';
   let password = '';
   for (let i = 0; i < 10; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
+    password += chars.charAt(randomInt(chars.length));
   }
   // Add 2 special characters at random positions
   for (let i = 0; i < 2; i++) {
-    const pos = Math.floor(Math.random() * password.length);
-    const special = specials.charAt(Math.floor(Math.random() * specials.length));
+    const pos = randomInt(password.length + 1);
+    const special = specials.charAt(randomInt(specials.length));
     password = password.slice(0, pos) + special + password.slice(pos);
   }
   return password;

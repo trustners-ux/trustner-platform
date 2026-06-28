@@ -13,6 +13,20 @@ export async function POST(request: NextRequest) {
   try {
     const { employeeCode, phone, pin } = await request.json();
 
+    // SECURITY: This endpoint historically ran in "demo mode" — issuing a 12h
+    // RM session to anyone who knew an employee code, no PIN check. That's a
+    // commission-data exposure risk for /api/mis/*. In production we now
+    // refuse to issue tokens until the PIN bcrypt check is wired up. The
+    // RM_DEMO_MODE env var keeps the unsafe path available only in dev/preview
+    // for testing the UI.
+    const demoMode = process.env.RM_DEMO_MODE === 'true';
+    if (process.env.NODE_ENV === 'production' && !demoMode) {
+      return NextResponse.json(
+        { error: 'RM login is temporarily unavailable. Please contact your manager.' },
+        { status: 503 }
+      );
+    }
+
     if (!employeeCode && !phone) {
       return NextResponse.json(
         { error: 'Employee code or phone number required' },
@@ -39,10 +53,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // In production: verify PIN hash with bcrypt
-    // For now (demo mode): allow login if employee exists
-    // TODO: Add PIN verification when Supabase is connected
-    // const isPinValid = await bcrypt.compare(pin, employee.auth_pin_hash);
+    // DEMO MODE ONLY (non-prod or RM_DEMO_MODE=true): no PIN check, just
+    // confirm the employee exists. Real bcrypt PIN check arrives with the
+    // Supabase employees table migration. Reference unused `pin` arg so the
+    // request body stays backwards compatible.
+    void pin;
 
     const role = getRMRole(employee.levelCode);
 

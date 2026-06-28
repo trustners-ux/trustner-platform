@@ -20,7 +20,31 @@ import { verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 import { getSupabaseAdmin } from '@/lib/db/supabase';
 import { writeAuditEvent } from '@/lib/trustner-agent-platform/workflow-actions';
 import { ALLOCATION_TEMPLATES } from '@/lib/investment-proposal/types';
-import type { RiskProfile, ProposalPurpose, HorizonBand } from '@/lib/investment-proposal/types';
+import type { RiskProfile, ProposalPurpose, HorizonBand, AssetAllocation } from '@/lib/investment-proposal/types';
+
+/**
+ * Scale a template allocation so the equity sleeves sum to `targetEq`% and the
+ * defensive sleeves (hybrid/debt/gold) make up the rest, preserving each group's
+ * relative weights. Rounding drift is absorbed by the largest equity sleeve.
+ */
+function blendToTargetEquity(a: AssetAllocation, targetEq: number): AssetAllocation {
+  const eqKeys: (keyof AssetAllocation)[] = ['largeCap', 'midCap', 'smallCap', 'flexiCap', 'multiCap', 'largeAndMid', 'international'];
+  const defKeys: (keyof AssetAllocation)[] = ['hybrid', 'debt', 'gold'];
+  const eqSum = eqKeys.reduce((s, k) => s + a[k], 0);
+  const defSum = defKeys.reduce((s, k) => s + a[k], 0);
+  const defTarget = 100 - targetEq;
+  const out: AssetAllocation = { ...a };
+  if (eqSum > 0) for (const k of eqKeys) out[k] = Math.round((a[k] / eqSum) * targetEq);
+  else out.flexiCap = targetEq;
+  if (defSum > 0) for (const k of defKeys) out[k] = Math.round((a[k] / defSum) * defTarget);
+  else out.hybrid = defTarget;
+  const tot = (Object.values(out) as number[]).reduce((s, v) => s + v, 0);
+  if (tot !== 100) {
+    const big = eqKeys.reduce((m, k) => (out[k] > out[m] ? k : m), eqKeys[0]);
+    out[big] += 100 - tot;
+  }
+  return out;
+}
 
 export async function POST(req: NextRequest) {
   const email = await resolveEmployeeEmail();
@@ -59,8 +83,27 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Seed allocation from template — reviewer can override later
-  const alloc = ALLOCATION_TEMPLATES[body.riskProfile];
+  // Seed allocation, grounded in the client's PD risk model where available:
+  // start from the risk-profile template, then scale the equity/defensive split to
+  // the diagnostic's target equity % (keeping the template's relative sleeve
+  // weights). Falls back to the plain template. Reviewer can override later.
+  let alloc = { ...ALLOCATION_TEMPLATES[body.riskProfile] };
+  try {
+    const { data: run } = await supabase
+      .from('pd_diagnostic_runs')
+      .select('rm_target_equity_pct')
+      .eq('family_id', body.familyId)
+      .in('status', ['APPROVED', 'PUBLISHED'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const targetEq = run?.rm_target_equity_pct as number | null | undefined;
+    if (targetEq != null && targetEq >= 0 && targetEq <= 100) {
+      alloc = blendToTargetEquity(alloc, targetEq);
+    }
+  } catch {
+    // Grounding is opportunistic — fall back to the template on any miss.
+  }
 
   const documentId = `IP-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 

@@ -107,6 +107,14 @@ export function FundReturnsTable({ fund }: FundReturnsTableProps) {
             </tbody>
           </table>
         </div>
+
+        {/* SEBI mandatory disclosure — placed adjacent to returns data */}
+        <p className="text-[11px] text-slate-500 mt-3 leading-snug">
+          <strong className="text-slate-600">Past performance is not indicative
+          of future returns.</strong> Mutual fund investments are subject to
+          market risks. Read all scheme-related documents carefully before
+          investing.
+        </p>
       </div>
     </section>
   );

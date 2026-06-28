@@ -9,6 +9,7 @@ import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '@/lib/auth/jwt';
 import { verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 import { getSupabaseAdmin } from '@/lib/db/supabase';
+import { isAdvisoryRecordInScope } from '@/lib/advisory/visibility';
 
 export async function GET(
   _req: NextRequest,
@@ -24,6 +25,11 @@ export async function GET(
   const numericId = parseInt(id, 10);
   if (Number.isNaN(numericId)) {
     return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
+  }
+
+  // DPDP need-to-know: only show briefs within the actor's visibility scope.
+  if (!(await isAdvisoryRecordInScope(supabase, 'mp_meeting_briefs', numericId, { employeeEmail: email }))) {
+    return NextResponse.json({ error: 'Not authorised for this brief' }, { status: 403 });
   }
 
   const { data, error } = await supabase
@@ -64,6 +70,11 @@ export async function PUT(
     return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
   }
 
+  // DPDP need-to-know: only edit briefs within the actor's visibility scope.
+  if (!(await isAdvisoryRecordInScope(supabase, 'mp_meeting_briefs', numericId, { employeeEmail: email }))) {
+    return NextResponse.json({ error: 'Not authorised for this brief' }, { status: 403 });
+  }
+
   const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
 
@@ -96,6 +107,10 @@ export async function PUT(
   }
 
   // ── Sub-tables: replace-all on each update ──
+  // Every delete/insert error is now surfaced (was previously unread, so writes
+  // that hit a missing column failed silently and the brief lost its content).
+  const subFail = (label: string, msg: string) =>
+    NextResponse.json({ error: `Failed to save ${label}: ${msg}` }, { status: 500 });
 
   // Action items
   if (Array.isArray(body.actionItems)) {
@@ -113,19 +128,38 @@ export async function PUT(
       .maybeSingle();
     const familyId = existing?.family_id as number | undefined;
 
-    await supabase.from('mp_action_items').delete().eq('brief_id', numericId);
+    // Preserve completion provenance across the replace-all: read existing rows,
+    // then re-apply completed_at / completed_by on description match (the form
+    // does not round-trip ids). Carries history forward instead of wiping it.
+    const { data: prior } = await supabase
+      .from('mp_action_items')
+      .select('description, completed_at, completed_by_employee_id')
+      .eq('brief_id', numericId);
+    const priorByDesc = new Map(
+      (prior ?? []).map((pr) => [String(pr.description).trim(), pr as { completed_at: string | null; completed_by_employee_id: number | null }])
+    );
+
+    const del = await supabase.from('mp_action_items').delete().eq('brief_id', numericId);
+    if (del.error) return subFail('action items', del.error.message);
     if (items.length > 0 && familyId) {
-      await supabase.from('mp_action_items').insert(
-        items.map((i) => ({
-          brief_id: numericId,
-          family_id: familyId,
-          description: i.description,
-          owner: i.owner,
-          status: i.status,
-          due_date: i.dueDate ?? null,
-          notes: i.notes ?? null,
-        }))
+      const ins = await supabase.from('mp_action_items').insert(
+        items.map((i) => {
+          const keep = priorByDesc.get(String(i.description).trim());
+          const done = i.status === 'Completed';
+          return {
+            brief_id: numericId,
+            family_id: familyId,
+            description: i.description,
+            owner: i.owner,
+            status: i.status,
+            due_date: i.dueDate ?? null,
+            notes: i.notes ?? null,
+            completed_at: done ? (keep?.completed_at ?? new Date().toISOString()) : null,
+            completed_by_employee_id: done ? (keep?.completed_by_employee_id ?? null) : null,
+          };
+        })
       );
+      if (ins.error) return subFail('action items', ins.error.message);
     }
   }
 
@@ -137,9 +171,10 @@ export async function PUT(
       keyMessage: string;
       supportingData?: string;
     }>;
-    await supabase.from('mp_talking_points').delete().eq('brief_id', numericId);
+    const del = await supabase.from('mp_talking_points').delete().eq('brief_id', numericId);
+    if (del.error) return subFail('talking points', del.error.message);
     if (points.length > 0) {
-      await supabase.from('mp_talking_points').insert(
+      const ins = await supabase.from('mp_talking_points').insert(
         points.map((p, idx) => ({
           brief_id: numericId,
           order_index: p.orderIndex ?? idx + 1,
@@ -148,6 +183,7 @@ export async function PUT(
           supporting_data: p.supportingData ?? null,
         }))
       );
+      if (ins.error) return subFail('talking points', ins.error.message);
     }
   }
 
@@ -159,9 +195,10 @@ export async function PUT(
       priority: 'High' | 'Medium' | 'Low';
       estimatedAmountInr?: number;
     }>;
-    await supabase.from('mp_opportunities').delete().eq('brief_id', numericId);
+    const del = await supabase.from('mp_opportunities').delete().eq('brief_id', numericId);
+    if (del.error) return subFail('opportunities', del.error.message);
     if (opps.length > 0) {
-      await supabase.from('mp_opportunities').insert(
+      const ins = await supabase.from('mp_opportunities').insert(
         opps.map((o) => ({
           brief_id: numericId,
           title: o.title,
@@ -170,26 +207,30 @@ export async function PUT(
           estimated_amount_inr: o.estimatedAmountInr ?? null,
         }))
       );
+      if (ins.error) return subFail('opportunities', ins.error.message);
     }
   }
 
-  // Q&A
+  // Q&A — order_index supplied (column is NOT NULL until migration 053)
   if (Array.isArray(body.qa)) {
     const qaItems = body.qa as Array<{
       question: string;
       anticipatedAnswer: string;
       sensitivity?: 'Low' | 'Medium' | 'High';
     }>;
-    await supabase.from('mp_anticipated_qa').delete().eq('brief_id', numericId);
+    const del = await supabase.from('mp_anticipated_qa').delete().eq('brief_id', numericId);
+    if (del.error) return subFail('anticipated Q&A', del.error.message);
     if (qaItems.length > 0) {
-      await supabase.from('mp_anticipated_qa').insert(
-        qaItems.map((q) => ({
+      const ins = await supabase.from('mp_anticipated_qa').insert(
+        qaItems.map((q, idx) => ({
           brief_id: numericId,
+          order_index: idx + 1,
           question: q.question,
           anticipated_answer: q.anticipatedAnswer,
           sensitivity: q.sensitivity ?? 'Medium',
         }))
       );
+      if (ins.error) return subFail('anticipated Q&A', ins.error.message);
     }
   }
 

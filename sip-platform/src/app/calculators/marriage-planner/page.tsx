@@ -700,7 +700,7 @@ export default function MarriagePlannerCalculatorPage() {
                 </div>
 
                 {/* Step-up */}
-                <div>
+                <div data-pdf-stepup={stepUpEnabled ? `Annual Step-Up (${stepUpType === 'percentage' ? 'Percentage' : 'Amount'}): ${stepUpType === 'amount' ? '₹' : ''}${stepUpType === 'percentage' ? stepUpRate : stepUpAmount}${stepUpType === 'percentage' ? '%' : '/month'}` : undefined}>
                   <label className="block text-[13px] font-semibold text-slate-600 mb-3 uppercase tracking-wider">
                     Step-up SIP
                   </label>

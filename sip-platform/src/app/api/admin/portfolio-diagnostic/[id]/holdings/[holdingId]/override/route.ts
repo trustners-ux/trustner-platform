@@ -14,6 +14,8 @@ import { verifyToken, COOKIE_NAME } from '@/lib/auth/jwt';
 import { verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 import { getSupabaseAdmin } from '@/lib/db/supabase';
 import type { Verdict } from '@/lib/portfolio-diagnostic/types';
+import { logPdEvent } from '@/lib/portfolio-diagnostic/audit';
+import { isPdRunInScope } from '@/lib/portfolio-diagnostic/run-scope';
 
 const VALID_VERDICTS: Verdict[] = ['STAR', 'KEEP', 'WATCH', 'SWAP', 'LIQUIDATE'];
 
@@ -48,6 +50,14 @@ export async function POST(
   const supabase = getSupabaseAdmin();
   if (!supabase) {
     return NextResponse.json({ error: 'Database unavailable' }, { status: 500 });
+  }
+
+  // PRIVACY GATE (audit P0-4) — only act on runs within the actor's scope.
+  if (!(await isPdRunInScope(supabase, parseInt(id, 10), { employeeEmail: email }))) {
+    return NextResponse.json(
+      { error: 'You do not have access to this diagnostic — it belongs to another relationship manager.' },
+      { status: 403 }
+    );
   }
 
   // Get actor
@@ -113,6 +123,15 @@ export async function POST(
       })
       .eq('id', parseInt(id, 10));
   }
+
+  // Immutable time-log of the verdict override (who / which fund / from→to / why).
+  await logPdEvent(supabase, {
+    runId: parseInt(id, 10),
+    actorEmail: email,
+    action: 'VERDICT_OVERRIDE',
+    comment: reason,
+    metadata: { holdingId: parseInt(holdingId, 10), from: holding.verdict, to: newVerdict },
+  });
 
   return NextResponse.json({ success: true });
 }

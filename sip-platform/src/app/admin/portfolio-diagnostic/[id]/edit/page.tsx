@@ -68,6 +68,7 @@ interface DiagnosticDetail {
   holdings: Holding[];
   sips: Sip[];
   availableActions: string[];
+  viewerCanReview?: boolean;
 }
 
 export default function EditDiagnosticPage() {
@@ -113,9 +114,15 @@ export default function EditDiagnosticPage() {
         method: 'POST',
         credentials: 'include',
       });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(`Scoring failed: ${data.error ?? `HTTP ${res.status}`}`);
+      // A gateway timeout (504) or auth redirect returns a non-JSON body, so
+      // parse defensively — never let res.json() throw a cryptic browser error.
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data) {
+        const msg =
+          res.status === 504 || res.status === 408 || res.status === 502
+            ? 'Scoring took longer than the server allows and timed out. This can happen on a large book or when the fund-data source is slow. Please click Run Scoring again — the second run is usually quick because the data gets cached.'
+            : (data?.error ?? `Scoring failed (HTTP ${res.status}). Please try again.`);
+        alert(msg);
         return;
       }
       setScoreResult({
@@ -131,7 +138,7 @@ export default function EditDiagnosticPage() {
     }
   }
 
-  async function submitForReview() {
+  async function submitForReview(reviewMode: 'self' | 'senior' = 'senior') {
     setSubmitting(true);
     try {
       // Auto-trigger scoring if any holding is unscored. Saves the user
@@ -159,7 +166,7 @@ export default function EditDiagnosticPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({}),
+        body: JSON.stringify({ reviewMode }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -241,9 +248,31 @@ export default function EditDiagnosticPage() {
               <Eye className="h-3.5 w-3.5" />
               Review View
             </Link>
-            {isDraftLike && (
+            {isDraftLike && diagnostic.viewerCanReview && (
+              <>
+                <button
+                  onClick={() => submitForReview('self')}
+                  disabled={submitting || diagnostic.holdings.length === 0}
+                  title="You review and approve this yourself"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-40"
+                >
+                  {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                  Review Myself
+                </button>
+                <button
+                  onClick={() => submitForReview('senior')}
+                  disabled={submitting || diagnostic.holdings.length === 0}
+                  title="Send to your senior / reviewer for sign-off"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700 disabled:opacity-40"
+                >
+                  <Send className="h-3.5 w-3.5" />
+                  Send to Senior
+                </button>
+              </>
+            )}
+            {isDraftLike && !diagnostic.viewerCanReview && (
               <button
-                onClick={submitForReview}
+                onClick={() => submitForReview('senior')}
                 disabled={submitting || diagnostic.holdings.length === 0}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700 disabled:opacity-40"
               >

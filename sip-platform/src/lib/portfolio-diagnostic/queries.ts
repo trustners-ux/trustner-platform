@@ -62,6 +62,8 @@ export async function getDashboardCounts(
   let draftsQuery = supabase
     .from('pd_diagnostic_runs')
     .select('id', { count: 'exact', head: true })
+    .neq('is_demo', true)
+    .neq('is_deleted', true)
     .in('status', ['DRAFT', 'CHANGES_REQUESTED']);
   if (opts?.showAllTeam) {
     // no filter — sees everything
@@ -78,6 +80,8 @@ export async function getDashboardCounts(
     supabase
       .from('pd_diagnostic_runs')
       .select('id', { count: 'exact', head: true })
+    .neq('is_demo', true)
+    .neq('is_deleted', true)
       .eq('current_reviewer_employee_id', employeeId)
       .in('status', ['IN_REVIEW', 'ESCALATED']),
 
@@ -85,21 +89,39 @@ export async function getDashboardCounts(
     supabase
       .from('pd_diagnostic_runs')
       .select('id', { count: 'exact', head: true })
+    .neq('is_demo', true)
+    .neq('is_deleted', true)
       .or(`approved_by_employee_id.eq.${employeeId},uploaded_by_employee_id.eq.${employeeId}`)
       .eq('status', 'APPROVED'),
 
-    // Published this month
-    supabase
-      .from('pd_diagnostic_runs')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'PUBLISHED')
-      .gte('published_at', startOfMonth.toISOString()),
+    // Published this month — scoped to the actor's visibility (was firm-wide)
+    (() => {
+      let q = supabase
+        .from('pd_diagnostic_runs')
+        .select('id', { count: 'exact', head: true })
+        .neq('is_demo', true)
+        .neq('is_deleted', true)
+        .eq('status', 'PUBLISHED')
+        .gte('published_at', startOfMonth.toISOString());
+      if (opts?.showAllTeam) { /* no filter */ }
+      else if (opts?.visibleEmployeeIds && opts.visibleEmployeeIds.length > 0) q = q.in('uploaded_by_employee_id', opts.visibleEmployeeIds);
+      else q = q.eq('uploaded_by_employee_id', employeeId);
+      return q;
+    })(),
 
-    // Total this month (any status, any user)
-    supabase
-      .from('pd_diagnostic_runs')
-      .select('id', { count: 'exact', head: true })
-      .gte('created_at', startOfMonth.toISOString()),
+    // Total this month — scoped to the actor's visibility (was any-user)
+    (() => {
+      let q = supabase
+        .from('pd_diagnostic_runs')
+        .select('id', { count: 'exact', head: true })
+        .neq('is_demo', true)
+        .neq('is_deleted', true)
+        .gte('created_at', startOfMonth.toISOString());
+      if (opts?.showAllTeam) { /* no filter */ }
+      else if (opts?.visibleEmployeeIds && opts.visibleEmployeeIds.length > 0) q = q.in('uploaded_by_employee_id', opts.visibleEmployeeIds);
+      else q = q.eq('uploaded_by_employee_id', employeeId);
+      return q;
+    })(),
   ]);
 
   return {
@@ -166,6 +188,8 @@ export async function getMyDrafts(
   let query = supabase
     .from('pd_diagnostic_runs')
     .select(DIAGNOSTIC_SELECT_COLS)
+    .neq('is_demo', true)
+    .neq('is_deleted', true)
     .in('status', ['DRAFT', 'CHANGES_REQUESTED']);
   if (opts?.showAllTeam) {
     // no filter
@@ -193,6 +217,8 @@ export async function getAwaitingMyReview(
   const { data, error } = await supabase
     .from('pd_diagnostic_runs')
     .select(DIAGNOSTIC_SELECT_COLS)
+    .neq('is_demo', true)
+    .neq('is_deleted', true)
     .eq('current_reviewer_employee_id', employeeId)
     .in('status', ['IN_REVIEW', 'ESCALATED'])
     .order('created_at', { ascending: false, nullsFirst: false })
@@ -203,15 +229,32 @@ export async function getAwaitingMyReview(
 }
 
 export async function getRecentlyPublished(
-  limit = 20
+  limit = 20,
+  opts?: { showAllTeam?: boolean; visibleEmployeeIds?: number[] }
 ): Promise<DiagnosticListItem[]> {
   const supabase = getSupabaseAdmin();
   if (!supabase) return [];
 
-  const { data, error } = await supabase
+  // PRIVACY: an RM must only see published runs within their visibility scope
+  // (own + direct-reports/subtree + explicit PD assignments; firm for admins).
+  // Without this filter the feed leaked every family — e.g. another RM's
+  // Bihani Family — to everyone. Default (no scope) = own only.
+  let query = supabase
     .from('pd_diagnostic_runs')
     .select(DIAGNOSTIC_SELECT_COLS)
-    .eq('status', 'PUBLISHED')
+    .neq('is_demo', true)
+    .neq('is_deleted', true)
+    .eq('status', 'PUBLISHED');
+  if (opts?.showAllTeam) {
+    // principals (firm scope) — no filter
+  } else if (opts?.visibleEmployeeIds && opts.visibleEmployeeIds.length > 0) {
+    query = query.in('uploaded_by_employee_id', opts.visibleEmployeeIds);
+  } else {
+    // Fail closed: with no resolved scope, show nothing rather than leak.
+    return [];
+  }
+
+  const { data, error } = await query
     .order('published_at', { ascending: false, nullsFirst: false })
     .limit(limit);
 
@@ -229,6 +272,8 @@ export async function getMyApprovedAwaitingPublish(
   const { data, error } = await supabase
     .from('pd_diagnostic_runs')
     .select(DIAGNOSTIC_SELECT_COLS)
+    .neq('is_demo', true)
+    .neq('is_deleted', true)
     .eq('status', 'APPROVED')
     .or(
       `approved_by_employee_id.eq.${employeeId},uploaded_by_employee_id.eq.${employeeId}`
@@ -238,6 +283,45 @@ export async function getMyApprovedAwaitingPublish(
 
   if (error || !data) return [];
   return data.map(mapDiagnosticRow);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// DELETED (soft-delete) — admin recovery view
+// ─────────────────────────────────────────────────────────────────
+
+export interface DeletedDiagnosticItem extends DiagnosticListItem {
+  deletedAt: string | null;
+  deletedByName: string | null;
+  deletionReason: string | null;
+}
+
+/**
+ * Soft-deleted runs, most-recently-deleted first. Admin-only recovery view.
+ * Includes who/when/why so an admin can decide whether to restore.
+ */
+export async function getDeletedRuns(limit = 50): Promise<DeletedDiagnosticItem[]> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('pd_diagnostic_runs')
+    .select(
+      `${DIAGNOSTIC_SELECT_COLS},
+       deleted_at,
+       deletion_reason,
+       deleted_by_employee:employees!pd_diagnostic_runs_deleted_by_employee_id_fkey(name)`
+    )
+    .eq('is_deleted', true)
+    .order('deleted_at', { ascending: false, nullsFirst: false })
+    .limit(limit);
+
+  if (error || !data) return [];
+  return data.map((row) => ({
+    ...mapDiagnosticRow(row as Record<string, unknown>),
+    deletedAt: (row as Record<string, unknown>).deleted_at as string | null,
+    deletedByName: extractName((row as Record<string, unknown>).deleted_by_employee),
+    deletionReason: (row as Record<string, unknown>).deletion_reason as string | null,
+  }));
 }
 
 function mapDiagnosticRow(row: Record<string, unknown>): DiagnosticListItem {

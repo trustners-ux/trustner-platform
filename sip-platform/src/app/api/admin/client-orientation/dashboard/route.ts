@@ -22,7 +22,8 @@ const SELECT_COLS = `
   id, document_id, family_id, family_name, status,
   risk_category, client_signed_at, created_at, updated_at,
   uploader:employees!co_client_orientations_uploaded_by_employee_id_fkey(name),
-  reviewer:employees!co_client_orientations_current_reviewer_employee_id_fkey(name)
+  reviewer:employees!co_client_orientations_current_reviewer_employee_id_fkey(name),
+  goals:co_goals(count)
 `;
 
 export async function GET() {
@@ -60,12 +61,20 @@ function mapRow(row: Record<string, unknown>): Record<string, unknown> {
   return {
     id: row.id, documentId: row.document_id, familyId: row.family_id,
     familyName: row.family_name, status: row.status,
-    riskCategory: row.risk_category, numGoals: 0,
+    riskCategory: row.risk_category, numGoals: extractCount(row.goals),
     clientSigned: !!row.client_signed_at,
     uploadedByName: extractName(row.uploader),
     currentReviewerName: extractName(row.reviewer),
     createdAt: row.created_at, updatedAt: row.updated_at,
   };
+}
+
+function extractCount(rel: unknown): number {
+  if (Array.isArray(rel) && rel.length > 0) {
+    const c = (rel[0] as { count?: number }).count;
+    return typeof c === 'number' ? c : 0;
+  }
+  return 0;
 }
 
 function extractName(emp: unknown): string | null {

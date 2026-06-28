@@ -127,7 +127,7 @@ export async function GET() {
       : Promise.resolve([]),
     employee.role.canReview ? getAwaitingMyReview(employeeId) : Promise.resolve([]),
     employee.role.canPublish ? getMyApprovedAwaitingPublish(employeeId) : Promise.resolve([]),
-    getRecentlyPublished(20),
+    getRecentlyPublished(20, { showAllTeam: showAllTeamDrafts, visibleEmployeeIds }),
   ]);
 
   return NextResponse.json({

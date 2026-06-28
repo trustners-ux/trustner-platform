@@ -175,13 +175,12 @@ export default function HomePage() {
             </p>
 
             <div className="flex flex-wrap justify-center gap-4 mb-10">
-              <a href="https://trustner.investwell.app/app/#/kycOnBoarding/mobileSignUp" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-amber-400 text-slate-900 px-8 py-3.5 rounded-lg font-bold text-sm hover:bg-amber-300 transition-colors shadow-lg shadow-amber-400/25">
-                <IndianRupee className="w-4 h-4" />
-                Start SIP
+              <a href="/portfolio-check" className="inline-flex items-center gap-2 bg-amber-400 text-slate-900 px-8 py-3.5 rounded-lg font-bold text-sm hover:bg-amber-300 transition-colors shadow-lg shadow-amber-400/25">
+                🔍 Free Portfolio Check — 60 sec
               </a>
               <a href="https://trustner.investwell.app/app/#/kycOnBoarding/mobileSignUp" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-white text-primary-700 px-8 py-3.5 rounded-lg font-bold text-sm hover:bg-slate-50 transition-colors shadow-lg">
-                <UserCheck className="w-4 h-4" />
-                Sign Up Free
+                <IndianRupee className="w-4 h-4" />
+                Start SIP
               </a>
               <a href="#sip-calculator" className="inline-flex items-center gap-2 bg-white/15 text-white border border-white/30 px-8 py-3.5 rounded-lg font-bold text-sm hover:bg-white/25 transition-colors backdrop-blur-sm">
                 <Calculator className="w-4 h-4" />

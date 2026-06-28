@@ -523,7 +523,7 @@ export default function FundExplorePage() {
                 Browse Full Universe
               </h3>
               <p className="text-xs text-white/80 leading-relaxed">
-                2,000+ funds across 80 categories — sortable on every metric
+                4,200+ funds across 80+ categories — sortable on every metric
               </p>
             </Link>
             <Link

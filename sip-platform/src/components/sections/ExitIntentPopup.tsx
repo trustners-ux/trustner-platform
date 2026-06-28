@@ -175,11 +175,17 @@ export function ExitIntentPopup() {
             )}
           </form>
 
-          {/* Privacy Text */}
-          <div className="flex items-center justify-center gap-1.5 mt-4">
-            <Shield className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <p className="text-[11px] text-slate-400">
-              We&apos;ll email you the guide instantly. No spam.
+          {/* Privacy Text — DPDP consent notice (newsletter is a service-interest
+              opt-in, not full PII capture, so we use an inline notice rather than
+              a blocking checkbox). */}
+          <div className="mt-4">
+            <p className="text-[11px] text-slate-400 text-center leading-snug">
+              By subscribing you agree to receive the guide + occasional updates
+              from Trustner. We process your email per our{' '}
+              <a href="/privacy" className="underline hover:text-brand" target="_blank" rel="noopener">
+                Privacy Policy
+              </a>
+              . Unsubscribe anytime.
             </p>
           </div>
 

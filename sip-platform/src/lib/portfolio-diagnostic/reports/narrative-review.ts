@@ -3,7 +3,7 @@
  * matches the hand-crafted Bihani / Dutta / Dhar / Sarkar style.
  *
  * Input: ReportData (the deterministic snapshot) + NarrativeJSON
- * (the LLM-generated advisor layer).
+ * (the LLM-generated RM layer).
  *
  * Output: full HTML ready for Chrome headless PDF render via the
  * existing report endpoint pipeline.
@@ -340,7 +340,7 @@ ${agendaRows ? `<h2 class="new-page">13 · Recommended meeting agenda</h2>
 </table>
 ${narrative.toneNote ? `<blockquote><strong>Tone for this meeting:</strong> ${escape(narrative.toneNote)}</blockquote>` : ''}` : ''}
 
-${(narrative.anticipatedQA ?? []).length > 0 ? `<h2>14 · Anticipated Q&amp;A — for the advisor</h2>
+${(narrative.anticipatedQA ?? []).length > 0 ? `<h2>14 · Anticipated Q&amp;A — for the RM</h2>
 ${(narrative.anticipatedQA ?? [])
   .map(
     (qa) => `<p><strong>Q: ${escape(qa.question)}</strong><br/>${escape(qa.answer)}</p>`

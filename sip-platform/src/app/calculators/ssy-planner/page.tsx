@@ -87,7 +87,8 @@ interface ProjectionInput {
   openingBalance: number; // current balance if already opened
   annualContribution: number;
   stepUpEnabled: boolean;
-  stepUpPct: number; // e.g. 5 => 5%
+  stepUpType: 'percentage' | 'amount';
+  stepUpValue: number; // when percentage → 5 = 5%; when amount → 5000 = ₹5000/yr added
   ssyRate: number; // e.g. 8.2
   ppfRate: number;
   mfRate: number;
@@ -119,10 +120,16 @@ function buildProjection(p: ProjectionInput): ProjectionRow[] {
   for (let yr = 1; yr <= SSY_MATURITY_YEARS; yr++) {
     // Contribution this year (only during first 15 years)
     const inContribWindow = yr <= SSY_CONTRIBUTION_YEARS;
-    const stepUpMultiplier = p.stepUpEnabled
-      ? Math.pow(1 + p.stepUpPct / 100, yr - 1)
-      : 1;
-    let contribution = inContribWindow ? p.annualContribution * stepUpMultiplier : 0;
+    let contribution: number;
+    if (!inContribWindow) {
+      contribution = 0;
+    } else if (!p.stepUpEnabled) {
+      contribution = p.annualContribution;
+    } else if (p.stepUpType === 'percentage') {
+      contribution = p.annualContribution * Math.pow(1 + p.stepUpValue / 100, yr - 1);
+    } else {
+      contribution = p.annualContribution + p.stepUpValue * (yr - 1);
+    }
     // Cap at max 1.5L regulatory limit per year
     if (contribution > SSY_MAX_ANNUAL) contribution = SSY_MAX_ANNUAL;
 
@@ -167,10 +174,16 @@ function buildProjection(p: ProjectionInput): ProjectionRow[] {
     const row = rows[i];
     const yr = row.yearIndex;
     const inContribWindow = yr <= SSY_CONTRIBUTION_YEARS;
-    const stepUpMultiplier = p.stepUpEnabled
-      ? Math.pow(1 + p.stepUpPct / 100, yr - 1)
-      : 1;
-    let contribution = inContribWindow ? p.annualContribution * stepUpMultiplier : 0;
+    let contribution: number;
+    if (!inContribWindow) {
+      contribution = 0;
+    } else if (!p.stepUpEnabled) {
+      contribution = p.annualContribution;
+    } else if (p.stepUpType === 'percentage') {
+      contribution = p.annualContribution * Math.pow(1 + p.stepUpValue / 100, yr - 1);
+    } else {
+      contribution = p.annualContribution + p.stepUpValue * (yr - 1);
+    }
     if (contribution > SSY_MAX_ANNUAL) contribution = SSY_MAX_ANNUAL;
     const halfContrib = contribution / 2;
     // Skip SSY deposit for already-opened completed years (already in balance)
@@ -197,7 +210,10 @@ export default function SSYPlannerPage() {
   // ─── Contribution ───
   const [annualContribution, setAnnualContribution] = useState(100000);
   const [stepUpEnabled, setStepUpEnabled] = useState(false);
-  const [stepUpPct, setStepUpPct] = useState(5);
+  const [stepUpType, setStepUpType] = useState<'percentage' | 'amount'>('percentage');
+  const [stepUpPct, setStepUpPct] = useState(5);          // used when stepUpType === 'percentage'
+  const [stepUpAmount, setStepUpAmount] = useState(5000); // used when stepUpType === 'amount' (₹ added per year)
+  const activeStepUpValue = stepUpType === 'percentage' ? stepUpPct : stepUpAmount;
 
   // ─── Rate assumption ───
   const [rateScenario, setRateScenario] = useState<string>('current');
@@ -242,7 +258,8 @@ export default function SSYPlannerPage() {
       openingBalance: accountStatus === 'already' ? currentBalance : 0,
       annualContribution,
       stepUpEnabled,
-      stepUpPct,
+      stepUpType,
+      stepUpValue: activeStepUpValue,
       ssyRate: activeRate,
       ppfRate,
       mfRate,
@@ -255,7 +272,8 @@ export default function SSYPlannerPage() {
     currentBalance,
     annualContribution,
     stepUpEnabled,
-    stepUpPct,
+    stepUpType,
+    activeStepUpValue,
     activeRate,
     ppfRate,
     mfRate,
@@ -331,7 +349,8 @@ export default function SSYPlannerPage() {
       openingBalance: accountStatus === 'already' ? currentBalance : 0,
       annualContribution,
       stepUpEnabled: false,
-      stepUpPct: 0,
+      stepUpType: 'percentage',
+      stepUpValue: 0,
       ssyRate: activeRate,
       ppfRate,
       mfRate,
@@ -500,7 +519,7 @@ export default function SSYPlannerPage() {
                       max={SSY_MAX_ANNUAL}
                       hint={`Min ₹250 · Max ₹1.5L per year per girl`}
                     />
-                    <div>
+                    <div data-pdf-stepup={stepUpEnabled ? `Annual Step-Up (${stepUpType === 'percentage' ? 'Percentage' : 'Amount'}): ${stepUpType === 'amount' ? '₹' : ''}${activeStepUpValue}${stepUpType === 'percentage' ? '%' : '/year'}` : undefined}>
                       <div className="flex items-center justify-between mb-3">
                         <label className="text-[13px] font-semibold text-slate-600 uppercase tracking-wider">
                           Step-up Contributions?
@@ -523,16 +542,59 @@ export default function SSYPlannerPage() {
                         </button>
                       </div>
                       {stepUpEnabled && (
-                        <NumberInput
-                          label="Annual Step-up Rate"
-                          value={stepUpPct}
-                          onChange={setStepUpPct}
-                          suffix="% p.a."
-                          step={1}
-                          min={1}
-                          max={15}
-                          hint="Will cap at ₹1.5L/yr limit"
-                        />
+                        <div className="space-y-3">
+                          {/* +% / +₹ toggle */}
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setStepUpType('percentage')}
+                              className={cn(
+                                'flex-1 text-[10px] font-semibold py-1.5 rounded-lg border transition-colors',
+                                stepUpType === 'percentage'
+                                  ? 'bg-rose-600 text-white border-rose-600'
+                                  : 'bg-white text-slate-600 border-slate-300 hover:border-rose-300'
+                              )}
+                            >
+                              +% per year
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setStepUpType('amount')}
+                              className={cn(
+                                'flex-1 text-[10px] font-semibold py-1.5 rounded-lg border transition-colors',
+                                stepUpType === 'amount'
+                                  ? 'bg-rose-600 text-white border-rose-600'
+                                  : 'bg-white text-slate-600 border-slate-300 hover:border-rose-300'
+                              )}
+                            >
+                              +₹ per year
+                            </button>
+                          </div>
+                          {stepUpType === 'percentage' ? (
+                            <NumberInput
+                              label="Annual Step-up Rate"
+                              value={stepUpPct}
+                              onChange={setStepUpPct}
+                              suffix="% p.a."
+                              step={1}
+                              min={1}
+                              max={15}
+                              hint="Each year your contribution grows by this %. Caps at ₹1.5L/yr limit."
+                            />
+                          ) : (
+                            <NumberInput
+                              label="Annual Increase Amount"
+                              value={stepUpAmount}
+                              onChange={setStepUpAmount}
+                              prefix="₹"
+                              suffix="/year"
+                              step={1000}
+                              min={500}
+                              max={20000}
+                              hint="₹X added to your contribution each year. Caps at ₹1.5L/yr limit."
+                            />
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -955,7 +1017,7 @@ export default function SSYPlannerPage() {
                       <span className="text-rose-600 font-bold mt-0.5">•</span>
                       <p>
                         <span className="font-semibold">
-                          Stepping up {stepUpPct}% yearly → final corpus{' '}
+                          Stepping up {stepUpType === 'percentage' ? `${stepUpPct}%` : `₹${stepUpAmount.toLocaleString('en-IN')}`} yearly → final corpus{' '}
                           {formatINR(flatVsStepCompare.stepFinal)}
                         </span>{' '}
                         vs flat: {formatINR(flatVsStepCompare.flatFinal)} — a{' '}

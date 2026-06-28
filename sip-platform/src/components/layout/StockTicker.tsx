@@ -124,8 +124,14 @@ export function StockTicker() {
     return () => { isMounted = false; clearInterval(interval); };
   }, []);
 
-  /* Duplicate the stock list 4x for seamless infinite loop */
-  const extendedStocks = [...stocks, ...stocks, ...stocks, ...stocks];
+  /* The track animates translateX(-50%), so exactly TWO copies of the list
+     give a seamless infinite loop. (Was 4× — doubled the DOM and polluted
+     the crawlable HTML for zero visual gain.) The second copy is marked
+     aria-hidden so screen readers and search engines see the list once. */
+  const loopCopies: { stock: StockData; dup: boolean }[] = [
+    ...stocks.map((stock) => ({ stock, dup: false })),
+    ...stocks.map((stock) => ({ stock, dup: true })),
+  ];
 
   return (
     <div
@@ -148,8 +154,10 @@ export function StockTicker() {
           width: 'max-content',
         }}
       >
-        {extendedStocks.map((stock, i) => (
-          <TickerItem key={`${stock.symbol}-${i}`} stock={stock} />
+        {loopCopies.map(({ stock, dup }, i) => (
+          <span key={`${stock.symbol}-${i}`} aria-hidden={dup || undefined} className="contents">
+            <TickerItem stock={stock} />
+          </span>
         ))}
       </div>
 

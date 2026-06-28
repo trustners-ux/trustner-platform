@@ -18,10 +18,12 @@ export function ConditionalShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname.startsWith('/admin');
   const isRM = pathname.startsWith('/rm');
-  const isInternalPage = isAdmin || isRM;
+  const isEmployee = pathname.startsWith('/employee');
+  const isPortal = pathname.startsWith('/portal');
+  const isInternalPage = isAdmin || isRM || isEmployee || isPortal;
 
   if (isInternalPage) {
-    // Admin/RM pages render their own layout shell — no public chrome
+    // Admin/RM/Employee pages render their own layout shell — no public chrome
     return <>{children}</>;
   }
 

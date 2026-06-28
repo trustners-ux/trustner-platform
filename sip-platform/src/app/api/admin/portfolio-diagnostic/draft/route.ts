@@ -27,6 +27,7 @@ import type {
   ClientSegment,
 } from '@/lib/portfolio-diagnostic/types';
 import { METHODOLOGY_VERSION } from '@/lib/portfolio-diagnostic/methodology';
+import { sanitizeSchemeName } from '@/lib/portfolio-diagnostic/cas-parser';
 
 /**
  * Round an INR amount to whole rupees for storage.
@@ -57,10 +58,25 @@ interface FamilyForm {
   notes?: string;
 }
 
+interface RiskProfileForm {
+  primaryAge?: number;
+  lifeStage?: string;
+  monthlyIncomeInr?: number;
+  monthlyExpenseInr?: number;
+  livingDependsOnThis?: boolean;
+  netWorthBufferInr?: number;
+  longestHorizonYears?: number;
+  statedPriority?: string;
+  pastDrawdownBehaviour?: string;
+  targetCorpusInr?: number;
+  yearsToGoal?: number;
+}
+
 interface DraftBody {
   family: FamilyForm;
   holdings: RawHolding[];
   sips: RawSip[];
+  riskProfile?: RiskProfileForm;
 }
 
 export async function POST(request: NextRequest) {
@@ -191,6 +207,21 @@ export async function POST(request: NextRequest) {
         unrealised_gain_inr: inrRupees(totalCurrent - totalInvested),
         monthly_sip_flow_inr: inrRupees(monthlySipFlow),
         annual_sip_flow_inr: inrRupees(monthlySipFlow * 12),
+        // ── v2 risk-intake (drives the Verdict Engine) ──
+        ...(body.riskProfile ? {
+          risk_profile_captured: true,
+          rp_primary_age: body.riskProfile.primaryAge ?? null,
+          rp_life_stage: body.riskProfile.lifeStage ?? null,
+          rp_monthly_income_inr: body.riskProfile.monthlyIncomeInr != null ? inrRupees(body.riskProfile.monthlyIncomeInr) : null,
+          rp_monthly_expense_inr: body.riskProfile.monthlyExpenseInr != null ? inrRupees(body.riskProfile.monthlyExpenseInr) : null,
+          rp_living_depends_on_this: body.riskProfile.livingDependsOnThis ?? null,
+          rp_net_worth_buffer_inr: body.riskProfile.netWorthBufferInr != null ? inrRupees(body.riskProfile.netWorthBufferInr) : null,
+          rp_longest_horizon_years: body.riskProfile.longestHorizonYears ?? null,
+          rp_stated_priority: body.riskProfile.statedPriority ?? null,
+          rp_past_drawdown_behaviour: body.riskProfile.pastDrawdownBehaviour ?? null,
+          rp_target_corpus_inr: body.riskProfile.targetCorpusInr != null && body.riskProfile.targetCorpusInr > 0 ? inrRupees(body.riskProfile.targetCorpusInr) : null,
+          rp_years_to_goal: body.riskProfile.yearsToGoal != null && body.riskProfile.yearsToGoal > 0 ? body.riskProfile.yearsToGoal : null,
+        } : {}),
       })
       .select('id')
       .single();
@@ -211,7 +242,7 @@ export async function POST(request: NextRequest) {
         .map((h) => ({
           diagnostic_run_id: diagnosticRunId,
           entity_id: entityIdByName.get(h.entityName)!,
-          fund_name: h.fundName,
+          fund_name: sanitizeSchemeName(h.fundName),
           folio_number: h.folioNumber,
           units: h.units,
           invested_inr: inrRupees(h.investedAmount),

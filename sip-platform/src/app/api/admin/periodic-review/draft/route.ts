@@ -49,6 +49,50 @@ export async function POST(req: NextRequest) {
 
   const documentId = `PR-${Date.now()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 
+  // ── Auto-populate the headline numbers from the family's book ──
+  // Current AUM/XIRR come from the latest PUBLISHED/APPROVED PD run; the
+  // period-start AUM comes from the prior periodic review, so period gain/return
+  // are computed (not hand-typed) — these were 100% manual before. Best-effort:
+  // leave NULL on a miss and the RM fills them in.
+  const grounded: Record<string, number | string | null> = {};
+  try {
+    const { data: latestRun } = await supabase
+      .from('pd_diagnostic_runs')
+      .select('id, current_value_inr, family_xirr_pct, created_at')
+      .eq('family_id', body.familyId)
+      .in('status', ['APPROVED', 'PUBLISHED'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (latestRun) {
+      grounded.underlying_diagnostic_run_id = (latestRun.id as number) ?? null;
+      grounded.current_aum_inr = (latestRun.current_value_inr as number) ?? null;
+      grounded.family_xirr_pct = (latestRun.family_xirr_pct as number) ?? null;
+    }
+
+    const { data: priorReview } = await supabase
+      .from('pr_periodic_reviews')
+      .select('id, current_aum_inr')
+      .eq('family_id', body.familyId)
+      .eq('status', 'PUBLISHED')
+      .order('review_period_end', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (priorReview) {
+      grounded.prior_periodic_review_id = (priorReview.id as number) ?? null;
+      grounded.period_start_aum_inr = (priorReview.current_aum_inr as number) ?? null;
+    }
+
+    const startAum = grounded.period_start_aum_inr as number | null;
+    const curAum = grounded.current_aum_inr as number | null;
+    if (startAum != null && curAum != null && startAum > 0) {
+      grounded.period_gain_inr = Math.round(curAum - startAum);
+      grounded.period_return_pct = Number((((curAum - startAum) / startAum) * 100).toFixed(2));
+    }
+  } catch {
+    // Grounding is opportunistic — failure is non-fatal.
+  }
+
   const { data: row, error } = await supabase
     .from('pr_periodic_reviews')
     .insert({
@@ -67,6 +111,7 @@ export async function POST(req: NextRequest) {
       num_action_items_completed: 0,
       num_action_items_new: 0,
       num_action_items_pending: 0,
+      ...grounded,
     })
     .select('id, document_id')
     .single();

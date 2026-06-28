@@ -29,16 +29,21 @@ import { buildWealthTrackerXlsx } from '@/lib/portfolio-diagnostic/reports/xlsx-
 import { buildFamilyMeetingDeckPptx } from '@/lib/portfolio-diagnostic/reports/pptx-deck';
 import { renderNarrativeReviewHtml } from '@/lib/portfolio-diagnostic/reports/narrative-review';
 import { renderMeetingNoteHtml } from '@/lib/portfolio-diagnostic/reports/meeting-note';
+import { renderInvestmentProposalHtml } from '@/lib/portfolio-diagnostic/reports/investment-proposal';
+import { renderClientDeckHtml } from '@/lib/portfolio-diagnostic/reports/client-deck';
+import { renderPremiumHtml } from '@/lib/portfolio-diagnostic/reports/premium-html';
+import { buildPremiumDocx } from '@/lib/portfolio-diagnostic/reports/docx-premium';
 import { getOrGenerateNarrative } from '@/lib/portfolio-diagnostic/narrative-engine';
+import { canViewPdRun } from '@/lib/portfolio-diagnostic/access-admin';
 
 // XLSX, PPTX, and LLM-narrative generation can be slow. Opus 4.7 with
 // adaptive thinking on a 10-15 holding family takes 50-90 sec uncached,
 // so we headroom up to the Vercel Pro ceiling of 300 sec.
 export const maxDuration = 300;
 
-type ReportType = 'full' | 'action' | 'one-pager' | 'three-pager' | 'xlsx' | 'pptx' | 'narrative' | 'meeting-note';
+type ReportType = 'full' | 'action' | 'one-pager' | 'three-pager' | 'client-deck' | 'xlsx' | 'pptx' | 'narrative' | 'meeting-note' | 'proposal' | 'premium' | 'docx';
 
-const VALID_TYPES: ReportType[] = ['full', 'action', 'one-pager', 'three-pager', 'xlsx', 'pptx', 'narrative', 'meeting-note'];
+const VALID_TYPES: ReportType[] = ['full', 'action', 'one-pager', 'three-pager', 'client-deck', 'xlsx', 'pptx', 'narrative', 'meeting-note', 'proposal', 'premium', 'docx'];
 
 export async function GET(
   req: NextRequest,
@@ -54,7 +59,7 @@ export async function GET(
   const type = (url.searchParams.get('type') ?? 'full').toLowerCase() as ReportType;
   if (!VALID_TYPES.includes(type)) {
     return NextResponse.json(
-      { error: `Unknown report type: ${type}. Use ?type=full|action|one-pager|three-pager|xlsx|pptx|narrative|meeting-note.` },
+      { error: `Unknown report type: ${type}. Use ?type=full|action|one-pager|three-pager|xlsx|pptx|narrative|meeting-note|proposal.` },
       { status: 400 }
     );
   }
@@ -79,6 +84,17 @@ export async function GET(
     const email = await resolveEmployeeEmail();
     if (!email) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+    // PRIVACY: a session user may only fetch reports for runs in their scope
+    // (otherwise an RM could pull another RM's client report by id).
+    const cookieStore = await cookies();
+    const adminTok = cookieStore.get(COOKIE_NAME)?.value;
+    const isAdminToken = adminTok ? !!(await verifyToken(adminTok)) : false;
+    if (!(await canViewPdRun(numericId, email, isAdminToken))) {
+      return NextResponse.json(
+        { error: 'You do not have access to this report — it belongs to another relationship manager.' },
+        { status: 403 }
+      );
     }
   }
   // authMode is currently informational; could be used later to inject
@@ -133,11 +149,14 @@ export async function GET(
   }
 
   // ── HTML formats ──
-  if (type === 'full' || type === 'action' || type === 'one-pager' || type === 'three-pager') {
+  if (type === 'full' || type === 'action' || type === 'one-pager' || type === 'three-pager' || type === 'client-deck' || type === 'proposal' || type === 'premium') {
     let html: string;
     if (type === 'full') html = renderFullPortfolioReviewHtml(data, { showPrintBar: true });
     else if (type === 'action') html = renderActionSheetHtml(data, { showPrintBar: true });
     else if (type === 'one-pager') html = renderOnePagerHtml(data, { showPrintBar: true });
+    else if (type === 'client-deck') html = renderClientDeckHtml(data, { showPrintBar: true });
+    else if (type === 'proposal') html = renderInvestmentProposalHtml(data, { showPrintBar: true });
+    else if (type === 'premium') html = renderPremiumHtml(data, { showPrintBar: true });
     else html = renderThreePagerHtml(data, { showPrintBar: true });
 
     return new NextResponse(html, {
@@ -171,6 +190,20 @@ export async function GET(
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Cache-Control': 'no-store, max-age=0',
+      },
+    });
+  }
+
+  // ── DOCX format — editable Word "Portfolio Review & Action Plan" ──
+  if (type === 'docx') {
+    const buf = await buildPremiumDocx(data);
+    const filename = `${data.familyName.replace(/[^\w\-]+/g, '_')}_Portfolio_Review_${data.reportDateIso}.docx`;
+    return new NextResponse(new Uint8Array(buf), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'Content-Disposition': `attachment; filename="${filename}"`,
         'Cache-Control': 'no-store, max-age=0',
       },

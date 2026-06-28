@@ -1,10 +1,11 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
 import { PageTracker } from '@/components/analytics/PageTracker';
 import { ConditionalShell } from '@/components/layout/ConditionalShell';
 import { ConsentBanner } from '@/components/consent/ConsentBanner';
+import { PWARegister } from '@/components/pwa/PWARegister';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -59,6 +60,24 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/',
   },
+  // Installable-app (PWA) metadata — manifest is auto-served from app/manifest.ts.
+  applicationName: 'MeraSIP',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'MeraSIP',
+  },
+  icons: {
+    icon: '/icon-192.png',
+    apple: '/apple-touch-icon.png',
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#15233B',
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
@@ -69,7 +88,6 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <head>
-        <meta name="theme-color" content="#1A1A2E" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -138,6 +156,7 @@ export default function RootLayout({
         />
       </head>
       <body className="font-sans antialiased bg-surface-100 text-primary-700">
+        <PWARegister />
         <GoogleAnalytics />
         <PageTracker />
         <ConditionalShell>

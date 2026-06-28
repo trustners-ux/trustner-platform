@@ -7,7 +7,20 @@ export interface JWTPayload {
   role: AdminRole;
 }
 
-const getSecret = () => new TextEncoder().encode(process.env.JWT_SECRET || 'dev-secret-change-in-production');
+const DEV_SECRET = 'dev-secret-change-in-production';
+
+const getSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    // In production, refuse to operate with the fallback dev secret.
+    // The fallback string is in source, so anyone could forge admin tokens.
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('JWT_SECRET env var is required in production');
+    }
+    return new TextEncoder().encode(DEV_SECRET);
+  }
+  return new TextEncoder().encode(secret);
+};
 
 export async function signToken(payload: JWTPayload): Promise<string> {
   return new SignJWT({ ...payload })

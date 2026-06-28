@@ -17,7 +17,9 @@ import {
   formatInrShort,
   formatInrFull,
   formatPct,
+  riskNotCapturedBanner,
 } from '../report-data';
+import { REPORT_TABLE_CSS } from './_shared-styles';
 
 const STYLES = `
   @page {
@@ -40,7 +42,7 @@ const STYLES = `
   * { box-sizing: border-box; }
   body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    color: #1A1A2E;
+    color: #1F2937;
     line-height: 1.3;
     font-size: 7.5pt;
     margin: 0;
@@ -48,30 +50,30 @@ const STYLES = `
   }
   .container { max-width: 178mm; margin: 0 auto; padding: 4mm 0; }
   .no-print-bar {
-    position: sticky; top: 0; z-index: 100; background: #0c4a6e; color: white;
+    position: sticky; top: 0; z-index: 100; background: #15233B; color: white;
     padding: 8px 16px; margin: -4mm 0 8mm 0; display: flex; gap: 12px; align-items: center; justify-content: space-between;
     font-size: 9pt;
   }
   .no-print-bar button {
-    background: white; color: #0c4a6e; border: 0; padding: 6px 14px; font-weight: 700; font-size: 9pt;
+    background: white; color: #15233B; border: 0; padding: 6px 14px; font-weight: 700; font-size: 9pt;
     border-radius: 4px; cursor: pointer;
   }
 
   .header {
-    border-bottom: 2px solid #0c4a6e;
+    border-bottom: 2px solid #15233B;
     padding-bottom: 4px;
     margin-bottom: 5px;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
   }
-  .header-left .firm-name { color: #0c4a6e; font-weight: 700; font-size: 10pt; }
-  .header-left .firm-sub { color: #6B5F54; font-size: 6.5pt; }
-  .header-right { text-align: right; font-size: 6.8pt; color: #6B5F54; }
-  .header-right .label { font-size: 7.5pt; color: #0c4a6e; font-weight: 700; letter-spacing: 0.5px; }
+  .header-left .firm-name { color: #15233B; font-weight: 700; font-size: 10pt; }
+  .header-left .firm-sub { color: #64748B; font-size: 6.5pt; }
+  .header-right { text-align: right; font-size: 6.8pt; color: #64748B; }
+  .header-right .label { font-size: 7.5pt; color: #15233B; font-weight: 700; letter-spacing: 0.5px; }
 
   .doc-title {
-    background: #0c4a6e;
+    background: #15233B;
     color: white;
     padding: 5px 10px;
     font-size: 11.5pt;
@@ -81,7 +83,7 @@ const STYLES = `
     justify-content: space-between;
     align-items: center;
   }
-  .doc-title .sub { font-size: 8pt; font-weight: 400; color: #CCFBF1; }
+  .doc-title .sub { font-size: 8pt; font-weight: 400; color: #C9D2DD; }
 
   .snapshot {
     display: grid;
@@ -90,81 +92,44 @@ const STYLES = `
     margin-bottom: 6px;
   }
   .tile {
-    background: #eff6ff;
-    border: 1px solid #0c4a6e;
+    background: #F4F6F8;
+    border: 1px solid #15233B;
     padding: 4px 5px;
     text-align: center;
   }
-  .tile .lbl { font-size: 6pt; color: #075985; font-weight: 700; letter-spacing: 0.3px; }
-  .tile .val { font-size: 11pt; font-weight: 700; color: #0c4a6e; line-height: 1.05; margin-top: 1px; }
+  .tile .lbl { font-size: 6pt; color: #15233B; font-weight: 700; letter-spacing: 0.3px; }
+  .tile .val { font-size: 11pt; font-weight: 700; color: #15233B; line-height: 1.05; margin-top: 1px; }
 
   h2 {
-    color: white;
-    font-size: 9pt;
-    margin: 6px 0 3px 0;
+    font-family: Georgia, 'Times New Roman', serif;
+    color: #15233B;
+    font-size: 9.5pt;
+    margin: 8px 0 4px 0;
     padding: 4px 10px;
-    border-radius: 2px;
+    border-left: 3px solid #15233B;
+    background: #F4F6F8;
     display: flex;
     justify-content: space-between;
     align-items: center;
-  }
-  h2 .count { font-size: 8pt; font-weight: 400; }
-  .h2-star  { background: #B45309; }
-  .h2-keep  { background: #16A34A; }
-  .h2-watch { background: #D97706; }
-  .h2-swap  { background: #DC2626; }
-  .h2-liq   { background: #6B5F54; }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 6.8pt;
-    margin: 2px 0;
-  }
-  th {
-    background: #075985;
-    color: white;
-    padding: 3px 4px;
-    text-align: left;
-    font-weight: 600;
-    font-size: 6.5pt;
-    border: 1px solid #0c4a6e;
-  }
-  td {
-    padding: 3px 4px;
-    border: 1px solid #D6D3D1;
-    vertical-align: top;
-  }
-  tr:nth-child(even) td { background: #FAFAF8; }
-
-  .amt { text-align: right; white-space: nowrap; font-weight: 600; color: #075985; }
-  .ctr { text-align: center; }
-  .pct-pos { color: #16A34A; font-weight: 700; }
-  .pct-neg { color: #DC2626; font-weight: 700; }
-  .pct-neu { color: #6B5F54; }
-  .nm      { color: #94A3B8; font-style: italic; }
-
-  .verdict {
-    text-align: center;
     font-weight: 700;
-    font-size: 6.5pt;
-    padding: 1px 3px;
-    border-radius: 2px;
-    display: inline-block;
-    width: 56px;
+    letter-spacing: 0.2px;
   }
-  .v-star { background: #FEF3C7; color: #B45309; border: 1px solid #D4A017; }
-  .v-keep { background: #DCFCE7; color: #16A34A; border: 1px solid #16A34A; }
-  .v-watch { background: #FFEDD5; color: #C2410C; border: 1px solid #D97706; }
-  .v-swap { background: #FEE2E2; color: #DC2626; border: 1px solid #DC2626; }
-  .v-liq { background: #E5E5E5; color: #44403C; border: 1px solid #57534E; }
+  h2 .count { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 7.5pt; font-weight: 600; color: #6B7280; }
+  .h2-star  { border-left-color: #9A7B4F; }
+  .h2-keep  { border-left-color: #2F6F4F; }
+  .h2-watch { border-left-color: #B07A2E; }
+  .h2-swap  { border-left-color: #9B2C3A; }
+  .h2-liq   { border-left-color: #6B7280; }
+
+  /* Holdings table + verdict badges — shared canonical definition. */
+  ${REPORT_TABLE_CSS}
 
   .legend {
     display: flex;
     gap: 10px;
     margin: 3px 0 4px 0;
     font-size: 6.8pt;
-    color: #6B5F54;
+    color: #64748B;
     flex-wrap: wrap;
   }
   .legend .verdict { width: auto; padding: 1px 6px; }
@@ -184,47 +149,95 @@ const STYLES = `
     gap: 6px;
   }
   .obs-card {
-    border: 1px solid #D6D3D1;
+    border: 1px solid #E5E7EB;
     border-radius: 3px;
     padding: 5px 8px;
     font-size: 7pt;
   }
-  .obs-card.good { border-left: 3px solid #16A34A; background: #F0FDF4; }
-  .obs-card.bad { border-left: 3px solid #DC2626; background: #FEF2F2; }
-  .obs-card.watch { border-left: 3px solid #D97706; background: #FFFBEB; }
-  .obs-card.proj { border-left: 3px solid #0c4a6e; background: #eff6ff; }
+  .obs-card.good { border-left: 3px solid #2F6F4F; background: #E8F1EC; }
+  .obs-card.bad { border-left: 3px solid #9B2C3A; background: #F6E6E9; }
+  .obs-card.watch { border-left: 3px solid #B07A2E; background: #FAF7F2; }
+  .obs-card.proj { border-left: 3px solid #15233B; background: #F4F6F8; }
   .obs-card h3 {
     margin: 0 0 3px 0; font-size: 7.5pt; font-weight: 700; letter-spacing: 0.2px;
     text-transform: uppercase;
   }
-  .obs-card.good h3 { color: #16A34A; }
-  .obs-card.bad h3 { color: #DC2626; }
-  .obs-card.watch h3 { color: #D97706; }
-  .obs-card.proj h3 { color: #0c4a6e; }
+  .obs-card.good h3 { color: #2F6F4F; }
+  .obs-card.bad h3 { color: #9B2C3A; }
+  .obs-card.watch h3 { color: #B07A2E; }
+  .obs-card.proj h3 { color: #15233B; }
   .obs-card ul { margin: 0; padding-left: 14px; }
   .obs-card li { margin-bottom: 2px; }
 
   .footer-note {
     margin-top: 6px;
     padding: 5px 9px;
-    border-left: 3px solid #D4A017;
-    background: #FFFBEB;
+    border-left: 3px solid #9A7B4F;
+    background: #FAF7F2;
     font-size: 7pt;
-    color: #1A1A2E;
+    color: #1F2937;
   }
-  .footer-note strong { color: #B45309; }
+  .footer-note strong { color: #9A7B4F; }
 
   .compliance {
     margin-top: 6px;
     padding-top: 4px;
-    border-top: 1px solid #D6D3D1;
+    border-top: 1px solid #E5E7EB;
     font-size: 5.8pt;
-    color: #6B5F54;
+    color: #64748B;
     line-height: 1.3;
     text-align: justify;
   }
 
   .page-break { page-break-before: always; }
+
+  /* v2 intelligence — buy-list marker, exit/switch tags, consolidation & tax sections */
+  .buylist-mark {
+    display: inline-block;
+    font-size: 5.6pt;
+    font-weight: 700;
+    color: #9A7B4F;
+    background: #F5EFE3;
+    border: 1px solid #9A7B4F;
+    border-radius: 2px;
+    padding: 0 3px;
+    letter-spacing: 0.2px;
+  }
+  .v2-tag {
+    margin-top: 2px;
+    font-size: 5.6pt;
+    font-weight: 700;
+    border-radius: 2px;
+    padding: 0 3px;
+    display: inline-block;
+    letter-spacing: 0.2px;
+  }
+  .v2-exit { background: #F6E6E9; color: #9B2C3A; border: 1px solid #9B2C3A; }
+  .v2-switch { background: #EAEEF3; color: #15233B; border: 1px solid #15233B; }
+
+  .keep-cell { color: #2F6F4F; font-weight: 700; }
+  .fold-cell { color: #9B2C3A; }
+
+  .tax-headline {
+    margin: 2px 0 4px 0;
+    padding: 4px 8px;
+    background: #F4F6F8;
+    border-left: 3px solid #15233B;
+    font-size: 7pt;
+    font-weight: 600;
+    color: #15233B;
+  }
+  .gain-type {
+    display: inline-block;
+    font-size: 5.8pt;
+    font-weight: 700;
+    border-radius: 2px;
+    padding: 0 3px;
+  }
+  .gt-ltcg { background: #E8F1EC; color: #1F4E37; border: 1px solid #2F6F4F; }
+  .gt-stcg { background: #F6EEDF; color: #B07A2E; border: 1px solid #B07A2E; }
+  .gt-debt { background: #E5E5E5; color: #44403C; border: 1px solid #57534E; }
+  .gt-locked { background: #F6E6E9; color: #9B2C3A; border: 1px solid #9B2C3A; }
 `;
 
 function pctClass(p: number | null | undefined): string {
@@ -271,7 +284,9 @@ function renderTierTable(
   const rowsHtml = rows
     .map((r, idx) => {
       const numCol = `<td class="ctr">${idx + 1}</td>`;
-      const fundCol = `<td><div class="fund-name">${escapeHtml(r.fundName)}</div>${r.category ? `<div style="font-size:6pt;color:#6B5F54;">${escapeHtml(r.category)}</div>` : ''}</td>`;
+      // ★ marker when this held fund is itself on the Trustner Buy-List (committee shortlist).
+      const buyListMark = r.onBuyList ? ' <span class="buylist-mark" title="On Trustner Buy-List">★ Buy-List</span>' : '';
+      const fundCol = `<td><div class="fund-name">${escapeHtml(r.fundName)}${buyListMark}</div>${r.category ? `<div style="font-size:6pt;color:#64748B;">${escapeHtml(r.category)}</div>` : ''}</td>`;
       const holdersCol = `<td>${escapeHtml(r.entityName)}</td>`;
       const investedCol = `<td class="amt">${formatInrFull(r.investedInr)}</td>`;
       const currentCol = `<td class="amt">${formatInrFull(r.currentValueInr)}</td>`;
@@ -296,9 +311,20 @@ function renderTierTable(
       // swap
       const cagr3yCol = `<td class="ctr ${pctClass(r.cagr3y)}">${formatPct(r.cagr3y)}</td>`;
       const cagr5yCol = `<td class="ctr ${pctClass(r.cagr5y)}">${formatPct(r.cagr5y)}</td>`;
-      const replaceCol = `<td>${escapeHtml(r.preferredReplacementFundName ?? '—')}</td>`;
+      // v2 precise action — distinguish a clean EXIT (unsuitable) from a SWITCH (better fund
+      // exists). The legacy verdict collapses both to "SWAP"; show the v2 nuance beneath it.
+      const isExit = (r.v2Action ?? '').toUpperCase().includes('EXIT');
+      const v2Tag = r.v2ActionLabel
+        ? `<div class="v2-tag ${isExit ? 'v2-exit' : 'v2-switch'}">${escapeHtml(r.v2ActionLabel)}</div>`
+        : '';
+      const verdictColV2 = `<td class="ctr"><span class="verdict ${verdictClass}">${verdictLabel}</span>${v2Tag}</td>`;
+      // Replacement provenance — flag when the replacement is sourced from the Trustner Buy-List.
+      const replName = r.preferredReplacementFundName ?? '—';
+      const replIsBuyList = !!r.buyListReplacementFundName && r.buyListReplacementFundName === r.preferredReplacementFundName;
+      const replProvenance = replIsBuyList ? '<div class="buylist-mark" style="margin-top:1px;">★ Trustner Buy-List</div>' : '';
+      const replaceCol = `<td>${escapeHtml(replName)}${replProvenance}</td>`;
       const reasonCol = `<td>${escapeHtml(r.rationale ?? '—')}</td>`;
-      return `<tr>${numCol}${fundCol}${holdersCol}${investedCol}${currentCol}${cagr3yCol}${cagr5yCol}${verdictCol}${replaceCol}${reasonCol}</tr>`;
+      return `<tr>${numCol}${fundCol}${holdersCol}${investedCol}${currentCol}${cagr3yCol}${cagr5yCol}${verdictColV2}${replaceCol}${reasonCol}</tr>`;
     })
     .join('');
 
@@ -330,6 +356,110 @@ function renderTierTable(
       <thead><tr>${headHtml}</tr></thead>
       <tbody>${rowsHtml}</tbody>
     </table>
+  `;
+}
+
+/**
+ * Pillar-6 Consolidation — KEEP vs FOLD-IN per same-sub-category duplicate group.
+ * Renders nothing when there are no consolidation groups.
+ */
+function renderConsolidationSection(data: ReportData): string {
+  const groups = data.consolidationGroups ?? [];
+  if (groups.length === 0) return '';
+
+  const rowsHtml = groups
+    .map((g, idx) => {
+      const foldNames = g.consolidate
+        .map((c) => `${escapeHtml(c.fundName)} (${formatInrShort(c.currentValueInr)})`)
+        .join('; ');
+      return `
+        <tr>
+          <td class="ctr">${idx + 1}</td>
+          <td>${escapeHtml(g.subCategory)} <span style="color:#64748B;">(${g.count} funds)</span></td>
+          <td class="keep-cell">${escapeHtml(g.keep.fundName)}</td>
+          <td class="fold-cell">${foldNames || '—'}</td>
+          <td class="amt">${formatInrFull(g.totalConsolidatableInr)}</td>
+          <td>${escapeHtml(g.rationale)}</td>
+        </tr>`;
+    })
+    .join('');
+
+  return `
+    <h2 style="border-left-color: #15233B;">
+      <span>PILLAR 6 — CONSOLIDATION <span style="font-weight:400; opacity:0.85;">(same-category duplicates; keep the stronger fund)</span></span>
+      <span class="count">${groups.length} group${groups.length === 1 ? '' : 's'} • ${formatInrShort(data.consolidationValueInr)} to redeploy</span>
+    </h2>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:14px;">#</th>
+          <th>Sub-Category</th>
+          <th>Keep (stronger)</th>
+          <th>Fold In (redeploy)</th>
+          <th style="text-align:right;">Consolidatable ₹</th>
+          <th>Rationale</th>
+        </tr>
+      </thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+  `;
+}
+
+/**
+ * v2 Tax-Aware Exit estimate — per-fund gain / gain-type / lock status / estimated tax.
+ * India rules already applied upstream (LTCG 12.5% over ₹1.25L / STCG 20% / debt-slab /
+ * ELSS lock-in). Renders nothing when there are no taxable exits.
+ */
+function renderTaxSection(data: ReportData): string {
+  const tax = data.taxSummary;
+  if (!tax || tax.exitCount <= 0) return '';
+
+  const gainTypeBadge = (gt: string, locked: boolean): string => {
+    if (locked) return '<span class="gain-type gt-locked">LOCKED</span>';
+    const t = (gt || '').toUpperCase();
+    if (t.includes('LTCG')) return '<span class="gain-type gt-ltcg">LTCG</span>';
+    if (t.includes('STCG')) return '<span class="gain-type gt-stcg">STCG</span>';
+    if (t.includes('DEBT')) return '<span class="gain-type gt-debt">DEBT</span>';
+    return `<span class="gain-type gt-debt">${escapeHtml(gt || '—')}</span>`;
+  };
+
+  const rowsHtml = tax.lines
+    .map((ln, idx) => `
+      <tr>
+        <td class="ctr">${idx + 1}</td>
+        <td>${escapeHtml(ln.fundName)}</td>
+        <td class="amt ${ln.gainInr >= 0 ? 'pct-pos' : 'pct-neg'}">${formatInrFull(ln.gainInr)}</td>
+        <td class="ctr">${gainTypeBadge(ln.gainType, ln.locked)}</td>
+        <td class="amt">${ln.locked ? '—' : (ln.estTaxInr === null ? 'NM' : formatInrFull(ln.estTaxInr))}</td>
+        <td>${escapeHtml(ln.note ?? '—')}</td>
+      </tr>`)
+    .join('');
+
+  return `
+    <h2 style="border-left-color: #9A7B4F;">
+      <span>TAX-AWARE EXIT ESTIMATE <span style="font-weight:400; opacity:0.85;">(India rules applied — confirm with your CA)</span></span>
+      <span class="count">${tax.exitCount} exit${tax.exitCount === 1 ? '' : 's'} • est. tax ${formatInrShort(tax.estTotalTaxInr)}</span>
+    </h2>
+    ${tax.headline ? `<div class="tax-headline">${escapeHtml(tax.headline)}</div>` : ''}
+    <table>
+      <thead>
+        <tr>
+          <th style="width:14px;">#</th>
+          <th>Fund (Exit)</th>
+          <th style="text-align:right;">Gain ₹</th>
+          <th class="ctr">Type</th>
+          <th style="text-align:right;">Est. Tax ₹</th>
+          <th>Note</th>
+        </tr>
+      </thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+    <div class="footer-note" style="border-left-color:#9A7B4F;">
+      <strong>NOTE:</strong> Tax figures are indicative estimates using current India capital-gains
+      rules (LTCG 12.5% above the ₹1.25 L per-FY equity exemption / STCG 20% / debt taxed at slab /
+      ELSS three-year lock-in). They are not a tax computation — please confirm the final liability
+      with your Chartered Accountant before any redemption.
+    </div>
   `;
 }
 
@@ -378,7 +508,7 @@ export function renderFullPortfolioReviewHtml(data: ReportData, opts?: { showPri
           `
           )
           .join('')}
-        <tr style="font-weight:700; background:#eff6ff;">
+        <tr style="font-weight:700; background:#F4F6F8;">
           <td class="tier-label">TOTAL</td>
           <td>${data.numHoldings}</td>
           <td class="amt">${formatInrFull(totalInvested)}</td>
@@ -423,11 +553,11 @@ export function renderFullPortfolioReviewHtml(data: ReportData, opts?: { showPri
       </div>
       <div class="obs-card bad">
         <h3>What Needs Fixing (${needsFixingPct}% of the portfolio)</h3>
-        ${swapList ? `<ul><li>${swapList.replace(/; /g, '</li><li>')}</li></ul>` : '<p style="margin:0;color:#6B5F54;">No SWAP-tier holdings — portfolio is healthy.</p>'}
+        ${swapList ? `<ul><li>${swapList.replace(/; /g, '</li><li>')}</li></ul>` : '<p style="margin:0;color:#64748B;">No SWAP-tier holdings — portfolio is healthy.</p>'}
       </div>
       <div class="obs-card watch">
         <h3>Too Young to Call (${tooYoungPct}%)</h3>
-        ${watchList ? `<ul><li>${watchList.replace(/; /g, '</li><li>')}</li></ul><p style="margin:4px 0 0 0;"><em>Re-assess at next quarterly review.</em></p>` : '<p style="margin:0;color:#6B5F54;">No WATCH-tier holdings.</p>'}
+        ${watchList ? `<ul><li>${watchList.replace(/; /g, '</li><li>')}</li></ul><p style="margin:4px 0 0 0;"><em>Re-assess at next quarterly review.</em></p>` : '<p style="margin:0;color:#64748B;">No WATCH-tier holdings.</p>'}
       </div>
       <div class="obs-card proj">
         <h3>Wealth Projection (36 months)</h3>
@@ -447,13 +577,16 @@ export function renderFullPortfolioReviewHtml(data: ReportData, opts?: { showPri
 <title>${escapeHtml(data.familyName)} — Full Portfolio Review</title>
 <style>${STYLES}</style>
 </head>
-<body>
+<body>${riskNotCapturedBanner(data)}
 <div class="container">
   ${
     showPrintBar
       ? `<div class="no-print no-print-bar">
           <span>📄 Full Portfolio Review — ${escapeHtml(data.familyName)} | ${escapeHtml(data.reportDate)}</span>
-          <button onclick="window.print()">🖨️ Print / Save as PDF</button>
+          <span style="display:flex; align-items:center; gap:12px;">
+            <span style="font-size:7.5pt; opacity:0.85; font-weight:400;">Tip: in the print dialog, untick <strong>“Headers and footers”</strong> for a clean PDF (no web address).</span>
+            <button onclick="window.print()">🖨️ Print / Save as PDF</button>
+          </span>
         </div>`
       : ''
   }
@@ -500,7 +633,10 @@ export function renderFullPortfolioReviewHtml(data: ReportData, opts?: { showPri
   ${renderTierTable(data.swapHoldings, 'swap')}
   ${renderTierTable(data.liquidateHoldings, 'liquidate')}
 
-  <h2 style="background: #0c4a6e;">
+  ${renderConsolidationSection(data)}
+  ${renderTaxSection(data)}
+
+  <h2 style="border-left-color: #15233B;">
     <span>PORTFOLIO HEALTH SUMMARY</span>
     <span class="count">Bottom-line by tier</span>
   </h2>
@@ -522,14 +658,16 @@ export function renderFullPortfolioReviewHtml(data: ReportData, opts?: { showPri
 
   <div class="compliance">
     Mutual Fund investments are subject to market risks. Read all scheme-related documents carefully.
-    Trustner Asset Services Pvt. Ltd. (CIN: U66301AS2023PTC025505) is an AMFI-Registered Mutual Fund
-    Distributor (ARN-286886); the firm is not a SEBI-Registered Investment Adviser. Past performance is
+    AMFI registered Mutual Fund distributor and SIF Distributor, APMI registered PMS Distributor: ARN-286886.
+    Trustner Asset Services Pvt. Ltd. (CIN: U66301AS2023PTC025505). Past performance is
     not indicative of future results. 3Y &amp; 5Y CAGR figures are sourced from AMFI / AMC fact-sheets. XIRR
-    figures are computed at the family/holding level as of ${escapeHtml(data.reportDate)}. Verdicts
-    (STAR / KEEP / WATCH / SWAP / LIQUIDATE) represent our analytical view based on the funds&apos;
-    track record, manager quality, category positioning, and category benchmark data — they do not
-    constitute personalised investment advice. Final investment decisions rest with each PAN holder.
-    Recommendations may be revised at subsequent quarterly reviews.
+    figures are computed at the family/holding level as of ${escapeHtml(data.reportDate)}. Tax estimates
+    are indicative only — please confirm the final liability with your Chartered Accountant. Verdicts
+    (STAR / KEEP / WATCH / SWAP / LIQUIDATE) and consolidation groupings represent our analytical and
+    distribution view based on the funds&apos; track record, manager
+    quality, category positioning, and category benchmark data — this report does NOT constitute investment
+    advice as defined under SEBI (Investment Advisers) Regulations, 2013. Final investment decisions rest
+    with each PAN holder. Recommendations may be revised at subsequent reviews.
   </div>
 </div>
 </body>

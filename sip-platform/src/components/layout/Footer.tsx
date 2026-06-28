@@ -182,11 +182,11 @@ export function Footer() {
             </div>
             <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
               <Shield className="w-3.5 h-3.5 text-brand-300" />
-              <span>AMFI Registered</span>
+              <span>AMFI Registered MFD</span>
             </div>
             <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
               <ShieldCheck className="w-3.5 h-3.5 text-accent" />
-              <span>SEBI Regulated</span>
+              <span>ARN-286886</span>
             </div>
           </div>
         </div>
@@ -204,12 +204,7 @@ export function Footer() {
               <span>ARN-286886</span>
             </div>
             <span className="text-slate-600">|</span>
-            <div className="flex items-center gap-1.5">
-              <Shield className="w-3 h-3 text-positive" />
-              <span className="font-semibold text-white">SEBI Regulated</span>
-            </div>
-            <span className="text-slate-600">|</span>
-            <span>Mutual Fund investments are subject to market risks</span>
+            <span>Mutual Fund investments are subject to market risks. Read all scheme-related documents carefully.</span>
           </div>
           <div className="flex items-center gap-3">
             <a href="https://www.amfiindia.com" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">AMFI India</a>

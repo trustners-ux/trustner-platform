@@ -5,6 +5,7 @@ import {
   resetUserPassword,
   SUPER_ADMIN_EMAIL,
 } from '@/lib/admin/admin-user-store';
+import { rateLimit, clientIp } from '@/lib/security/rate-limit';
 
 // Auth routes: always dynamic, Node runtime, zero caching.
 export const dynamic = 'force-dynamic';
@@ -12,11 +13,26 @@ export const revalidate = 0;
 export const runtime = 'nodejs';
 export const fetchCache = 'force-no-store';
 
+// Rate limits — defence against lockout-spam (an attacker repeatedly resetting
+// a real admin's password to lock them out, or to flood their inbox).
+// Per-IP:    5 requests / hour
+// Per-email: 3 requests / hour (i.e. even from rotating IPs an admin can only
+//            be locked out 3x/hour at worst)
+const ipLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 5 });
+const emailLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 3 });
+
 /**
  * Forgot Password — Self-service password reset.
- * Sends an OTP to the super admin for verification,
- * then generates a new password and emails it to the requesting user.
- * This route is PUBLIC (no auth required) — accessible from login page.
+ *
+ * SECURITY: This is a PUBLIC unauthenticated POST. To prevent abuse:
+ *   1. Per-IP + per-email rate limit (above).
+ *   2. We always return the same generic success response — never reveal
+ *      whether the email is registered.
+ *   3. A copy of every reset is sent to SUPER_ADMIN_EMAIL so unauthorized
+ *      activity is visible.
+ *
+ * TODO (next sprint): replace push-password flow with signed time-limited
+ * reset link + super-admin approval gate, matching the employee reset flow.
  */
 export async function POST(request: Request) {
   try {
@@ -26,6 +42,20 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: 'Please enter a valid email address' },
         { status: 400 }
+      );
+    }
+
+    // Apply IP + email rate limits BEFORE doing any work. Same generic 429
+    // response for either limit so the attacker can't distinguish.
+    const ip = clientIp(request);
+    const normalisedEmail = String(email).trim().toLowerCase();
+    const ipCheck = ipLimiter.check(`fp:ip:${ip}`);
+    const emailCheck = emailLimiter.check(`fp:email:${normalisedEmail}`);
+    if (!ipCheck.ok || !emailCheck.ok) {
+      const retryAfter = Math.max(ipCheck.retryAfter, emailCheck.retryAfter);
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(retryAfter) } }
       );
     }
 

@@ -1,8 +1,21 @@
 import { NextResponse } from 'next/server';
 import { otpStore } from '@/lib/services/otp-store';
+import { rateLimit, clientIp } from '@/lib/security/rate-limit';
+
+// Per-IP cap (audit P1) on top of otpStore's per-PHONE limit — otherwise a bot
+// rotating phone numbers can still burn SMS. 15 OTP sends / 15 min / IP.
+const ipLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 15 });
 
 export async function POST(request: Request) {
   try {
+    const ipCheck = ipLimiter.check(`fp-otp:ip:${clientIp(request)}`);
+    if (!ipCheck.ok) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait a few minutes and try again.' },
+        { status: 429, headers: { 'Retry-After': String(ipCheck.retryAfter) } }
+      );
+    }
+
     const { phone, email } = await request.json();
 
     if (!phone || !email) {

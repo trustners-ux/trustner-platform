@@ -12,7 +12,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import {
-  ArrowLeft, CheckCircle2, XCircle, MessageSquare, Send, AlertTriangle,
+  ArrowLeft, CheckCircle2, XCircle, MessageSquare, Send, AlertTriangle, FileText,
 } from 'lucide-react';
 
 interface Proposal {
@@ -265,6 +265,9 @@ export default function ReviewInvestmentProposalPage() {
           )}
 
           <div className="flex flex-wrap items-center gap-2 justify-end">
+            <a href={`/api/admin/investment-proposal/${id}/document`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50">
+              <FileText className="w-4 h-4" /> Proposal PDF
+            </a>
             {canApprove && (
               <>
                 <button

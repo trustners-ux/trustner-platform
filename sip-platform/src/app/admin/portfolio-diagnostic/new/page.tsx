@@ -84,6 +84,19 @@ export default function NewDiagnosticPage() {
   const [holdings, setHoldings] = useState<RawHolding[]>([]);
   const [sips, setSips] = useState<RawSip[]>([]);
 
+  // v2 Verdict Engine — client risk & behaviour intake (drives capacity × tolerance × suitability)
+  const [riskProfile, setRiskProfile] = useState<{
+    primaryAge: number; lifeStage: string; monthlyIncomeInr: number; monthlyExpenseInr: number;
+    livingDependsOnThis: boolean; netWorthBufferInr: number; longestHorizonYears: number;
+    statedPriority: string; pastDrawdownBehaviour: string;
+    targetCorpusInr: number; yearsToGoal: number;
+  }>({
+    primaryAge: 45, lifeStage: 'accumulation', monthlyIncomeInr: 0, monthlyExpenseInr: 0,
+    livingDependsOnThis: true, netWorthBufferInr: 0, longestHorizonYears: 15,
+    statedPriority: 'balanced', pastDrawdownBehaviour: 'unknown',
+    targetCorpusInr: 0, yearsToGoal: 0,
+  });
+
   // CAS upload state
   const [casUploading, setCasUploading] = useState(false);
   const [casParseError, setCasParseError] = useState<string | null>(null);
@@ -93,31 +106,56 @@ export default function NewDiagnosticPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Auto-save to localStorage every 30s
+  // A previous unsaved draft recovered from localStorage. We DO NOT auto-apply
+  // it — a fresh "New Diagnostic" must start BLANK so the next client's
+  // name / PAN / email are never pre-filled with the previous one's (and so the
+  // CAS auto-capture isn't blocked by stale values). Instead we offer an opt-in
+  // "Restore draft" banner.
+  const [restorable, setRestorable] = useState<
+    { savedAt?: string; family?: FamilyForm; holdings?: RawHolding[]; sips?: RawSip[]; riskProfile?: typeof riskProfile } | null
+  >(null);
+
+  // Auto-save to localStorage every 30s — but ONLY once there is real content,
+  // so a blank fresh form never overwrites a recoverable draft.
   useEffect(() => {
     const id = setInterval(() => {
+      const hasContent =
+        family.familyName.trim() || family.primaryContactName.trim() || holdings.length > 0 || sips.length > 0;
+      if (!hasContent) return;
       localStorage.setItem(
         'pd-new-diagnostic-draft',
-        JSON.stringify({ family, holdings, sips, savedAt: new Date().toISOString() })
+        JSON.stringify({ family, holdings, sips, riskProfile, savedAt: new Date().toISOString() })
       );
     }, 30_000);
     return () => clearInterval(id);
-  }, [family, holdings, sips]);
+  }, [family, holdings, sips, riskProfile]);
 
-  // Restore from localStorage on mount
+  // Detect (but don't apply) a recoverable draft on mount.
   useEffect(() => {
     const raw = localStorage.getItem('pd-new-diagnostic-draft');
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw);
-        if (parsed.family) setFamily(parsed.family);
-        if (parsed.holdings) setHoldings(parsed.holdings);
-        if (parsed.sips) setSips(parsed.sips);
-      } catch {
-        // ignore
-      }
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw);
+      const hasContent =
+        parsed?.family?.familyName || parsed?.family?.primaryContactName || parsed?.holdings?.length || parsed?.sips?.length;
+      if (hasContent) setRestorable(parsed);
+    } catch {
+      // ignore
     }
   }, []);
+
+  function restoreDraft() {
+    if (!restorable) return;
+    if (restorable.family) setFamily(restorable.family);
+    if (restorable.holdings) setHoldings(restorable.holdings);
+    if (restorable.sips) setSips(restorable.sips);
+    if (restorable.riskProfile) setRiskProfile((rp) => ({ ...rp, ...restorable.riskProfile }));
+    setRestorable(null);
+  }
+  function discardDraft() {
+    localStorage.removeItem('pd-new-diagnostic-draft');
+    setRestorable(null);
+  }
 
   // ── CAS upload handler ─────────────────────────────────────
   async function handleCasUpload(file: File, password: string) {
@@ -148,13 +186,15 @@ export default function NewDiagnosticPage() {
         return;
       }
 
-      // Merge parsed data
-      if (data.investorName && !family.primaryContactName) {
+      // Auto-capture the investor's identity from the parsed statement. Fill
+      // only the fields the user hasn't already typed, so a CAS upload populates
+      // a blank form (name / family name / PAN) without clobbering manual edits.
+      if (data.investorName || data.pan) {
         setFamily((f) => ({
           ...f,
-          primaryContactName: data.investorName,
-          familyName: f.familyName || `${data.investorName} Family`,
-          primaryContactPan: data.pan,
+          primaryContactName: f.primaryContactName || (data.investorName ?? ''),
+          familyName: f.familyName || (data.investorName ? `${data.investorName} Family` : ''),
+          primaryContactPan: f.primaryContactPan || (data.pan ?? undefined),
         }));
       }
       setHoldings(data.holdings ?? []);
@@ -180,7 +220,7 @@ export default function NewDiagnosticPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ family, holdings, sips }),
+        body: JSON.stringify({ family, holdings, sips, riskProfile }),
       });
 
       if (!res.ok) {
@@ -212,6 +252,19 @@ export default function NewDiagnosticPage() {
     } finally {
       setSaving(false);
     }
+  }
+
+  // ── Proceed without SIP (explicit permission) ──────────────
+  // CAS / valuation statements carry no SIP register, so a clean upload
+  // legitimately yields 0 SIPs. Rather than leave the user unsure, ask for
+  // a one-click confirmation and then save the holdings-only diagnostic.
+  function handleProceedWithoutSip() {
+    const ok = window.confirm(
+      'No SIP was detected in the uploaded statement.\n\n' +
+        'SIPs are optional — continue and save this diagnostic without any SIP? ' +
+        'You can still add SIPs to this draft later.'
+    );
+    if (ok) void handleSaveDraft();
   }
 
   // ── Validation ─────────────────────────────────────────────
@@ -286,6 +339,26 @@ export default function NewDiagnosticPage() {
         </div>
       )}
 
+      {/* Opt-in restore of a previous unsaved draft. The form itself starts blank. */}
+      {restorable && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-sky-300 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+          <div>
+            <strong>Unsaved draft found</strong>
+            {restorable.savedAt ? ` from ${new Date(restorable.savedAt).toLocaleString('en-IN')}` : ''}
+            {restorable.family?.primaryContactName ? ` — ${restorable.family.primaryContactName}` : ''}.{' '}
+            This form is starting fresh — restore the earlier draft, or discard it?
+          </div>
+          <div className="flex flex-shrink-0 gap-2">
+            <button onClick={restoreDraft} className="rounded-lg bg-sky-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-800">
+              Restore draft
+            </button>
+            <button onClick={discardDraft} className="rounded-lg border border-sky-300 bg-white px-3 py-1.5 text-xs font-semibold text-sky-700 hover:bg-sky-100">
+              Discard
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="border-b border-slate-200">
         <nav className="flex gap-2">
@@ -334,8 +407,79 @@ export default function NewDiagnosticPage() {
           />
         )}
         {activeTab === 'sips' && (
-          <SipsTab sips={sips} onChange={setSips} />
+          <SipsTab
+            sips={sips}
+            onChange={setSips}
+            onProceedWithoutSip={handleProceedWithoutSip}
+            canProceed={canSubmit}
+            saving={saving}
+          />
         )}
+      </div>
+
+      {/* ── Client Risk & Behaviour (drives the v2 Verdict Engine) ── */}
+      <div className="mt-6 rounded-xl border-2 border-emerald-200 bg-emerald-50/40 p-4">
+        <div className="mb-1 flex items-center gap-2">
+          <span className="text-sm font-extrabold text-emerald-800">Client Risk &amp; Behaviour</span>
+          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">drives verdicts</span>
+        </div>
+        <p className="mb-3 text-[11px] leading-relaxed text-slate-600">
+          These six inputs power the engine&apos;s capacity × tolerance × suitability reconciliation —
+          the difference between a generic screen and a Jaideep-grade verdict. The key switch is
+          &ldquo;does the client&apos;s living depend on this money?&rdquo; — when it doesn&apos;t, the engine permits
+          higher equity regardless of age.
+        </p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <label className="text-[11px] font-semibold text-slate-600">Primary age
+            <input type="number" inputMode="numeric" min={0} placeholder="e.g. 45" value={riskProfile.primaryAge || ''} onChange={(e) => setRiskProfile({ ...riskProfile, primaryAge: e.target.value === '' ? 0 : Number(e.target.value) })} className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" />
+          </label>
+          <label className="text-[11px] font-semibold text-slate-600">Life stage
+            <select value={riskProfile.lifeStage} onChange={(e) => setRiskProfile({ ...riskProfile, lifeStage: e.target.value })} className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm">
+              <option value="accumulation">Accumulation</option>
+              <option value="pre_retirement">Pre-retirement</option>
+              <option value="retirement">Retirement</option>
+              <option value="legacy">Legacy</option>
+            </select>
+          </label>
+          <label className="text-[11px] font-semibold text-slate-600">Longest goal horizon (yrs)
+            <input type="number" inputMode="numeric" min={0} placeholder="e.g. 15" value={riskProfile.longestHorizonYears || ''} onChange={(e) => setRiskProfile({ ...riskProfile, longestHorizonYears: e.target.value === '' ? 0 : Number(e.target.value) })} className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" />
+          </label>
+          <label className="text-[11px] font-semibold text-slate-600">Target corpus (₹) <span className="font-normal text-slate-400">(optional — activates the required-return leg)</span>
+            <input type="number" inputMode="numeric" min={0} placeholder="e.g. 20000000" value={riskProfile.targetCorpusInr || ''} onChange={(e) => setRiskProfile({ ...riskProfile, targetCorpusInr: e.target.value === '' ? 0 : Number(e.target.value) })} className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" />
+          </label>
+          <label className="text-[11px] font-semibold text-slate-600">Years to that goal <span className="font-normal text-slate-400">(blank → uses longest horizon)</span>
+            <input type="number" inputMode="numeric" min={0} placeholder="blank = longest horizon" value={riskProfile.yearsToGoal || ''} onChange={(e) => setRiskProfile({ ...riskProfile, yearsToGoal: e.target.value === '' ? 0 : Number(e.target.value) })} className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" />
+          </label>
+          <label className="text-[11px] font-semibold text-slate-600">Monthly guaranteed income (₹) <span className="font-normal text-slate-400">(pension/rent/salary — not this portfolio)</span>
+            <input type="number" inputMode="numeric" min={0} placeholder="e.g. 80000" value={riskProfile.monthlyIncomeInr || ''} onChange={(e) => setRiskProfile({ ...riskProfile, monthlyIncomeInr: e.target.value === '' ? 0 : Number(e.target.value) })} className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" />
+          </label>
+          <label className="text-[11px] font-semibold text-slate-600">Monthly essential expense (₹)
+            <input type="number" inputMode="numeric" min={0} placeholder="e.g. 50000" value={riskProfile.monthlyExpenseInr || ''} onChange={(e) => setRiskProfile({ ...riskProfile, monthlyExpenseInr: e.target.value === '' ? 0 : Number(e.target.value) })} className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" />
+          </label>
+          <label className="text-[11px] font-semibold text-slate-600">Net-worth buffer outside this (₹)
+            <input type="number" inputMode="numeric" min={0} placeholder="e.g. 5000000" value={riskProfile.netWorthBufferInr || ''} onChange={(e) => setRiskProfile({ ...riskProfile, netWorthBufferInr: e.target.value === '' ? 0 : Number(e.target.value) })} className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm" />
+          </label>
+          <label className="text-[11px] font-semibold text-slate-600">Stated priority
+            <select value={riskProfile.statedPriority} onChange={(e) => setRiskProfile({ ...riskProfile, statedPriority: e.target.value })} className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm">
+              <option value="capital_first">Capital first</option>
+              <option value="balanced">Balanced</option>
+              <option value="growth_first">Growth first</option>
+            </select>
+          </label>
+          <label className="text-[11px] font-semibold text-slate-600">Past behaviour in a crash
+            <select value={riskProfile.pastDrawdownBehaviour} onChange={(e) => setRiskProfile({ ...riskProfile, pastDrawdownBehaviour: e.target.value })} className="mt-1 w-full rounded-md border border-slate-300 px-2 py-1 text-sm">
+              <option value="unknown">Unknown</option>
+              <option value="added_more">Added more</option>
+              <option value="stayed_invested">Stayed invested</option>
+              <option value="stopped_sip">Stopped SIP</option>
+              <option value="panic_sold">Panic sold</option>
+            </select>
+          </label>
+          <label className="flex items-center gap-2 text-[11px] font-semibold text-slate-600 sm:col-span-1">
+            <input type="checkbox" checked={riskProfile.livingDependsOnThis} onChange={(e) => setRiskProfile({ ...riskProfile, livingDependsOnThis: e.target.checked })} className="h-4 w-4" />
+            Living depends on this portfolio
+          </label>
+        </div>
       </div>
     </div>
   );
@@ -629,11 +773,11 @@ function HoldingsTab({
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    // Reset state, then try without password first.
     setSelectedFile(file);
     setPasswordPromptVisible(false);
-    setCasPassword('');
-    onCasUpload(file, '');
+    // Use any password the user pre-entered (optional). Blank → parser tries
+    // without one first; we still auto-prompt if it turns out to be encrypted.
+    onCasUpload(file, casPassword.trim());
   }
 
   function addManualHolding() {
@@ -722,18 +866,22 @@ function HoldingsTab({
                 <AlertTriangle className="h-4 w-4 text-amber-700 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-amber-900">
                   <strong>This PDF is password-protected.</strong> Enter the password
-                  (usually the investor&apos;s PAN in uppercase) and we&apos;ll retry.
+                  exactly as shared — it is <strong>case-sensitive</strong> (often the
+                  investor&apos;s PAN, but not always uppercase) and we&apos;ll retry.
                 </div>
               </div>
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={casPassword}
-                  onChange={(e) => setCasPassword(e.target.value.toUpperCase())}
-                  placeholder="ABCDE1234F"
-                  maxLength={10}
+                  onChange={(e) => setCasPassword(e.target.value)}
+                  placeholder="Enter exactly as shared (case-sensitive)"
+                  maxLength={64}
                   autoFocus
-                  className="flex-1 rounded-lg border border-amber-300 px-3 py-2 text-sm font-mono uppercase focus:outline-none focus:border-amber-500"
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  className="flex-1 rounded-lg border border-amber-300 px-3 py-2 text-sm font-mono focus:outline-none focus:border-amber-500"
                 />
                 <button
                   type="button"
@@ -750,6 +898,40 @@ function HoldingsTab({
               </div>
             </div>
           )}
+
+          {/* Optional password — ALWAYS available (not only on error). PAN unlocks
+              CAMS / Karvy CAS; leave blank for Trustner reports. */}
+          <div className="mb-3">
+            <label className="block text-xs font-medium text-slate-600 mb-1">
+              Password{' '}
+              <span className="font-normal text-slate-400">
+                — only if the PDF is protected (optional; often the PAN, but enter it exactly as shared — case-sensitive)
+              </span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <input
+                type="text"
+                value={casPassword}
+                onChange={(e) => setCasPassword(e.target.value)}
+                placeholder="Leave blank for Trustner reports · enter exactly as shared"
+                maxLength={64}
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
+                className="w-full sm:w-72 rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:outline-none focus:border-brand"
+              />
+              {selectedFile && (
+                <button
+                  type="button"
+                  onClick={() => onCasUpload(selectedFile, casPassword.trim())}
+                  disabled={casUploading}
+                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                >
+                  {casUploading ? 'Parsing…' : 'Re-parse with password'}
+                </button>
+              )}
+            </div>
+          </div>
 
           <button
             onClick={() => fileInputRef.current?.click()}
@@ -929,9 +1111,12 @@ function HoldingsTab({
 interface SipsTabProps {
   sips: RawSip[];
   onChange: (s: RawSip[]) => void;
+  onProceedWithoutSip: () => void;
+  canProceed: boolean;
+  saving: boolean;
 }
 
-function SipsTab({ sips, onChange }: SipsTabProps) {
+function SipsTab({ sips, onChange, onProceedWithoutSip, canProceed, saving }: SipsTabProps) {
   const sipFileInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingSipFile, setIsUploadingSipFile] = useState(false);
   const [sipUploadError, setSipUploadError] = useState<string | null>(null);
@@ -1089,11 +1274,27 @@ function SipsTab({ sips, onChange }: SipsTabProps) {
       )}
 
       {sips.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 py-8 text-center">
+        <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 py-8 px-4 text-center">
           <Repeat className="h-8 w-8 text-slate-400 mx-auto mb-2" />
-          <p className="text-sm text-slate-500">
-            No SIPs added yet. {sips.length === 0 && holdings_no_sip_hint()}
+          <p className="text-sm text-slate-500 mx-auto max-w-md">
+            No SIP detected. {holdings_no_sip_hint()}
           </p>
+          <div className="mt-4 flex flex-col items-center gap-2">
+            <button
+              onClick={onProceedWithoutSip}
+              disabled={!canProceed || saving}
+              className="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
+              title={canProceed ? 'Save this diagnostic without any SIP' : 'Complete Family (Tab 1) and add at least one holding (Tab 2) first'}
+            >
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              Proceed without SIP
+            </button>
+            <span className="text-[11px] text-slate-400">
+              {canProceed
+                ? 'or add SIPs above using “Upload SIP file” / “Add SIP”.'
+                : 'Add at least one holding (Tab 2) before proceeding — SIPs stay optional.'}
+            </span>
+          </div>
         </div>
       ) : (
         <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
@@ -1205,7 +1406,7 @@ function SipsTab({ sips, onChange }: SipsTabProps) {
 }
 
 function holdings_no_sip_hint() {
-  return 'CAS PDF parse already extracts active SIPs — they should appear here automatically. You can add more manually.';
+  return 'Most CAS / valuation statements carry no SIP register, so none were auto-detected. Add SIPs manually if the client has any — otherwise you can proceed without SIP.';
 }
 
 // ─────────────────────────────────────────────────────────────────

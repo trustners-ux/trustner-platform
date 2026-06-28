@@ -10,7 +10,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
-  ArrowLeft, CheckCircle2, XCircle, MessageSquare, Send, AlertTriangle,
+  ArrowLeft, CheckCircle2, XCircle, MessageSquare, Send, AlertTriangle, FileText,
 } from 'lucide-react';
 
 interface Orientation {
@@ -224,6 +224,9 @@ export default function ReviewOrientationPage() {
             </div>
           )}
           <div className="flex flex-wrap items-center gap-2 justify-end">
+            <a href={`/api/admin/client-orientation/${id}/summary`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50">
+              <FileText className="w-4 h-4" /> Client Summary
+            </a>
             {canApprove && (
               <>
                 <button type="button" onClick={() => performAction('request-changes', true)} disabled={acting !== null} className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 text-sm font-semibold hover:bg-amber-100 disabled:opacity-50">

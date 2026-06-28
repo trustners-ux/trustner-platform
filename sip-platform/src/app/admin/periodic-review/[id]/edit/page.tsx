@@ -9,7 +9,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Save, Send, Plus, Trash2, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Save, Send, Plus, Trash2, AlertTriangle, CheckCircle2, FileText } from 'lucide-react';
 
 interface Review {
   id: number;
@@ -252,7 +252,12 @@ export default function EditPeriodicReviewPage() {
               {review.cadence} review · {review.review_period_start} → {review.review_period_end}
             </p>
           </div>
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">{review.status}</span>
+          <div className="flex items-center gap-2">
+            <a href={`/api/admin/periodic-review/${id}/note`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50">
+              <FileText className="w-3.5 h-3.5" /> Preview Note
+            </a>
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">{review.status}</span>
+          </div>
         </div>
       </div>
 
@@ -272,7 +277,7 @@ export default function EditPeriodicReviewPage() {
         </div>
 
         <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-          <span className="text-sm font-semibold text-slate-700">Alpha vs Benchmark</span>
+          <span className="text-sm font-semibold text-slate-700">Excess Return vs Benchmark</span>
           <span className={`text-lg font-bold ${alphaPct >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
             {alphaPct >= 0 ? '+' : ''}{alphaPct.toFixed(2)}%
           </span>

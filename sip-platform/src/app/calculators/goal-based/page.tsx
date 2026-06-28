@@ -182,7 +182,10 @@ export default function GoalBasedSIPCalculatorPage() {
               </div>
 
               {/* Step-Up SIP Toggle */}
-              <div className="mt-6 border border-surface-300 rounded-xl p-4">
+              <div
+                className="mt-6 border border-surface-300 rounded-xl p-4"
+                data-pdf-stepup={stepUpEnabled ? `Annual Step-Up (${stepUpType === 'percentage' ? 'Percentage' : 'Amount'}): ${stepUpType === 'amount' ? '₹' : ''}${stepUpValue}${stepUpType === 'percentage' ? '%' : ''}` : undefined}
+              >
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="w-4 h-4 text-brand" />

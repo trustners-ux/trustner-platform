@@ -640,7 +640,7 @@ export default function ChildEducationPlannerPage() {
                 </div>
 
                 {/* Step-up */}
-                <div>
+                <div data-pdf-stepup={stepUpEnabled ? `Annual Step-Up (${stepUpType === 'percentage' ? 'Percentage' : 'Amount'}): ${stepUpType === 'amount' ? '₹' : ''}${stepUpType === 'percentage' ? stepUpRate : stepUpAmount}${stepUpType === 'percentage' ? '%' : '/month'}` : undefined}>
                   <div className="flex items-center justify-between mb-3">
                     <label className="text-[13px] font-semibold text-slate-600 uppercase tracking-wider">
                       Monthly SIP Step-up

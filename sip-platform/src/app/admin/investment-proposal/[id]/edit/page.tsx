@@ -11,7 +11,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Save, Send, RotateCcw, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Save, Send, RotateCcw, AlertTriangle, CheckCircle2, FileText } from 'lucide-react';
 
 interface Proposal {
   id: number;
@@ -202,7 +202,12 @@ export default function EditInvestmentProposalPage() {
               {proposal.purpose} · {proposal.risk_profile} · {proposal.horizon}
             </p>
           </div>
-          <StatusBadge status={proposal.status} />
+          <div className="flex items-center gap-2">
+            <a href={`/api/admin/investment-proposal/${id}/document`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50">
+              <FileText className="w-3.5 h-3.5" /> Preview PDF
+            </a>
+            <StatusBadge status={proposal.status} />
+          </div>
         </div>
 
         <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">

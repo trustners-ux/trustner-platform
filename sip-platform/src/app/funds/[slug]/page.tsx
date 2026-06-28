@@ -1,261 +1,203 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft, AlertTriangle, RefreshCw, Loader2 } from 'lucide-react';
-import { parseSlugCode } from '@/lib/utils/fund-slug';
-import { useFundDetail } from '@/lib/hooks/useFundDetail';
-import { FundDetailSkeleton } from '@/components/funds/FundLoadingSkeleton';
-import { FundDetailHero } from '@/components/funds/FundDetailHero';
-import { FundMetricsGrid } from '@/components/funds/FundMetricsGrid';
-import { FundReturnsTable } from '@/components/funds/FundReturnsTable';
-import { NavChart } from '@/components/funds/NavChart';
-import { InvestmentDetails } from '@/components/funds/InvestmentDetails';
-import { PeerComparisonTable } from '@/components/funds/PeerComparisonTable';
-import { DISCLAIMER } from '@/lib/constants/company';
-
 /**
- * Resolves a text-based slug to a numeric scheme code.
- * 1. First tries the curated Trustner list — fast, no network — by matching id (slug).
- * 2. Falls back to MFAPI search if not in curated set.
- * 3. Final fallback: progressively shortens the query (drops "Regular", "Direct", "(G)")
- *    so awkward suffixes don't break resolution.
+ * /funds/[slug] — Canonical fund-detail route.
+ *
+ * Numeric slug (4-7 digits) → resolves as AMFI code against pd_fund_master,
+ * server-rendered with full SEO metadata + OG image. This is the canonical
+ * URL for per-fund pages (e.g. /funds/120503).
+ *
+ * Non-numeric slug → falls back to the legacy client-side resolver which
+ * maps the slug to an MFAPI scheme code (curated Trustner list + MFAPI
+ * search). Preserved for backwards-compatibility with existing inbound
+ * links from the curated /funds/explore + selection surfaces.
+ *
+ * Trustner Asset Services Pvt. Ltd. | ARN-286886
  */
-async function resolveSlugToCode(slug: string): Promise<number | null> {
-  // ── Tier 1: Direct lookup in the curated Trustner list ──
-  // Dynamic import keeps this client component bundle slim.
-  try {
-    const { CURRENT_TRUSTNER_LIST } = await import('@/data/funds/trustner');
-    for (const cat of CURRENT_TRUSTNER_LIST.categories) {
-      const fund = cat.funds.find((f) => f.id === slug);
-      if (fund?.schemeCode) return fund.schemeCode;
-    }
-  } catch {
-    // ignore — fall through to MFAPI search
-  }
 
-  // ── Tier 2: MFAPI search via /api/funds/search ──
-  const cleanQuery = (slug: string) =>
-    slug
-      .replace(/-/g, ' ')
-      .replace(/\bg\b/gi, '')        // strip standalone "g" (was "(G)" suffix)
-      .replace(/\bregular\b/gi, '')
-      .replace(/\s+/g, ' ')
-      .trim();
+import { notFound } from 'next/navigation';
+import Link from 'next/link';
+import type { Metadata } from 'next';
+import {
+  getFundByAmfiCode,
+  getCategoryPeers,
+  getCategoryMedianReturns,
+} from '@/lib/services/pd-fund-detail';
+import { FundHeaderCanonical } from '@/components/funds/detail/FundHeaderCanonical';
+import { FundKpiGrid } from '@/components/funds/detail/FundKpiGrid';
+import { FundReturnsCanonical } from '@/components/funds/detail/FundReturnsCanonical';
+import { FundNavChartCanonical } from '@/components/funds/detail/FundNavChartCanonical';
+import { FundCalendarStrip } from '@/components/funds/detail/FundCalendarStrip';
+import { FundAllocationBlock } from '@/components/funds/detail/FundAllocationBlock';
+import { FundRiskBlock } from '@/components/funds/detail/FundRiskBlock';
+import { FundManagerCard } from '@/components/funds/detail/FundManagerCard';
+import { FundKeyInfoTable } from '@/components/funds/detail/FundKeyInfoTable';
+import { FundPeerCompareCanonical } from '@/components/funds/detail/FundPeerCompareCanonical';
+import { FundTalkToTrustnerCta } from '@/components/funds/detail/FundTalkToTrustnerCta';
+import { FundDetailLegacy } from './FundDetailLegacy';
+import { DISCLAIMER, COMPANY } from '@/lib/constants/company';
 
-  const tryQueries = [slug.replace(/-/g, ' ').trim(), cleanQuery(slug)];
-  for (const query of tryQueries) {
-    if (!query) continue;
-    try {
-      const res = await fetch(`/api/funds/search?q=${encodeURIComponent(query)}`);
-      if (!res.ok) continue;
-      const data = await res.json();
-      if (data.results && data.results.length > 0) {
-        return data.results[0].schemeCode;
-      }
-    } catch {
-      // continue to next query
-    }
-  }
-  return null;
+export const revalidate = 3600;
+export const runtime = 'nodejs';
+
+interface PageProps {
+  params: Promise<{ slug: string }>;
 }
 
-export default function FundDetailPage() {
-  const params = useParams();
-  const slug = typeof params.slug === 'string' ? params.slug : '';
+const NUMERIC_AMFI = /^[0-9]{4,7}$/;
 
-  // Try direct numeric parse first
-  const directCode = parseSlugCode(slug);
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
 
-  // State for resolved code (when slug is non-numeric)
-  const [resolvedCode, setResolvedCode] = useState<number | null>(null);
-  const [resolving, setResolving] = useState(false);
-  const [resolveFailed, setResolveFailed] = useState(false);
+  // Canonical AMFI-code branch — fetch and build rich SEO metadata.
+  if (NUMERIC_AMFI.test(slug)) {
+    const fund = await getFundByAmfiCode(slug);
+    if (!fund) {
+      return {
+        title: `Fund Not Found — ${COMPANY.platform}`,
+        description: 'This mutual fund scheme could not be found.',
+      };
+    }
 
-  // The effective scheme code to use
-  const schemeCode = directCode || resolvedCode;
+    const nav = fund.live_nav != null ? `₹${fund.live_nav.toFixed(2)}` : 'NA';
+    const ret1y = fund.returns_1y != null ? `${fund.returns_1y.toFixed(1)}%` : 'NA';
+    const cagr3y = fund.returns_3y != null ? `${fund.returns_3y.toFixed(1)}%` : 'NA';
 
-  // Resolution effect for non-numeric slugs
-  useEffect(() => {
-    if (directCode) return; // Already have a numeric code
-    if (!slug) return;
+    const title = `${fund.scheme_name} — NAV ${nav}, ${ret1y} 1Y | Trustner Mutual Fund Distributor`;
+    const description = `${fund.amc_name ?? 'Mutual Fund'} · ${fund.external_category ?? fund.amfi_category ?? 'Mutual Fund'} · 3Y CAGR ${cagr3y}. Live NAV, returns trail, risk metrics, peer comparison. Talk to Trustner (ARN-286886) about this scheme.`;
 
-    let cancelled = false;
-    setResolving(true);
-    setResolveFailed(false);
-
-    resolveSlugToCode(slug).then((code) => {
-      if (cancelled) return;
-      if (code) {
-        setResolvedCode(code);
-      } else {
-        setResolveFailed(true);
-      }
-      setResolving(false);
-    });
-
-    return () => { cancelled = true; };
-  }, [slug, directCode]);
-
-  const { fund, loading, error } = useFundDetail(schemeCode);
-
-  // Resolving state (searching MFapi by name)
-  if (resolving) {
-    return (
-      <>
-        <section className="relative overflow-hidden bg-hero-pattern text-white">
-          <div className="container-custom py-10 lg:py-14">
-            <nav className="flex items-center gap-1.5 text-xs text-slate-400 mb-6">
-              <Link href="/" className="hover:text-white transition-colors">Home</Link>
-              <span className="mx-1">/</span>
-              <Link href="/funds" className="hover:text-white transition-colors">Funds</Link>
-              <span className="mx-1">/</span>
-              <span className="text-slate-500">Resolving...</span>
-            </nav>
-            <div className="flex items-center gap-3">
-              <Loader2 className="w-6 h-6 animate-spin text-teal-300" />
-              <div>
-                <h1 className="text-lg font-semibold">Resolving fund...</h1>
-                <p className="text-sm text-slate-400">Looking up fund details, please wait.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-        <section className="section-padding bg-surface-100">
-          <div className="container-custom">
-            <FundDetailSkeleton />
-          </div>
-        </section>
-      </>
-    );
+    return {
+      title,
+      description,
+      alternates: { canonical: `/funds/${fund.amfi_code}` },
+      openGraph: {
+        title,
+        description,
+        type: 'website',
+        siteName: COMPANY.platform,
+        images: [
+          {
+            url: `/api/og/fund/${fund.amfi_code}`,
+            width: 1200,
+            height: 630,
+            alt: fund.scheme_name,
+          },
+        ],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title,
+        description,
+        images: [`/api/og/fund/${fund.amfi_code}`],
+      },
+    };
   }
 
-  // Resolution failed — could not find the fund by name
-  if (resolveFailed || (!schemeCode && !resolving)) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center bg-surface-100">
-        <div className="text-center max-w-md mx-auto px-4">
-          <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-primary-700 mb-2">Fund Not Found</h2>
-          <p className="text-sm text-slate-500 mb-6">
-            We couldn&apos;t find a fund matching &quot;{slug.replace(/-/g, ' ')}&quot;.
-            The fund may have been renamed, merged, or closed.
-          </p>
-          <Link
-            href="/funds"
-            className="inline-flex items-center gap-2 btn-primary"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Fund Explorer
-          </Link>
-        </div>
-      </div>
-    );
+  // Legacy non-numeric slug → keep prior generic metadata.
+  const parts = slug.split('-');
+  const nameFromSlug =
+    parts.length > 1
+      ? parts.slice(1).map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+      : slug;
+  return {
+    title: `${nameFromSlug} — ${COMPANY.platform}`,
+    description: `View detailed analysis, NAV history, returns, expense ratio, and peer comparison for ${nameFromSlug}.`,
+  };
+}
+
+export default async function FundDetailPage({ params }: PageProps) {
+  const { slug } = await params;
+
+  // Non-numeric slug → legacy client resolver (MFAPI scheme code path).
+  if (!NUMERIC_AMFI.test(slug)) {
+    return <FundDetailLegacy />;
   }
 
-  // Loading fund detail (after schemeCode is resolved)
-  if (loading) {
-    return (
-      <>
-        <section className="relative overflow-hidden bg-hero-pattern text-white">
-          <div className="container-custom py-10 lg:py-14">
-            <nav className="flex items-center gap-1.5 text-xs text-slate-400 mb-6">
-              <Link href="/" className="hover:text-white transition-colors">Home</Link>
-              <span className="mx-1">/</span>
-              <Link href="/funds" className="hover:text-white transition-colors">Funds</Link>
-              <span className="mx-1">/</span>
-              <span className="text-slate-500">Loading...</span>
-            </nav>
-            <div className="animate-pulse">
-              <div className="h-4 bg-white/10 rounded w-40 mb-4" />
-              <div className="h-8 bg-white/10 rounded w-96 mb-3" />
-              <div className="h-4 bg-white/10 rounded w-64" />
-            </div>
-          </div>
-        </section>
-        <section className="section-padding bg-surface-100">
-          <div className="container-custom">
-            <FundDetailSkeleton />
-          </div>
-        </section>
-      </>
-    );
+  // Canonical AMFI-code path.
+  const fund = await getFundByAmfiCode(slug);
+  if (!fund) {
+    notFound();
   }
 
-  // Error state
-  if (error || !fund) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center bg-surface-100">
-        <div className="text-center max-w-md mx-auto px-4">
-          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-primary-700 mb-2">
-            {error === 'Fund not found' ? 'Fund Not Found' : 'Something Went Wrong'}
-          </h2>
-          <p className="text-sm text-slate-500 mb-6">
-            {error === 'Fund not found'
-              ? `We couldn't find a fund with scheme code ${schemeCode}. It may have been merged or closed.`
-              : `Failed to load fund data. ${error || 'Please try again later.'}`}
-          </p>
-          <div className="flex items-center justify-center gap-3">
-            <Link
-              href="/funds"
-              className="inline-flex items-center gap-2 bg-surface-200 text-primary-700 text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-surface-300 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back to Funds
-            </Link>
-            <button
-              onClick={() => window.location.reload()}
-              className="inline-flex items-center gap-2 btn-primary"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Retry
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Peer + median in parallel.
+  const [peers, median] = await Promise.all([
+    fund.external_category
+      ? getCategoryPeers(fund.external_category, fund.amfi_code, 8)
+      : Promise.resolve([]),
+    fund.external_category
+      ? getCategoryMedianReturns(fund.external_category)
+      : Promise.resolve(null),
+  ]);
 
-  // Success - render fund detail
+  // Structured data — helps search engines render a rich result and understand
+  // the page is a specific fund scheme distributed by Trustner. Purely
+  // descriptive (no rating / "buy" signal) to stay MFD-compliant.
+  const SITE = 'https://www.merasip.com';
+  const canonicalUrl = `${SITE}/funds/${fund.amfi_code}`;
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'FinancialProduct',
+        name: fund.scheme_name,
+        category: fund.external_category ?? fund.amfi_category ?? 'Mutual Fund',
+        url: canonicalUrl,
+        description: `${fund.scheme_name} — ${fund.external_category ?? fund.amfi_category ?? 'mutual fund'} scheme. Live NAV, returns trail, risk metrics and peer comparison from Trustner, an AMFI-registered Mutual Fund Distributor (ARN-286886).`,
+        ...(fund.amc_name
+          ? { provider: { '@type': 'Organization', name: fund.amc_name } }
+          : {}),
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Funds', item: `${SITE}/funds` },
+          { '@type': 'ListItem', position: 2, name: 'Fund Universe', item: `${SITE}/funds/universe` },
+          { '@type': 'ListItem', position: 3, name: fund.scheme_name, item: canonicalUrl },
+        ],
+      },
+    ],
+  };
+
   return (
     <>
-      {/* Hero with breadcrumb, fund name, badges, NAV */}
-      <FundDetailHero fund={fund} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <FundHeaderCanonical fund={fund} />
+      <FundKpiGrid fund={fund} />
+      <FundReturnsCanonical fund={fund} median={median} />
+      <FundNavChartCanonical amfiCode={fund.amfi_code} schemeName={fund.scheme_name} />
+      <FundCalendarStrip fund={fund} />
+      <FundAllocationBlock fund={fund} />
+      <FundRiskBlock fund={fund} />
+      <FundManagerCard fund={fund} />
+      <FundKeyInfoTable fund={fund} />
+      <FundPeerCompareCanonical current={fund} peers={peers} />
+      <FundTalkToTrustnerCta fundName={fund.scheme_name} amfiCode={fund.amfi_code} />
 
-      {/* Key metrics grid */}
-      <FundMetricsGrid fund={fund} />
-
-      {/* Returns table */}
-      <FundReturnsTable fund={fund} />
-
-      {/* NAV history chart */}
-      <NavChart schemeCode={fund.schemeCode} />
-
-      {/* Investment details */}
-      <InvestmentDetails fund={fund} />
-
-      {/* Peer comparison table */}
-      {fund.enriched?.comparison && fund.enriched.comparison.length > 0 && (
-        <PeerComparisonTable
-          peers={fund.enriched.comparison}
-          currentFundName={fund.enriched?.shortName || fund.schemeName}
-        />
-      )}
-
-      {/* Disclaimer */}
-      <section className="py-8 bg-surface-200">
+      {/* Mandatory compliance footer — AMFI ARN + SEBI past-perf disclaimer. */}
+      <section className="py-8 bg-surface-200 border-t border-slate-200">
         <div className="container-custom">
-          <div className="bg-white rounded-lg p-4 mb-3">
-            <p className="text-xs text-slate-500 text-center leading-relaxed">
-              <strong className="text-slate-600">Data Disclaimer:</strong> Fund data is sourced
-              from MFapi.in and Kuvera (via Captnemo). Returns shown are historical and do not
-              guarantee future performance. Always verify with official AMC sources before investing.
+          <div className="bg-white rounded-lg p-4 mb-3 border border-slate-200">
+            <p className="text-[11px] text-slate-600 leading-relaxed">
+              <strong className="text-slate-700">Disclaimer:</strong>{' '}
+              The information on this page is for educational and research purposes only and
+              does NOT constitute investment advice as defined under SEBI (Investment Advisers)
+              Regulations, 2013. Trustner Asset Services Pvt. Ltd. is an AMFI Registered Mutual
+              Fund Distributor (ARN-286886) and recommends Regular plans only. Fund data is
+              sourced from AMFI / MFAPI and refreshed periodically; verify with the AMC before
+              investing.
             </p>
           </div>
-          <p className="text-xs text-slate-400 text-center leading-relaxed">
-            {DISCLAIMER.mutual_fund} {DISCLAIMER.amfi} | {DISCLAIMER.sebi_investor}
+          <p className="text-[11px] text-slate-500 text-center leading-relaxed">
+            {DISCLAIMER.mutual_fund} · {DISCLAIMER.amfi} · {DISCLAIMER.sebi_investor}
+          </p>
+          <p className="mt-3 text-center">
+            <Link
+              href="/funds/universe"
+              className="text-xs font-semibold text-brand hover:text-brand-700"
+            >
+              ← Back to Fund Universe
+            </Link>
           </p>
         </div>
       </section>

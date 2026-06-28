@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { otpStore } from '@/lib/services/otp-store';
+import { sendOtpViaWhatsApp } from '@/lib/messaging/whatsapp';
 
 /**
  * POST /api/otp/send
@@ -10,10 +11,11 @@ import { otpStore } from '@/lib/services/otp-store';
  * - phone: 10-digit Indian mobile number (required)
  * - email: optional — if provided, OTP is sent via email too
  *
- * Delivery:
- *  1. Email via Resend (if email provided + RESEND_API_KEY configured)
- *  2. SMS via MSG91 (if MSG91_AUTH_KEY + MSG91_TEMPLATE_ID configured)
- *  3. In dev mode, OTP is logged to console for testing
+ * Delivery (in priority order):
+ *  1. WhatsApp via GITCS (primary — 90% open rate, instant, free for service msgs)
+ *  2. Email via Resend (parallel — for users who supplied an email)
+ *  3. SMS via MSG91 (legacy fallback if MSG91 ever gets configured)
+ *  4. In dev mode, OTP is logged to console for testing
  */
 export async function POST(request: Request) {
   try {
@@ -57,8 +59,17 @@ export async function POST(request: Request) {
 
     let emailSent = false;
     let smsSent = false;
+    let waSent = false;
 
-    // 1. Send via email if email is provided
+    // 1. PRIMARY: WhatsApp via Meta Cloud API (template → text fallback)
+    //    Template works for cold leads; text works for users in 24h window.
+    try {
+      waSent = await sendOtpViaWhatsApp(cleanPhone, otp);
+    } catch (waErr) {
+      console.error('[Lead OTP] WhatsApp send error:', waErr);
+    }
+
+    // 2. Send via email if email is provided
     if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       const resendKey = process.env.RESEND_API_KEY;
       if (resendKey) {
@@ -131,24 +142,32 @@ export async function POST(request: Request) {
       }
     }
 
-    // 3. Log in development
+    // 4. Log in development
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[Lead OTP] Phone: ${cleanPhone}, OTP: ${otp}, Email: ${emailSent}, SMS: ${smsSent}`);
+      console.log(`[Lead OTP] Phone: ${cleanPhone}, OTP: ${otp}, WhatsApp: ${waSent}, Email: ${emailSent}, SMS: ${smsSent}`);
     }
 
-    // Determine delivery message
+    // Determine delivery message — WhatsApp is the primary channel now
     const channels: string[] = [];
-    if (smsSent) channels.push('phone');
+    if (waSent) channels.push('WhatsApp');
     if (emailSent) channels.push('email');
+    if (smsSent && !waSent) channels.push('SMS');
     const deliveryMsg =
       channels.length > 0
         ? `OTP sent to your ${channels.join(' and ')}`
-        : 'OTP generated. Check your email or phone.';
+        : 'OTP generated. Check your WhatsApp or email.';
+    const channel = waSent
+      ? (emailSent ? 'whatsapp+email' : 'whatsapp')
+      : smsSent
+      ? (emailSent ? 'sms+email' : 'sms')
+      : emailSent
+      ? 'email'
+      : 'stored';
 
     return NextResponse.json({
       success: true,
       message: deliveryMsg,
-      channel: smsSent ? (emailSent ? 'sms+email' : 'sms') : emailSent ? 'email' : 'stored',
+      channel,
     });
   } catch (error) {
     console.error('[Lead OTP] Send error:', error);

@@ -1,11 +1,12 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, GraduationCap, BarChart3, FileText, LogOut,
-  IndianRupee, TrendingUp,
+  IndianRupee, TrendingUp, ClipboardList, UserCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
@@ -16,7 +17,14 @@ const TABS = [
   { label: 'Trail Income', href: '/rm/trails', icon: TrendingUp },
   { label: 'Log Business', href: '/rm/business-entry', icon: FileText },
   { label: 'MF Gyan', href: '/rm/learn', icon: GraduationCap },
+  // Every employee has HR self-service (payslips, leave, attendance, documents).
+  { label: 'My HR', href: '/employee/hr/me', icon: UserCircle },
 ];
+
+// Shown only to employees granted Portfolio Diagnostic access. Links into the
+// PD workbench (under /admin, which employee sessions can reach). Resolved
+// internally so every /rm page picks it up without threading a prop.
+const PD_TAB = { label: 'Portfolio Diagnostic', href: '/admin/portfolio-diagnostic', icon: ClipboardList };
 
 function isActive(pathname: string, href: string, exact?: boolean) {
   if (exact) return pathname === href;
@@ -32,6 +40,18 @@ interface RMNavProps {
 
 export function RMNav({ userName, designation, entity, onLogout }: RMNavProps) {
   const pathname = usePathname();
+  const [hasPdAccess, setHasPdAccess] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/admin/auth/me', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => { if (alive) setHasPdAccess(!!d?.user?.hasPdAccess); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+
+  const tabs = hasPdAccess ? [...TABS, PD_TAB] : TABS;
 
   return (
     <div className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
@@ -63,8 +83,8 @@ export function RMNav({ userName, designation, entity, onLogout }: RMNavProps) {
       {/* Tab bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <nav className="flex gap-1 -mb-px overflow-x-auto scrollbar-hide">
-          {TABS.map((tab) => {
-            const active = isActive(pathname, tab.href, tab.exact);
+          {tabs.map((tab) => {
+            const active = isActive(pathname, tab.href, (tab as { exact?: boolean }).exact);
             const Icon = tab.icon;
             return (
               <Link

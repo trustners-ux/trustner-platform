@@ -9,7 +9,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Save, Send, Plus, Trash2, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Save, Send, Plus, Trash2, AlertTriangle, CheckCircle2, FileText } from 'lucide-react';
 import {
   RISK_QUESTIONS,
   computeRiskCategory,
@@ -284,9 +284,14 @@ export default function EditOrientationPage() {
               {orient.pref_review_frequency ? ` · ${orient.pref_review_frequency} reviews` : ''}
             </p>
           </div>
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
-            {orient.status}
-          </span>
+          <div className="flex items-center gap-2">
+            <a href={`/api/admin/client-orientation/${id}/summary`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50">
+              <FileText className="w-3.5 h-3.5" /> Preview Summary
+            </a>
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
+              {orient.status}
+            </span>
+          </div>
         </div>
       </div>
 

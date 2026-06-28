@@ -9,7 +9,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, CheckCircle2, XCircle, MessageSquare, Send, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, MessageSquare, Send, AlertTriangle, FileText } from 'lucide-react';
 
 interface Review {
   id: number;
@@ -136,7 +136,7 @@ export default function ReviewPeriodicReviewPage() {
         <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
           <Stat label="Period Return" value={review.period_return_pct !== null ? `${review.period_return_pct.toFixed(2)}%` : '—'} />
           <Stat label="Benchmark" value={review.benchmark_return_pct !== null ? `${review.benchmark_return_pct.toFixed(2)}%` : '—'} />
-          <Stat label="Alpha" value={review.alpha_pct !== null ? `${review.alpha_pct >= 0 ? '+' : ''}${review.alpha_pct.toFixed(2)}%` : '—'} accent={review.alpha_pct !== null && review.alpha_pct >= 0 ? 'green' : 'red'} />
+          <Stat label="Excess vs Benchmark" value={review.alpha_pct !== null ? `${review.alpha_pct >= 0 ? '+' : ''}${review.alpha_pct.toFixed(2)}%` : '—'} accent={review.alpha_pct !== null && review.alpha_pct >= 0 ? 'green' : 'red'} />
           <Stat label="XIRR" value={review.family_xirr_pct !== null ? `${review.family_xirr_pct.toFixed(2)}%` : '—'} />
         </div>
 
@@ -236,6 +236,9 @@ export default function ReviewPeriodicReviewPage() {
             </div>
           )}
           <div className="flex flex-wrap items-center gap-2 justify-end">
+            <a href={`/api/admin/periodic-review/${id}/note`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-semibold hover:bg-slate-50">
+              <FileText className="w-4 h-4" /> Client Note
+            </a>
             {canApprove && (
               <>
                 <button type="button" onClick={() => performAction('request-changes', true)} disabled={acting !== null} className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 text-sm font-semibold hover:bg-amber-100 disabled:opacity-50">

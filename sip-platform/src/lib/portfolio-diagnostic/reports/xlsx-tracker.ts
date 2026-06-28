@@ -18,7 +18,7 @@
  */
 
 import ExcelJS from 'exceljs';
-import { ReportData } from '../report-data';
+import { ReportData, formatInrShort } from '../report-data';
 
 // Trustner brand colors (must be ARGB hex without # for exceljs fills)
 const COLOR = {
@@ -118,6 +118,17 @@ function verdictFontColorFor(verdict: string): string {
   }
 }
 
+// Human-friendly Buy-List flag from onBuyList + buyListStatus.
+function buyListFlagFor(onBuyList?: boolean, status?: string | null): string {
+  if (!onBuyList) return '—';
+  switch (status) {
+    case 'APPROVED_OPEN': return '✓ Approved (Open)';
+    case 'APPROVED_HOLD_ONLY': return '✓ Approved (Hold-only)';
+    case 'WATCH': return '⚠ Watch';
+    default: return '✓ On Buy-List';
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────
 // MAIN
 // ─────────────────────────────────────────────────────────────────
@@ -197,10 +208,10 @@ export async function buildWealthTrackerXlsx(data: ReportData): Promise<Buffer> 
 
   // ── 2. FAMILY HOLDINGS ───────────────────────────────────────
   const ws2 = wb.addWorksheet('2. Family Holdings');
-  setColWidths(ws2, [4, 22, 38, 18, 14, 14, 12, 10, 10, 10, 12, 36]);
-  titleBlock(ws2, 1, 12, `${data.familyName} — All Holdings`, `Full inventory across ${data.numEntities} entities · ${data.numAmcs} AMCs · ${data.numUniqueFunds} unique funds`);
+  setColWidths(ws2, [4, 22, 38, 18, 14, 14, 12, 10, 10, 10, 12, 22, 12, 30, 36]);
+  titleBlock(ws2, 1, 15, `${data.familyName} — All Holdings`, `Full inventory across ${data.numEntities} entities · ${data.numAmcs} AMCs · ${data.numUniqueFunds} unique funds`);
 
-  ws2.getRow(4).values = ['#', 'Held By', 'Fund', 'Category', 'Invested ₹', 'Current ₹', 'Gain ₹', 'XIRR %', '3Y CAGR %', '5Y CAGR %', 'Verdict', 'Rationale'];
+  ws2.getRow(4).values = ['#', 'Held By', 'Fund', 'Category', 'Invested ₹', 'Current ₹', 'Gain ₹', 'XIRR %', '3Y CAGR %', '5Y CAGR %', 'Verdict', 'v2 Action', 'On Buy-List', 'Replace With (Buy-List)', 'Rationale'];
   applyHeader(ws2.getRow(4));
 
   // All holdings in tier order
@@ -226,6 +237,9 @@ export async function buildWealthTrackerXlsx(data: ReportData): Promise<Buffer> 
       h.cagr3y ?? null,
       h.cagr5y ?? null,
       h.verdict,
+      h.v2ActionLabel ?? '—',
+      buyListFlagFor(h.onBuyList, h.buyListStatus),
+      h.preferredReplacementFundName ?? '—',
       h.rationale ?? '',
     ];
     r.getCell(5).numFmt = '#,##0';
@@ -239,6 +253,10 @@ export async function buildWealthTrackerXlsx(data: ReportData): Promise<Buffer> 
     r.getCell(11).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: verdictFillFor(h.verdict) } };
     r.getCell(11).font = { name: 'Calibri', size: 10, bold: true, color: { argb: verdictFontColorFor(h.verdict) } };
     r.getCell(11).alignment = { horizontal: 'center', vertical: 'middle' };
+    // v2 Action cell — center it
+    r.getCell(12).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    // On Buy-List cell — center it
+    r.getCell(13).alignment = { horizontal: 'center', vertical: 'middle' };
   });
 
   // Freeze header
@@ -299,10 +317,10 @@ export async function buildWealthTrackerXlsx(data: ReportData): Promise<Buffer> 
 
   // ── 4. ACTION ITEMS ──────────────────────────────────────────
   const ws4 = wb.addWorksheet('4. Action Items');
-  setColWidths(ws4, [4, 22, 36, 18, 14, 14, 32, 36]);
-  titleBlock(ws4, 1, 8, 'Action Items — Swaps + Liquidations', `${data.swapCount} swaps + ${data.liquidateCount} liquidations · ${data.totalReallocationInr.toLocaleString('en-IN')} reallocation`);
+  setColWidths(ws4, [4, 22, 36, 18, 20, 14, 14, 32, 12, 36]);
+  titleBlock(ws4, 1, 10, 'Action Items — Swaps + Liquidations', `${data.swapCount} swaps + ${data.liquidateCount} liquidations · ${data.totalReallocationInr.toLocaleString('en-IN')} reallocation`);
 
-  ws4.getRow(4).values = ['#', 'Held By', 'Exit Fund', 'Category', 'Invested ₹', 'Current ₹', 'Replace With', 'Reason'];
+  ws4.getRow(4).values = ['#', 'Held By', 'Exit Fund', 'Category', 'v2 Action', 'Invested ₹', 'Current ₹', 'Replace With (Buy-List)', 'On Buy-List', 'Reason'];
   applyHeader(ws4.getRow(4), COLOR.amber);
 
   const actions = [...data.swapHoldings, ...data.liquidateHoldings];
@@ -313,18 +331,22 @@ export async function buildWealthTrackerXlsx(data: ReportData): Promise<Buffer> 
       h.entityName,
       h.fundName,
       h.category ?? '—',
+      h.v2ActionLabel ?? '—',
       h.investedInr,
       h.currentValueInr,
-      h.preferredReplacementFundName ?? 'Per Trustner preferred list',
+      h.preferredReplacementFundName ?? 'Per Trustner Buy-List',
+      buyListFlagFor(h.onBuyList, h.buyListStatus),
       h.rationale ?? '',
     ];
-    r.getCell(5).numFmt = '#,##0';
     r.getCell(6).numFmt = '#,##0';
+    r.getCell(7).numFmt = '#,##0';
     applyBody(r, { alt: i % 2 === 1 });
+    r.getCell(5).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    r.getCell(9).alignment = { horizontal: 'center', vertical: 'middle' };
   });
 
   if (actions.length === 0) {
-    ws4.mergeCells(5, 1, 5, 8);
+    ws4.mergeCells(5, 1, 5, 10);
     const noActionCell = ws4.getCell(5, 1);
     noActionCell.value = '✓ No actions required — portfolio is healthy. Continue all existing SIPs as scheduled.';
     noActionCell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: COLOR.green } };
@@ -333,8 +355,124 @@ export async function buildWealthTrackerXlsx(data: ReportData): Promise<Buffer> 
     ws4.getRow(5).height = 36;
   }
 
-  // ── 5. NOTES ─────────────────────────────────────────────────
-  const ws5 = wb.addWorksheet('5. Notes');
+  // ── 4b. CONSOLIDATION (v2 Pillar-6 dedup) ───────────────────
+  // Only emit the sheet when the engine actually found duplicate sub-category
+  // overlaps to fold in — empty runs render nothing (no empty header).
+  if (data.consolidationGroups.length > 0) {
+    const wsC = wb.addWorksheet('5. Consolidation');
+    setColWidths(wsC, [22, 8, 38, 38, 16, 12, 40]);
+    titleBlock(
+      wsC,
+      1,
+      7,
+      'Consolidation — Reduce Overlap',
+      `${data.consolidationGroups.length} duplicate sub-category group(s) · ${formatInrShort(data.consolidationValueInr)} consolidatable`,
+    );
+
+    wsC.getRow(4).values = ['Sub-Category', '# Funds', 'Keep (the better fund)', 'Fold In', 'Fold-In Value ₹', 'Confidence', 'Rationale'];
+    applyHeader(wsC.getRow(4), COLOR.tealDark);
+
+    let cRow = 5;
+    data.consolidationGroups.forEach((g, gi) => {
+      const foldNames = g.consolidate.map((c) => c.fundName).join('\n');
+      const r = wsC.getRow(cRow);
+      r.values = [
+        g.subCategory ?? '—',
+        g.count,
+        g.keep?.fundName ?? '—',
+        foldNames || '—',
+        g.totalConsolidatableInr,
+        g.confidence ?? '—',
+        g.rationale ?? '',
+      ];
+      r.getCell(5).numFmt = '#,##0';
+      applyBody(r, { alt: gi % 2 === 1 });
+      r.getCell(3).font = { name: 'Calibri', size: 10, bold: true, color: { argb: COLOR.green } };
+      r.getCell(4).alignment = { vertical: 'top', wrapText: true };
+      r.getCell(6).alignment = { horizontal: 'center', vertical: 'middle' };
+      cRow++;
+    });
+
+    // Total fold-in row
+    const cTotal = wsC.getRow(cRow);
+    cTotal.values = ['TOTAL CONSOLIDATABLE', '', '', '', data.consolidationValueInr, '', ''];
+    cTotal.getCell(5).numFmt = '#,##0';
+    cTotal.eachCell((cell) => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR.teal50 } };
+      cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: COLOR.teal } };
+    });
+    applyBody(cTotal);
+
+    wsC.views = [{ state: 'frozen', xSplit: 0, ySplit: 4 }];
+  }
+
+  // ── 4c. TAX-AWARE EXIT ESTIMATE (v2) ─────────────────────────
+  // India tax-aware: LTCG 12.5% over ₹1.25L / STCG 20% / ELSS lock / debt-slab.
+  // Only emit when the engine produced a tax summary (null on many runs).
+  if (data.taxSummary && data.taxSummary.lines.length > 0) {
+    const tax = data.taxSummary;
+    const wsT = wb.addWorksheet('6. Tax on Exits');
+    setColWidths(wsT, [40, 16, 16, 12, 16, 40]);
+    titleBlock(
+      wsT,
+      1,
+      6,
+      'Tax on Exits — Estimated Impact',
+      tax.headline || `${tax.exitCount} exit(s) · est. tax ${formatInrShort(tax.estTotalTaxInr)}`,
+    );
+
+    wsT.getRow(4).values = ['Fund', 'Gain ₹', 'Gain Type', 'Locked', 'Est. Tax ₹', 'Note'];
+    applyHeader(wsT.getRow(4), COLOR.amber);
+
+    let tRow = 5;
+    tax.lines.forEach((ln, li) => {
+      const r = wsT.getRow(tRow);
+      r.values = [
+        ln.fundName ?? '—',
+        ln.gainInr,
+        ln.gainType ?? '—',
+        ln.locked ? 'Yes' : 'No',
+        ln.estTaxInr ?? null,
+        ln.note ?? '',
+      ];
+      r.getCell(2).numFmt = '#,##0';
+      r.getCell(5).numFmt = '#,##0';
+      applyBody(r, { alt: li % 2 === 1 });
+      r.getCell(3).alignment = { horizontal: 'center', vertical: 'middle' };
+      r.getCell(4).alignment = { horizontal: 'center', vertical: 'middle' };
+      if (ln.locked) {
+        r.getCell(4).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR.watchLight } };
+        r.getCell(4).font = { name: 'Calibri', size: 10, bold: true, color: { argb: COLOR.watch } };
+      }
+      tRow++;
+    });
+
+    // Total tax row
+    const tTotal = wsT.getRow(tRow);
+    tTotal.values = ['TOTAL ESTIMATED TAX', '', '', '', tax.estTotalTaxInr, ''];
+    tTotal.getCell(5).numFmt = '#,##0';
+    tTotal.eachCell((cell) => {
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: COLOR.amberLight } };
+      cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: COLOR.amber } };
+    });
+    applyBody(tTotal);
+
+    // Tax caveat
+    const caveatRow = tRow + 2;
+    wsT.mergeCells(caveatRow, 1, caveatRow, 6);
+    const caveat = wsT.getCell(caveatRow, 1);
+    caveat.value =
+      'Estimates use LTCG 12.5% over the ₹1.25L per-FY exemption, STCG 20%, debt at slab, and respect ELSS lock-in. ' +
+      'Indicative only — confirm exact liability with your CA before any redemption.';
+    caveat.font = { name: 'Calibri', size: 9, italic: true, color: { argb: COLOR.gray } };
+    caveat.alignment = { vertical: 'top', wrapText: true };
+    wsT.getRow(caveatRow).height = 30;
+
+    wsT.views = [{ state: 'frozen', xSplit: 0, ySplit: 4 }];
+  }
+
+  // ── 7. NOTES ─────────────────────────────────────────────────
+  const ws5 = wb.addWorksheet('7. Notes');
   setColWidths(ws5, [120]);
   titleBlock(ws5, 1, 1, 'Methodology, Assumptions & Compliance');
 
@@ -362,8 +500,8 @@ export async function buildWealthTrackerXlsx(data: ReportData): Promise<Buffer> 
     '',
     'COMPLIANCE',
     'Mutual Fund investments are subject to market risks. Read all scheme-related documents carefully.',
-    'Trustner Asset Services Pvt. Ltd. (CIN: U66301AS2023PTC025505) is an AMFI-Registered Mutual Fund',
-    'Distributor (ARN-286886); the firm is not a SEBI-Registered Investment Adviser. Past performance',
+    'Trustner Asset Services Pvt. Ltd. (CIN: U66301AS2023PTC025505) is an AMFI registered Mutual Fund',
+    'distributor and SIF Distributor, APMI registered PMS Distributor: ARN-286886. Past performance',
     'is not indicative of future results. The verdicts and recommendations in this tracker represent',
     'the firm\'s analytical view based on the funds\' track record, manager quality, and category',
     'positioning — they do not constitute personalised investment advice. Final investment decisions',

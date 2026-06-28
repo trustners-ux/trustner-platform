@@ -18,10 +18,18 @@ export interface EmployeeJWTPayload {
   canApproveResets: boolean;
 }
 
-const getSecret = () =>
-  new TextEncoder().encode(
-    process.env.EMPLOYEE_JWT_SECRET || 'emp-dev-secret-change-in-production'
-  );
+const DEV_SECRET = 'emp-dev-secret-change-in-production';
+
+const getSecret = () => {
+  const secret = process.env.EMPLOYEE_JWT_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('EMPLOYEE_JWT_SECRET env var is required in production');
+    }
+    return new TextEncoder().encode(DEV_SECRET);
+  }
+  return new TextEncoder().encode(secret);
+};
 
 export async function signEmployeeToken(payload: EmployeeJWTPayload): Promise<string> {
   return new SignJWT({ ...payload })

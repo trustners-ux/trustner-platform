@@ -66,8 +66,11 @@ export function FundDetailHero({ fund }: FundDetailHeroProps) {
             <span className="text-[10px] font-semibold px-3 py-1 rounded-full border bg-white/10 text-white/90 border-white/20 uppercase tracking-wider">
               {category}
             </span>
-            <span className={cn('text-[10px] font-semibold px-3 py-1 rounded-full border uppercase tracking-wider', riskStyle)}>
-              {riskLevel} Risk
+            <span
+              className={cn('text-[10px] font-semibold px-3 py-1 rounded-full border uppercase tracking-wider', riskStyle)}
+              title="Risk-O-Meter per SEBI MF Regulations"
+            >
+              Risk-O-Meter: {riskLevel}
             </span>
             {fund.enriched?.fundRating && fund.enriched.fundRating > 0 && (
               <StarRating rating={fund.enriched.fundRating} size="md" />

@@ -9,7 +9,8 @@ import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '@/lib/auth/jwt';
 import { verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 import { getSupabaseAdmin } from '@/lib/db/supabase';
-import { computeRiskCategory } from '@/lib/client-orientation/types';
+import { computeRiskCategory, RISK_MAX_PER_Q } from '@/lib/client-orientation/types';
+import { isAdvisoryRecordInScope } from '@/lib/advisory/visibility';
 
 export async function GET(
   _req: NextRequest,
@@ -25,6 +26,11 @@ export async function GET(
   const numericId = parseInt(id, 10);
   if (Number.isNaN(numericId)) {
     return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
+  }
+
+  // DPDP need-to-know: only show orientations within the actor's scope.
+  if (!(await isAdvisoryRecordInScope(supabase, 'co_client_orientations', numericId, { employeeEmail: email }))) {
+    return NextResponse.json({ error: 'Not authorised for this orientation' }, { status: 403 });
   }
 
   const { data, error } = await supabase
@@ -63,6 +69,11 @@ export async function PUT(
     return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
   }
 
+  // DPDP need-to-know: only edit orientations within the actor's scope.
+  if (!(await isAdvisoryRecordInScope(supabase, 'co_client_orientations', numericId, { employeeEmail: email }))) {
+    return NextResponse.json({ error: 'Not authorised for this orientation' }, { status: 403 });
+  }
+
   const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
 
@@ -97,15 +108,16 @@ export async function PUT(
       responseOrder?: number;
     }>;
     const totalScore = responses.reduce((s, r) => s + (r.responseScore ?? 0), 0);
-    const category = computeRiskCategory(totalScore);
+    const category = computeRiskCategory(totalScore, responses.length * RISK_MAX_PER_Q);
     update.risk_score = totalScore;
     update.risk_category = category;
     update.risk_questionnaire_completed_at = new Date().toISOString();
 
-    // Replace responses in sub-table
-    await supabase.from('co_risk_responses').delete().eq('orientation_id', numericId);
+    // Replace responses in sub-table (errors surfaced — was silent before).
+    const delR = await supabase.from('co_risk_responses').delete().eq('orientation_id', numericId);
+    if (delR.error) return NextResponse.json({ error: `Failed to save risk responses: ${delR.error.message}` }, { status: 500 });
     if (responses.length > 0) {
-      await supabase.from('co_risk_responses').insert(
+      const insR = await supabase.from('co_risk_responses').insert(
         responses.map((r) => ({
           orientation_id: numericId,
           question_code: r.questionCode,
@@ -115,6 +127,7 @@ export async function PUT(
           response_order: r.responseOrder ?? null,
         }))
       );
+      if (insR.error) return NextResponse.json({ error: `Failed to save risk responses: ${insR.error.message}` }, { status: 500 });
     }
   }
 
@@ -134,9 +147,10 @@ export async function PUT(
       notes?: string;
     }>;
 
-    await supabase.from('co_goals').delete().eq('orientation_id', numericId);
+    const delG = await supabase.from('co_goals').delete().eq('orientation_id', numericId);
+    if (delG.error) return NextResponse.json({ error: `Failed to save goals: ${delG.error.message}` }, { status: 500 });
     if (goals.length > 0) {
-      await supabase.from('co_goals').insert(
+      const insG = await supabase.from('co_goals').insert(
         goals.map((g) => ({
           orientation_id: numericId,
           goal_type: g.goalType,
@@ -152,6 +166,7 @@ export async function PUT(
           notes: g.notes ?? null,
         }))
       );
+      if (insG.error) return NextResponse.json({ error: `Failed to save goals: ${insG.error.message}` }, { status: 500 });
     }
   }
 

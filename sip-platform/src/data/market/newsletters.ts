@@ -21,6 +21,98 @@ export interface NewsletterIssue {
 
 export const newsletters: NewsletterIssue[] = [
   {
+    id: 'week-2026-06-28',
+    issueNumber: 17,
+    volume: 1,
+    title:
+      'The Quiet Win — A Holiday-Shortened Week Drifts to a Third Straight Gain as Volatility Hits a 5-Month Low; Nifty +0.18% to 24,056, Sensex +0.4% to 77,100',
+    weekRange: 'June 22 - June 28, 2026',
+    publishDate: '2026-06-28',
+    summary:
+      'A quiet, holiday-shortened week — and a notably calm one. Indian markets traded only four sessions (shut Friday 26 June for Muharram) and still extended their winning run to a third consecutive week, the longest such streak in about seven months. After a firm Monday, a Tuesday wobble saw the Nifty slip 1.16% to 23,824 on profit-taking, before a steady two-day recovery (Wednesday +0.83% to 24,021.65, Thursday +0.14% to 24,056.00) carried the week back into the green. The benchmarks closed marginally higher — the Nifty 50 added 0.18% to 24,056.00 and the Sensex about 0.4% to 77,100.47. The defining feature was the calm: India VIX eased to roughly 13.0, a five-month low, as soft crude (Brent near $72-73/bbl) and a dovish RBI — Governor Sanjay Malhotra ruling out near-term rate hikes — kept the mood steady. Leadership rotated to autos (Nifty Auto +2.25%) and defensives (FMCG, realty, pharma), while metals, oil & gas and IT lagged; large-caps edged ahead of a slightly softer broader market. Domestic institutions did the heavy lifting on flows — the SIP-and-insurance floor again out-buying modest foreign interest. There was no single dominant geopolitical driver this week: markets simply drifted gently higher on an absence of bad news. The companion blog explains why these quiet, uneventful weeks are exactly where long-term wealth is built. (Figures are as of the Thursday 25 June close; items that could not be independently cross-verified are stated approximately or omitted.)',
+    pdfPath: '/newsletters/Trustner-Weekly-Market-Brief-June-27-2026.pdf',
+    fileSize: '820 KB',
+    highlights: [
+      'Nifty +0.18% WoW to 24,056.00 · Sensex +0.4% to 77,100.47 — a third straight weekly gain in a 4-session week (shut Fri 26 Jun for Muharram)',
+      'A Tuesday dip (Nifty −1.16% to 23,824) gave way to a steady two-day recovery; India VIX eased to ~13.0, a five-month low',
+      'Autos led (Nifty Auto +2.25%) with FMCG/realty/pharma firm; metals, oil & gas and IT lagged — a low-conviction, rotational week',
+      'Domestic institutions did the buying (SIP floor) vs modest foreign interest · soft Brent ~$72-73 + dovish RBI (no near-term hikes) kept the calm',
+    ],
+    featured: true,
+  },
+  {
+    id: 'week-2026-06-21',
+    issueNumber: 16,
+    volume: 1,
+    title: 'A Strong Week with a Friday Reminder — Nifty +1.65% to 24,013, Sensex +1.69%; US-Iran Peace Crashes Oil ~8%, Then an Accenture-Led IT Rout',
+    weekRange: 'June 15 - June 21, 2026',
+    publishDate: '2026-06-21',
+    summary:
+      'A strong week, with a sharp reminder tucked into the last session. Indian equities rallied for five straight sessions from Monday to Thursday — the Nifty peaking near 24,168 — before giving back part of the gains on Friday. The week still closed firmly higher: the Nifty 50 added 1.65% to 24,013.10 (+390 points) and the Sensex rose 1.69% to 76,802.90 (+1,275 points). The rally\'s engine was a sharp easing of Middle-East tension — the prospect of a formalised US-Iran peace framework, with the Strait of Hormuz reopening to Iranian exports — which crashed crude oil by roughly 8% to near $80/bbl, a clean tailwind for an economy that imports over 80% of its oil; defence stocks surged on reported India-Vietnam BrahMos deal news. Then came Friday\'s reminder: a single corporate headline — Accenture cutting its FY27 revenue guidance — triggered an IT sell-off that pulled the Nifty down 0.64% and the Sensex 0.78% on the day, with Infosys, TCS and Tech Mahindra the biggest drags (Nifty IT was the only major sector down for the week, −1.3%). The broader market shrugged it off — Midcaps +2.9% and Smallcaps +3.2% beat the large-caps — and India VIX eased ~12% to 12.97. Encouragingly, foreign investors turned net buyers on the cash tape (~+₹3,386 Cr provisional) while DIIs added ~+₹7,108 Cr, though the broader NSDL FPI measure still shows heavy 2026 selling. A hawkish US Fed (holding rates but hinting at a possible 2026 hike) lifted the dollar, pushed gold to a third straight weekly fall, and the rupee firmed to ~₹94.6. The week\'s lesson, in one line: a market never falls without a reason — and on Friday, the reason simply arrived. The companion blog explains why short-term volatility should never move a long-term investor.',
+    pdfPath: '/newsletters/Trustner-Weekly-Market-Brief-June-20-2026.pdf',
+    fileSize: '1.0 MB',
+    highlights: [
+      'Nifty +1.65% WoW to 24,013.10 · Sensex +1.69% to 76,802.90 — 5 up sessions, then a Friday IT pullback',
+      'US-Iran peace prospect + Strait of Hormuz reopening crashed Brent ~8% to ~$80; defence stocks led (+6.6%)',
+      'Friday IT rout on Accenture\'s FY27 guidance cut — Infosys/TCS/Tech Mahindra fell; Nifty IT only weekly loser (−1.3%)',
+      'FII turned net buyer (~+₹3,386 Cr cash) · DII ~+₹7,108 Cr · Midcaps +2.9% / Smallcaps +3.2% · VIX −12% to 12.97',
+    ],
+  },
+  {
+    id: 'week-2026-06-14',
+    issueNumber: 15,
+    volume: 1,
+    title: 'A Friday V-Recovery on US-Iran Peace Hopes Crashes Oil ~6% — Nifty +1.10% WoW to 23,623, Sensex +1.67%, Domestic Money Out-Buys Foreign Selling',
+    weekRange: 'June 8 - June 14, 2026',
+    publishDate: '2026-06-14',
+    summary:
+      'The week traced a clean V. Indian equities spent Monday-to-Thursday under pressure on soft global and technology cues, then a powerful Friday rally flipped the week firmly positive. On Friday June 12 the Nifty 50 surged +1.99% to close at 23,622.90 and the Sensex jumped +2.30% to 75,527.95 — the Sensex out-rallying the Nifty on the day purely on index composition (its heavier weights in the big rallying financials and L&T). On a week-on-week basis the Nifty added 1.10% (from 23,366.70) and the Sensex about 1.67% (from ~74,286). The single trigger was a sharp de-escalation in the Middle East: US President Trump signalled an imminent US-Iran peace framework, including a possible reopening of the Strait of Hormuz, which crashed Brent crude roughly 6% on the week to ~$86.9/bbl and revived global risk appetite — an across-the-board tailwind for a country that imports over 80% of its oil. The broader market led the charge: Midcaps (+2.4%) and Smallcaps (+2.8%) outpaced large-caps on Friday with a roughly 5-to-1 advance-decline ratio. Realty, defence, autos and financials led; IT was the relative laggard. Foreign investors kept selling — but in shrinking daily size (about -₹15,300 Cr for the week, taking 2026 outflows past ~₹2.6 lakh crore) — and were more than fully absorbed by domestic institutions (~+₹24,000 Cr), the SIP-and-insurance floor once again doing exactly its job. AMFI\'s May data confirmed that floor: monthly SIP contributions held above ₹30,000 Cr for a third straight month at ₹30,954 Cr, even as lump-sum-driven net equity inflows cooled to a one-year low of ~₹22,900 Cr. The week\'s real lesson was behavioural: an investor who panicked on the four soft sessions would have missed Friday\'s surge entirely. The companion blog unpacks the comparison trap — why a falling headline return can hide a growing fortune, and the quiet, full-time value of a mentor who keeps you anchored to your goal.',
+    pdfPath: '/newsletters/Trustner-Weekly-Market-Brief-June-13-2026.pdf',
+    fileSize: '540 KB',
+    highlights: [
+      'Nifty +1.10% WoW to 23,622.90 · Sensex +1.67% to 75,527.95 — a sharp Friday V-recovery (+1.99% / +2.30%)',
+      'Trigger: Trump signals US-Iran peace + Strait of Hormuz reopening → Brent crashes ~6% on the week to ~$86.9',
+      'FII -₹15,300 Cr (selling, but shrinking daily) · DII +₹24,000 Cr — domestic money out-buys foreign by ~₹8,700 Cr',
+      'SIP held above ₹30,000 Cr (₹30,954 Cr, May) · Midcaps +2.4% / Smallcaps +2.8% led Friday · IT lagged',
+    ],
+  },
+  {
+    id: 'week-2026-06-07',
+    issueNumber: 14,
+    volume: 1,
+    title: 'RBI Holds Repo at 5.25% (Neutral) — Nifty Eases to 23,367 (-0.77% WoW), IT Leads as Domestic Money Absorbs Foreign Selling',
+    weekRange: 'June 1 - June 7, 2026',
+    publishDate: '2026-06-07',
+    summary:
+      'A quiet headline masked a busy week. Nifty 50 closed at 23,366.70 (-181.05 pts / -0.77% WoW from 23,547.75) and Sensex at 74,286 (-489.74 pts / -0.66% WoW from 74,775.74), both drifting lower into Friday\'s policy. The defining event was the June 5 RBI Monetary Policy Committee meeting: the MPC unanimously held the repo rate at 5.25% with a neutral stance, raised its inflation forecast (a soft rupee near ₹95 and sticky food keep the imported-inflation channel warm) and trimmed its FY growth projection — a wait-and-watch signal that gave the tape little fresh fuel. Foreign investors stayed net sellers (about -₹4,447 Cr in the week, taking 2026 outflows past ₹2.3 lakh crore — already heavier than all of 2025), but domestic institutions remained the dominant buyer, with DIIs absorbing ₹82,600 Cr in May alone — the structural SIP-and-insurance floor doing exactly its job. Information Technology was the standout, surging 4%+ mid-week on a softer dollar and resilient deal pipeline; FMCG (-2.3%), Realty, PSU Banks and Autos lagged. Brent crude eased to ~$92.9/bbl from ~$96.4, a welcome cooling for a net oil importer; the rupee held a soft ₹94.8-95.9 band, closing ~₹95.19. The week\'s most sobering story was Rajesh Exports — SEBI barred promoter-CEO Rajesh Mehta over an alleged ₹15.15 lakh-crore revenue misrepresentation across FY21-FY25 and fund diversion; the stock hit successive lower circuits and is now down ~45% in six months. A diversified mutual-fund investor felt none of it; a concentrated direct-equity holder felt all of it. The companion blog unpacks why single-name blow-ups are temporary speed-breakers for the goal-based investor.',
+    pdfPath: '/newsletters/Trustner-Weekly-Market-Brief-June-6-2026.pdf',
+    fileSize: '332 KB',
+    highlights: [
+      'Nifty 23,366.70 (-0.77% WoW) · Sensex 74,286 (-0.66%) — drifted into Friday\'s RBI policy',
+      'RBI MPC held repo at 5.25% (neutral) — inflation forecast raised, GDP trimmed; rate floor likely in',
+      'FII -₹4,447 Cr (2026 YTD > ₹2.3 lakh cr) · DII absorbed ₹82,600 Cr in May — domestic money holds the line',
+      'IT led (+4%+) on softer dollar · Brent eased to ~$92.9 · Rupee ~₹95.2 · Rajesh Exports -45% on SEBI fraud action',
+    ],
+  },
+  {
+    id: 'week-2026-05-31',
+    issueNumber: 13,
+    volume: 1,
+    title: 'MSCI Rebalance Triggers ₹21,000 Cr FII Outflow on Friday — Nifty -1.5% to 23,548, Bank Nifty Marks 18 Months Flat',
+    weekRange: 'May 25 - May 31, 2026',
+    publishDate: '2026-05-31',
+    summary:
+      'A heavy MSCI Global Standard Index rebalance and US-Iran deal jitters dragged Indian equities sharply lower on Friday, dominating an otherwise mixed week. Nifty 50 closed at 23,547.75 (-359.40 pts / -1.50% on Friday; -171.55 pts / -0.72% WoW from 23,719.30). Sensex 74,775.74 (-1,092.06 pts / -1.44% Friday; -639.61 pts / -0.85% WoW from 75,415.35). Bank Nifty fell ~1.8% on the week — and crucially, the index is now broadly flat over the last 18-20 months from its September 2024 peak of ~61,765, a level of fatigue not seen since the 2018-19 NBFC-stress cycle. Friday\'s single-day FII outflow of ₹21,105.86 Cr was the heaviest of 2026 and the bulk of it was MSCI-mechanical: the May 2026 quarterly rebalance triggered ~$800 million-$1 billion in passive selling from Indian large-caps. DIIs absorbed ₹16,764.14 Cr — covering ~80% of FII selling in a single session — pushing structural domestic inflows further. Brent crude held near $103/bbl on Iran-deal uncertainty after Trump pulled back from the 14-point MoU framework. Rupee traded in a narrower ₹95.40-95.70 band after the prior week\'s RBI defence. Bank Nifty\'s 18-month flat trace is this week\'s headline behavioural risk; the companion blog explains the historical precedent and why this is cyclical, not structural.',
+    pdfPath: '/newsletters/Trustner-Weekly-Market-Brief-May-31-2026.pdf',
+    fileSize: '447 KB',
+    highlights: [
+      'Nifty 23,547.75 (-0.72% WoW) · Sensex 74,775.74 (-0.85%) — sharp -1.5% Friday on MSCI rebalance',
+      'FII outflow ₹21,106 Cr Friday (heaviest of 2026, $800m-1b MSCI-passive) · DII absorbed ₹16,764 Cr',
+      'Bank Nifty now flat 18 months from Sep-24 peak of 61,765 — same pattern as 2018-19 NBFC-stress cycle',
+      'Brent ~$103/bbl on Iran-deal jitters · Rupee ₹95.40-95.70 holding after last week\'s RBI defence',
+    ],
+  },
+  {
     id: 'week-2026-05-23',
     issueNumber: 12,
     volume: 1,
@@ -37,7 +129,6 @@ export const newsletters: NewsletterIssue[] = [
       'Bank Nifty -2.89% WoW to 53,710 — worst-performing major segment despite Friday rally in private banks',
       'FII YTD outflow ₹1.92 lakh Cr (now > full 2025) · DII YTD inflow ₹1.7 lakh Cr absorbing ~90% via SIPs',
     ],
-    featured: true,
   },
   {
     id: 'week-2026-05-16',

@@ -14,6 +14,7 @@ import { verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 import { getSupabaseAdmin } from '@/lib/db/supabase';
 import { ALLOCATION_TEMPLATES } from '@/lib/investment-proposal/types';
 import type { RiskProfile } from '@/lib/investment-proposal/types';
+import { isAdvisoryRecordInScope } from '@/lib/advisory/visibility';
 
 export async function GET(
   _req: NextRequest,
@@ -29,6 +30,11 @@ export async function GET(
   const numericId = parseInt(id, 10);
   if (Number.isNaN(numericId)) {
     return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
+  }
+
+  // DPDP need-to-know: only show proposals within the actor's scope.
+  if (!(await isAdvisoryRecordInScope(supabase, 'ip_investment_proposals', numericId, { employeeEmail: email }))) {
+    return NextResponse.json({ error: 'Not authorised for this proposal' }, { status: 403 });
   }
 
   const { data, error } = await supabase
@@ -64,6 +70,11 @@ export async function PUT(
   const numericId = parseInt(id, 10);
   if (Number.isNaN(numericId)) {
     return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
+  }
+
+  // DPDP need-to-know: only edit proposals within the actor's scope.
+  if (!(await isAdvisoryRecordInScope(supabase, 'ip_investment_proposals', numericId, { employeeEmail: email }))) {
+    return NextResponse.json({ error: 'Not authorised for this proposal' }, { status: 403 });
   }
 
   const body = await req.json().catch(() => null) as Record<string, unknown> | null;

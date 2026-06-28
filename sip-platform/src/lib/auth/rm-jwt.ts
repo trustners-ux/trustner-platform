@@ -13,8 +13,18 @@ export interface RMJWTPayload {
   role: 'rm' | 'manager' | 'super_admin';
 }
 
-const getSecret = () =>
-  new TextEncoder().encode(process.env.RM_JWT_SECRET || 'rm-dev-secret-change-in-production');
+const DEV_SECRET = 'rm-dev-secret-change-in-production';
+
+const getSecret = () => {
+  const secret = process.env.RM_JWT_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('RM_JWT_SECRET env var is required in production');
+    }
+    return new TextEncoder().encode(DEV_SECRET);
+  }
+  return new TextEncoder().encode(secret);
+};
 
 export async function signRMToken(payload: RMJWTPayload): Promise<string> {
   return new SignJWT({ ...payload })

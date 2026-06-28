@@ -205,7 +205,19 @@ export async function getNavHistory(
       url += `?startDate=${toQueryDate(start)}&endDate=${toQueryDate(now)}`;
     }
 
-    const res = await fetch(url, { next: { revalidate: 86400 } });
+    // Bound every NAV-history fetch with an 8s timeout. MFAPI occasionally
+    // hangs on individual scheme codes; without this, a single stuck request
+    // blocks the whole Promise.all batch in fetchRolling3yBatch and the scoring
+    // route times out (504). On abort we fall through to the catch → [] → the
+    // caller falls back to point-to-point returns.
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8000);
+    let res: Response;
+    try {
+      res = await fetch(url, { next: { revalidate: 86400 }, signal: ctrl.signal });
+    } finally {
+      clearTimeout(timer);
+    }
     if (!res.ok) return [];
 
     const json = await res.json();

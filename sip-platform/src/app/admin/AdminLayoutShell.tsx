@@ -12,6 +12,7 @@ interface UserInfo {
   email: string;
   name: string;
   role: AdminRole;
+  hasPdAccess?: boolean;
 }
 
 export default function AdminLayoutShell({ children }: { children: React.ReactNode }) {
@@ -49,6 +50,7 @@ export default function AdminLayoutShell({ children }: { children: React.ReactNo
     <div className="min-h-screen bg-surface-50">
       <AdminSidebar
         role={user.role}
+        hasPdAccess={!!user.hasPdAccess}
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
         mobileOpen={mobileMenuOpen}

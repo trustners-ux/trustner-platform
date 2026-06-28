@@ -662,6 +662,13 @@ export const EMPLOYEE_DIRECTORY: Employee[] = [
     department: 'DIGITAL & IT', jobResponsibility: 'SALES',
     role: 'rm', isActive: true, canApproveResets: false,
   },
+  {
+    id: 80, name: 'Mustafizur Rahman', email: 'mustafizur.rehman@trustner.in',
+    companyGroup: 'TIB', doj: '01/01/2025', jobLocation: 'Guwahati',
+    designation: 'Channel Development Manager', reportingHeadId: 60, // Raju Chakraborty (assumed — confirm)
+    department: 'POSP', jobResponsibility: 'SALES',
+    role: 'cdm', isActive: true, canApproveResets: false,
+  },
 ];
 
 // ─── Lookup Utilities ────────────────────────────────────────

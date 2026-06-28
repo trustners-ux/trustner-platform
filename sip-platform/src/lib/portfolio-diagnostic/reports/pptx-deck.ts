@@ -127,13 +127,18 @@ function holdingsTable(slide: PptxGenJS.Slide, pptx: PptxGenJS, rows: ReportHold
   const dataRows: PptxGenJS.TableRow[] = rows.slice(0, 8).map((r, idx) => {
     const altBg = idx % 2 === 1 ? C.cream : C.white;
     if (mode === 'swap') {
+      // Buy-list-first replacement; mark committee-sourced picks with a star.
+      const replName = r.preferredReplacementFundName ?? 'Per preferred list';
+      const fromBuyList = !!r.buyListReplacementFundName;
+      // Make EXIT vs SWITCH explicit via the v2 action label when available.
+      const actionTag = r.v2ActionLabel ? `${r.v2ActionLabel}: ` : '';
       return [
-        { text: r.fundName, options: { fontFace: 'Calibri', fontSize: 9, fill: { color: altBg } } },
+        { text: `${actionTag}${r.fundName}`, options: { fontFace: 'Calibri', fontSize: 9, fill: { color: altBg } } },
         { text: r.entityName, options: { fontFace: 'Calibri', fontSize: 9, fill: { color: altBg } } },
         { text: formatInrFull(r.investedInr), options: { fontFace: 'Calibri', fontSize: 9, fill: { color: altBg }, align: 'right' } },
         { text: formatInrFull(r.currentValueInr), options: { fontFace: 'Calibri', fontSize: 9, fill: { color: altBg }, align: 'right' } },
         { text: formatPct(r.cagr3y), options: { fontFace: 'Calibri', fontSize: 9, fill: { color: altBg }, align: 'center' } },
-        { text: r.preferredReplacementFundName ?? 'Per preferred list', options: { fontFace: 'Calibri', fontSize: 9, fill: { color: altBg }, bold: true, color: C.amber } },
+        { text: fromBuyList ? `★ ${replName}` : replName, options: { fontFace: 'Calibri', fontSize: 9, fill: { color: altBg }, bold: true, color: C.amber } },
       ];
     }
     return [
@@ -162,6 +167,65 @@ function holdingsTable(slide: PptxGenJS.Slide, pptx: PptxGenJS, rows: ReportHold
   }
 }
 
+// Consolidation table — keep vs fold-in per duplicate sub-category group.
+function consolidationTable(slide: PptxGenJS.Slide, pptx: PptxGenJS, groups: ReportData['consolidationGroups'], x: number, y: number, w: number): void {
+  const headers = ['Sub-Category', 'Keep (anchor fund)', 'Fold In', 'Value Freed', 'Confidence'];
+  const headerRow: PptxGenJS.TableRow = headers.map((h) => ({
+    text: h,
+    options: {
+      bold: true, fontFace: 'Calibri', fontSize: 11, color: C.white,
+      fill: { color: C.tealDark }, align: 'center', valign: 'middle',
+    },
+  }));
+
+  const dataRows: PptxGenJS.TableRow[] = groups.slice(0, 8).map((g, idx) => {
+    const altBg = idx % 2 === 1 ? C.cream : C.white;
+    const foldIn = g.consolidate.map((c) => c.fundName).join('; ');
+    return [
+      { text: g.subCategory, options: { fontFace: 'Calibri', fontSize: 9, fill: { color: altBg }, bold: true } },
+      { text: g.keep.fundName, options: { fontFace: 'Calibri', fontSize: 9, fill: { color: altBg }, color: C.green } },
+      { text: foldIn || '—', options: { fontFace: 'Calibri', fontSize: 9, fill: { color: altBg } } },
+      { text: formatInrFull(g.totalConsolidatableInr), options: { fontFace: 'Calibri', fontSize: 9, fill: { color: altBg }, align: 'right', bold: true } },
+      { text: g.confidence, options: { fontFace: 'Calibri', fontSize: 9, fill: { color: altBg }, align: 'center' } },
+    ];
+  });
+
+  slide.addTable([headerRow, ...dataRows], {
+    x, y, w,
+    colW: [w * 0.18, w * 0.28, w * 0.30, w * 0.14, w * 0.10],
+    border: { type: 'solid', color: 'D6D3D1', pt: 0.5 },
+  });
+}
+
+// Tax-aware exit table — per-fund gain, type, and estimated tax.
+function taxTable(slide: PptxGenJS.Slide, pptx: PptxGenJS, lines: NonNullable<ReportData['taxSummary']>['lines'], x: number, y: number, w: number): void {
+  const headers = ['Fund (Exit)', 'Gain', 'Gain Type', 'Est. Tax', 'Note'];
+  const headerRow: PptxGenJS.TableRow = headers.map((h) => ({
+    text: h,
+    options: {
+      bold: true, fontFace: 'Calibri', fontSize: 11, color: C.white,
+      fill: { color: C.tealDark }, align: 'center', valign: 'middle',
+    },
+  }));
+
+  const dataRows: PptxGenJS.TableRow[] = lines.slice(0, 9).map((ln, idx) => {
+    const altBg = idx % 2 === 1 ? C.cream : C.white;
+    return [
+      { text: ln.fundName, options: { fontFace: 'Calibri', fontSize: 9, fill: { color: altBg } } },
+      { text: formatInrFull(ln.gainInr), options: { fontFace: 'Calibri', fontSize: 9, fill: { color: altBg }, align: 'right' } },
+      { text: ln.locked ? `${ln.gainType} (locked)` : ln.gainType, options: { fontFace: 'Calibri', fontSize: 9, fill: { color: altBg }, align: 'center' } },
+      { text: ln.estTaxInr === null ? '—' : formatInrFull(ln.estTaxInr), options: { fontFace: 'Calibri', fontSize: 9, fill: { color: altBg }, align: 'right', bold: true, color: C.amber } },
+      { text: ln.note, options: { fontFace: 'Calibri', fontSize: 8, fill: { color: altBg } } },
+    ];
+  });
+
+  slide.addTable([headerRow, ...dataRows], {
+    x, y, w,
+    colW: [w * 0.30, w * 0.14, w * 0.18, w * 0.14, w * 0.24],
+    border: { type: 'solid', color: 'D6D3D1', pt: 0.5 },
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────
 // MAIN
 // ─────────────────────────────────────────────────────────────────
@@ -174,7 +238,14 @@ export async function buildFamilyMeetingDeckPptx(data: ReportData): Promise<Buff
   pptx.title = `${data.familyName} — Portfolio Review Meeting Deck`;
   pptx.subject = data.documentId;
 
-  const TOTAL_SLIDES = 10;
+  // Two v2 slides are conditional (consolidation + tax-aware exit), so the deck
+  // length and page numbering are computed dynamically.
+  const hasConsolidation = (data.consolidationGroups?.length ?? 0) > 0;
+  const hasTaxExit = !!data.taxSummary && data.taxSummary.exitCount > 0;
+  const TOTAL_SLIDES = 10 + (hasConsolidation ? 1 : 0) + (hasTaxExit ? 1 : 0);
+  // Running page counter so inserted slides don't require manual renumbering.
+  let pageNum = 1;
+  const nextPage = () => ++pageNum;
 
   // ── SLIDE 1 — TITLE ──
   const s1 = pptx.addSlide();
@@ -222,7 +293,7 @@ export async function buildFamilyMeetingDeckPptx(data: ReportData): Promise<Buff
   // ── SLIDE 2 — AGENDA ──
   const s2 = pptx.addSlide();
   s2.background = { color: C.white };
-  addHeader(s2, pptx, 2, TOTAL_SLIDES, 'Meeting Agenda');
+  addHeader(s2, pptx, nextPage(), TOTAL_SLIDES, 'Meeting Agenda');
   s2.addText("Today's Agenda", {
     x: 0.5, y: 0.8, w: 12.3, h: 0.6,
     fontFace: 'Calibri', fontSize: 26, color: C.teal, bold: true,
@@ -255,7 +326,7 @@ export async function buildFamilyMeetingDeckPptx(data: ReportData): Promise<Buff
   // ── SLIDE 3 — THE BIG PICTURE (KPI snapshot) ──
   const s3 = pptx.addSlide();
   s3.background = { color: C.white };
-  addHeader(s3, pptx, 3, TOTAL_SLIDES, 'The Big Picture');
+  addHeader(s3, pptx, nextPage(), TOTAL_SLIDES, 'The Big Picture');
   s3.addText(`${data.familyName} — Portfolio Snapshot`, {
     x: 0.5, y: 0.8, w: 12.3, h: 0.6,
     fontFace: 'Calibri', fontSize: 24, color: C.teal, bold: true,
@@ -305,7 +376,7 @@ export async function buildFamilyMeetingDeckPptx(data: ReportData): Promise<Buff
   // ── SLIDE 4 — VERDICT AT A GLANCE ──
   const s4 = pptx.addSlide();
   s4.background = { color: C.white };
-  addHeader(s4, pptx, 4, TOTAL_SLIDES, 'Verdict at a Glance');
+  addHeader(s4, pptx, nextPage(), TOTAL_SLIDES, 'Verdict at a Glance');
   s4.addText('Where your holdings stand', {
     x: 0.5, y: 0.8, w: 12.3, h: 0.6,
     fontFace: 'Calibri', fontSize: 24, color: C.teal, bold: true,
@@ -354,7 +425,7 @@ export async function buildFamilyMeetingDeckPptx(data: ReportData): Promise<Buff
   // ── SLIDE 5 — STAR HOLDINGS ──
   const s5 = pptx.addSlide();
   s5.background = { color: C.white };
-  addHeader(s5, pptx, 5, TOTAL_SLIDES, 'Tier A — STAR Holdings');
+  addHeader(s5, pptx, nextPage(), TOTAL_SLIDES, 'Tier A — STAR Holdings');
   s5.addText(`Your top-quartile holdings — keep doing what works`, {
     x: 0.5, y: 0.8, w: 12.3, h: 0.6,
     fontFace: 'Calibri', fontSize: 22, color: C.amber, bold: true,
@@ -377,7 +448,7 @@ export async function buildFamilyMeetingDeckPptx(data: ReportData): Promise<Buff
   // ── SLIDE 6 — KEEP + WATCH ──
   const s6 = pptx.addSlide();
   s6.background = { color: C.white };
-  addHeader(s6, pptx, 6, TOTAL_SLIDES, 'Tier B — KEEP + WATCH');
+  addHeader(s6, pptx, nextPage(), TOTAL_SLIDES, 'Tier B — KEEP + WATCH');
   s6.addText(`Solid funds + new entries in the J-curve`, {
     x: 0.5, y: 0.8, w: 12.3, h: 0.6,
     fontFace: 'Calibri', fontSize: 22, color: C.green, bold: true,
@@ -401,7 +472,7 @@ export async function buildFamilyMeetingDeckPptx(data: ReportData): Promise<Buff
   // ── SLIDE 7 — SWAP RECOMMENDATIONS ──
   const s7 = pptx.addSlide();
   s7.background = { color: C.white };
-  addHeader(s7, pptx, 7, TOTAL_SLIDES, 'Tier C — SWAP');
+  addHeader(s7, pptx, nextPage(), TOTAL_SLIDES, 'Tier C — SWAP');
   s7.addText(`Re-allocation Plan — better alternatives available`, {
     x: 0.5, y: 0.8, w: 12.3, h: 0.6,
     fontFace: 'Calibri', fontSize: 22, color: C.red, bold: true,
@@ -412,7 +483,12 @@ export async function buildFamilyMeetingDeckPptx(data: ReportData): Promise<Buff
   });
 
   if (data.swapHoldings.length > 0) {
-    holdingsTable(s7, pptx, data.swapHoldings, 0.5, 1.9, 12.3, 5.0, 'swap');
+    holdingsTable(s7, pptx, data.swapHoldings, 0.5, 1.9, 12.3, 4.7, 'swap');
+    // Legend for the markers used in the table.
+    s7.addText('★ = sourced from the Trustner Approved Buy-List  ·  EXIT = unsuitable, sell out  ·  SWITCH = better alternative available', {
+      x: 0.5, y: 6.7, w: 12.3, h: 0.3,
+      fontFace: 'Calibri', fontSize: 9, italic: true, color: C.gray,
+    });
   } else {
     s7.addShape(pptx.ShapeType.rect, {
       x: 3, y: 3, w: 7.3, h: 1.5, fill: { color: C.greenLight }, line: { color: C.green, width: 2 },
@@ -431,7 +507,7 @@ export async function buildFamilyMeetingDeckPptx(data: ReportData): Promise<Buff
   // ── SLIDE 8 — LIQUIDATE + GRAND TOTAL ──
   const s8 = pptx.addSlide();
   s8.background = { color: C.white };
-  addHeader(s8, pptx, 8, TOTAL_SLIDES, 'Tier D — LIQUIDATE');
+  addHeader(s8, pptx, nextPage(), TOTAL_SLIDES, 'Tier D — LIQUIDATE');
   s8.addText(`Legacy Cleanup — immaterial positions`, {
     x: 0.5, y: 0.8, w: 12.3, h: 0.6,
     fontFace: 'Calibri', fontSize: 22, color: C.gray, bold: true,
@@ -469,10 +545,88 @@ export async function buildFamilyMeetingDeckPptx(data: ReportData): Promise<Buff
 
   addFooter(s8, pptx, data);
 
+  // ── SLIDE (conditional) — CONSOLIDATION ──
+  // Fold same-sub-category duplicates into the stronger anchor fund. Only
+  // rendered when the engine flagged at least one consolidation group.
+  if (hasConsolidation) {
+    const sc = pptx.addSlide();
+    sc.background = { color: C.white };
+    addHeader(sc, pptx, nextPage(), TOTAL_SLIDES, 'Consolidation');
+    sc.addText('Simplify — fold duplicates into the stronger fund', {
+      x: 0.5, y: 0.8, w: 12.3, h: 0.6,
+      fontFace: 'Calibri', fontSize: 22, color: C.teal, bold: true,
+    });
+    sc.addText(
+      `${data.consolidationGroups.length} overlapping sub-categor${data.consolidationGroups.length !== 1 ? 'ies' : 'y'} · ` +
+      `${formatInrShort(data.consolidationValueInr)} can be merged into the better-quality holding`,
+      {
+        x: 0.5, y: 1.4, w: 12.3, h: 0.3,
+        fontFace: 'Calibri', fontSize: 12, color: C.gray, italic: true,
+      }
+    );
+
+    consolidationTable(sc, pptx, data.consolidationGroups, 0.5, 1.95, 12.3);
+
+    // Rationale of the top group as a teaching callout.
+    const lead = data.consolidationGroups[0];
+    if (lead?.rationale) {
+      sc.addShape(pptx.ShapeType.rect, {
+        x: 0.5, y: 5.7, w: 12.3, h: 1.1, fill: { color: C.teal50 }, line: { color: C.teal, width: 2 },
+      });
+      sc.addText('Why consolidate:', {
+        x: 0.7, y: 5.8, w: 3, h: 0.35,
+        fontFace: 'Calibri', fontSize: 13, color: C.teal, bold: true,
+      });
+      sc.addText(lead.rationale, {
+        x: 0.7, y: 6.15, w: 11.9, h: 0.6,
+        fontFace: 'Calibri', fontSize: 11, color: C.navy, valign: 'top',
+      });
+    }
+    addFooter(sc, pptx, data);
+  }
+
+  // ── SLIDE (conditional) — TAX-AWARE EXIT ──
+  // India tax-aware exit estimate (LTCG 12.5% over ₹1.25L / STCG 20% / debt-slab /
+  // ELSS lock-in). Only rendered when there is at least one taxable exit.
+  if (hasTaxExit && data.taxSummary) {
+    const tx = pptx.addSlide();
+    tx.background = { color: C.white };
+    addHeader(tx, pptx, nextPage(), TOTAL_SLIDES, 'Tax-Aware Exit');
+    tx.addText('What the re-alignment costs in tax', {
+      x: 0.5, y: 0.8, w: 12.3, h: 0.6,
+      fontFace: 'Calibri', fontSize: 22, color: C.amber, bold: true,
+    });
+    tx.addText(data.taxSummary.headline, {
+      x: 0.5, y: 1.4, w: 12.3, h: 0.3,
+      fontFace: 'Calibri', fontSize: 12, color: C.gray, italic: true,
+    });
+
+    taxTable(tx, pptx, data.taxSummary.lines, 0.5, 1.95, 12.3);
+
+    // Estimated-total bar.
+    tx.addShape(pptx.ShapeType.rect, {
+      x: 0.5, y: 5.6, w: 12.3, h: 1.0, fill: { color: C.amber }, line: { color: C.amber },
+    });
+    tx.addText(`ESTIMATED TAX — ${data.taxSummary.exitCount} EXIT${data.taxSummary.exitCount !== 1 ? 'S' : ''}`, {
+      x: 0.7, y: 5.7, w: 7, h: 0.4,
+      fontFace: 'Calibri', fontSize: 13, color: C.white, bold: true, valign: 'middle',
+    });
+    tx.addText(`~ ${formatInrFull(data.taxSummary.estTotalTaxInr)}`, {
+      x: 7, y: 5.7, w: 5.7, h: 0.4,
+      fontFace: 'Calibri', fontSize: 18, color: C.white, bold: true, align: 'right', valign: 'middle',
+    });
+    // CA-confirm footnote — estimate only, not a tax computation.
+    tx.addText('Estimate only — please confirm the final tax position with your Chartered Accountant before executing.', {
+      x: 0.7, y: 6.15, w: 12, h: 0.4,
+      fontFace: 'Calibri', fontSize: 10, color: C.amberLight, valign: 'middle',
+    });
+    addFooter(tx, pptx, data);
+  }
+
   // ── SLIDE 9 — WEALTH PROJECTION ──
   const s9 = pptx.addSlide();
   s9.background = { color: C.white };
-  addHeader(s9, pptx, 9, TOTAL_SLIDES, 'Wealth Projection');
+  addHeader(s9, pptx, nextPage(), TOTAL_SLIDES, 'Wealth Projection');
   s9.addText('What the next 36 months could look like', {
     x: 0.5, y: 0.8, w: 12.3, h: 0.6,
     fontFace: 'Calibri', fontSize: 24, color: C.teal, bold: true,
@@ -537,7 +691,7 @@ export async function buildFamilyMeetingDeckPptx(data: ReportData): Promise<Buff
   // ── SLIDE 10 — NEXT STEPS ──
   const s10 = pptx.addSlide();
   s10.background = { color: C.white };
-  addHeader(s10, pptx, 10, TOTAL_SLIDES, 'Next Steps');
+  addHeader(s10, pptx, nextPage(), TOTAL_SLIDES, 'Next Steps');
   s10.addText('Next Steps', {
     x: 0.5, y: 0.8, w: 12.3, h: 0.6,
     fontFace: 'Calibri', fontSize: 28, color: C.teal, bold: true,

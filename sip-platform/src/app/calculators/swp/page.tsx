@@ -117,7 +117,7 @@ export default function SWPCalculatorPage() {
                 <NumberInput label="Total Corpus" value={corpus} onChange={setCorpus} prefix="₹" step={10000} min={10000} max={100000000} hint="₹10K to ₹10 Cr" />
 
                 {/* Monthly Withdrawal */}
-                <NumberInput label="Monthly Withdrawal" value={monthlyWithdrawal} onChange={setMonthlyWithdrawal} prefix="₹" step={5000} min={5000} max={5000000} />
+                <NumberInput label="Monthly Withdrawal" value={monthlyWithdrawal} onChange={setMonthlyWithdrawal} prefix="₹" step={500} min={500} max={2500000} hint="₹500 to ₹25L — type any amount" />
 
                 {/* Return Rate */}
                 <NumberInput label="Expected Annual Return" value={returnRate} onChange={setReturnRate} suffix="% p.a." step={0.5} min={1} max={20} />
@@ -126,7 +126,10 @@ export default function SWPCalculatorPage() {
                 <NumberInput label="Withdrawal Period" value={years} onChange={setYears} suffix="Years" step={1} min={1} max={50} />
 
                 {/* Step-Up Withdrawal Toggle */}
-                <div className="pt-3 border-t border-amber-200">
+                <div
+                  className="pt-3 border-t border-amber-200"
+                  data-pdf-increment={stepUpEnabled ? `Annual Withdrawal Increment (${stepUpType === 'percentage' ? 'Percentage' : 'Amount'}): ${stepUpType === 'amount' ? '₹' : ''}${stepUpValue}${stepUpType === 'percentage' ? '%' : ''}` : undefined}
+                >
                   <div className="flex items-center justify-between mb-1">
                     <label className="text-xs font-medium text-slate-600 flex items-center gap-1.5">
                       <TrendingUp className="w-3.5 h-3.5 text-amber-500" />

@@ -122,7 +122,7 @@ function Queue({ title, items, hrefFn }: { title: string; items: ListItem[]; hre
                     <span className="font-mono">{item.documentId}</span>
                     <span><BarChart3 className="h-3 w-3 inline" /> Period ending {item.reviewPeriodEnd}</span>
                     {item.periodReturnPct !== null && <span>Return: {item.periodReturnPct.toFixed(2)}%</span>}
-                    {item.alphaPct !== null && <span>Alpha: {item.alphaPct.toFixed(2)}%</span>}
+                    {item.alphaPct !== null && <span>Excess: {item.alphaPct.toFixed(2)}%</span>}
                   </div>
                 </div>
                 <ArrowRight className="h-3.5 w-3.5 text-slate-400" />

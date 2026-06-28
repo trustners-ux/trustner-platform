@@ -17,6 +17,21 @@
 import { extractText, getDocumentProxy } from 'unpdf';
 import type { RawHolding, RawSip, EntityType, SipFrequency } from './types';
 
+/**
+ * Strip a stray statistics-column label that the CAS layout occasionally glues
+ * onto the front of a scheme name (observed: "XIRR ICICI Prudential Smallcap
+ * Fund Growth" on small-cap rows where the XIRR column header bled into the
+ * name). None of these tokens EVER begin a real Indian mutual-fund scheme name,
+ * so removing a single leading one is safe and lets the fund matcher resolve it.
+ * Idempotent — a clean name passes through untouched.
+ */
+export function sanitizeSchemeName(name: string | null | undefined): string {
+  if (!name) return '';
+  let n = name.replace(/\s+/g, ' ').trim();
+  n = n.replace(/^(?:XIRR|IRR|NAV|CAGR|Abs\.?|Absolute|Gain|Loss|Reinv\.?)\s+/i, '');
+  return n.trim();
+}
+
 // ─────────────────────────────────────────────────────────────────
 // HIGH-LEVEL ENTRY POINT
 // ─────────────────────────────────────────────────────────────────
@@ -42,6 +57,37 @@ export interface CasParseResult {
  * pdfjs-dist that works on Vercel/Cloudflare). `pdf-parse` requires
  * `DOMMatrix` which is not available in Node runtime.
  */
+/**
+ * Open a (possibly encrypted) PDF, trying the password as-entered first and
+ * then its upper/lower-case variants. PDF passwords ARE case-sensitive, so this
+ * only helps when the supplied password matches the real one except for case
+ * (e.g. a PAN typed in lowercase, or a password the client wrote in small
+ * letters) — it never accepts a genuinely wrong password. Non-password errors
+ * are re-thrown immediately so they aren't masked.
+ */
+async function openPdfWithPasswordVariants(uint8: Uint8Array, password?: string) {
+  const pw = password?.trim();
+  const variants: (string | undefined)[] = [];
+  if (!pw) {
+    variants.push(undefined);
+  } else {
+    const seen = new Set<string>();
+    for (const v of [pw, pw.toUpperCase(), pw.toLowerCase()]) {
+      if (!seen.has(v)) { seen.add(v); variants.push(v); }
+    }
+  }
+  let lastErr: unknown;
+  for (const v of variants) {
+    try {
+      return await getDocumentProxy(uint8, { password: v } as { password?: string });
+    } catch (e) {
+      lastErr = e;
+      if (!/password/i.test((e as Error).message)) throw e; // not a password issue — surface it
+    }
+  }
+  throw lastErr;
+}
+
 export async function parseCasPdf(input: {
   pdfBuffer: Buffer;
   password?: string;          // CAS PDFs are usually password-protected (PAN); Trustner reports are not
@@ -50,10 +96,11 @@ export async function parseCasPdf(input: {
     // Convert Buffer to Uint8Array for unpdf
     const uint8 = new Uint8Array(input.pdfBuffer);
 
-    // Try to open the document (handles password if provided)
-    const pdf = await getDocumentProxy(uint8, {
-      password: input.password,
-    } as { password?: string });
+    // Open the document. PDF passwords are case-sensitive, but a client may
+    // share the password (often the PAN) in any case while the planner types it
+    // differently — so try the password as-entered, then its upper- and
+    // lower-case variants before giving up.
+    const pdf = await openPdfWithPasswordVariants(uint8, input.password);
 
     const { text: pages } = await extractText(pdf, { mergePages: false });
     const text = Array.isArray(pages) ? pages.join('\n') : String(pages);
@@ -70,8 +117,24 @@ export async function parseCasPdf(input: {
     }
 
     // Auto-detect format — order matters: most-specific markers first
+    // MF Central "Consolidated Account Summary" (CAMS+KFintech summary via
+    // mfcentral.com — distinct from the detailed CAS: no transactions, a 3-line
+    // value/return/units block per holding). Unique footer marker, so check first.
+    if (isMfCentralCasSummary(text)) {
+      return parseMfCentralCasSummary(text);
+    }
     if (isPortfolioValuationSummary(text)) {
       return parsePortfolioValuationSummary(text);
+    }
+    // CAMS / KFintech detailed Consolidated Account Statement (transaction-level,
+    // full scheme names). Most reliable source — check before the generic fallback.
+    if (isCamsDetailedCas(text)) {
+      return parseCamsDetailedCas(text);
+    }
+    // Trustner "Portfolio Valuation Report By CAS" — the newer compact MFD
+    // back-office export (distinct row layout from the older Valuation Report).
+    if (isTrustnerCasValuationReport(text)) {
+      return parseTrustnerCasValuationReport(text);
     }
     if (isTrustnerFamilyReport(text)) {
       // Newer Trustner multi-PAN "Family" valuation report (e.g., Aashish
@@ -146,109 +209,112 @@ function parseTrustnerValuationReport(text: string): CasParseResult {
   const holdings: RawHolding[] = [];
   const sips: RawSip[] = [];
 
-  // Known asset/category markers from the report
-  const categoryRe = /(Debt\s*-\s*[A-Z][^\n]*?Fund|Equity\s*-\s*[A-Z][^\n]*?Fund|Hybrid\s*-\s*[A-Z][^\n]*?Fund)/g;
-  const categoryMatches = [...text.matchAll(categoryRe)];
+  // ── Line-block parser ──────────────────────────────────────────────
+  // unpdf emits each fund as a multi-LINE block:
+  //   <name line 1> [<name line 2> …]
+  //   <folio>            (digits, optional /digits)
+  //   ARN-…              (broker code)
+  //   <code>             (a stray single digit on some rows)
+  //   <DD-MM-YY>         (first investment date)
+  //   (NNNN              \n  Days)
+  //   <Sensex> <InvCost> <SDuty> <DivR> <Units> <Price> <CurNav> <NavDate> <CurValue> <DivReinv> <DivPaid> <Total> <Gain> <Abs%> <XIRR%>   ← THE DATA LINE
+  // We accumulate the block, and on the data line emit a holding. Category
+  // headers and "Total :-" subtotal lines reset the block.
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length > 0);
 
-  // Build a list of (category, span) pairs to limit per-row parsing
-  const spans: Array<{ category: string; start: number; end: number }> = [];
-  for (let i = 0; i < categoryMatches.length; i++) {
-    const m = categoryMatches[i];
-    spans.push({
-      category: m[1].trim(),
-      start: m.index ?? 0,
-      end: i + 1 < categoryMatches.length ? (categoryMatches[i + 1].index ?? text.length) : text.length,
-    });
-  }
+  // The data line: 15 columns, with a NavDate (e.g. "09-Jun") in the middle.
+  const dataLineRe =
+    /^([\d.,-]+)\s+([\d.,-]+)\s+([\d.,-]+)\s+([\d.,-]+)\s+([\d.,-]+)\s+([\d.,-]+)\s+([\d.,-]+)\s+(\d{1,2}-[A-Za-z]{3,9})\s+([\d.,-]+)\s+([\d.,-]+)\s+([\d.,-]+)\s+([\d.,-]+)\s+([\d.,-]+)\s+([\d.,\-]+%?)\s+([\d.,\-]+%?)$/;
+  const categoryRe =
+    /^(Equity|Debt|Hybrid|Other|Sol(?:ution)?\s*Oriented|Liquid|Index|ETF|Gold|International|Commodit(?:y|ies)|Fund\s*of\s*Funds)\s*[-–].+/i;
+  const folioRe = /^[A-Z]?\d[\d/]{3,}$/i;     // e.g. 3712288/94, 6983679, 9103302914
+  const ddmmyyRe = /^\d{2}-\d{2}-\d{2,4}$/;    // first-investment date
 
-  // For each span, extract individual holdings using a row regex anchored on
-  // (a) presence of "ARN-" tag and (b) a date in DD-MM-YY format.
-  // Tolerant to extra whitespace because unpdf flattens columns.
-  const rowRe = /([A-Za-z][A-Za-z0-9 &\-/().,'']+?)(?:Growth|Dividend|IDCW)(?:\s*\(SIP\))?\s*(?:\(Direct\)|\(Regular\))?\s+([0-9/]+)\s*ARN-[\d,]+\s+(\d{2}-\d{2}-\d{2})\s*\((\d+)\s*Days?\)\s+([\d.,]+)?\s*([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+(\d{1,2}-[A-Za-z]+)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.,-]+)\s+([\d.\-]+%)\s+([\d.\-]+%)/g;
+  let block: string[] = [];
 
-  for (const span of spans) {
-    const slice = text.slice(span.start, span.end);
-    for (const m of slice.matchAll(rowRe)) {
-      const [
-        ,
-        rawScheme,
-        folio,
-        invSince,
-        ,
-        ,
-        invCost,
-        ,
-        ,
-        unitsStr,
-        ,
-        currentNav,
-        ,
-        currentValue,
-        ,
-        ,
-        ,
-        gainLoss,
-        absRtn,
-        xirr,
-      ] = m as unknown as string[];
-
-      // Reconstruct scheme name + plan/option
-      const schemeMatch = slice.slice(Math.max(0, (m.index ?? 0) - 80), (m.index ?? 0) + 200).match(/([A-Za-z][A-Za-z0-9 &\-/().,'']+?)(?:Growth|Dividend|IDCW)(?:\s*\(SIP\))?/);
-      const schemeRaw = (schemeMatch?.[0] ?? rawScheme).trim();
-      const hasSip = /\(SIP\)/i.test(schemeRaw);
-
-      // Resolve AMC by scanning leading words
-      const amc = guessAmcFromSchemeName(schemeRaw);
-
-      const units = numeric(unitsStr);
-      const invCostInr = numeric(invCost);
-      const currentValInr = numeric(currentValue);
-      const gain = numeric(gainLoss);
-      const absRtnPct = pctNumeric(absRtn);
-      const xirrPct = pctNumeric(xirr);
-
-      if (!invCostInr || !currentValInr) continue;
-
-      void absRtnPct; void xirrPct; void gain; // captured for future use; not in RawHolding shape
-
-      const entityName = investorName ?? 'Unknown';
-      const cleanedScheme = cleanSchemeName(schemeRaw);
-      const firstInvDate = normaliseDdMmYy(invSince);
-
-      const holding: RawHolding = {
-        entityName,
-        entityType: detectEntityType(entityName),
-        fundName: cleanedScheme,
-        folioNumber: folio,
-        amcName: amc,
-        units,
-        currentNav: numeric(currentNav),
-        currentValue: currentValInr,
-        investedAmount: invCostInr,
-        firstInvestmentDate: firstInvDate,
-      };
-      holdings.push(holding);
-
-      // Infer active SIP from the (SIP) flag.
-      // We don't know the actual installment amount from the valuation report,
-      // so we estimate by amortizing invested amount over months-held.
-      if (hasSip && firstInvDate) {
-        const monthsHeld = Math.max(1, monthsBetween(firstInvDate, new Date()));
-        const estMonthly = Math.round(invCostInr / monthsHeld);
-        sips.push({
-          entityName,
-          fundName: cleanedScheme,
-          folioNumber: folio,
-          amcName: amc,
-          monthlyAmountInr: estMonthly,
-          actualAmountInr: estMonthly,
-          frequency: 'Monthly' as SipFrequency,
-          startDate: firstInvDate,
-          status: 'Active',
-          hasStepUp: false,
-        });
-      }
+  const flush = (g: RegExpMatchArray) => {
+    let folio: string | null = null;
+    let firstDate: string | null = null;
+    const nameParts: string[] = [];
+    // Page headers, column headers and subtotal fragments repeat on every page
+    // and must never become part of a fund name.
+    const isJunk = (s: string): boolean =>
+      /^Page\s+no\s+\d+/i.test(s) ||
+      /Scheme\s+Name|Inv\.\s*Since|Cur\.\s*Nav|Nav\s*Date|Abs\.\s*Rtn|Div\s*Reinv/i.test(s) ||
+      /^Paid\b/i.test(s) ||
+      /\bTotal\s*:?-/i.test(s) ||
+      /Valuation\s+Report|Mutual\s+Fund\s+Summary|AMFI[- ]Registered/i.test(s);
+    for (const ln of block) {
+      if (/^ARN[-\s]/i.test(ln)) continue;                  // broker code line
+      if (ddmmyyRe.test(ln)) { firstDate = ln; continue; }   // first-investment date
+      if (folio === null && folioRe.test(ln)) { folio = ln; continue; }
+      if (/^\(?\d+$/.test(ln) || /^Days\)?$/i.test(ln) || /^\(\d+\s*Days?\)?$/i.test(ln)) continue; // days/code fragments
+      if (categoryRe.test(ln) || isJunk(ln)) continue;
+      if (folio === null) nameParts.push(ln);                // scheme-name lines precede the folio
     }
+    let schemeRaw = nameParts.join(' ').replace(/\s+/g, ' ').trim();
+    // unpdf sometimes glues a grand-total row, a section header and the next
+    // fund name onto ONE line. Peel those leaked prefixes/suffixes off the name:
+    schemeRaw = schemeRaw
+      .replace(/^.*?Total\s*:?-[\d.,\s%-]+/i, '')                                              // leaked "…Total :- <nums> NN%"
+      .replace(/^(?:Sol(?:ution)?\s*Oriented|Equity|Debt|Hybrid|Other|Index|ETF|Gold|International)\s*[-–]\s*[A-Za-z/&. ]+?Fund\s+/i, '') // leaked section header
+      .replace(/\s+[A-Z]?\d{5,}(?:\/\d+)?$/i, '')                                              // trailing folio glued to the name
+      .replace(/\s+/g, ' ')
+      .trim();
+    const invCostInr = numeric(g[2]);
+    const currentValInr = numeric(g[9]);
+    if (!schemeRaw || !invCostInr || !currentValInr) return;
+
+    const units = numeric(g[5]);
+    const currentNav = numeric(g[7]);
+    const hasSip = /\(SIP\)/i.test(schemeRaw);
+    const amc = guessAmcFromSchemeName(schemeRaw);
+    const entityName = investorName ?? 'Unknown';
+    const cleanedScheme = cleanSchemeName(schemeRaw);
+    const firstInvDate = firstDate ? normaliseDdMmYy(firstDate) : undefined;
+
+    holdings.push({
+      entityName,
+      entityType: detectEntityType(entityName),
+      fundName: cleanedScheme,
+      folioNumber: folio ?? '',
+      amcName: amc,
+      units,
+      currentNav,
+      currentValue: currentValInr,
+      investedAmount: invCostInr,
+      firstInvestmentDate: firstInvDate,
+    });
+
+    if (hasSip && firstInvDate) {
+      const monthsHeld = Math.max(1, monthsBetween(firstInvDate, new Date()));
+      const estMonthly = Math.round(invCostInr / monthsHeld);
+      sips.push({
+        entityName,
+        fundName: cleanedScheme,
+        folioNumber: folio ?? '',
+        amcName: amc,
+        monthlyAmountInr: estMonthly,
+        actualAmountInr: estMonthly,
+        frequency: 'Monthly' as SipFrequency,
+        startDate: firstInvDate,
+        status: 'Active',
+        hasStepUp: false,
+      });
+    }
+  };
+
+  for (const ln of lines) {
+    if (categoryRe.test(ln)) { block = []; continue; }       // new category section
+    if (/\bTotal\s*:?-/i.test(ln)) { block = []; continue; } // subtotal row — discard the block
+    // The "(N Days)" held-period token sometimes sits on its OWN line and
+    // sometimes is glued to the front of the data line — strip it either way.
+    const daysMatch = ln.match(/^\((\d+)\s*Days?\)\s*/i);
+    if (daysMatch && /^\(\d+\s*Days?\)\s*$/i.test(ln)) { continue; } // standalone "(N Days)" — ignore
+    const candidate = daysMatch ? ln.slice(daysMatch[0].length) : ln;
+    const dm = candidate.match(dataLineRe);
+    if (dm) { flush(dm); block = []; continue; }
+    block.push(ln);
   }
 
   const amcSet = new Set(holdings.map((h) => h.amcName ?? '').filter(Boolean));
@@ -269,9 +335,16 @@ function parseTrustnerValuationReport(text: string): CasParseResult {
 }
 
 function extractInvestorNameTrustner(text: string): string | undefined {
-  // Trustner reports start with the holder's full name in caps on its own line
-  // right after "Valuation Report as on Date - <date>".
-  const m = text.match(/Valuation\s+Report\s+as\s+on\s+Date[^\n]*\n([A-Z][A-Z\s.]+?)\s*\(PAN:/);
+  // Most reliable anchor: the holder's name sits on its OWN line immediately
+  // before "(PAN: XXXXX)". Works whether the name is Title Case ("Ram Shah") or
+  // ALL CAPS, and regardless of the Sensex/quote lines between the header and it.
+  let m = text.match(/\n\s*([A-Za-z][A-Za-z\s.]{2,40}?)\s*\n\s*\(\s*PAN\s*:/i);
+  if (m?.[1]) {
+    const name = m[1].replace(/\s+/g, ' ').trim();
+    if (!/^(Current\s+Sensex|TRUSTNER|Valuation|Mutual\s+Fund)/i.test(name)) return name;
+  }
+  // Fallback: CAPS name right after the report header line.
+  m = text.match(/Valuation\s+Report\s+as\s+on\s+Date[^\n]*\n([A-Z][A-Z\s.]+?)\s*\(PAN:/);
   return m?.[1]?.trim();
 }
 
@@ -817,6 +890,7 @@ function guessAmcFromSchemeName(scheme: string): string | undefined {
     'tata': 'Tata Mutual Fund',
     'sundaram': 'Sundaram Mutual Fund',
     'edelweiss': 'Edelweiss Mutual Fund',
+    'canara robeco': 'Canara Robeco Mutual Fund',
     'baroda bnp': 'Baroda BNP Paribas Mutual Fund',
     'hsbc': 'HSBC Mutual Fund',
     'lic': 'LIC Mutual Fund',
@@ -860,6 +934,396 @@ function normalizeCategoryFromHeader(header: string): string {
     .replace(/^Hybrid\s*-\s*/i, '')
     .replace(/\s*Fund\s*$/i, '')
     .trim();
+}
+
+// ─────────────────────────────────────────────────────────────────
+// CAMS / KFintech DETAILED CONSOLIDATED ACCOUNT STATEMENT
+//
+// The transaction-level CAS investors download from CAMS/KFintech.
+// Most reliable source: full scheme names, exact units / cost / value.
+//
+// Per-scheme block structure (each appears exactly once per holding):
+//   <AMC> Mutual Fund                                   ← AMC header (own line)
+//   PAN: XXXXX KYC: OK ...
+//   <CODE>-<Scheme Name> - <Plan> - ISIN: <isin>...     ← scheme line (may wrap)
+//   Folio No: <folio> / <n>
+//   <holder name> / Nominee lines / Opening Unit Balance
+//   <DD-Mon-YYYY> <amt> <price><units>Purchase <bal>    ← transactions
+//   *** Stamp Duty ***
+//   NAV on <date>: INR <nav> Market Value on <date>: INR <value>
+//   <exit-load prose>
+//   Closing Unit Balance: <units> Total Cost Value: <cost>   ← closes the block
+// ─────────────────────────────────────────────────────────────────
+
+/**
+ * MF Central "Consolidated Account Summary" (mfcentral.com — a CAMS+KFintech
+ * summary). Distinct from the detailed CAS: holdings-only, no transactions, with
+ * a unique footer marker. Each holding is three lines under a (possibly wrapped)
+ * scheme name:
+ *   <Invested> <Market> <Gain>
+ *   (<±pct>%)
+ *   <Units> <NavDate><Folio> <NAV>     ← NAV date is glued to the folio number
+ */
+function isMfCentralCasSummary(text: string): boolean {
+  return (
+    /MFCentralCASSummary/i.test(text) ||
+    (/Consolidated\s+Account\s+Summary/i.test(text) && /CAMS\s+and\s+KFintech/i.test(text))
+  );
+}
+
+function extractInvestorNameMfc(text: string): string | undefined {
+  // The PAN-holder name is the line immediately after "PAN :ABCDE1234F".
+  const m = text.match(/PAN\s*:\s*[A-Z]{5}\d{4}[A-Z]\s*[\r\n]+\s*([A-Z][A-Z .]{2,60})/);
+  return m ? m[1].trim().replace(/\s+/g, ' ') : undefined;
+}
+
+function parseMfCentralCasSummary(text: string): CasParseResult {
+  const investorName = extractInvestorNameMfc(text) ?? extractInvestorNameCams(text) ?? extractInvestorName(text);
+  const pan = extractPan(text);
+  const holdings: RawHolding[] = [];
+
+  const lines = text.split('\n').map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean);
+
+  // Page chrome / column headers / totals / address block — never part of a name.
+  const NOISE = /^(Consolidated Account Summary|\( As on Date|MFCentralCASSummary|SoA Holdings|Demat Holdings|Invested Value|Market Value|Gain\/Loss|\(INR\)|\(Absolute\)|Balance|Units NAV Date|Scheme Details|Folio No\.|Client Id|NAV$|Total\b|-- No MF|#IDCW|Allocation by Asset Class|EQUITY|DEBT|The Consolidated Account|CAMS and KFintech|investor friendly|are holding investments|If you find|Mutual Fund folios|PAN\s*:|Mobile\s*:|Email\s*:|Page \d+ of \d+|\d{6},\s)/i;
+
+  // Anchor: "<name-tail?> <Invested> <Market> <Gain(±)>"
+  const anchorRe = /^(.*?)([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+\(?-?[\d,]+\.\d{2}\)?\s*$/;
+  // "<Units> <NavDate><Folio> <NAV>" — NavDate (DD-Mon-YYYY) is glued to the folio.
+  const unitsRe = /^([\d,]+\.\d+)\s+(?:(\d{1,2}-[A-Za-z]{3}-\d{4})(\d+))?\s*([\d,]+\.?\d*)?\s*$/;
+  const pctOnly = /^\([+-]?[\d.,]+%\)$/;
+
+  let nameBuf: string[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const ln = lines[i];
+    if (NOISE.test(ln)) { nameBuf = []; continue; }
+
+    const m = ln.match(anchorRe);
+    if (!m) {
+      if (!pctOnly.test(ln)) nameBuf.push(ln); // accumulate a (possibly wrapped) scheme name
+      continue;
+    }
+
+    const fullName = [...nameBuf, m[1].trim()].join(' ').replace(/\s+/g, ' ').trim();
+    const invested = numeric(m[2]);
+    const market = numeric(m[3]);
+    nameBuf = [];
+
+    // The next data line (skipping the percentage line) carries units / folio / NAV.
+    let units = 0, folio = '', nav = 0;
+    for (let j = i + 1; j <= i + 3 && j < lines.length; j++) {
+      if (anchorRe.test(lines[j])) break; // ran into the next holding — no units line
+      const um = lines[j].match(unitsRe);
+      if (um) {
+        units = numeric(um[1]);
+        folio = um[3] || '';
+        nav = numeric(um[4] || '');
+        i = j; // consume up to and including the units line
+        break;
+      }
+    }
+
+    // Skip zero-balance / redeemed folios and any nameless block.
+    if (!fullName || (market <= 0 && invested <= 0)) continue;
+
+    holdings.push({
+      entityName: investorName ?? 'Unknown',
+      entityType: detectEntityType(investorName ?? ''),
+      fundName: cleanSchemeName(fullName),
+      folioNumber: folio,
+      amcName: guessAmcFromSchemeName(fullName),
+      units,
+      currentNav: nav || undefined,
+      currentValue: market,
+      investedAmount: invested,
+    });
+  }
+
+  const amcSet = new Set(holdings.map((h) => h.amcName ?? '').filter(Boolean));
+  const folioSet = new Set(holdings.map((h) => h.folioNumber ?? '').filter(Boolean));
+  return {
+    success: holdings.length > 0,
+    error: holdings.length === 0
+      ? 'MF Central Consolidated Account Summary detected but no holdings could be extracted. The PDF layout may have changed.'
+      : undefined,
+    investorName,
+    pan,
+    holdings,
+    sips: [], // a summary has no SIP register — add SIPs separately, never fabricate
+    totalFoliosFound: folioSet.size,
+    totalAmcsFound: amcSet.size,
+  };
+}
+
+function isCamsDetailedCas(text: string): boolean {
+  return (
+    /Consolidated\s+Account\s+Statement/i.test(text) &&
+    /Closing\s+Unit\s+Balance/i.test(text) &&
+    /Total\s+Cost\s+Value/i.test(text)
+  );
+}
+
+/** Strip plan/option/parenthetical noise from a CAMS scheme line to the base fund name. */
+function cleanCamsSchemeName(raw: string): string {
+  let n = raw.replace(/\s*-\s*ISIN.*$/i, '');                                   // drop "- ISIN: ..." onward
+  n = n.replace(/\s*[-–]\s*(Direct|Regular)\b.*$/i, '');                        // "- Direct Plan - Growth ..."
+  n = n.replace(/\s+(Direct|Regular)\b.*$/i, '');                              // "...Fund Direct Growth" (no hyphen)
+  n = n.replace(/\(erstwhile[^)]*\)/gi, '').replace(/\(formerly[^)]*\)/gi, '').replace(/\(Demat\)/gi, '');
+  n = n.replace(/\s*[-–]\s*(Growth|Dividend|IDCW)\b.*$/i, '');                  // residual "- Growth"
+  n = n.replace(/\s+(Growth|Dividend|IDCW)\b.*$/i, '');                        // residual bare option
+  return n.replace(/\s+/g, ' ').trim();
+}
+
+function extractInvestorNameCams(text: string): string | undefined {
+  // Holder name sits on its own line right after the "Email Id: ..." line.
+  const m = text.match(/Email\s*Id\s*:\s*\S+\s*\n\s*([A-Z][A-Za-z .]{2,50}?)\s*\n/i);
+  if (m?.[1] && !/Mutual\s+Fund|Consolidated/i.test(m[1])) return m[1].replace(/\s+/g, ' ').trim();
+  return undefined;
+}
+
+function parseCamsDetailedCas(text: string): CasParseResult {
+  const investorName = extractInvestorNameCams(text) ?? extractInvestorName(text);
+  const pan = extractPan(text);
+  const holdings: RawHolding[] = [];
+
+  const lines = text.split(/\r?\n/).map((l) => l.trim());
+
+  const amcRe = /^([A-Z][A-Za-z&.\s]+?(?:Mutual\s+Fund|MF))$/;
+  const schemeCodeRe = /^([A-Z0-9]{3,12})-(.+)$/;
+  const folioRe = /Folio\s*No\s*:\s*([0-9][0-9/\s-]*)/i;
+  const navMvRe = /NAV\s+on\s+[^:]+:\s*INR\s*([\d,]+\.?\d*)\s*Market\s+Value\s+on\s+[^:]+:\s*INR\s*([\d,]+\.?\d*)/i;
+  const closingRe = /Closing\s+Unit\s+Balance\s*:\s*([\d,]+\.?\d*)\s*Total\s+Cost\s+Value\s*:\s*([\d,]+\.?\d*)/i;
+  const txnDateRe = /^(\d{2}-[A-Za-z]{3}-\d{4})\b/;
+
+  let currentAmc = '';
+  let pName = '';
+  let pNameDone = false;
+  let pFolio = '';
+  let pNav = 0, pValue = 0, pUnits = 0, pCost = 0;
+  let pFirstDate: string | undefined;
+  let inBlock = false;
+
+  const reset = () => {
+    pName = ''; pNameDone = false; pFolio = '';
+    pNav = 0; pValue = 0; pUnits = 0; pCost = 0;
+    pFirstDate = undefined; inBlock = false;
+  };
+
+  for (const ln of lines) {
+    if (!ln) continue;
+
+    // AMC header (own line, no digits → not the PORTFOLIO SUMMARY rows)
+    const am = ln.match(amcRe);
+    if (am && !/\d/.test(ln)) { currentAmc = am[1].trim(); continue; }
+
+    // Scheme-code line starts a fresh block
+    const sc = ln.match(schemeCodeRe);
+    if (sc && /ISIN|Direct|Regular|Growth|Plan|Fund/i.test(ln)) {
+      reset();
+      inBlock = true;
+      pName = sc[2];
+      if (/\bISIN\b/i.test(ln)) pNameDone = true;
+      continue;
+    }
+
+    if (!inBlock) continue;
+
+    // Accumulate a wrapped scheme name until the ISIN appears
+    if (!pNameDone) {
+      if (folioRe.test(ln) || txnDateRe.test(ln) || /^Opening\s+Unit\s+Balance/i.test(ln)) {
+        pNameDone = true; // fall through to folio handling below
+      } else {
+        pName += ' ' + ln;
+        if (/\bISIN\b/i.test(ln)) pNameDone = true;
+        continue;
+      }
+    }
+
+    const fm = ln.match(folioRe);
+    if (fm && !pFolio) { pFolio = fm[1].replace(/\s+/g, '').replace(/\/+$/, ''); continue; }
+
+    if (!pFirstDate) {
+      const dm = ln.match(txnDateRe);
+      if (dm && /Purchase/i.test(ln)) pFirstDate = normaliseDate(dm[1]);
+    }
+
+    const nm = ln.match(navMvRe);
+    if (nm) { pNav = numeric(nm[1]); pValue = numeric(nm[2]); continue; }
+
+    const cm = ln.match(closingRe);
+    if (cm) {
+      pUnits = numeric(cm[1]);
+      pCost = numeric(cm[2]);
+      const name = cleanCamsSchemeName(pName);
+      if (name && pCost > 0 && pValue > 0) {
+        holdings.push({
+          entityName: investorName ?? 'Unknown',
+          entityType: detectEntityType(investorName ?? ''),
+          fundName: name,
+          folioNumber: pFolio || '',
+          amcName: currentAmc || guessAmcFromSchemeName(name),
+          units: pUnits,
+          currentNav: pNav,
+          currentValue: pValue,
+          investedAmount: pCost,
+          firstInvestmentDate: pFirstDate,
+        });
+      }
+      reset();
+      continue;
+    }
+  }
+
+  const amcSet = new Set(holdings.map((h) => h.amcName ?? '').filter(Boolean));
+  const folioSet = new Set(holdings.map((h) => h.folioNumber ?? '').filter(Boolean));
+
+  return {
+    success: holdings.length > 0,
+    error: holdings.length === 0
+      ? 'CAMS/KFintech statement detected but no scheme blocks could be extracted. The PDF layout may have changed; share the file with engineering.'
+      : undefined,
+    investorName,
+    pan,
+    holdings,
+    sips: [], // CAMS detailed CAS has no explicit SIP register — added separately
+    totalFoliosFound: folioSet.size,
+    totalAmcsFound: amcSet.size,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TRUSTNER "PORTFOLIO VALUATION REPORT BY CAS" (newer compact export)
+//
+// Header: "Portfolio Valuation Report By CAS as on Date - <date>"
+//         "TRUSTNER  AMFI-Registered Mutual Fund Distributor"
+//         "Mutual Fund Summary Report"
+//         "Scheme Name Inv. Since Sensex Inv. Cost Units Pur. Nav Cur. Nav
+//          Nav Date Cur. Value Div Reinv Div Paid Gain / Loss Abs. Rtn. XIRR"
+//
+// Per-holding block (pypdf breaks the scheme name across 1-2 lines):
+//   Equity - Flexi Cap Fund                 ← category header
+//   Nippon India Flexi Cap                  ← scheme name (line 1)
+//   Fund Growth                             ← scheme name (line 2) [+ glued "(ISIN)"]
+//   (INF204KC1121)                          ← ISIN (own line OR glued to name)
+//   Folio: 488382587322
+//   ARN - INZ000031633
+//   PAN: [code]
+//   <DD-MM-YY> [<Sensex>] <InvCost> <Units> <PurNav> <CurNav> <NavDate>
+//             <CurValue> <DivReinv> <DivPaid> <Gain> <Abs%> <XIRR%>   ← DATA LINE
+//
+// The Sensex column is sometimes BLANK, so we anchor positions off the
+// NavDate token (DD-Mon) rather than counting from the left.
+// ─────────────────────────────────────────────────────────────────
+
+function isTrustnerCasValuationReport(text: string): boolean {
+  return (
+    /Portfolio\s+Valuation\s+Report\s+By\s+CAS/i.test(text) ||
+    (/Valuation\s+Report\s+By\s+CAS\s+as\s+on\s+Date/i.test(text) &&
+      /Mutual\s+Fund\s+Summary\s+Report/i.test(text))
+  );
+}
+
+function cleanTrustnerCasName(s: string): string {
+  return s
+    .replace(/\(INF[A-Z0-9]{9,12}\)/gi, '')
+    .replace(/\s+(Growth|Dividend|IDCW|Reinvestment|Payout)\b.*$/i, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function parseTrustnerCasValuationReport(text: string): CasParseResult {
+  const investorName =
+    text.match(/Client\s+Name\s*:\s*\n\s*([A-Z][A-Za-z .]{2,50}?)\s*\n/i)?.[1]?.trim() ??
+    extractInvestorName(text);
+  const pan = extractPan(text);
+  const holdings: RawHolding[] = [];
+
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+
+  const categoryRe = /^(Equity|Debt|Hybrid|Others?|Solution\s+Oriented)\s*[-–]\s*.+/i;
+  const totalRe = /Total\s*:?-/i;
+  const folioLineRe = /^Folio\s*:\s*(\S+)/i;
+  const isinGluedRe = /\(INF[A-Z0-9]{9,12}\)/i;
+  const isinOnlyRe = /^\(INF[A-Z0-9]{9,12}\)$/i;
+  const navDateTok = /^\d{1,2}-[A-Za-z]{3,}$/;
+  // Data row: starts with InvSince DD-MM-YY, ends with two percentage columns.
+  const dataLineRe = /^\d{2}-\d{2}-\d{2}\s+.*-?\d+(?:\.\d+)?%\s+-?\d+(?:\.\d+)?%$/;
+
+  let nameBuf: string[] = [];
+  let pFolio = '';
+  let nameDone = false;
+
+  const resetPending = () => { nameBuf = []; pFolio = ''; nameDone = false; };
+
+  for (const ln of lines) {
+    if (categoryRe.test(ln)) { resetPending(); continue; }
+    if (totalRe.test(ln)) { resetPending(); continue; }
+    if (/^Scheme\s+Name\s+Inv/i.test(ln)) { resetPending(); continue; }
+    if (/^(Top\s+\d+|Scheme\s+Type\s+Wise|Portfolio\s+Asset|Grand\s+Total|Disclaimer|Fund\s+Type|Sector|Equity\s+Holding|Debt\s+Holding|Asset\s+Type)/i.test(ln)) {
+      resetPending();
+      continue;
+    }
+
+    // Data line → emit the pending holding
+    if (dataLineRe.test(ln) && nameBuf.length > 0) {
+      const tokens = ln.split(/\s+/);
+      const navIdx = tokens.findIndex((t) => navDateTok.test(t) && !/^\d{2}-\d{2}-\d{2}$/.test(t));
+      if (navIdx >= 4) {
+        const left = tokens.slice(0, navIdx);   // [InvSince, (Sensex?), InvCost, Units, PurNav, CurNav]
+        const right = tokens.slice(navIdx + 1); // [CurValue, DivReinv, DivPaid, Gain, Abs%, XIRR%]
+        const invSince = left[0];
+        const curNav = numeric(left[left.length - 1]);
+        const units = numeric(left[left.length - 3]);
+        const invCost = numeric(left[left.length - 4]);
+        const curValue = numeric(right[0]);
+        const name = cleanTrustnerCasName(nameBuf.join(' '));
+        if (name && invCost > 0 && curValue > 0) {
+          holdings.push({
+            entityName: investorName ?? 'Unknown',
+            entityType: detectEntityType(investorName ?? ''),
+            fundName: name,
+            folioNumber: pFolio || '',
+            amcName: guessAmcFromSchemeName(name),
+            units,
+            currentNav: curNav,
+            currentValue: curValue,
+            investedAmount: invCost,
+            firstInvestmentDate: normaliseDdMmYy(invSince),
+          });
+        }
+      }
+      resetPending();
+      continue;
+    }
+
+    const fm = ln.match(folioLineRe);
+    if (fm) { pFolio = fm[1].replace(/\/+$/, ''); continue; }
+    if (/^ARN\b/i.test(ln) || /^PAN\s*:/i.test(ln)) continue;
+    if (isinOnlyRe.test(ln)) { nameDone = true; continue; }
+
+    // Otherwise a scheme-name fragment — accumulate until the ISIN closes it
+    if (!nameDone) {
+      const cleaned = ln.replace(isinGluedRe, '').trim();
+      if (cleaned) nameBuf.push(cleaned);
+      if (isinGluedRe.test(ln)) nameDone = true;
+    }
+  }
+
+  const amcSet = new Set(holdings.map((h) => h.amcName ?? '').filter(Boolean));
+  const folioSet = new Set(holdings.map((h) => h.folioNumber ?? '').filter(Boolean));
+
+  return {
+    success: holdings.length > 0,
+    error: holdings.length === 0
+      ? 'Trustner Portfolio Valuation Report (By CAS) detected but no scheme rows could be extracted. The PDF layout may have changed; share the file with engineering.'
+      : undefined,
+    investorName,
+    pan,
+    holdings,
+    sips: [], // SIP register not present in this report — added separately
+    totalFoliosFound: folioSet.size,
+    totalAmcsFound: amcSet.size,
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────

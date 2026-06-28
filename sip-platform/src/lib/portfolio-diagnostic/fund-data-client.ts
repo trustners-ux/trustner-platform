@@ -371,11 +371,77 @@ function percentile(values: number[], p: number): number {
 // ─────────────────────────────────────────────────────────────────
 
 /**
+ * Extract the SEBI fund-category token that defines what a scheme IS
+ * (small cap vs multi cap vs liquid …). This is the single most
+ * discriminating part of an Indian scheme name, yet a plain token
+ * overlap weights "small" no more than "canara" — which is how
+ * "Canara Robeco Small Cap" once matched "Canara Robeco Multi Cap".
+ *
+ * Returns a canonical key, or null when the name carries no determinate
+ * category token (e.g. a truncated "ICICI Prudential Multi", or a
+ * sectoral/FoF name) — null means "don't use category as a guard".
+ *
+ * Order matters: the most specific phrase must be tested first
+ * (largemid before large/mid, multiasset before multi, etc.).
+ */
+export function extractCategoryToken(name: string): string | null {
+  const s = (name || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+  if (/(largeandmidcap|largemidcap|largeandmid|largemid)/.test(s)) return 'largemid';
+  if (/multiassetallocation|multiasset/.test(s)) return 'multiasset';
+  if (/multicap/.test(s)) return 'multi';
+  if (/(flexicap|flexi)/.test(s)) return 'flexi';
+  if (/smallcap/.test(s)) return 'small';
+  if (/midcap/.test(s)) return 'mid';
+  if (/largecap|bluechip/.test(s)) return 'large';
+  if (/(elss|taxsaver|taxsaving|longtermequity|taxrelief)/.test(s)) return 'elss';
+  if (/dividendyield/.test(s)) return 'dividendyield';
+  if (/focus(s)?ed/.test(s)) return 'focused';
+  if (/contra/.test(s)) return 'contra';
+  if (/value(fund|discovery|oriented)?/.test(s) && !/valueresearch/.test(s)) return 'value';
+  if (/balancedadvantage|dynamicasset/.test(s)) return 'baf';
+  if (/aggressivehybrid|equityhybrid/.test(s)) return 'agghybrid';
+  if (/conservativehybrid/.test(s)) return 'conshybrid';
+  if (/equitysavings/.test(s)) return 'equitysavings';
+  if (/arbitrage/.test(s)) return 'arbitrage';
+  if (/overnight/.test(s)) return 'overnight';
+  if (/liquidfund|liquid/.test(s)) return 'liquid';
+  if (/(index|nifty|sensex|etf)/.test(s)) return 'index';
+  return null;
+}
+
+/** First (AMC) token of a normalised scheme name — "axis", "hdfc", "icici"… */
+export function amcHeadToken(name: string): string {
+  return normaliseSchemeName(name).split(/\s+/)[0] || '';
+}
+
+/**
+ * Sanity-check a candidate fund against a holding name before trusting
+ * it. Used both as a guard on a pre-stored amfi_code (a CAS PDF or an
+ * older matcher can write a wrong code) and inside the fuzzy matcher.
+ * Rejects when the two disagree on AMC or on fund category — the two
+ * ways a confident-but-wrong match happens (wrong AMC: Axis→Union;
+ * wrong sub-category: Small→Multi, Focused→Liquid).
+ */
+export function isPlausibleCodeMatch(holdingName: string, fundSchemeName: string): boolean {
+  const hCat = extractCategoryToken(holdingName);
+  const fCat = extractCategoryToken(fundSchemeName);
+  if (hCat && fCat && hCat !== fCat) return false;
+  const hAmc = amcHeadToken(holdingName);
+  const fAmc = amcHeadToken(fundSchemeName);
+  if (hAmc && fAmc && hAmc !== fAmc) return false;
+  return true;
+}
+
+/**
  * Match a raw CAS scheme name to a fund_master AMFI code via fuzzy
  * matching. The CAS PDF often abbreviates names; we normalise both
- * sides and use substring + token overlap.
+ * sides and use substring + token overlap, then HARD-GUARD on AMC and
+ * fund-category so a high token overlap can never cross a category or
+ * an AMC. When every candidate conflicts, we return null (an honest
+ * "no match") rather than a confidently-wrong fund — a wrong verdict
+ * on a client's portfolio is worse than a flagged gap.
  *
- * Returns null if no confident match (>=0.7 score).
+ * Returns null if no confident match (>=0.5 score after guards).
  */
 export function fuzzyMatchSchemeName(
   casName: string,
@@ -383,12 +449,20 @@ export function fuzzyMatchSchemeName(
 ): { amfiCode: string; confidence: number } | null {
   const norm = normaliseSchemeName(casName);
   const normTokens = new Set(norm.split(/\s+/).filter((t) => t.length > 2));
+  const casCat = extractCategoryToken(casName);
+  const casAmc = amcHeadToken(casName);
 
   let bestMatch: { amfiCode: string; confidence: number } | null = null;
 
   for (const candidate of candidates) {
     const candNorm = normaliseSchemeName(candidate.schemeName);
     const candTokens = new Set(candNorm.split(/\s+/).filter((t) => t.length > 2));
+
+    // ── HARD GUARDS: a category or AMC conflict disqualifies outright ──
+    const candCat = extractCategoryToken(candidate.schemeName);
+    if (casCat && candCat && casCat !== candCat) continue;
+    const candAmc = amcHeadToken(candidate.schemeName);
+    if (casAmc && candAmc && casAmc !== candAmc) continue;
 
     // Token overlap (Jaccard)
     const intersection = [...normTokens].filter((t) => candTokens.has(t)).length;
@@ -399,7 +473,12 @@ export function fuzzyMatchSchemeName(
     const substringScore =
       candNorm.includes(norm) || norm.includes(candNorm) ? 0.15 : 0;
 
-    const confidence = Math.min(1, jaccard + substringScore);
+    // Small agreement bonus so the right plan/category wins close ties
+    const agreementBonus =
+      (casCat && candCat && casCat === candCat ? 0.05 : 0) +
+      (casAmc && candAmc && casAmc === candAmc ? 0.05 : 0);
+
+    const confidence = Math.min(1, jaccard + substringScore + agreementBonus);
 
     if (!bestMatch || confidence > bestMatch.confidence) {
       bestMatch = { amfiCode: candidate.amfiCode, confidence };
@@ -435,6 +514,8 @@ export function normaliseSchemeName(name: string): string {
     .replace(/\bppfas\b/g, 'parag parikh')
     .replace(/\bhdfc mf\b/g, 'hdfc')
     .replace(/\bsbi mf\b/g, 'sbi')
+    // ── Legacy AMC rename so an old CAS name still matches the master ──
+    .replace(/\breliance\b/g, 'nippon india')
     // ── Expand plan/option suffixes ──
     .replace(/\(g\)\s*$/g, ' growth')
     .replace(/\(d\)\s*$/g, ' dividend')

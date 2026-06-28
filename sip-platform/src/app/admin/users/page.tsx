@@ -65,7 +65,7 @@ const ROLE_COLORS: Record<string, string> = {
   support: 'bg-stone-100 text-stone-600 border-stone-200',
 };
 
-const PERMISSION_CATEGORIES = ['Content', 'Operations', 'People', 'Learning', 'Admin'];
+const PERMISSION_CATEGORIES = ['Content', 'Operations', 'People', 'Learning', 'Admin', 'Portfolio Diagnostic'];
 
 const PERMISSION_MODULES: PermissionModule[] = [
   { key: 'blog_view', label: 'View Blog', description: 'Read blog posts', category: 'Content' },
@@ -94,6 +94,8 @@ const PERMISSION_MODULES: PermissionModule[] = [
   { key: 'user_management', label: 'User Management', description: 'This page', category: 'Admin' },
   { key: 'audit_log', label: 'Audit Log', description: 'System audit', category: 'Admin' },
   { key: 'settings', label: 'Settings', description: 'System config', category: 'Admin' },
+  { key: 'pd_access', label: 'PD — Access', description: 'Use Portfolio Diagnostic (upload + prepare)', category: 'Portfolio Diagnostic' },
+  { key: 'pd_review', label: 'PD — Review & Approve', description: 'Review/approve diagnostics (else upload-only)', category: 'Portfolio Diagnostic' },
 ];
 
 const CATEGORY_ICONS: Record<string, string> = {

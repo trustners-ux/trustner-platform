@@ -18,6 +18,7 @@ import {
   buildApproverFallbackResponse,
 } from '@/lib/trustner-agent-platform/generic-queries';
 import { getEmployeeWithPdRole } from '@/lib/portfolio-diagnostic/queries';
+import { getSupabaseAdmin } from '@/lib/db/supabase';
 
 const TABLE = 'mp_meeting_briefs';
 const SELECT_COLS = `
@@ -25,7 +26,9 @@ const SELECT_COLS = `
   meeting_scheduled_at, meeting_purpose, meeting_format,
   created_at, updated_at,
   uploader:employees!mp_meeting_briefs_uploaded_by_employee_id_fkey(name),
-  reviewer:employees!mp_meeting_briefs_current_reviewer_employee_id_fkey(name)
+  reviewer:employees!mp_meeting_briefs_current_reviewer_employee_id_fkey(name),
+  action_items:mp_action_items(status),
+  opportunities:mp_opportunities(count)
 `;
 
 export async function GET() {
@@ -57,7 +60,7 @@ export async function GET() {
     });
   }
 
-  const [counts, myDrafts, awaiting, approvedPending] = await Promise.all([
+  const [counts, myDrafts, awaiting, approvedPending, upcoming] = await Promise.all([
     getAgentDashboardCounts(TABLE, employeeId),
     employee.role.canEditDraft
       ? queryAgentQueue({ table: TABLE, selectCols: SELECT_COLS, statuses: ['DRAFT', 'CHANGES_REQUESTED'], filter: 'uploaded_by_me', employeeId, orderBy: 'updated_at' })
@@ -68,6 +71,7 @@ export async function GET() {
     employee.role.canPublish
       ? queryAgentQueue({ table: TABLE, selectCols: SELECT_COLS, statuses: ['APPROVED'], filter: 'approved_by_me_or_uploader', employeeId, orderBy: 'approved_at' })
       : Promise.resolve([]),
+    getUpcomingMeetingCounts(employeeId),
   ]);
 
   return NextResponse.json({
@@ -82,8 +86,8 @@ export async function GET() {
     },
     counts: {
       ...counts,
-      meetingsTomorrow: 0,        // TODO: compute from meeting_scheduled_at
-      upcomingMeetingsThisWeek: 0,
+      meetingsTomorrow: upcoming.tomorrow,
+      upcomingMeetingsThisWeek: upcoming.thisWeek,
     },
     myDrafts: myDrafts.map(mapRow),
     awaiting: awaiting.map(mapRow),
@@ -103,7 +107,8 @@ function mapRow(row: Record<string, unknown>): Record<string, unknown> {
     hoursUntilMeeting: computeHoursUntil(row.meeting_scheduled_at as string),
     uploadedByName: extractName(row.uploader),
     currentReviewerName: extractName(row.reviewer),
-    numOpenActionItems: 0, numOpportunities: 0,
+    numOpenActionItems: countOpenActions(row.action_items),
+    numOpportunities: extractCount(row.opportunities),
     createdAt: row.created_at, updatedAt: row.updated_at,
   };
 }
@@ -111,6 +116,46 @@ function mapRow(row: Record<string, unknown>): Record<string, unknown> {
 function computeHoursUntil(iso: string): number {
   if (!iso) return Infinity;
   return (new Date(iso).getTime() - Date.now()) / 3_600_000;
+}
+
+/** Count action items still open (anything not Completed). */
+function countOpenActions(rel: unknown): number {
+  if (!Array.isArray(rel)) return 0;
+  return rel.filter((i) => (i as { status?: string }).status !== 'Completed').length;
+}
+
+/** Extract a PostgREST embedded `(count)` aggregate: [{ count: N }] → N. */
+function extractCount(rel: unknown): number {
+  if (Array.isArray(rel) && rel.length > 0) {
+    const c = (rel[0] as { count?: number }).count;
+    return typeof c === 'number' ? c : 0;
+  }
+  return 0;
+}
+
+/**
+ * Count the actor's own upcoming meetings (next 24h / next 7 days), excluding
+ * already-published briefs — drives the dashboard's "Meetings Tomorrow" /
+ * "This Week" KPI tiles (previously hardcoded to 0).
+ */
+async function getUpcomingMeetingCounts(
+  employeeId: number
+): Promise<{ tomorrow: number; thisWeek: number }> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return { tomorrow: 0, thisWeek: 0 };
+  const now = new Date();
+  const in24h = new Date(now.getTime() + 24 * 3_600_000);
+  const in7d = new Date(now.getTime() + 7 * 24 * 3_600_000);
+  const window = (end: Date) =>
+    supabase
+      .from('mp_meeting_briefs')
+      .select('id', { count: 'exact', head: true })
+      .eq('uploaded_by_employee_id', employeeId)
+      .neq('status', 'PUBLISHED')
+      .gte('meeting_scheduled_at', now.toISOString())
+      .lte('meeting_scheduled_at', end.toISOString());
+  const [t, w] = await Promise.all([window(in24h), window(in7d)]);
+  return { tomorrow: t.count ?? 0, thisWeek: w.count ?? 0 };
 }
 
 function extractName(emp: unknown): string | null {

@@ -139,7 +139,10 @@ export default function LifeStageCalculatorPage() {
                   <NumberInput label="Investment Duration" value={investYears} onChange={setInvestYears} suffix="Years" step={1} min={1} max={30} />
                   <NumberInput label="Expected Return (Growth Phase)" value={investReturn} onChange={setInvestReturn} suffix="% p.a." step={0.5} min={1} max={25} />
 
-                  <div className="pt-3 border-t border-brand-200">
+                  <div
+                    className="pt-3 border-t border-brand-200"
+                    data-pdf-stepup={investmentMode === 'step-up' ? `Annual Step-Up (${stepUpType === 'percentage' ? 'Percentage' : 'Amount'}): ${stepUpType === 'amount' ? '₹' : ''}${stepUpValue}${stepUpType === 'percentage' ? '%' : ''}` : undefined}
+                  >
                     <div className="flex items-center justify-between mb-2">
                       <label className="text-xs font-medium text-slate-600">SIP Mode</label>
                       <button
@@ -240,7 +243,7 @@ export default function LifeStageCalculatorPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <NumberInput label="Monthly Withdrawal" value={monthlyWithdrawal} onChange={setMonthlyWithdrawal} prefix="₹" step={5000} min={5000} max={5000000} />
+                  <NumberInput label="Monthly Withdrawal" value={monthlyWithdrawal} onChange={setMonthlyWithdrawal} prefix="₹" step={500} min={500} max={2500000} hint="₹500 to ₹25L — type any amount" />
                   <NumberInput label="Withdrawal Duration" value={withdrawYears} onChange={setWithdrawYears} suffix="Years" step={1} min={1} max={30} />
                   <NumberInput label="Expected Return during Withdrawal" value={withdrawReturn} onChange={setWithdrawReturn} suffix="% p.a." step={0.5} min={1} max={15} />
 

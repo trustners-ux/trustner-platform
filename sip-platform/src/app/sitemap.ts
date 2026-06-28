@@ -4,8 +4,13 @@ import { join } from 'node:path';
 import { getAllModules } from '@/data/modules';
 import { blogPosts } from '@/data/blog';
 import { getAllProfiles } from '@/data/life-plans';
+import { getSitemapFundCodes } from '@/lib/services/pd-fund-detail';
 
 const BASE_URL = 'https://www.merasip.com';
+
+// Regenerate the sitemap daily — the per-fund URL set + NAV lastModified shift
+// with the daily NAV cron; a stale sitemap would under-report fresh data.
+export const revalidate = 86400;
 
 /**
  * Auto-discover all sub-routes that have a `page.tsx`, scanning the app
@@ -34,7 +39,7 @@ function discoverRoutesIn(appSubDir: string): string[] {
   }
 }
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const modules = getAllModules();
   const now = new Date().toISOString();
 
@@ -42,6 +47,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: BASE_URL, lastModified: now, changeFrequency: 'weekly', priority: 1.0 },
     { url: `${BASE_URL}/learn`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${BASE_URL}/calculators`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${BASE_URL}/portfolio-check`, lastModified: now, changeFrequency: 'monthly', priority: 1.0 },
     { url: `${BASE_URL}/research`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE_URL}/glossary`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE_URL}/funds`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
@@ -57,6 +63,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE_URL}/grievance-redressal`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${BASE_URL}/commission-disclosure`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${BASE_URL}/what-is-sip`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${BASE_URL}/sif`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${BASE_URL}/funds/sif`, lastModified: now, changeFrequency: 'daily', priority: 0.85 },
     { url: `${BASE_URL}/sip-for-beginners`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${BASE_URL}/sip-vs-lumpsum`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${BASE_URL}/sip-for-retirement`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
@@ -170,5 +178,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE_URL}/mfd/trail-calculator`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.7 },
   ];
 
-  return [...staticPages, ...calculatorPages, ...researchPages, ...blogPages, ...financialPlanningPages, ...galleryPage, ...resourcePages, ...lifePlanPages, ...fundToolPages, ...mfdPages, ...trackPages, ...modulePages];
+  // Per-fund detail pages — the canonical /funds/<amfi_code> URLs. This is the
+  // bulk of organic search surface (~2,300 Regular-plan schemes). Sourced live
+  // from the DB so every newly-tracked fund appears automatically; a DB blip
+  // degrades to an empty list (the rest of the sitemap still ships).
+  let fundDetailPages: MetadataRoute.Sitemap = [];
+  try {
+    const codes = await getSitemapFundCodes();
+    fundDetailPages = codes.map((c) => ({
+      url: `${BASE_URL}/funds/${c.amfi_code}`,
+      lastModified: c.lastModified,
+      changeFrequency: 'daily' as const,
+      priority: 0.6,
+    }));
+  } catch {
+    fundDetailPages = [];
+  }
+
+  return [...staticPages, ...calculatorPages, ...researchPages, ...blogPages, ...financialPlanningPages, ...galleryPage, ...resourcePages, ...lifePlanPages, ...fundToolPages, ...mfdPages, ...trackPages, ...modulePages, ...fundDetailPages];
 }

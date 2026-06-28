@@ -49,6 +49,7 @@ function normalizeName(name: string): string {
   if (!name) return '';
   let s = String(name).toLowerCase();
   s = s.replace(/\([^)]*\)/g, ' ');
+  s = s.replace(/\bbalance\s+advantage\b/g, 'balanced advantage'); // NGEN typo for the SEBI "Balanced Advantage" cat
   s = s
     .replace(/\bregular\s+plan\b/g, '').replace(/\bdirect\s+plan\b/g, '')
     .replace(/\bgrowth\s+option\b/g, '').replace(/\bgrowth\s+sub\s+option\b/g, '')
@@ -56,7 +57,7 @@ function normalizeName(name: string): string {
     .replace(/\bidcw-payout\b|\bidcw-reinvest\b|\bidcw-w\b|\bidcw-m\b|\bidcw-q\b|\bidcw\b/g, '')
     .replace(/\bdividend\s+payout\b|\bdividend\s+reinvest\b|\bdividend\s+option\b/g, '')
     .replace(/\bgrowth\b/g, '').replace(/\boption\b/g, '')
-    .replace(/\bregulr\b/g, '').replace(/\bregular\b/g, '').replace(/\bdirect\b/g, '').replace(/\breg\b/g, '')
+    .replace(/\bregulr\b/g, '').replace(/\bregulat\b/g, '').replace(/\bregular\b/g, '').replace(/\bdirect\b/g, '').replace(/\breg\b/g, '')
     .replace(/\bplan\b/g, '');
   s = s
     .replace(/\baditya\s+birla\s+sun\s+life\b/g, 'absl').replace(/\baditya\s+birla\s+sl\b/g, 'absl')
@@ -77,7 +78,9 @@ function normalizeName(name: string): string {
   s = s.replace(/\bmutual\s+fund\b/g, '').replace(/\basset\s+management\b/g, '')
     .replace(/\bamc\b/g, '').replace(/\bfund\s+of\s+funds?\b/g, 'fof')
     .replace(/\bfund\b/g, '');
-  s = s.replace(/[-–—•·,.&'"/]/g, ' ').replace(/\s+/g, ' ').trim();
+  // Include "_" (junk separator in some AMFI names, e.g. Kotak Focused) and drop
+  // the "and" connector so NGEN "Large & Mid" and AMFI "Large and Mid" unify.
+  s = s.replace(/[-–—•·,._&'"/]/g, ' ').replace(/\band\b/g, ' ').replace(/\s+/g, ' ').trim();
   return s;
 }
 
@@ -91,21 +94,42 @@ function preferRegularGrowth(candidates: MasterRow[]): MasterRow {
   return candidates.find(isRegular) || candidates.find(isGrowth) || candidates[0];
 }
 
+// Re-select the Regular-Growth sibling sharing the despaced norm — the NGEN feed
+// is Regular-only, so any match to a Direct/IDCW code is wrong (e.g. Nippon Vision
+// Regular "Midcap" vs Direct "Mid Cap" can exact-match the Direct twin).
+function finalizeMatch(row: MasterRow | null, despacedIndex?: Map<string, MasterRow[]>): MasterRow | null {
+  if (!row || !despacedIndex) return row;
+  const key = normalizeName(row.scheme_name).replace(/\s+/g, '');
+  const group = despacedIndex.get(key);
+  if (group && group.length > 1) return preferRegularGrowth(group);
+  return row;
+}
+
 function matchFund(
   ngenName: string,
   index: Map<string, MasterRow[]>,
-  flatIndex: MasterRow[]
+  flatIndex: MasterRow[],
+  despacedIndex?: Map<string, MasterRow[]>
 ): MasterRow | null {
   const norm = normalizeName(ngenName);
   if (!norm) return null;
   const exact = index.get(norm) || [];
-  if (exact.length > 0) return preferRegularGrowth(exact);
+  if (exact.length > 0) return finalizeMatch(preferRegularGrowth(exact), despacedIndex);
+
+  // Despaced exact match — bridges cap-size word spacing ("Flexi Cap" vs
+  // "Flexicap", "Large and Mid Cap" vs "Large and Midcap", "Mid Cap" vs
+  // "Midcap"). Additive: only fires when the spaced exact match failed, so it
+  // cannot regress a currently-correct match.
+  if (despacedIndex) {
+    const dArr = despacedIndex.get(norm.replace(/\s+/g, ''));
+    if (dArr && dArr.length > 0) return preferRegularGrowth(dArr);
+  }
 
   const tokens = norm.split(' ');
   for (let drop = 1; drop <= 3 && drop < tokens.length; drop++) {
     const reduced = tokens.slice(drop).join(' ');
     const arr = index.get(reduced);
-    if (arr && arr.length > 0) return preferRegularGrowth(arr);
+    if (arr && arr.length > 0) return finalizeMatch(preferRegularGrowth(arr), despacedIndex);
   }
 
   const ngenTokens = new Set(tokens.filter((t) => t.length > 2));
@@ -132,7 +156,7 @@ function matchFund(
     const adjScore = score - excess * 0.25;
     if (adjScore > best.score) best = { row: f, score: adjScore };
   }
-  return best.row;
+  return finalizeMatch(best.row, despacedIndex);
 }
 
 function toIsoDate(v: unknown): string | null {
@@ -316,6 +340,7 @@ export async function POST(req: NextRequest) {
 
     // Build index
     const byNormName = new Map<string, MasterRow[]>();
+    const despacedIndex = new Map<string, MasterRow[]>();
     const flatIndex: MasterRow[] = [];
     for (const row of master) {
       const norm = normalizeName(row.scheme_name);
@@ -323,12 +348,17 @@ export async function POST(req: NextRequest) {
       flatIndex.push(item);
       if (!byNormName.has(norm)) byNormName.set(norm, []);
       byNormName.get(norm)!.push(item);
+      const dKey = norm.replace(/\s+/g, '');
+      if (dKey) {
+        if (!despacedIndex.has(dKey)) despacedIndex.set(dKey, []);
+        despacedIndex.get(dKey)!.push(item);
+      }
     }
 
     const matched: Array<ParsedFund & { amfi_code: string }> = [];
     const unmatched: ParsedFund[] = [];
     for (const f of allFunds) {
-      const hit = matchFund(f.scheme_name_source, byNormName, flatIndex);
+      const hit = matchFund(f.scheme_name_source, byNormName, flatIndex, despacedIndex);
       if (hit) matched.push({ ...f, amfi_code: hit.amfi_code });
       else unmatched.push(f);
     }

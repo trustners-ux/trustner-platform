@@ -50,12 +50,9 @@ export interface RiskResponse {
 }
 
 /**
- * Standard 15-question Trustner risk profiler. Scoring:
- *   < 25:    Conservative
- *   25-40:   Moderate
- *   40-60:   Moderately Aggressive
- *   60-80:   Aggressive
- *   80+:     Very Aggressive
+ * Trustner risk profiler. Each question scores 1-5; the category is derived
+ * from the score normalised to the achievable range (see computeRiskCategory),
+ * so it stays correct no matter how many questions the questionnaire carries.
  */
 export const RISK_QUESTIONS: RiskQuestion[] = [
   {
@@ -239,11 +236,37 @@ export interface OrientationListItem {
 // RISK SCORE COMPUTATION
 // ─────────────────────────────────────────────────────────────────
 
-export function computeRiskCategory(score: number): RiskCategoryName {
-  if (score < 25) return 'Conservative';
-  if (score < 40) return 'Moderate';
-  if (score < 60) return 'Moderately Aggressive';
-  if (score < 80) return 'Aggressive';
+/** Per-question score bounds (every risk question uses a 1-5 option scale). */
+export const RISK_MIN_PER_Q = 1;
+export const RISK_MAX_PER_Q = 5;
+/** Max achievable score on the full questionnaire (sum of each question's top option). */
+export const RISK_MAX_SCORE = RISK_QUESTIONS.reduce(
+  (s, q) => s + Math.max(...q.options.map((o) => o.score)),
+  0
+);
+
+/**
+ * Map a raw risk score to a category. The bands were originally hard-coded for a
+ * 15-question profiler (max 75) but the questionnaire was cut to 8 questions
+ * (max 40), which made 'Aggressive'/'Very Aggressive' mathematically unreachable.
+ * We now normalise the score to the achievable range so all five categories are
+ * reachable regardless of question count.
+ *
+ * @param maxScore  the max achievable for the answered set (defaults to the full
+ *                  questionnaire). Pass `numAnswered * RISK_MAX_PER_Q` when a
+ *                  partial set is scored so the normalisation stays honest.
+ */
+export function computeRiskCategory(
+  score: number,
+  maxScore: number = RISK_MAX_SCORE
+): RiskCategoryName {
+  const minScore = (maxScore / RISK_MAX_PER_Q) * RISK_MIN_PER_Q; // proportional floor
+  const range = Math.max(1, maxScore - minScore);
+  const pct = ((score - minScore) / range) * 100;
+  if (pct < 20) return 'Conservative';
+  if (pct < 40) return 'Moderate';
+  if (pct < 60) return 'Moderately Aggressive';
+  if (pct < 80) return 'Aggressive';
   return 'Very Aggressive';
 }
 

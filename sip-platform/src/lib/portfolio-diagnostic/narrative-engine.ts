@@ -2,7 +2,7 @@
  * Portfolio Diagnostic — LLM Narrative Engine
  *
  * Bridges the gap between the platform's deterministic data layer
- * (scoring, verdicts, KPIs, tax math) and the hand-crafted advisor
+ * (scoring, verdicts, KPIs, tax math) and the hand-crafted RM
  * narrative quality of the Bihani / Dutta / Dhar / Sarkar reports.
  *
  * Architecture:
@@ -23,6 +23,8 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { getSupabaseAdmin } from '@/lib/db/supabase';
+import { loadBuyList, bestOpenReplacement } from '@/lib/portfolio-diagnostic/v2/buylist';
+import { subCategoryKey } from '@/lib/portfolio-diagnostic/v2/fund-engine';
 
 // ─────────────────────────────────────────────────────────────────
 // NARRATIVE JSON SCHEMA (TS types + JSON schema)
@@ -98,9 +100,9 @@ export interface NarrativeJSON {
   directNote: string;
   /** Recommended meeting agenda with time allocations. */
   meetingAgenda: Array<{ time: string; topic: string }>;
-  /** Anticipated client questions with scripted answers (for advisor brief). */
+  /** Anticipated client questions with scripted answers (for RM brief). */
   anticipatedQA: Array<{ question: string; answer: string }>;
-  /** Meeting tone note — how the advisor should pace this conversation. */
+  /** Meeting tone note — how the RM should pace this conversation. */
   toneNote: string;
 }
 
@@ -307,26 +309,26 @@ Your output will be rendered in PDF reports that match these gold-standard hand-
 - **Direct, data-led, no hedging.** "₹56 L of dead capital identified" is the right register. "There may be some underperformance" is not.
 - **Concrete numbers always.** Never write "the fund has lagged." Write "9.19% XIRR over 3 years; 1Y -0.87%."
 - **Honest about timing vs fund quality.** Distinguish "the fund is bad" from "the entry timing was unlucky." Both warrant action but the framing is different.
-- **Confident without being cocky.** The advisor's read is the read — but anchored in benchmarks, peer comparisons, and 3Y/5Y CAGR.
+- **Confident without being cocky.** The RM's read is the read — but anchored in benchmarks, peer comparisons, and 3Y/5Y CAGR.
 - **Empathetic when warranted.** For the direct note section (Section 12), acknowledge the human pull behind decisions before redirecting. Never blame the client.
 - **Frame underperformance as opportunity.** "₹49 L additional wealth for ~₹12k net tax. That is ROI of 4,000× on the tax outlay." Not "you should fix this."
-- **Specific scripted answers for anticipated questions.** The advisor uses these verbatim in the meeting — write them as Sangeeta/Ram would say them.
+- **Specific scripted answers for anticipated questions.** The RM uses these verbatim in the meeting — write them as Sangeeta/Ram would say them.
 
 # WHAT MAKES A REPORT GREAT
 
-1. **The CENTRAL FINDING is the lede.** Open every review with the single most important observation — the 2.7 ppt XIRR gap, the ₹56 L dead capital, the 4 dead-money positions. This is what the advisor mentions in the first 2 minutes of the meeting.
+1. **The CENTRAL FINDING is the lede.** Open every review with the single most important observation — the 2.7 ppt XIRR gap, the ₹56 L dead capital, the 4 dead-money positions. This is what the RM mentions in the first 2 minutes of the meeting.
 
 2. **Per-holding "why" is context-aware.** Don't just say "STAR — top quartile." Say "Sribas's entry is better than Madhuchanda's (8.60%) — keep this lot." Cross-reference funds the family already owns. Connect dots across PANs.
 
 3. **Tax math has ROI framing.** Never just list "tax = ₹32k." Always pair with "to unlock ₹56 L of dead capital. 1,750× ROI on the tax outlay."
 
-4. **Wealth scenarios are concrete.** "Do nothing: ₹6.13 Cr" / "Execute swaps: ₹6.43 Cr (+₹30 L)" / "+International: ₹6.62 Cr (+₹19 L)". The marginal benefit per scenario lets the advisor walk the family through choices.
+4. **Wealth scenarios are concrete.** "Do nothing: ₹6.13 Cr" / "Execute swaps: ₹6.43 Cr (+₹30 L)" / "+International: ₹6.62 Cr (+₹19 L)". The marginal benefit per scenario lets the RM walk the family through choices.
 
 5. **The direct note is empathetic and short.** 3-4 paragraphs. Acknowledge what's working. Explain the underperformers as timing accidents (not fund-selection errors) where possible. Close with confidence in the path forward.
 
-6. **Anticipated Q&A is realistic.** Predict the 4-5 questions the client will actually ask, with answers written in the advisor's voice — "You picked the same quality of funds. The difference is timing..."
+6. **Anticipated Q&A is realistic.** Predict the 4-5 questions the client will actually ask, with answers written in the RM's voice — "You picked the same quality of funds. The difference is timing..."
 
-7. **Tone note matters.** Tell the advisor whether to lead with empathy or with math. "Lead with the math. The behavioural conversation flows from the math, not the other way around."
+7. **Tone note matters.** Tell the RM whether to lead with empathy or with math. "Lead with the math. The behavioural conversation flows from the math, not the other way around."
 
 # WHAT TO AVOID
 
@@ -453,7 +455,44 @@ interface DiagnosticInputData {
     holdingPeriodMonths: number | null;
     verdict: string;
     verdictRationale: string | null;
+    // v2 precise action — distinguishes EXIT_UNSUITABLE vs SWITCH_BETTER, which the
+    // legacy 5-value verdict enum collapses into a single "SWAP".
+    v2Action: string | null;
+    v2ActionLabel: string | null;
+    // Trustner Approved Buy-List replacement (capacity-aware, house view) for sells.
+    buyListReplacement: string | null;
   }>;
+  // ── v2 Verdict-Engine intelligence (already computed; we only narrate it) ──
+  v2: {
+    // Pillar-6 consolidation: same-sub-category duplicates worth folding into a keeper.
+    consolidation: {
+      groupCount: number;
+      totalConsolidatableInr: number;
+      groups: Array<{
+        subCategory: string;
+        count: number;
+        keep: string;
+        fold: string[];
+        totalConsolidatableInr: number;
+        confidence: string;
+      }>;
+    };
+    // India tax-aware exit estimate (LTCG 12.5% over ₹1.25L / STCG 20% / debt-slab / ELSS lock).
+    tax: {
+      exitCount: number;
+      estTotalTaxInr: number;
+      headline: string;
+      lockedNotes: string[];   // e.g. ELSS-locked or note-bearing lines worth surfacing
+    } | null;
+    // Exit-vs-switch split — how many holdings are genuinely unsuitable (full exit)
+    // versus simply beaten by a better fund in the same role (switch).
+    exitVsSwitch: {
+      exitUnsuitableCount: number;
+      switchBetterCount: number;
+      exitFunds: string[];
+      switchFunds: string[];
+    };
+  };
 }
 
 async function loadDiagnosticData(diagnosticRunId: number): Promise<DiagnosticInputData | null> {
@@ -467,6 +506,7 @@ async function loadDiagnosticData(diagnosticRunId: number): Promise<DiagnosticIn
       `id, family_id, family_name, status,
        total_invested_inr, current_value_inr, unrealised_gain_inr,
        family_xirr_pct, num_holdings, num_active_sips,
+       v2_consolidation, v2_consolidation_value_inr, v2_tax_summary,
        family:pd_client_families!pd_diagnostic_runs_family_id_fkey(
          id, family_name, primary_contact_name, primary_contact_mobile, segment, notes
        )`
@@ -490,12 +530,17 @@ async function loadDiagnosticData(diagnosticRunId: number): Promise<DiagnosticIn
   const { data: holdings } = await supabase
     .from('pd_diagnostic_holdings')
     .select(
-      `id, fund_name, category, units, invested_inr, current_value_inr,
+      `id, fund_name, amfi_code, category, units, invested_inr, current_value_inr,
        xirr_pct, holding_period_months,
        cagr_3y, cagr_5y, verdict, verdict_rationale,
+       v2_action, v2_action_label,
        entity:pd_family_entities(entity_name)`
     )
     .eq('diagnostic_run_id', diagnosticRunId);
+
+  // Trustner Approved Buy-List (committee shortlist) — supplies capacity-aware,
+  // house-view replacement names for sells. Loads gracefully (empty if absent).
+  const buyList = await loadBuyList(supabase);
 
   // PAN-level aggregation from entities
   const { data: entities } = await supabase
@@ -517,19 +562,34 @@ async function loadDiagnosticData(diagnosticRunId: number): Promise<DiagnosticIn
     const entObj = (h as { entity?: unknown }).entity;
     const ent = Array.isArray(entObj) ? entObj[0] : entObj;
     const heldBy = (ent as { entity_name?: string } | undefined)?.entity_name ?? '—';
+    const category = (h.category as string | null) ?? null;
+    const verdict = h.verdict as string;
+    const amfiCode = (h.amfi_code as string | null) ?? null;
+
+    // For sells, surface the capacity-aware Buy-List replacement (house view) so the
+    // narrative can name a concrete, already-approved alternative.
+    let buyListReplacement: string | null = null;
+    if (verdict === 'SWAP' || verdict === 'LIQUIDATE') {
+      const blr = bestOpenReplacement(buyList, subCategoryKey(category), amfiCode);
+      if (blr) buyListReplacement = blr.schemeName;
+    }
+
     return {
       id: h.id as number,
       fundName: h.fund_name as string,
       heldBy,
-      category: (h.category as string | null) ?? null,
+      category,
       invested: Number(h.invested_inr) || 0,
       current: Number(h.current_value_inr) || 0,
       xirrPct: h.xirr_pct as number | null,
       cagr3y: h.cagr_3y as number | null,
       cagr5y: h.cagr_5y as number | null,
       holdingPeriodMonths: h.holding_period_months as number | null,
-      verdict: h.verdict as string,
+      verdict,
       verdictRationale: (h.verdict_rationale as string | null) ?? null,
+      v2Action: (h.v2_action as string | null) ?? null,
+      v2ActionLabel: (h.v2_action_label as string | null) ?? null,
+      buyListReplacement,
     };
   });
 
@@ -545,6 +605,44 @@ async function loadDiagnosticData(diagnosticRunId: number): Promise<DiagnosticIn
       xirrPct: null as number | null, // PAN-level XIRR computed at scoring time, not here
     };
   });
+
+  // ── v2 Verdict-Engine intelligence (already computed by the engine; we only
+  //    reshape it into prompt-ready summaries — no recomputation) ──────────────
+  type RawConsolidationGroup = {
+    subCategory: string; count: number;
+    keep?: { fundName?: string };
+    consolidate?: Array<{ fundName?: string; currentValueInr?: number }>;
+    totalConsolidatableInr?: number; confidence?: string;
+  };
+  const rawConsolidation = (run.v2_consolidation as RawConsolidationGroup[] | null) ?? [];
+  const consolidationGroups = rawConsolidation.map((g) => ({
+    subCategory: g.subCategory,
+    count: g.count,
+    keep: g.keep?.fundName ?? '—',
+    fold: (g.consolidate ?? []).map((c) => c.fundName ?? '—'),
+    totalConsolidatableInr: Number(g.totalConsolidatableInr) || 0,
+    confidence: g.confidence ?? '',
+  }));
+
+  type RawTaxSummary = {
+    lines?: Array<{ fundName?: string; gainType?: string; locked?: boolean; note?: string }>;
+    exitCount?: number; estTotalTaxInr?: number; headline?: string;
+  };
+  const rawTax = (run.v2_tax_summary as RawTaxSummary | null) ?? null;
+  const tax = rawTax
+    ? {
+        exitCount: Number(rawTax.exitCount) || 0,
+        estTotalTaxInr: Number(rawTax.estTotalTaxInr) || 0,
+        headline: rawTax.headline ?? '',
+        lockedNotes: (rawTax.lines ?? [])
+          .filter((l) => l.locked || (l.note && l.note.trim().length > 0))
+          .map((l) => `${l.fundName ?? '—'}: ${l.locked ? 'LOCKED' : ''}${l.note ? ` ${l.note}` : ''}`.trim()),
+      }
+    : null;
+
+  // Exit-vs-switch split from the precise v2 action (legacy verdict collapses both to SWAP).
+  const exitFunds = mappedHoldings.filter((h) => h.v2Action === 'EXIT_UNSUITABLE').map((h) => h.fundName);
+  const switchFunds = mappedHoldings.filter((h) => h.v2Action === 'SWITCH_BETTER').map((h) => h.fundName);
 
   return {
     diagnosticRunId,
@@ -566,12 +664,78 @@ async function loadDiagnosticData(diagnosticRunId: number): Promise<DiagnosticIn
       numActiveSips: (run.num_active_sips as number) || 0,
     },
     holdings: mappedHoldings,
+    v2: {
+      consolidation: {
+        groupCount: consolidationGroups.length,
+        totalConsolidatableInr: Number(run.v2_consolidation_value_inr) || 0,
+        groups: consolidationGroups,
+      },
+      tax,
+      exitVsSwitch: {
+        exitUnsuitableCount: exitFunds.length,
+        switchBetterCount: switchFunds.length,
+        exitFunds,
+        switchFunds,
+      },
+    },
   };
 }
 
 // ─────────────────────────────────────────────────────────────────
 // PROMPT BUILDER — turns structured data into a clear user message
 // ─────────────────────────────────────────────────────────────────
+
+/**
+ * Render the v2 Verdict-Engine intelligence (consolidation, India tax-aware exit
+ * estimate, exit-vs-switch split) as a prompt block. Each sub-section is emitted
+ * ONLY when it has content — empty arrays / null tax produce nothing, so the model
+ * is never tempted to invent a section. All figures are pre-computed by the engine.
+ */
+function buildV2Block(data: DiagnosticInputData, formatInr: (n: number) => string): string {
+  const { consolidation, tax, exitVsSwitch } = data.v2;
+  const parts: string[] = [];
+
+  // ── Pillar-6 consolidation ──
+  if (consolidation.groupCount > 0) {
+    const rows = consolidation.groups
+      .map(
+        (g) =>
+          `- **${g.subCategory}** (${g.count} funds, ${g.confidence || 'review'} confidence): keep **${g.keep}**, fold ${g.fold.join(', ')} → ${formatInr(g.totalConsolidatableInr)} freed`
+      )
+      .join('\n');
+    parts.push(
+      `## Consolidation opportunity (engine-computed)
+${consolidation.groupCount} same-sub-category duplicate cluster(s); ${formatInr(consolidation.totalConsolidatableInr)} total can be folded into the better fund:
+${rows}`
+    );
+  }
+
+  // ── India tax-aware exit estimate ──
+  if (tax && tax.exitCount > 0) {
+    const notes = tax.lockedNotes.length
+      ? `\nLocked / note-bearing positions: ${tax.lockedNotes.join('; ')}`
+      : '';
+    parts.push(
+      `## Tax cost of acting (engine-computed, India rules)
+${tax.headline || `${tax.exitCount} exit(s); estimated tax ${formatInr(tax.estTotalTaxInr)}`}
+Estimated total tax to action the recommended exits: **${formatInr(tax.estTotalTaxInr)}** across ${tax.exitCount} position(s). This applies LTCG 12.5% over ₹1.25 L/PAN/FY, STCG 20%, debt at slab, and respects ELSS lock-in.${notes}
+NOTE: this is an estimate — the narrative must tell the family to confirm the exact figure with their CA before acting.`
+    );
+  }
+
+  // ── Exit-vs-switch split ──
+  if (exitVsSwitch.exitUnsuitableCount > 0 || exitVsSwitch.switchBetterCount > 0) {
+    const exit = exitVsSwitch.exitFunds.length ? `EXIT (unsuitable): ${exitVsSwitch.exitFunds.join(', ')}` : '';
+    const sw = exitVsSwitch.switchFunds.length ? `SWITCH (beaten by a better fund): ${exitVsSwitch.switchFunds.join(', ')}` : '';
+    parts.push(
+      `## Exit-vs-switch split (engine-computed)
+${exitVsSwitch.exitUnsuitableCount} holding(s) are full EXITs (fund no longer fits the goal/risk), ${exitVsSwitch.switchBetterCount} are SWITCHes (the fund is acceptable but a stronger fund exists for the same role). Keep these distinct in the narrative — an exit is a fit problem, a switch is an upgrade.
+${[exit, sw].filter(Boolean).join('\n')}`
+    );
+  }
+
+  return parts.length ? `\n${parts.join('\n\n')}\n` : '';
+}
 
 function buildUserPrompt(data: DiagnosticInputData): string {
   const formatInr = (n: number): string => {
@@ -601,15 +765,17 @@ ${data.pansCovered.map((p) => `- ${p.name}`).join('\n')}
 
 ## All holdings (${data.holdings.length})
 
-| # | Fund | Held by | Category | Invested | Current | XIRR | 3Y CAGR | 5Y CAGR | Verdict | Rationale |
-|---|------|---------|----------|----------|---------|------|---------|---------|---------|-----------|
+The "v2 Action" column is the engine's PRECISE action — note it distinguishes EXIT_UNSUITABLE (the fund no longer fits; full exit warranted) from SWITCH_BETTER (the fund is fine but a better fund exists for the same role). "Buy-List replacement" is the firm's committee-approved, capacity-aware alternative — name it verbatim when recommending a sell; never substitute a direct plan.
+
+| # | Fund | Held by | Category | Invested | Current | XIRR | 3Y CAGR | 5Y CAGR | Verdict | v2 Action | Buy-List replacement | Rationale |
+|---|------|---------|----------|----------|---------|------|---------|---------|---------|-----------|----------------------|-----------|
 ${data.holdings
   .map(
     (h, i) =>
-      `| ${i + 1} | ${h.fundName} | ${h.heldBy} | ${h.category ?? '—'} | ${formatInr(h.invested)} | ${formatInr(h.current)} | ${h.xirrPct?.toFixed(2) ?? 'NM'}% | ${h.cagr3y?.toFixed(2) ?? 'NM'}% | ${h.cagr5y?.toFixed(2) ?? 'NM'}% | ${h.verdict} | ${h.verdictRationale ?? ''} |`
+      `| ${i + 1} | ${h.fundName} | ${h.heldBy} | ${h.category ?? '—'} | ${formatInr(h.invested)} | ${formatInr(h.current)} | ${h.xirrPct?.toFixed(2) ?? 'NM'}% | ${h.cagr3y?.toFixed(2) ?? 'NM'}% | ${h.cagr5y?.toFixed(2) ?? 'NM'}% | ${h.verdict} | ${h.v2ActionLabel ?? h.v2Action ?? '—'} | ${h.buyListReplacement ?? '—'} | ${h.verdictRationale ?? ''} |`
   )
   .join('\n')}
-
+${buildV2Block(data, formatInr)}
 # INSTRUCTIONS
 
 Generate the NarrativeJSON for this family.
@@ -624,9 +790,17 @@ Key things to look for in this dataset:
 7. **Concentration risk** — single fund >15% of family AUM → flag
 8. **Legacy positions** — funds held 5+ years with strong absolute returns → "untouchable" in whatNotToDo
 
+## WEAVE IN THE ENGINE-COMPUTED v2 INTELLIGENCE (only what is provided above)
+
+The blocks above the instructions ("Consolidation opportunity", "Tax cost of acting", "Exit-vs-switch split") are ALREADY computed by Trustner's deterministic engine. Narrate ONLY what is present — do NOT invent any figure, fund name, or section that is not in the data:
+
+9. **Consolidation** — if a "Consolidation opportunity" block is present, weave it into bottomLine / portfolioOverlap / topActions: name the keeper, name the funds to fold, and state the ₹ freed (use the figure given verbatim). If no such block appears, say nothing about consolidation.
+10. **Tax cost of acting** — if a "Tax cost of acting" block is present, reflect that exact ₹ estimate in taxImpact.summary and pair it with the wealth unlocked (ROI framing). ALWAYS add a short "confirm the exact figure with your CA before acting" line — the engine number is an estimate. Honour any ELSS-locked / note-bearing positions listed (they cannot be exited until lock-in ends). If no tax block appears, leave taxImpact as the no-swaps default.
+11. **Exit vs switch** — if an "Exit-vs-switch split" block is present, keep the two distinct everywhere (topActions, perHoldingWhy, directNote): an EXIT is a fit problem (the fund no longer suits the goal/risk), a SWITCH is an upgrade (the fund is fine but a stronger one exists for the same role). When recommending a sell, name the "Buy-List replacement" from the holdings table verbatim — it is the firm's committee-approved, capacity-aware pick. Never suggest a direct plan.
+
 For perHoldingWhy: produce ONE entry per holding, with holdingId matching the data above. Keep each "why" to 1-2 sentences with specific numbers.
 
-For tax math: use the standard Indian LTCG ₹1.25 L per PAN per FY exemption rule (12.5% on excess). Phase swaps across FY26-FY27 if any single PAN's gains exceed the exemption.
+For tax math: use the standard Indian LTCG ₹1.25 L per PAN per FY exemption rule (12.5% on excess). Phase swaps across FY26-FY27 if any single PAN's gains exceed the exemption. Where the engine's "Tax cost of acting" block gives a figure, prefer that figure over any you would derive.
 
 Output ONLY the JSON. No markdown fences, no commentary.`;
 

@@ -24,12 +24,14 @@ const ICON_MAP: Record<string, React.ElementType> = {
 
 export function AdminSidebar({
   role,
+  hasPdAccess = false,
   collapsed,
   onToggle,
   mobileOpen,
   onMobileClose,
 }: {
   role: AdminRole;
+  hasPdAccess?: boolean;
   collapsed: boolean;
   onToggle: () => void;
   mobileOpen: boolean;
@@ -37,7 +39,14 @@ export function AdminSidebar({
 }) {
   const pathname = usePathname();
 
-  const visibleNav = ADMIN_NAV.filter((item) => canAccess(role, item.role));
+  // An explicit Portfolio Diagnostic grant (can_access_pd) unlocks the
+  // "Advisory Workbench" group regardless of the generic admin-role ladder —
+  // so a granted RM/Sr-RM (who maps to 'viewer') still sees PD & its sub-tools.
+  const visibleNav = ADMIN_NAV.filter(
+    (item) =>
+      canAccess(role, item.role) ||
+      (hasPdAccess && item.group === 'Advisory Workbench')
+  );
 
   return (
     <>

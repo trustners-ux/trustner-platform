@@ -24,10 +24,14 @@ import { loadReportData, formatInrShort, formatPct } from './report-data';
 // ─────────────────────────────────────────────────────────────────
 
 export type DeliverableId =
+  | 'client-deck'
+  | 'premium'
+  | 'docx'
   | 'one-pager'
   | 'full'
   | 'three-pager'
   | 'action'
+  | 'proposal'
   | 'xlsx'
   | 'pptx';
 
@@ -36,15 +40,19 @@ export interface DeliverableOption {
   label: string;
   description: string;
   urlSuffix: string;        // appended to /report?type=...
-  format: 'html' | 'xlsx' | 'pptx';
+  format: 'html' | 'xlsx' | 'pptx' | 'docx';
   emoji: string;
 }
 
 export const DELIVERABLE_OPTIONS: DeliverableOption[] = [
+  { id: 'client-deck', label: 'Client Review Deck (PDF)', description: 'Easy-read landscape deck — your portfolio, 1Y/3Y/5Y returns, and the action plan at a glance.', urlSuffix: 'client-deck', format: 'html', emoji: '🗂️' },
+  { id: 'premium',     label: 'Premium Review (PDF)',   description: 'The detailed report — tier-by-tier verdicts, kept for your records.',             urlSuffix: 'premium',     format: 'html', emoji: '⭐' },
+  { id: 'docx',        label: 'Editable Word Document',  description: 'The full review as an editable Word / Google Docs file.',              urlSuffix: 'docx',        format: 'docx', emoji: '📝' },
   { id: 'one-pager',   label: 'One-Pager Snapshot',     description: 'Single-page bottom-line summary — fastest read.',                       urlSuffix: 'one-pager',   format: 'html', emoji: '📋' },
   { id: 'full',        label: 'Full Portfolio Review',  description: 'Detailed 2-page tier-by-tier verdict report with observations.',        urlSuffix: 'full',        format: 'html', emoji: '📄' },
   { id: 'three-pager', label: 'Three-Pager Diagnostic', description: 'Methodology + holdings + wealth projection — deepest context.',       urlSuffix: 'three-pager', format: 'html', emoji: '📊' },
   { id: 'action',      label: 'Action Sheet',           description: 'Sign-off ready execution plan with tax estimate.',                      urlSuffix: 'action',      format: 'html', emoji: '✅' },
+  { id: 'proposal',    label: 'Investment Proposal',    description: 'Forward plan — allocation gap, the moves, and the step-up SIP to the goal.', urlSuffix: 'proposal', format: 'html', emoji: '🎯' },
   { id: 'xlsx',        label: 'Wealth Math Tracker',    description: 'Excel workbook with stay-vs-realign math + projections.',              urlSuffix: 'xlsx',        format: 'xlsx', emoji: '📈' },
   { id: 'pptx',        label: 'Family Meeting Deck',    description: 'PowerPoint for the in-person review.',                                  urlSuffix: 'pptx',        format: 'pptx', emoji: '🎯' },
 ];
@@ -58,10 +66,10 @@ export const DELIVERABLE_OPTIONS: DeliverableOption[] = [
 export type ClientSegment = 'RETAIL' | 'HNI' | 'UHNI' | 'CORPORATE';
 
 export const SEGMENT_DEFAULTS: Record<ClientSegment, DeliverableId[]> = {
-  RETAIL:    ['one-pager', 'action'],
-  HNI:       ['full', 'action', 'pptx'],
-  UHNI:      ['full', 'three-pager', 'action', 'xlsx', 'pptx'],
-  CORPORATE: ['three-pager', 'xlsx', 'pptx'],
+  RETAIL:    ['client-deck', 'action'],
+  HNI:       ['client-deck', 'action', 'pptx'],
+  UHNI:      ['client-deck', 'three-pager', 'action', 'xlsx', 'pptx'],
+  CORPORATE: ['client-deck', 'xlsx', 'pptx'],
 };
 
 // ─────────────────────────────────────────────────────────────────
@@ -217,7 +225,7 @@ export async function sendClientShareEmail(
     <h3 style="color: #0F766E; font-size: 16px; margin: 24px 0 8px 0;">${selectedDeliverables.length === 1 ? 'Your Report' : `Your ${selectedDeliverables.length} Deliverables`}</h3>
     <p style="font-size: 13px; color: #6B5F54; margin: 0 0 12px 0;">
       Click any link below. HTML reports open in your browser — use Cmd+P / Ctrl+P to save as PDF.
-      ${selectedDeliverables.some((d) => d.format !== 'html') ? 'Excel and PowerPoint files download directly.' : ''}
+      ${selectedDeliverables.some((d) => d.format !== 'html') ? 'Word, Excel and PowerPoint files download directly.' : ''}
     </p>
 
     <table style="width: 100%; border-collapse: collapse;">

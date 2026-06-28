@@ -29,7 +29,7 @@ export const fetchCache = 'force-no-store';
 // Whitelist of sortable columns
 const SORTABLE = new Set([
   'scheme_name', 'amc_name', 'external_category',
-  'live_nav', 'aum_inr_cr', 'ter',
+  'live_nav', 'aum_inr_cr', 'ter', 'launch_date',
   'returns_1d', 'returns_5d', 'returns_mtd', 'returns_ytd',
   'returns_1m', 'returns_3m', 'returns_6m',
   'returns_1y', 'returns_2y', 'returns_3y', 'returns_5y', 'returns_7y', 'returns_10y', 'returns_15y',
@@ -78,7 +78,9 @@ export async function GET(req: NextRequest) {
   const amc = sp.get('amc');
   const sortRaw = sp.get('sort') || 'aum_inr_cr:desc';
   const page = Math.max(1, parseInt(sp.get('page') || '1', 10));
-  const pageSize = Math.min(200, Math.max(10, parseInt(sp.get('pageSize') || '50', 10)));
+  // Cap at 2000 so power users (CSV export, advanced screener) can pull the
+  // whole filtered set in one request. Default remains 50 for normal pagination.
+  const pageSize = Math.min(2000, Math.max(10, parseInt(sp.get('pageSize') || '50', 10)));
 
   // Parse sort safely
   const [sortCol, sortDirRaw] = sortRaw.split(':');
@@ -127,11 +129,64 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // ── Serve OUR SEBI-standard self-computed metrics as the PRIMARY numbers ──
+  // pd_fund_metrics is refreshed nightly by /api/cron/universe-metrics from
+  // authoritative NAV (memory project-funds-auto-engine). We prefer those for
+  // the windows we compute (returns + risk), keep the NGEN snapshot for the
+  // windows we don't (MTD/YTD/2Y/7Y/10Y/15Y + valuation/allocation), and ATTACH
+  // the NGEN value as a `ngen_*` comparison field. Defensive: if pd_fund_metrics
+  // doesn't exist yet (migration 052 not applied), keep the NGEN values as-is.
+  const rows = (data ?? []) as unknown as Record<string, unknown>[];
+  let metricsAsOf: string | null = null;
+  // primary metric → (display column, ngen comparison key)
+  const MAP: Array<[string, string, string]> = [
+    ['ret_1d', 'returns_1d', 'ngen_ret_1d'],
+    ['ret_1w', 'returns_5d', 'ngen_ret_5d'],
+    ['ret_1m', 'returns_1m', 'ngen_ret_1m'],
+    ['ret_3m', 'returns_3m', 'ngen_ret_3m'],
+    ['ret_6m', 'returns_6m', 'ngen_ret_6m'],
+    ['ret_1y', 'returns_1y', 'ngen_ret_1y'],
+    ['ret_3y', 'returns_3y', 'ngen_ret_3y'],
+    ['ret_5y', 'returns_5y', 'ngen_ret_5y'],
+    ['ret_si', 'returns_since_launch', 'ngen_ret_si'],
+    ['volatility', 'volatility', 'ngen_volatility'],
+    ['sharpe', 'sharpe', 'ngen_sharpe'],
+    ['sortino', 'sortino', 'ngen_sortino'],
+    ['max_drawdown', 'max_drawdown', 'ngen_max_drawdown'],
+  ];
+  try {
+    const codes = [...new Set(rows.map((r) => r.amfi_code).filter(Boolean))] as string[];
+    const metrics: Record<string, unknown>[] = [];
+    for (let i = 0; i < codes.length; i += 300) {
+      const { data: chunk, error: mErr } = await supabase
+        .from('pd_fund_metrics')
+        .select('amfi_code, asof_date, identity_ok, ret_1d, ret_1w, ret_1m, ret_3m, ret_6m, ret_1y, ret_3y, ret_5y, ret_si, volatility, sharpe, sortino, max_drawdown')
+        .in('amfi_code', codes.slice(i, i + 300));
+      if (mErr) throw mErr; // table missing → bail, keep NGEN
+      if (chunk) metrics.push(...(chunk as unknown as Record<string, unknown>[]));
+    }
+    const m = new Map(metrics.map((x) => [String(x.amfi_code), x]));
+    for (const r of rows) {
+      const fm = m.get(String(r.amfi_code));
+      if (!fm || fm.identity_ok === false) { r.return_source = 'ngen'; continue; }
+      for (const [metricKey, displayKey, ngenKey] of MAP) {
+        if (fm[metricKey] != null) {
+          r[ngenKey] = r[displayKey];          // preserve ngen for comparison
+          r[displayKey] = fm[metricKey];       // primary = our computed value
+        }
+      }
+      r.return_source = 'computed';
+      const asof = fm.asof_date as string | null;
+      if (asof && (!metricsAsOf || asof > metricsAsOf)) metricsAsOf = asof;
+    }
+  } catch { /* pd_fund_metrics not present yet — serve NGEN snapshot unchanged */ }
+
   return NextResponse.json({
-    rows: data ?? [],
+    rows,
     total: count ?? 0,
     page,
     pageSize,
     totalPages: Math.ceil((count ?? 0) / pageSize),
+    metricsAsOf,
   });
 }

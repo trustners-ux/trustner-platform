@@ -36,23 +36,59 @@ const SORT_OPTIONS: { key: SortKey; label: string; shortLabel: string }[] = [
   { key: 'aum', label: 'Largest AUM', shortLabel: 'AUM' },
 ];
 
-function getSortedFunds(funds: TrustnerCuratedFund[], key: SortKey, dir: SortDir = 'desc'): TrustnerCuratedFund[] {
+/**
+ * Resolve the effective return for a fund + period — prefers the live-NAV
+ * recalculated number when present, falls back to the static curated value.
+ * Returns 0 if neither side has data so the sort treats them as ties at the
+ * bottom (descending) / top (ascending).
+ *
+ * IMPORTANT: This MUST mirror the display logic in `FundRow` (the `r = {...}`
+ * block). If display uses navData and sort uses static, the visible order will
+ * not match the visible numbers — exactly the bug we just fixed.
+ *
+ * Note: `twoYear` is in the static curated data but NOT in the live-NAV feed,
+ * so we keep it static-only. All other periods overlay live → static.
+ */
+type LivePeriod = 'mtd' | 'ytd' | 'threeMonth' | 'sixMonth' | 'oneYear' | 'threeYear' | 'fiveYear';
+type StaticOnlyPeriod = 'twoYear';
+
+function liveReturn(
+  fund: TrustnerCuratedFund,
+  period: LivePeriod | StaticOnlyPeriod,
+  navMap?: Map<number, FundNavData>
+): number {
+  if (period !== 'twoYear') {
+    const navData = fund.schemeCode ? navMap?.get(fund.schemeCode) : undefined;
+    const live = navData?.returns?.[period as LivePeriod];
+    if (typeof live === 'number') return live;
+  }
+  const staticVal = fund.returns[period];
+  return typeof staticVal === 'number' ? staticVal : 0;
+}
+
+function getSortedFunds(
+  funds: TrustnerCuratedFund[],
+  key: SortKey,
+  dir: SortDir = 'desc',
+  navMap?: Map<number, FundNavData>
+): TrustnerCuratedFund[] {
   const sorted = [...funds];
   const m = dir === 'asc' ? -1 : 1; // multiplier for direction
+  const lr = (f: TrustnerCuratedFund, p: Parameters<typeof liveReturn>[1]) => liveReturn(f, p, navMap);
 
   switch (key) {
     case 'rank': return sorted.sort((a, b) => (a.rank - b.rank) * m);
     case 'ter': return sorted.sort((a, b) => ((a.ter || 999) - (b.ter || 999)) * m);
     case 'sharpe': return sorted.sort((a, b) => (b.sharpeRatio - a.sharpeRatio) * m);
     case 'sd': return sorted.sort((a, b) => ((a.standardDeviation || 999) - (b.standardDeviation || 999)) * m);
-    case 'mtd': return sorted.sort((a, b) => ((b.returns.mtd || 0) - (a.returns.mtd || 0)) * m);
-    case 'ytd': return sorted.sort((a, b) => ((b.returns.ytd || 0) - (a.returns.ytd || 0)) * m);
-    case '3m': return sorted.sort((a, b) => ((b.returns.threeMonth || 0) - (a.returns.threeMonth || 0)) * m);
-    case '6m': return sorted.sort((a, b) => ((b.returns.sixMonth || 0) - (a.returns.sixMonth || 0)) * m);
-    case '1y': return sorted.sort((a, b) => (b.returns.oneYear - a.returns.oneYear) * m);
-    case '2y': return sorted.sort((a, b) => ((b.returns.twoYear || 0) - (a.returns.twoYear || 0)) * m);
-    case '3y': return sorted.sort((a, b) => (b.returns.threeYear - a.returns.threeYear) * m);
-    case '5y': return sorted.sort((a, b) => (b.returns.fiveYear - a.returns.fiveYear) * m);
+    case 'mtd': return sorted.sort((a, b) => (lr(b, 'mtd') - lr(a, 'mtd')) * m);
+    case 'ytd': return sorted.sort((a, b) => (lr(b, 'ytd') - lr(a, 'ytd')) * m);
+    case '3m': return sorted.sort((a, b) => (lr(b, 'threeMonth') - lr(a, 'threeMonth')) * m);
+    case '6m': return sorted.sort((a, b) => (lr(b, 'sixMonth') - lr(a, 'sixMonth')) * m);
+    case '1y': return sorted.sort((a, b) => (lr(b, 'oneYear') - lr(a, 'oneYear')) * m);
+    case '2y': return sorted.sort((a, b) => (lr(b, 'twoYear') - lr(a, 'twoYear')) * m);
+    case '3y': return sorted.sort((a, b) => (lr(b, 'threeYear') - lr(a, 'threeYear')) * m);
+    case '5y': return sorted.sort((a, b) => (lr(b, 'fiveYear') - lr(a, 'fiveYear')) * m);
     case 'aum': return sorted.sort((a, b) => (b.aumCr - a.aumCr) * m);
     default: return sorted;
   }
@@ -308,14 +344,18 @@ export function TrustnerCategoryTable({
     }
   };
 
-  const sortedFunds = getSortedFunds(category.funds, sortKey, sortDir);
+  // Pass navMap so the sort uses the SAME live-NAV-overlaid numbers that the
+  // display renders. Without this, the visible order won't match the visible
+  // values when live NAV bumps one fund above another.
+  const sortedFunds = getSortedFunds(category.funds, sortKey, sortDir, navMap);
 
   const bestSharpe = getBestInColumn(sortedFunds, (f) => f.sharpeRatio);
   const lowestTER = getLowestInColumn(sortedFunds, (f) => f.ter);
   const lowestSD = getLowestInColumn(sortedFunds, (f) => f.standardDeviation);
-  const best1Y = getBestInColumn(sortedFunds, (f) => f.returns.oneYear);
-  const best3Y = getBestInColumn(sortedFunds, (f) => f.returns.threeYear);
-  const best5Y = getBestInColumn(sortedFunds, (f) => f.returns.fiveYear);
+  // Use live-NAV-overlaid returns so the "best" pill matches the visible numbers.
+  const best1Y = getBestInColumn(sortedFunds, (f) => liveReturn(f, 'oneYear', navMap));
+  const best3Y = getBestInColumn(sortedFunds, (f) => liveReturn(f, 'threeYear', navMap));
+  const best5Y = getBestInColumn(sortedFunds, (f) => liveReturn(f, 'fiveYear', navMap));
 
   // Get latest NAV date from any fund in this category
   const latestNavDate = (() => {

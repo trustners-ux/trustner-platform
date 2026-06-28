@@ -76,6 +76,11 @@ export const ADMIN_NAV = [
   { label: 'Blog', href: '/admin/blog', icon: 'FileText', role: 'editor' as AdminRole },
   { label: 'Market Pulse', href: '/admin/market', icon: 'BarChart3', role: 'editor' as AdminRole },
   { label: 'Leads', href: '/admin/leads', icon: 'Users', role: 'editor' as AdminRole },
+  // ─── Client master (Phase A — Bulk Import + KYC) ───────────────────
+  { label: 'Client master',     href: '/admin/client-master',                   icon: 'IdCard',  role: 'viewer' as AdminRole, group: 'Clients & families' as const },
+  { label: 'Bulk import',       href: '/admin/client-master/import',            icon: 'Upload',  role: 'editor' as AdminRole, group: 'Clients & families' as const },
+  { label: 'Service requests',  href: '/admin/client-master/service-requests',  icon: 'Inbox',   role: 'viewer' as AdminRole, group: 'Clients & families' as const },
+  { label: 'Holdings import',   href: '/admin/client-master/holdings-import',   icon: 'Upload',  role: 'editor' as AdminRole, group: 'Clients & families' as const },
   { label: 'Reports', href: '/admin/reports', icon: 'FileCheck', role: 'editor' as AdminRole },
   // ─── Trustner Advisory Workbenches (grouped, role-gated at API level) ───
   { label: 'Portfolio Diagnostic', href: '/admin/portfolio-diagnostic', icon: 'ClipboardList', role: 'editor' as AdminRole, group: 'Advisory Workbench' as const },
@@ -95,6 +100,18 @@ export const ADMIN_NAV = [
   { label: 'MIS Reports', href: '/admin/mis/reports', icon: 'FileCheck', role: 'admin' as AdminRole },
   { label: 'Users', href: '/admin/users', icon: 'UserCog', role: 'admin' as AdminRole },
   { label: 'Audit Log', href: '/admin/audit', icon: 'ScrollText', role: 'admin' as AdminRole },
+
+  // ─── HR Workbench (internal HRMS) ─────────────────────────────────
+  // Entry points into /employee/hr/* — these jump out of the /admin
+  // route tree into the HR workbench shell. Visible to every signed-in
+  // employee (viewer+) because each employee has their own self-service
+  // dashboard there. Admin-only links surface inside the workbench.
+  { label: 'HR Workbench',  href: '/employee/hr/me',       icon: 'UserPlus',    role: 'viewer' as AdminRole, group: 'HRMS' as const },
+  { label: 'HR Admin',      href: '/employee/hr',          icon: 'Briefcase',   role: 'hr' as AdminRole,     group: 'HRMS' as const },
+  { label: 'Employees',     href: '/employee/hr/employees',icon: 'Users',       role: 'hr' as AdminRole,     group: 'HRMS' as const },
+  { label: 'Payroll',       href: '/employee/hr/payroll',  icon: 'Percent',     role: 'hr' as AdminRole,     group: 'HRMS' as const },
+  { label: 'Performance',   href: '/employee/hr/performance', icon: 'TrendingUp', role: 'hr' as AdminRole,  group: 'HRMS' as const },
+
   { label: 'Team', href: '/admin/team', icon: 'UsersRound', role: 'viewer' as AdminRole },
   { label: 'MF Gyan', href: '/admin/learn', icon: 'GraduationCap', role: 'viewer' as AdminRole },
   { label: 'Settings', href: '/admin/settings', icon: 'Settings', role: 'admin' as AdminRole },

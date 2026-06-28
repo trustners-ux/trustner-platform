@@ -21,7 +21,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const runtime = 'nodejs';
 export const fetchCache = 'force-no-store';
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -59,32 +59,74 @@ export async function GET(request: NextRequest) {
     const amfiRows = await fetchAmfiNavFile();
     log.push(`Fetched ${amfiRows.length} rows from AMFI`);
 
-    // Build batch updates: only current_nav + last_refreshed_at
+    // CRITICAL: AMFI NAVAll has ~14k schemes but pd_fund_master holds only our
+    // curated ~4.2k. Upserting the lot with onConflict:amfi_code tries to INSERT
+    // the ~10k unknown codes — which violates the scheme_name NOT NULL constraint
+    // and aborts the WHOLE 500-row batch (Postgres upsert is all-or-nothing), so
+    // NOTHING updated and the universe NAV silently froze. Fix: restrict to codes
+    // that ALREADY exist, so every upsert is a pure UPDATE (never an insert).
+    const existing = new Set<string>();
+    {
+      let from = 0;
+      const PAGE = 1000;
+      for (;;) {
+        const { data, error } = await supabase
+          .from('pd_fund_master')
+          .select('amfi_code')
+          .range(from, from + PAGE - 1);
+        if (error) { log.push(`load codes batch ${from}: ${error.message}`); break; }
+        if (!data || data.length === 0) break;
+        for (const r of data as Array<{ amfi_code: string }>) existing.add(r.amfi_code);
+        if (data.length < PAGE) break;
+        from += PAGE;
+      }
+    }
+    log.push(`pd_fund_master has ${existing.size} funds`);
+
+    // Build batch updates: current_nav + last_refreshed_at, restricted to codes
+    // that exist in the master → UPDATE-only, no inserts.
+    //
+    // last_refreshed_at carries the AMFI NAV PUBLICATION DATE (not the cron run
+    // time): the universe view maps live_nav_at = last_refreshed_at, and clients
+    // care about "what date is this NAV" — so /funds/universe shows the real AMFI
+    // date (matching /funds/selection), not when our job happened to run. Stored
+    // at noon IST of the NAV date so it renders as that calendar date in any TZ.
+    // (pd_fund_master has no dedicated nav_date column; this avoids a migration.)
     const nowIso = new Date().toISOString();
+    const navTs = (d: string | null | undefined) =>
+      d && /^\d{4}-\d{2}-\d{2}$/.test(d) ? `${d}T06:30:00.000Z` : nowIso;
     const updates = amfiRows
-      .filter((r) => r.schemeCode && r.nav != null && !Number.isNaN(r.nav))
+      .filter((r) => r.schemeCode && r.nav != null && !Number.isNaN(r.nav) && existing.has(String(r.schemeCode)))
       .map((r) => ({
         amfi_code: String(r.schemeCode),
         current_nav: r.nav,
-        last_refreshed_at: nowIso,
+        last_refreshed_at: navTs(r.date),
       }));
 
-    log.push(`Upserting ${updates.length} NAV updates`);
+    log.push(`Updating ${updates.length} NAVs (matched to master)`);
 
+    // UPDATE (not upsert): amfi_code has no UNIQUE constraint, so upsert
+    // onConflict:amfi_code can't match → it would attempt INSERTs that fail the
+    // scheme_name NOT NULL check and abort the whole batch (this is exactly why
+    // the universe NAV silently froze). A keyed UPDATE only ever touches the
+    // existing row. Bounded concurrency keeps it well within the time limit.
     let upserted = 0;
-    const BATCH = 500;
-    for (let i = 0; i < updates.length; i += BATCH) {
-      const slice = updates.slice(i, i + BATCH);
-      const { error } = await supabase
-        .from('pd_fund_master')
-        .upsert(slice, { onConflict: 'amfi_code', ignoreDuplicates: false });
-      if (error) {
-        log.push(`Batch ${i}: ${error.message}`);
-        // continue on error — better to upsert what we can
-      } else {
-        upserted += slice.length;
-      }
+    let failed = 0;
+    const CONC = 40;
+    for (let i = 0; i < updates.length; i += CONC) {
+      const chunk = updates.slice(i, i + CONC);
+      const res = await Promise.all(
+        chunk.map((u) =>
+          supabase
+            .from('pd_fund_master')
+            .update({ current_nav: u.current_nav, last_refreshed_at: u.last_refreshed_at })
+            .eq('amfi_code', u.amfi_code)
+            .then(({ error }) => (error ? 0 : 1))
+        )
+      );
+      for (const ok of res) { if (ok) upserted++; else failed++; }
     }
+    if (failed > 0) log.push(`${failed} individual updates failed`);
 
     const elapsed = Math.round((Date.now() - t0) / 1000);
     log.push(`✓ NAV refresh complete: ${upserted}/${updates.length} funds updated in ${elapsed}s`);

@@ -9,6 +9,7 @@ import { cookies } from 'next/headers';
 import { verifyToken, COOKIE_NAME } from '@/lib/auth/jwt';
 import { verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 import { getSupabaseAdmin } from '@/lib/db/supabase';
+import { isAdvisoryRecordInScope } from '@/lib/advisory/visibility';
 
 export async function GET(
   _req: NextRequest,
@@ -24,6 +25,11 @@ export async function GET(
   const numericId = parseInt(id, 10);
   if (Number.isNaN(numericId)) {
     return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
+  }
+
+  // DPDP need-to-know: only show reviews within the actor's visibility scope.
+  if (!(await isAdvisoryRecordInScope(supabase, 'pr_periodic_reviews', numericId, { employeeEmail: email }))) {
+    return NextResponse.json({ error: 'Not authorised for this review' }, { status: 403 });
   }
 
   const { data, error } = await supabase
@@ -58,6 +64,11 @@ export async function PUT(
 
   const numericId = parseInt(id, 10);
   if (Number.isNaN(numericId)) return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
+
+  // DPDP need-to-know: only edit reviews within the actor's visibility scope.
+  if (!(await isAdvisoryRecordInScope(supabase, 'pr_periodic_reviews', numericId, { employeeEmail: email }))) {
+    return NextResponse.json({ error: 'Not authorised for this review' }, { status: 403 });
+  }
 
   const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
@@ -112,19 +123,38 @@ export async function PUT(
       .maybeSingle();
     const familyId = existing?.family_id as number | undefined;
 
-    await supabase.from('pr_action_items').delete().eq('review_id', numericId);
+    // Preserve completion provenance across the replace-all: read existing rows
+    // first, then re-apply completed_at / completed_by on description match (the
+    // edit form does not yet round-trip ids). Every write error is surfaced.
+    const { data: prior } = await supabase
+      .from('pr_action_items')
+      .select('description, completed_at, completed_by_employee_id')
+      .eq('review_id', numericId);
+    const priorByDesc = new Map(
+      (prior ?? []).map((p) => [String(p.description).trim(), p as { completed_at: string | null; completed_by_employee_id: number | null }])
+    );
+
+    const del = await supabase.from('pr_action_items').delete().eq('review_id', numericId);
+    if (del.error) return NextResponse.json({ error: `Failed to save action items: ${del.error.message}` }, { status: 500 });
     if (items.length > 0 && familyId) {
-      await supabase.from('pr_action_items').insert(
-        items.map((i) => ({
-          review_id: numericId,
-          family_id: familyId,
-          description: i.description,
-          owner: i.owner,
-          status: i.status,
-          due_date: i.dueDate ?? null,
-          notes: i.notes ?? null,
-        }))
+      const ins = await supabase.from('pr_action_items').insert(
+        items.map((i) => {
+          const keep = priorByDesc.get(String(i.description).trim());
+          const done = i.status === 'Completed';
+          return {
+            review_id: numericId,
+            family_id: familyId,
+            description: i.description,
+            owner: i.owner,
+            status: i.status,
+            due_date: i.dueDate ?? null,
+            notes: i.notes ?? null,
+            completed_at: done ? (keep?.completed_at ?? new Date().toISOString()) : null,
+            completed_by_employee_id: done ? (keep?.completed_by_employee_id ?? null) : null,
+          };
+        })
       );
+      if (ins.error) return NextResponse.json({ error: `Failed to save action items: ${ins.error.message}` }, { status: 500 });
     }
 
     // Update counts
