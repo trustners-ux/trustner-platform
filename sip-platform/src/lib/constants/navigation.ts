@@ -272,7 +272,9 @@ export const NAVIGATION: NavItem[] = [
     label: 'Funds',
     href: '/funds',
     children: [
-      { label: 'Fund Universe — 2,000+ schemes', href: '/funds/universe', badge: 'New' },
+      { label: 'Specialized Investment Funds (SIF)', href: '/sif', badge: 'New' },
+      { label: 'Live SIF Universe — NAV & Returns', href: '/funds/sif', badge: 'New' },
+      { label: 'Fund Universe — 4,200+ schemes', href: '/funds/universe', badge: 'New' },
       { label: 'Fund Explorer', href: '/funds' },
       { label: 'Trustner Fund Selection', href: '/funds/selection' },
       { label: 'Fund Screener', href: '/funds/screener' },
@@ -283,6 +285,10 @@ export const NAVIGATION: NavItem[] = [
   {
     label: 'Financial Planning',
     href: '/financial-planning',
+    children: [
+      { label: 'Financial Health Assessment', href: '/financial-planning' },
+      { label: 'Free Portfolio Health Check', href: '/portfolio-check', badge: 'Free' },
+    ],
   },
   // NOTE: The "For MFDs" section (/mfd and sub-routes) is intentionally NOT exposed
   // in the top nav. MFD business tools (trail commission, AUM projections, sub-broker
@@ -396,8 +402,11 @@ export const FOOTER_LINKS = {
     { label: 'All 15 Life Plans', href: '/life-plans' },
   ],
   Explore: [
+    { label: 'Specialized Investment Funds (SIF)', href: '/sif' },
+    { label: 'Live SIF Universe — NAV & Returns', href: '/funds/sif' },
     { label: 'Financial Health Assessment', href: '/financial-planning' },
-    { label: 'Fund Universe (2,000+ schemes)', href: '/funds/universe' },
+    { label: 'Free Portfolio Health Check', href: '/portfolio-check' },
+    { label: 'Fund Universe (4,200+ schemes)', href: '/funds/universe' },
     { label: 'Fund Explorer', href: '/funds' },
     { label: 'Trustner Fund Selection', href: '/funds/selection' },
     { label: 'Compare Funds', href: '/funds/compare' },
