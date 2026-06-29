@@ -972,24 +972,137 @@ function isMfCentralCasSummary(text: string): boolean {
 }
 
 function extractInvestorNameMfc(text: string): string | undefined {
-  // The PAN-holder name is the line immediately after "PAN :ABCDE1234F".
-  const m = text.match(/PAN\s*:\s*[A-Z]{5}\d{4}[A-Z]\s*[\r\n]+\s*([A-Z][A-Z .]{2,60})/);
-  return m ? m[1].trim().replace(/\s+/g, ' ') : undefined;
+  // V3.4 layout: name on its own line right after "Email Id: ..." line.
+  const m1 = text.match(/Email\s*Id\s*:\s*\S+\s*[\r\n]+\s*([A-Z][A-Za-z .&()]{2,60})/i);
+  if (m1?.[1] && !/Consolidated|CAMS|KFintech|Mutual/i.test(m1[1])) return m1[1].trim().replace(/\s+/g, ' ');
+  // Older layout: name line immediately after "PAN :ABCDE1234F".
+  const m2 = text.match(/PAN\s*:\s*[A-Z]{5}\d{4}[A-Z]\s*[\r\n]+\s*([A-Z][A-Z .]{2,60})/);
+  return m2 ? m2[1].trim().replace(/\s+/g, ' ') : undefined;
 }
 
 function parseMfCentralCasSummary(text: string): CasParseResult {
   const investorName = extractInvestorNameMfc(text) ?? extractInvestorNameCams(text) ?? extractInvestorName(text);
   const pan = extractPan(text);
-  const holdings: RawHolding[] = [];
 
+  // Try V3.4 tabular layout first (has "Market ValueFolio No." column header);
+  // fall back to the older 3-line-per-holding layout.
+  if (/Market\s*Value\s*Folio\s*No/i.test(text) || /Version:\s*V\d/i.test(text)) {
+    const result = parseMfCentralV34(text, investorName, pan);
+    if (result.holdings.length > 0) return result;
+  }
+
+  return parseMfCentralLegacy(text, investorName, pan);
+}
+
+/**
+ * V3.4 CAMS/KFintech Consolidated Account Summary — tabular layout.
+ *
+ * Each holding is a multi-line block:
+ *   <Folio> <MarketValue><SchemeCode> - <SchemeName...>
+ *   <...SchemeName continued, ending with (Non-Demat) or (Demat)...>
+ *   <Units> <DD-Mon-YYYY> <NAV> <Registrar><ISIN> <CostValue>
+ *
+ * Market value (2 decimal places) is glued to the scheme code.
+ */
+function parseMfCentralV34(text: string, investorName: string | undefined, pan: string | undefined): CasParseResult {
+  const holdings: RawHolding[] = [];
   const lines = text.split('\n').map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean);
 
-  // Page chrome / column headers / totals / address block — never part of a name.
-  const NOISE = /^(Consolidated Account Summary|\( As on Date|MFCentralCASSummary|SoA Holdings|Demat Holdings|Invested Value|Market Value|Gain\/Loss|\(INR\)|\(Absolute\)|Balance|Units NAV Date|Scheme Details|Folio No\.|Client Id|NAV$|Total\b|-- No MF|#IDCW|Allocation by Asset Class|EQUITY|DEBT|The Consolidated Account|CAMS and KFintech|investor friendly|are holding investments|If you find|Mutual Fund folios|PAN\s*:|Mobile\s*:|Email\s*:|Page \d+ of \d+|\d{6},\s)/i;
+  // Holding-start: <folio> <marketValue.XX><schemeCode> - <name...>
+  const holdingStartRe = /^(\d[\d/]*)\s+([\d,]+\.\d{2})([A-Z0-9][\w]*)\s+-\s+(.+)$/;
+  // Data line: <units> <DD-Mon-YYYY> <NAV> <Registrar><ISIN> <costValue>
+  const dataLineRe = /^([\d,]+\.[\d]+)\s+(\d{1,2}-[A-Za-z]+-\d{4})\s+([\d,.]+)\s+(?:CAMS|KFINTECH|FTAMIL|SBFS)(INF\w+)\s+([\d,]+\.[\d]+)$/;
+  // Page/noise lines to skip
+  const skipRe = /^(CAMSCASWS|Consolidated Account|As on \d|Page \d|Market Value|Scheme Name|ISIN Cost|\(INR\)|Total\s|-- No MF|SoA Holdings|Demat Holdings|Email Id|Mobile:|The Consolidated|investor friendly|are holding|If you find|Mutual Fund folios|This statement|holdings\. Please|PAN\s*:|Version:)/i;
 
-  // Anchor: "<name-tail?> <Invested> <Market> <Gain(±)>"
+  let pendingFolio = '';
+  let pendingMarket = 0;
+  let pendingNameParts: string[] = [];
+  let state: 'idle' | 'name' = 'idle';
+
+  const flush = (dataMatch: RegExpMatchArray) => {
+    if (!pendingNameParts.length || pendingMarket <= 0) return;
+    const rawName = pendingNameParts.join(' ').replace(/\s+/g, ' ').trim();
+    const fundName = rawName
+      .replace(/\s*\((?:Non\s*-?\s*Demat|Demat)\)\s*/gi, '')
+      .replace(/\s*-\s*(?:Growth|Dividend|IDCW|Payout|Reinvestment)\s*[-–]?\s*(?:Regular|Direct)?\s*(?:Plan)?\s*/gi, ' ')
+      .replace(/\s*[-–]\s*(?:Regular|Direct)\s*(?:Plan)?\s*[-–]?\s*(?:Growth|Dividend|IDCW|Payout|Reinvestment)?\s*/gi, ' ')
+      .replace(/\s*\((?:formerly|erstwhile)\s+known\s+as[^)]*\)/gi, '')
+      .replace(/\s*\(ELSS[^)]*\)/gi, '')
+      .replace(/\s*[-–]\s*(?:PLAN)\s*/gi, ' ')
+      .replace(/\s*[-–]\s*Gr\.\s*REGULAR\s*/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const units = numeric(dataMatch[1]);
+    const nav = numeric(dataMatch[3]);
+    const cost = numeric(dataMatch[5]);
+
+    if (fundName) {
+      holdings.push({
+        entityName: investorName ?? 'Unknown',
+        entityType: detectEntityType(investorName ?? ''),
+        fundName: cleanSchemeName(fundName),
+        folioNumber: pendingFolio,
+        amcName: guessAmcFromSchemeName(rawName),
+        units,
+        currentNav: nav || undefined,
+        currentValue: pendingMarket,
+        investedAmount: cost,
+      });
+    }
+  };
+
+  for (const ln of lines) {
+    if (skipRe.test(ln)) continue;
+
+    const dm = ln.match(dataLineRe);
+    if (dm && state === 'name') {
+      flush(dm);
+      state = 'idle';
+      pendingNameParts = [];
+      continue;
+    }
+
+    const hm = ln.match(holdingStartRe);
+    if (hm) {
+      state = 'name';
+      pendingFolio = hm[1];
+      pendingMarket = numeric(hm[2]);
+      pendingNameParts = [hm[4]];
+      continue;
+    }
+
+    if (state === 'name') {
+      pendingNameParts.push(ln);
+    }
+  }
+
+  const amcSet = new Set(holdings.map((h) => h.amcName ?? '').filter(Boolean));
+  const folioSet = new Set(holdings.map((h) => h.folioNumber ?? '').filter(Boolean));
+  return {
+    success: holdings.length > 0,
+    error: holdings.length === 0
+      ? 'MF Central Consolidated Account Summary detected but no holdings could be extracted. The PDF layout may have changed.'
+      : undefined,
+    investorName,
+    pan,
+    holdings,
+    sips: [],
+    totalFoliosFound: folioSet.size,
+    totalAmcsFound: amcSet.size,
+  };
+}
+
+/**
+ * Legacy MFCentral CAS Summary — older 3-line-per-holding layout.
+ */
+function parseMfCentralLegacy(text: string, investorName: string | undefined, pan: string | undefined): CasParseResult {
+  const holdings: RawHolding[] = [];
+  const lines = text.split('\n').map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean);
+
+  const NOISE = /^(Consolidated Account Summary|\( As on Date|MFCentralCASSummary|SoA Holdings|Demat Holdings|Invested Value|Market Value|Gain\/Loss|\(INR\)|\(Absolute\)|Balance|Units NAV Date|Scheme Details|Folio No\.|Client Id|NAV$|Total\b|-- No MF|#IDCW|Allocation by Asset Class|EQUITY|DEBT|The Consolidated|CAMS and KFintech|investor friendly|are holding investments|If you find|Mutual Fund folios|PAN\s*:|Mobile\s*:|Email\s*:|Page \d+ of \d+|\d{6},\s)/i;
   const anchorRe = /^(.*?)([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+\(?-?[\d,]+\.\d{2}\)?\s*$/;
-  // "<Units> <NavDate><Folio> <NAV>" — NavDate (DD-Mon-YYYY) is glued to the folio.
   const unitsRe = /^([\d,]+\.\d+)\s+(?:(\d{1,2}-[A-Za-z]{3}-\d{4})(\d+))?\s*([\d,]+\.?\d*)?\s*$/;
   const pctOnly = /^\([+-]?[\d.,]+%\)$/;
 
@@ -1000,7 +1113,7 @@ function parseMfCentralCasSummary(text: string): CasParseResult {
 
     const m = ln.match(anchorRe);
     if (!m) {
-      if (!pctOnly.test(ln)) nameBuf.push(ln); // accumulate a (possibly wrapped) scheme name
+      if (!pctOnly.test(ln)) nameBuf.push(ln);
       continue;
     }
 
@@ -1009,21 +1122,19 @@ function parseMfCentralCasSummary(text: string): CasParseResult {
     const market = numeric(m[3]);
     nameBuf = [];
 
-    // The next data line (skipping the percentage line) carries units / folio / NAV.
     let units = 0, folio = '', nav = 0;
     for (let j = i + 1; j <= i + 3 && j < lines.length; j++) {
-      if (anchorRe.test(lines[j])) break; // ran into the next holding — no units line
+      if (anchorRe.test(lines[j])) break;
       const um = lines[j].match(unitsRe);
       if (um) {
         units = numeric(um[1]);
         folio = um[3] || '';
         nav = numeric(um[4] || '');
-        i = j; // consume up to and including the units line
+        i = j;
         break;
       }
     }
 
-    // Skip zero-balance / redeemed folios and any nameless block.
     if (!fullName || (market <= 0 && invested <= 0)) continue;
 
     holdings.push({
@@ -1049,7 +1160,7 @@ function parseMfCentralCasSummary(text: string): CasParseResult {
     investorName,
     pan,
     holdings,
-    sips: [], // a summary has no SIP register — add SIPs separately, never fabricate
+    sips: [],
     totalFoliosFound: folioSet.size,
     totalAmcsFound: amcSet.size,
   };
