@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { ShieldCheck, TrendingUp, AlertTriangle, CheckCircle2, ArrowRight, ChevronDown, ChevronUp, MessageCircle, Filter, Share2, Check } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ShieldCheck, TrendingUp, AlertTriangle, CheckCircle2, ArrowRight, ChevronDown, ChevronUp, MessageCircle, Filter, Share2, Check, Download } from 'lucide-react';
 
 interface Verdict {
   code: string;
@@ -71,6 +71,22 @@ function inr(n: number): string {
 
 const VERDICT_ORDER: Record<string, number> = { LIQUIDATE: 0, SWAP: 1, WATCH: 2, KEEP: 3, STAR: 4 };
 
+const VERDICT_STYLES: Record<string, { bg: string; text: string; border: string; pill: string }> = {
+  STAR:      { bg: 'bg-amber-50',   text: 'text-amber-800',   border: 'border-amber-200', pill: '#8A6A40' },
+  KEEP:      { bg: 'bg-emerald-50', text: 'text-emerald-800', border: 'border-emerald-200', pill: '#2F6F4F' },
+  WATCH:     { bg: 'bg-orange-50',  text: 'text-orange-800',  border: 'border-orange-200', pill: '#B07A2E' },
+  SWAP:      { bg: 'bg-rose-50',    text: 'text-rose-800',    border: 'border-rose-200', pill: '#9B2C3A' },
+  LIQUIDATE: { bg: 'bg-red-50',     text: 'text-red-800',     border: 'border-red-200', pill: '#7F1D1D' },
+};
+
+const VERDICT_SUMMARY = [
+  { key: 'star', label: 'Excellent', color: '#8A6A40', bg: '#F5EFE3' },
+  { key: 'keep', label: 'Good', color: '#2F6F4F', bg: '#E8F1EC' },
+  { key: 'watch', label: 'Monitor', color: '#B07A2E', bg: '#F6EEDF' },
+  { key: 'swap', label: 'Needs Change', color: '#9B2C3A', bg: '#F6E6E9' },
+  { key: 'liquidate', label: 'Exit', color: '#7F1D1D', bg: '#FEE2E2' },
+];
+
 type SortKey = 'priority' | 'value' | 'gain';
 
 export default function HealthReport({ review }: { review: Review }) {
@@ -78,6 +94,12 @@ export default function HealthReport({ review }: { review: Review }) {
   const [sortBy, setSortBy] = useState<SortKey>('priority');
   const [filterVerdict, setFilterVerdict] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [scoreAnimated, setScoreAnimated] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setScoreAnimated(true), 100);
+    return () => clearTimeout(t);
+  }, []);
 
   function copyLink() {
     navigator.clipboard.writeText(window.location.href).then(() => {
@@ -93,8 +115,9 @@ export default function HealthReport({ review }: { review: Review }) {
     ? Math.round(((v.star * 100 + v.keep * 80 + v.watch * 50 + v.swap * 20 + v.liquidate * 0) / totalVerdicts))
     : 50;
 
-  const scoreColor = healthScore >= 75 ? '#059669' : healthScore >= 50 ? '#D97706' : '#DC2626';
+  const scoreColor = healthScore >= 75 ? '#2F6F4F' : healthScore >= 50 ? '#B07A2E' : '#9B2C3A';
   const scoreLabel = healthScore >= 75 ? 'Healthy' : healthScore >= 50 ? 'Needs Attention' : 'Action Required';
+  const animatedDash = scoreAnimated ? healthScore * 3.14 : 0;
 
   const sorted = [...review.holdings]
     .filter((h) => !filterVerdict || h.verdict.code === filterVerdict)
@@ -109,26 +132,28 @@ export default function HealthReport({ review }: { review: Review }) {
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       {/* Hero */}
-      <section className="bg-gradient-to-r from-[#0A1628] via-[#1E3A5F] to-[#0D4F6B] text-white py-10 sm:py-14">
+      <section className="bg-gradient-to-br from-[#0F1A2E] via-[#15233B] to-[#1E3A5F] text-white py-10 sm:py-14">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center gap-2 text-xs text-slate-300 mb-3">
+          <div className="flex items-center gap-2 text-xs text-slate-400 mb-3">
             <ShieldCheck className="w-3.5 h-3.5" /> AMFI-registered distributor · ARN-286886 · Powered by Trustner PD Engine v2
           </div>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold leading-tight mb-1">
+              <h1 className="text-2xl sm:text-3xl font-extrabold leading-tight mb-1 tracking-tight">
                 Portfolio Health Report
               </h1>
-              <p className="text-sm text-slate-300">
+              <p className="text-sm text-slate-400">
                 {review.leadName || review.familyName} · {new Date(review.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
               </p>
             </div>
-            <button
-              onClick={copyLink}
-              className="flex-shrink-0 mt-1 inline-flex items-center gap-1.5 bg-white/10 border border-white/25 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-white/20 transition-colors"
-            >
-              {copied ? <><Check className="w-3.5 h-3.5" /> Copied!</> : <><Share2 className="w-3.5 h-3.5" /> Share</>}
-            </button>
+            <div className="flex gap-2 flex-shrink-0 mt-1">
+              <button
+                onClick={copyLink}
+                className="inline-flex items-center gap-1.5 bg-white/10 border border-white/20 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-white/20 transition-colors"
+              >
+                {copied ? <><Check className="w-3.5 h-3.5" /> Copied!</> : <><Share2 className="w-3.5 h-3.5" /> Share</>}
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -139,18 +164,19 @@ export default function HealthReport({ review }: { review: Review }) {
           {/* Health Score Ring */}
           <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-5 flex flex-col items-center justify-center">
             <svg viewBox="0 0 120 120" className="w-28 h-28 mb-2">
-              <circle cx="60" cy="60" r="50" fill="none" stroke="#E2E8F0" strokeWidth="10" />
+              <circle cx="60" cy="60" r="50" fill="none" stroke="#F1F5F9" strokeWidth="10" />
               <circle
                 cx="60" cy="60" r="50" fill="none"
                 stroke={scoreColor} strokeWidth="10"
-                strokeDasharray={`${healthScore * 3.14} ${314 - healthScore * 3.14}`}
+                strokeDasharray={`${animatedDash} ${314 - animatedDash}`}
                 strokeLinecap="round"
                 transform="rotate(-90 60 60)"
+                style={{ transition: 'stroke-dasharray 1.2s cubic-bezier(0.4, 0, 0.2, 1)' }}
               />
-              <text x="60" y="55" textAnchor="middle" className="text-2xl font-extrabold" fill={scoreColor} fontSize="28" fontWeight="800">{healthScore}</text>
-              <text x="60" y="72" textAnchor="middle" fill="#64748B" fontSize="10" fontWeight="600">/100</text>
+              <text x="60" y="55" textAnchor="middle" fill={scoreColor} fontSize="28" fontWeight="800">{scoreAnimated ? healthScore : 0}</text>
+              <text x="60" y="72" textAnchor="middle" fill="#94A3B8" fontSize="10" fontWeight="600">/100</text>
             </svg>
-            <div className="text-sm font-extrabold" style={{ color: scoreColor }}>{scoreLabel}</div>
+            <div className="text-sm font-extrabold tracking-tight" style={{ color: scoreColor }}>{scoreLabel}</div>
             <div className="text-[10px] text-slate-400 mt-1">Portfolio Health Score</div>
           </div>
 
@@ -183,26 +209,31 @@ export default function HealthReport({ review }: { review: Review }) {
           <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-5">
             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Verdict Breakdown</div>
             <div className="space-y-1.5">
-              {[
-                { key: 'star', label: 'Excellent', color: '#059669', count: v.star },
-                { key: 'keep', label: 'Good', color: '#0D9488', count: v.keep },
-                { key: 'watch', label: 'Monitor', color: '#D97706', count: v.watch },
-                { key: 'swap', label: 'Needs Change', color: '#EA580C', count: v.swap },
-                { key: 'liquidate', label: 'Exit', color: '#DC2626', count: v.liquidate },
-              ].map((vd) => (
-                <button
-                  key={vd.key}
-                  onClick={() => setFilterVerdict(filterVerdict === vd.key.toUpperCase() ? null : vd.key.toUpperCase())}
-                  className={`w-full flex items-center gap-2 text-left rounded-lg px-2 py-1.5 transition-colors ${filterVerdict === vd.key.toUpperCase() ? 'bg-slate-100' : 'hover:bg-slate-50'}`}
-                >
-                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: vd.color }} />
-                  <span className="flex-1 text-xs font-semibold text-slate-600">{vd.label}</span>
-                  <span className="text-sm font-extrabold" style={{ color: vd.color }}>{vd.count}</span>
-                  <div className="flex-1 max-w-[60px] h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                    <div className="h-full rounded-full" style={{ background: vd.color, width: `${totalVerdicts > 0 ? (vd.count / totalVerdicts) * 100 : 0}%` }} />
-                  </div>
-                </button>
-              ))}
+              {VERDICT_SUMMARY.map((vd) => {
+                const count = v[vd.key as keyof typeof v] ?? 0;
+                return (
+                  <button
+                    key={vd.key}
+                    onClick={() => setFilterVerdict(filterVerdict === vd.key.toUpperCase() ? null : vd.key.toUpperCase())}
+                    className={`w-full flex items-center gap-2 text-left rounded-lg px-2.5 py-2 transition-all ${filterVerdict === vd.key.toUpperCase() ? 'ring-1 ring-slate-300 bg-slate-50' : 'hover:bg-slate-50'}`}
+                  >
+                    <span className="w-5 h-5 rounded-md flex items-center justify-center text-[9px] font-extrabold flex-shrink-0" style={{ background: vd.bg, color: vd.color }}>
+                      {count}
+                    </span>
+                    <span className="flex-1 text-xs font-semibold text-slate-600">{vd.label}</span>
+                    <div className="flex-1 max-w-[70px] h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          background: vd.color,
+                          width: `${totalVerdicts > 0 ? (count / totalVerdicts) * 100 : 0}%`,
+                          transition: 'width 0.8s ease-out',
+                        }}
+                      />
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -267,15 +298,16 @@ export default function HealthReport({ review }: { review: Review }) {
           <div className="space-y-2">
             {sorted.map((h) => {
               const isExpanded = expandedId === h.id;
+              const vs = VERDICT_STYLES[h.verdict.code] ?? VERDICT_STYLES.WATCH;
               return (
-                <div key={h.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow transition-shadow">
+                <div key={h.id} className={`bg-white rounded-xl border overflow-hidden transition-all ${isExpanded ? 'shadow-md border-slate-300' : 'shadow-sm border-slate-200 hover:shadow'}`}>
                   <button
                     onClick={() => setExpandedId(isExpanded ? null : h.id)}
                     className="w-full text-left px-4 py-3 flex items-start gap-3"
                   >
                     <span
-                      className="flex-shrink-0 mt-0.5 px-2 py-0.5 rounded-md text-[10px] font-extrabold text-white"
-                      style={{ background: h.verdict.color }}
+                      className="flex-shrink-0 mt-0.5 px-2 py-0.5 rounded-md text-[10px] font-extrabold border"
+                      style={{ background: VERDICT_SUMMARY.find(x => x.key === h.verdict.code.toLowerCase())?.bg ?? '#F1F5F9', color: vs.pill, borderColor: vs.pill + '30' }}
                     >
                       {h.verdict.label}
                     </span>
@@ -293,39 +325,39 @@ export default function HealthReport({ review }: { review: Review }) {
                   </button>
 
                   {isExpanded && (
-                    <div className="px-4 pb-3 border-t border-slate-100 pt-3 space-y-2">
+                    <div className="px-4 pb-4 border-t border-slate-100 pt-3 space-y-3">
                       <div className="grid grid-cols-3 gap-2 text-center">
-                        <div className="bg-slate-50 rounded-lg p-2">
+                        <div className="bg-slate-50 rounded-lg p-2.5">
                           <div className="text-xs font-extrabold text-slate-700">{inr(Number(h.investedInr))}</div>
-                          <div className="text-[9px] text-slate-400 uppercase font-bold">Invested</div>
+                          <div className="text-[9px] text-slate-400 uppercase font-bold mt-0.5">Invested</div>
                         </div>
-                        <div className="bg-slate-50 rounded-lg p-2">
+                        <div className="bg-slate-50 rounded-lg p-2.5">
                           <div className="text-xs font-extrabold text-slate-700">{inr(Number(h.currentValueInr))}</div>
-                          <div className="text-[9px] text-slate-400 uppercase font-bold">Current</div>
+                          <div className="text-[9px] text-slate-400 uppercase font-bold mt-0.5">Current</div>
                         </div>
-                        <div className="bg-slate-50 rounded-lg p-2">
-                          <div className={`text-xs font-extrabold ${Number(h.gainInr) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                        <div className={`rounded-lg p-2.5 ${Number(h.gainInr) >= 0 ? 'bg-emerald-50' : 'bg-rose-50'}`}>
+                          <div className={`text-xs font-extrabold ${Number(h.gainInr) >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
                             {Number(h.gainInr) >= 0 ? '+' : ''}{inr(Number(h.gainInr))}
                           </div>
-                          <div className="text-[9px] text-slate-400 uppercase font-bold">Gain/Loss</div>
+                          <div className="text-[9px] text-slate-400 uppercase font-bold mt-0.5">Gain/Loss</div>
                         </div>
                       </div>
 
                       {(h.riskTier || h.qualityVerdict || h.suitability) && (
                         <div className="flex flex-wrap gap-1.5">
-                          {h.riskTier && (
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                              Risk: {h.riskTier}
-                            </span>
-                          )}
                           {h.qualityVerdict && (
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                              Quality: {h.qualityVerdict}
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${vs.bg} ${vs.text} ${vs.border}`}>
+                              {h.qualityVerdict}
                             </span>
                           )}
                           {h.suitability && (
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                              Suitability: {h.suitability}
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                              {h.suitability}
+                            </span>
+                          )}
+                          {h.riskTier && (
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                              {h.riskTier} risk
                             </span>
                           )}
                         </div>
@@ -337,9 +369,9 @@ export default function HealthReport({ review }: { review: Review }) {
                       </div>
 
                       {h.suggestion && (
-                        <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-xs text-blue-800">
-                          <ArrowRight className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                          {h.suggestion}
+                        <div className="flex items-start gap-2 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg px-3 py-2.5 text-xs text-blue-800">
+                          <ArrowRight className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-blue-500" />
+                          <span>{h.suggestion}</span>
                         </div>
                       )}
                     </div>
@@ -376,9 +408,9 @@ export default function HealthReport({ review }: { review: Review }) {
         )}
 
         {/* CTA Section */}
-        <div className="bg-gradient-to-r from-[#0A1628] to-[#1E40AF] rounded-2xl p-6 text-white text-center">
-          <h3 className="text-lg font-extrabold mb-2">Ready for the next step?</h3>
-          <p className="text-sm text-slate-300 max-w-lg mx-auto mb-5">
+        <div className="bg-gradient-to-br from-[#0F1A2E] via-[#15233B] to-[#1E3A5F] rounded-2xl p-8 text-white text-center">
+          <h3 className="text-xl font-extrabold mb-2 tracking-tight">Ready for the next step?</h3>
+          <p className="text-sm text-slate-400 max-w-lg mx-auto mb-6 leading-relaxed">
             This report shows exactly what needs attention. Our research desk will walk you through specific fund replacements,
             tax-efficient exit sequencing, and a forward SIP plan — free, no obligation.
           </p>
@@ -387,13 +419,13 @@ export default function HealthReport({ review }: { review: Review }) {
               href={wa}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 bg-white text-[#0A1628] px-6 py-3 rounded-xl font-bold text-sm hover:bg-slate-100 transition-colors"
+              className="inline-flex items-center justify-center gap-2 bg-[#D4A017] text-[#0F1A2E] px-6 py-3 rounded-xl font-bold text-sm hover:bg-[#E0B52F] transition-colors shadow-lg shadow-amber-900/20"
             >
               <MessageCircle className="w-4 h-4" /> Talk to us on WhatsApp
             </a>
             <a
               href="/contact"
-              className="inline-flex items-center justify-center gap-2 bg-white/10 border border-white/25 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-white/20 transition-colors"
+              className="inline-flex items-center justify-center gap-2 bg-white/10 border border-white/20 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-white/20 transition-colors"
             >
               Request a callback
             </a>

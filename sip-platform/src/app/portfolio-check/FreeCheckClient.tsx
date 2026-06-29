@@ -8,14 +8,17 @@
  *   Tab 2: Enter PAN + DOB → OTP to registered mobile → CASParser.in pulls CAS → full PD engine → results page
  */
 
-import { useState } from 'react';
-import { Upload, ShieldCheck, Lock, ArrowRight, AlertTriangle, CheckCircle2, Sparkles, CreditCard, FileText } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Upload, ShieldCheck, Lock, ArrowRight, AlertTriangle, CheckCircle2, Sparkles, CreditCard, FileText, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
 
 type Tab = 'pan' | 'pdf';
 type PanStep = 'form' | 'otp';
 
 export default function FreeCheckClient() {
-  const [tab, setTab] = useState<Tab>('pan');
+  const [tab, setTab] = useState<Tab>('pdf');
+  const [dragOver, setDragOver] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Shared fields
   const [name, setName] = useState('');
@@ -204,18 +207,6 @@ export default function FreeCheckClient() {
           <div className="flex gap-1 bg-slate-100 rounded-lg p-1 mb-5">
             <button
               type="button"
-              onClick={() => switchTab('pan')}
-              className={`flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-md text-sm font-bold transition-all ${
-                tab === 'pan'
-                  ? 'bg-white text-teal-700 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              <CreditCard className="w-4 h-4" /> Use PAN + OTP
-              <span className="text-[9px] font-bold bg-amber-400 text-slate-900 rounded-full px-1.5 py-0.5 uppercase leading-none">Instant</span>
-            </button>
-            <button
-              type="button"
               onClick={() => switchTab('pdf')}
               className={`flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-md text-sm font-bold transition-all ${
                 tab === 'pdf'
@@ -224,6 +215,19 @@ export default function FreeCheckClient() {
               }`}
             >
               <FileText className="w-4 h-4" /> Upload PDF
+              <span className="text-[9px] font-bold bg-teal-600 text-white rounded-full px-1.5 py-0.5 uppercase leading-none">Recommended</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => switchTab('pan')}
+              className={`flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-md text-sm font-bold transition-all ${
+                tab === 'pan'
+                  ? 'bg-white text-teal-700 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              <CreditCard className="w-4 h-4" /> PAN + OTP
+              <span className="text-[9px] font-medium text-slate-400 normal-case leading-none">CDSL demat</span>
             </button>
           </div>
 
@@ -327,19 +331,94 @@ export default function FreeCheckClient() {
             {/* ── PDF Upload Tab ── */}
             {tab === 'pdf' && (
               <form onSubmit={submitPdf} className="space-y-4">
-                <label className="block">
+                <div>
                   <span className="text-xs font-bold text-slate-600 uppercase tracking-wide">Your CAS / portfolio statement (PDF)</span>
-                  <label className="mt-2 flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-xl p-6 cursor-pointer hover:border-teal-500 hover:bg-teal-50/40 transition-colors">
-                    <Upload className="w-6 h-6 text-teal-600" />
-                    <span className="text-sm font-semibold text-slate-700">{file ? file.name : 'Click to choose your PDF'}</span>
-                    <span className="text-[11px] text-slate-400">CAMS / KFintech CAS (Detailed) or a Trustner valuation report · max 12 MB</span>
-                    <input type="file" accept="application/pdf,.pdf" className="hidden" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+                  <label
+                    className={`mt-2 flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl p-8 cursor-pointer transition-all ${
+                      dragOver
+                        ? 'border-teal-500 bg-teal-50 scale-[1.01]'
+                        : file
+                        ? 'border-teal-400 bg-teal-50/30'
+                        : 'border-slate-300 hover:border-teal-400 hover:bg-teal-50/30'
+                    }`}
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setDragOver(false);
+                      const f = e.dataTransfer.files?.[0];
+                      if (f?.type === 'application/pdf') setFile(f);
+                    }}
+                  >
+                    {file ? (
+                      <>
+                        <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center">
+                          <CheckCircle2 className="w-5 h-5 text-teal-600" />
+                        </div>
+                        <span className="text-sm font-bold text-teal-700">{file.name}</span>
+                        <span className="text-[11px] text-slate-400">{(file.size / 1024 / 1024).toFixed(1)} MB · Click or drag to replace</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
+                          <Upload className="w-6 h-6 text-teal-600" />
+                        </div>
+                        <span className="text-sm font-semibold text-slate-700">
+                          {dragOver ? 'Drop your PDF here' : 'Click or drag your PDF here'}
+                        </span>
+                        <span className="text-[11px] text-slate-400">
+                          CAMS · KFintech · MFCentral CAS · Trustner valuation report · max 12 MB
+                        </span>
+                      </>
+                    )}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="application/pdf,.pdf"
+                      className="hidden"
+                      onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                    />
                   </label>
-                </label>
+                </div>
+
                 <label className="block">
-                  <span className="text-xs font-bold text-slate-600 uppercase tracking-wide">PDF password <span className="font-normal normal-case text-slate-400">(only if your statement has one)</span></span>
-                  <input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Usually your PAN" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm" />
+                  <span className="text-xs font-bold text-slate-600 uppercase tracking-wide">
+                    PDF password
+                    <span className="font-normal normal-case text-slate-400 ml-1">(most CAS PDFs use your PAN as the password)</span>
+                  </span>
+                  <input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="e.g. ABCDE1234F" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm" />
                 </label>
+
+                {/* Help section */}
+                <button
+                  type="button"
+                  onClick={() => setShowHelp(!showHelp)}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-teal-700 transition-colors"
+                >
+                  <HelpCircle className="w-3.5 h-3.5" />
+                  Where do I get my CAS?
+                  {showHelp ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                </button>
+                {showHelp && (
+                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 space-y-3 text-xs text-slate-600">
+                    <div>
+                      <div className="font-bold text-slate-700 mb-0.5">MFCentral (recommended)</div>
+                      Visit <span className="font-semibold text-teal-700">mfcentral.com</span> → Login with PAN + mobile OTP → Download CAS. Covers all AMCs in one PDF.
+                    </div>
+                    <div>
+                      <div className="font-bold text-slate-700 mb-0.5">CAMS</div>
+                      Visit <span className="font-semibold text-teal-700">camsonline.com</span> → Investor Services → Consolidated Account Statement → Enter email → PDF sent to your inbox.
+                    </div>
+                    <div>
+                      <div className="font-bold text-slate-700 mb-0.5">KFintech</div>
+                      Visit <span className="font-semibold text-teal-700">kfintech.com</span> → Investor Services → CAS → Enter PAN → PDF sent to your inbox.
+                    </div>
+                    <p className="text-[10px] text-slate-400 pt-1 border-t border-slate-200">
+                      Tip: CAS PDFs are usually password-protected with your PAN number.
+                    </p>
+                  </div>
+                )}
+
                 <ConsentCheckbox consent={consent} setConsent={setConsent} />
                 {error && <ErrorBox message={error} />}
                 <button type="submit" disabled={busy || !sharedFieldsValid} className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-teal-600 to-teal-700 text-white px-6 py-3.5 rounded-xl font-bold text-sm hover:from-teal-700 hover:to-teal-800 transition-all shadow-lg shadow-teal-600/20 disabled:opacity-60">
