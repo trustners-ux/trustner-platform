@@ -137,7 +137,8 @@ export async function POST(
         console.log(`[Approve] Report email sent to ${entry.userEmail} (tier: ${tier})`);
       } catch (emailError) {
         console.error('[Approve] Email send failed:', emailError);
-        emailWarning = `Email delivery failed: ${emailError instanceof Error ? emailError.message : 'Unknown error'}. Report marked as approved.`;
+        console.error('[Approve] Email error detail:', emailError);
+        emailWarning = 'Email delivery failed. Report marked as approved.';
       }
     }
 
@@ -179,7 +180,7 @@ export async function POST(
   } catch (error) {
     console.error('[Approve] Error:', error);
     return NextResponse.json(
-      { error: `Failed to approve report: ${error instanceof Error ? error.message : 'Unknown error'}` },
+      { error: 'Failed to approve report' },
       { status: 500 }
     );
   }

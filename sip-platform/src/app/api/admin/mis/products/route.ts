@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('[Products API] Create change request error:', error);
     return NextResponse.json(
-      { error: `Failed to create product change request: ${error instanceof Error ? error.message : 'Unknown error'}` },
+      { error: 'Failed to create product change request' },
       { status: 500 }
     );
   }

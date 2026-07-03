@@ -47,10 +47,10 @@ export async function GET(
       },
     });
   } catch (err) {
+    console.error('[NavHistory]', err);
     return NextResponse.json(
       {
         error: 'Failed to fetch NAV history',
-        detail: err instanceof Error ? err.message : String(err),
       },
       { status: 502 }
     );

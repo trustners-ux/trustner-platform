@@ -422,8 +422,9 @@ export async function POST(req: NextRequest) {
         .from('pd_fund_research_stats')
         .upsert(slice, { onConflict: 'amfi_code,snapshot_date' });
       if (error) {
+        console.error(error.message);
         return NextResponse.json({
-          error: `Upsert failed at batch ${i}: ${error.message}`,
+          error: `Upsert failed at batch ${i}`,
         }, { status: 500 });
       }
       upserted += slice.length;
@@ -458,8 +459,9 @@ export async function POST(req: NextRequest) {
       })),
     });
   } catch (e) {
+    console.error((e as Error).message);
     return NextResponse.json(
-      { error: `Server error: ${(e as Error).message}` },
+      { error: 'Server error' },
       { status: 500 }
     );
   }

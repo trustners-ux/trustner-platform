@@ -123,8 +123,9 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (famErr || !newFamily) {
+        console.error(famErr?.message ?? 'Failed to create family');
         return NextResponse.json(
-          { error: `Failed to create family: ${famErr?.message}` },
+          { error: 'Failed to create family' },
           { status: 500 }
         );
       }
@@ -227,8 +228,9 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (runErr || !run) {
+      console.error(runErr?.message ?? 'Failed to create diagnostic run');
       return NextResponse.json(
-        { error: `Failed to create diagnostic run: ${runErr?.message}` },
+        { error: 'Failed to create diagnostic run' },
         { status: 500 }
       );
     }
@@ -306,8 +308,9 @@ export async function POST(request: NextRequest) {
       numSips: body.sips.length,
     });
   } catch (e) {
+    console.error((e as Error).message);
     return NextResponse.json(
-      { error: `Server error: ${(e as Error).message}` },
+      { error: 'Server error' },
       { status: 500 }
     );
   }

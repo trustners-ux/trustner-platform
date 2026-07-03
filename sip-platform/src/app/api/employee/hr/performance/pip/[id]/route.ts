@@ -131,7 +131,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
     .eq('id', pipId)
     .select('*')
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ row: data, fields_updated: Object.keys(update) });
 }
 
@@ -215,7 +215,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     .eq('id', pipId)
     .select('*')
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
 
   return NextResponse.json({ row: data, separation_id: separationId });
 }

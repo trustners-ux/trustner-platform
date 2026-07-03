@@ -160,7 +160,7 @@ export async function PUT(req: NextRequest, ctx: { params: Promise<{ id: string 
   if (existing) {
     const { data, error } = await supabase
       .from('hr_exit_interview').update(rowPayload).eq('id', existing.id).select('*').single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
     interviewId = data.id as number;
     if (sep.exit_interview_id !== interviewId) {
       await supabase.from('hr_separation')
@@ -170,7 +170,7 @@ export async function PUT(req: NextRequest, ctx: { params: Promise<{ id: string 
   } else {
     const { data, error } = await supabase
       .from('hr_exit_interview').insert(rowPayload).select('*').single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
     interviewId = data.id as number;
     await supabase.from('hr_separation')
       .update({ exit_interview_id: interviewId }).eq('id', sepId);

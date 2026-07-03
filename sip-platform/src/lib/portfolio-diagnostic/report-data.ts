@@ -15,6 +15,9 @@ import { getSupabaseAdmin } from '@/lib/db/supabase';
 import { loadBuyList, matchBuyList, bestOpenReplacement } from '@/lib/portfolio-diagnostic/v2/buylist';
 import { subCategoryKey, categoryRiskTier } from '@/lib/portfolio-diagnostic/v2/fund-engine';
 import { runGoalMonteCarlo, type GoalMcResult } from '@/lib/portfolio-diagnostic/v2/monte-carlo';
+import { computePortfolioHealthScore, type PortfolioHealthScore } from '@/lib/portfolio-diagnostic/v2/portfolio-health-score';
+import { buildAllocationComparison, type AllocationComparison } from '@/lib/portfolio-diagnostic/v2/allocation-comparison';
+import { computeBacktest, type BacktestResult } from '@/lib/portfolio-diagnostic/v2/backtest';
 import { getNavHistory } from '@/lib/services/mfapi';
 import { createSupabaseHoldingsProvider } from '@/lib/portfolio-diagnostic/holdings/provider';
 import { aggregateFamilyStockOverlap, type FamilyStockOverlap } from '@/lib/portfolio-diagnostic/holdings/overlap-aggregator';
@@ -55,6 +58,12 @@ export interface ReportHolding {
   investedInr: number;
   currentValueInr: number;
   unrealisedGainInr: number;
+  // Folio-level detail captured at CAS-parse time (pd_diagnostic_holdings.folio_number/
+  // units) — surfaced on the action-sheet REDEEM table so it reads as a precise
+  // transaction instruction, not just a fund-level amount. Null on older runs
+  // parsed before this was wired through, or when the source format lacked it.
+  folioNumber?: string | null;
+  units?: number | null;
   xirrPct: number | null;
   cagr3y: number | null;
   cagr5y: number | null;
@@ -212,6 +221,17 @@ export interface ReportData {
   // family — the true single-stock concentration fund-level diversification hides.
   // null when no held fund has disclosed-holdings data yet. ──
   stockLookThrough: FamilyStockOverlap | null;
+
+  // ── Portfolio Health Score — single top-line 0-100 rollup (REEDOS-parity) ──
+  portfolioHealthScore: PortfolioHealthScore;
+
+  // ── Merged Asset-Type → Category → Fund allocation drill-down, Existing vs
+  // New vs Change, all in one nested view (REEDOS "Scheme-Level Comparison" parity) ──
+  allocationComparison: AllocationComparison;
+
+  // ── Historical backtest overlay — current vs suggested portfolio, NAV-indexed
+  // (REEDOS "Back Tested Performance" parity). Null when coverage is too thin. ──
+  backtestOverlay: BacktestResult | null;
 }
 
 /** Coarse asset-class bucket for a fund category (for the allocation roll-up). */
@@ -256,7 +276,7 @@ export async function loadReportData(
   const { data: holdings } = await supabase
     .from('pd_diagnostic_holdings')
     .select(`
-      id, fund_name, amfi_code, category,
+      id, fund_name, amfi_code, category, folio_number, units,
       invested_inr, current_value_inr, unrealised_gain_inr,
       xirr_pct, cagr_3y, cagr_5y, holding_period_months,
       verdict, verdict_rationale, v2_action, v2_action_label, v2_quality_gates,
@@ -323,6 +343,8 @@ export async function loadReportData(
       fundName,
       amfiCode: amfiCode ?? undefined,
       category,
+      folioNumber: (h.folio_number as string | null) ?? null,
+      units: h.units != null ? Number(h.units) : null,
       investedInr: Number(h.invested_inr ?? 0),
       currentValueInr: Number(h.current_value_inr ?? 0),
       unrealisedGainInr: Number(h.unrealised_gain_inr ?? 0),
@@ -644,6 +666,44 @@ export async function loadReportData(
     }
   } catch { /* holdings data unavailable → omit the section gracefully */ }
 
+  // ── 7i. Portfolio Health Score — single top-line rollup (REEDOS-parity) ──
+  const portfolioHealthScore = computePortfolioHealthScore({
+    tierTotals,
+    riskGap,
+    consolidationValueInr: Number(run.v2_consolidation_value_inr) || 0,
+    currentValueInr,
+    behaviourGap,
+  });
+
+  // ── 7j. Merged allocation drill-down — Asset Type / Category / Fund (REEDOS-parity) ──
+  const allocationComparison = buildAllocationComparison(
+    shaped.map((h) => ({
+      fundName: h.fundName,
+      category: h.category,
+      currentValueInr: h.currentValueInr,
+      verdict: h.verdict,
+      preferredReplacementFundName: h.preferredReplacementFundName,
+    }))
+  );
+
+  // ── 7k. Backtest overlay — current vs suggested portfolio, NAV-indexed (REEDOS-parity) ──
+  let backtestOverlay: ReportData['backtestOverlay'] = null;
+  try {
+    const currentWeights = shaped
+      .filter((h) => h.currentValueInr > 0)
+      .map((h) => ({ amfiCode: h.amfiCode ?? null, valueInr: h.currentValueInr }));
+    const suggestedWeights = shaped
+      .filter((h) => h.currentValueInr > 0)
+      .map((h) => {
+        const stays = h.verdict === 'STAR' || h.verdict === 'KEEP' || h.verdict === 'WATCH';
+        return {
+          amfiCode: (stays ? h.amfiCode : h.preferredReplacementAmfiCode) ?? null,
+          valueInr: h.currentValueInr,
+        };
+      });
+    backtestOverlay = await computeBacktest(currentWeights, suggestedWeights, 18);
+  } catch { /* NAV history unavailable → omit the section gracefully */ }
+
   // ── 8. Format report date ──────────────────────────────────
   const reportDateIso = new Date().toISOString().slice(0, 10);
   const reportDate = new Date().toLocaleDateString('en-GB', {
@@ -700,6 +760,9 @@ export async function loadReportData(
     benchmark,
     monteCarlo,
     stockLookThrough,
+    portfolioHealthScore,
+    allocationComparison,
+    backtestOverlay,
   };
 }
 

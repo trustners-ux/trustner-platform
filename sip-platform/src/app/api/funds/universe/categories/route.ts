@@ -47,7 +47,8 @@ export async function GET() {
     if (missingTable) {
       return NextResponse.json({ categories: [], pendingSetup: true });
     }
-    return NextResponse.json({ categories: [], error: error.message });
+    console.error('[FundsCategories]', error.message);
+    return NextResponse.json({ categories: [], error: 'Failed to load categories' });
   }
 
   // Aggregate: { (category, broad_bucket) → count }

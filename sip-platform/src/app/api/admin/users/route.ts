@@ -169,7 +169,7 @@ export async function POST(request: Request) {
       message: `User ${email} added successfully`,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to add user';
+    const message = 'Failed to add user';
     console.error('[Admin Users] POST error:', error);
     return NextResponse.json({ error: message }, { status: 400 });
   }
@@ -253,7 +253,7 @@ export async function DELETE(request: Request) {
       message: `User ${email} removed successfully`,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to delete user';
+    const message = 'Failed to delete user';
     console.error('[Admin Users] DELETE error:', error);
     return NextResponse.json({ error: message }, { status: 400 });
   }

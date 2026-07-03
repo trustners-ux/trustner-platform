@@ -265,7 +265,10 @@ async function upsertCore(
       .eq('id', existing.id)
       .select('*')
       .single();
-    if (updErr) return { error: updErr.message, status: 500 };
+    if (updErr) {
+      console.error('[Manager review update]', updErr.message);
+      return { error: 'Internal error', status: 500 };
+    }
     row = upd;
   } else if (forceCreate || submit) {
     reviewPayload.status = 'draft';
@@ -274,7 +277,10 @@ async function upsertCore(
       .insert(reviewPayload)
       .select('*')
       .single();
-    if (insErr) return { error: insErr.message, status: 500 };
+    if (insErr) {
+      console.error('[Manager review insert]', insErr.message);
+      return { error: 'Internal error', status: 500 };
+    }
     row = ins;
   } else {
     return { error: 'No manager-review row yet — use POST to create.', status: 404 };
@@ -287,7 +293,10 @@ async function upsertCore(
       .eq('id', (row as { id: number }).id)
       .select('*')
       .single();
-    if (subErr) return { error: subErr.message, status: 500 };
+    if (subErr) {
+      console.error('[Manager review submit]', subErr.message);
+      return { error: 'Internal error', status: 500 };
+    }
     row = subRow;
   }
 

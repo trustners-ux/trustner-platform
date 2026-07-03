@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
     });
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'List failed' },
+      { error: 'List failed' },
       { status: 500 },
     );
   }
@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: err.message, existing: err.existing }, { status: 400 });
     }
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Create failed' },
+      { error: 'Create failed' },
       { status: 400 },
     );
   }

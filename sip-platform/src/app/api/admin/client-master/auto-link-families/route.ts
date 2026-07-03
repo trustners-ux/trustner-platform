@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Auto-link failed' },
+      { error: 'Auto-link failed' },
       { status: 500 },
     );
   }

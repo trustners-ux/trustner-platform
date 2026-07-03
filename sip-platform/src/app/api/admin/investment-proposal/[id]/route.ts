@@ -154,7 +154,8 @@ export async function PUT(
     .eq('id', numericId);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error(error);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });

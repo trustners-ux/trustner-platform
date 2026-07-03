@@ -74,7 +74,8 @@ export async function POST(
     .single();
 
   if (error || !data) {
-    return NextResponse.json({ error: `Insert failed: ${error?.message || 'unknown'}` }, { status: 500 });
+    console.error(error?.message || 'unknown insert error');
+    return NextResponse.json({ error: 'Insert failed' }, { status: 500 });
   }
 
   // Build the magic-link URL — Phase B will host /portal/claim/[token]
@@ -99,7 +100,7 @@ export async function POST(
       dispatch_results.push({
         channel: 'whatsapp',
         ok: false,
-        error: err instanceof Error ? err.message : 'send failed',
+        error: 'send failed',
       });
     }
   }
@@ -155,7 +156,7 @@ export async function POST(
       dispatch_results.push({
         channel: 'email',
         ok: false,
-        error: err instanceof Error ? err.message : 'send failed',
+        error: 'send failed',
       });
     }
   }

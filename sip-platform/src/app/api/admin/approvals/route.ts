@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('[Approvals API] Create error:', error);
     return NextResponse.json(
-      { error: `Failed to create change request: ${error instanceof Error ? error.message : 'Unknown error'}` },
+      { error: 'Failed to create change request' },
       { status: 500 }
     );
   }

@@ -100,7 +100,8 @@ export async function POST(
     .eq('id', parseInt(holdingId, 10));
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error(error);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 
   // Recompute verdict counts on the run

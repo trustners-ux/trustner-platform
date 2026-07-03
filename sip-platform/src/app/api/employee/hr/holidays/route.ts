@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
   }
 
   const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ holidays: data ?? [] });
 }
 
@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
     .select('*')
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ holiday: data });
 }
 
@@ -147,7 +147,7 @@ export async function PUT(req: NextRequest) {
     .select('*')
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ holiday: data });
 }
 
@@ -163,6 +163,6 @@ export async function DELETE(req: NextRequest) {
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
 
   const { error } = await supabase.from('hr_holidays').delete().eq('id', id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ ok: true });
 }

@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:pd": "tsx src/lib/portfolio-diagnostic/v2/_proof_required_return.ts && tsx src/lib/portfolio-diagnostic/v2/_proof_consolidation.ts && tsx src/lib/portfolio-diagnostic/v2/_proof_tax.ts && tsx src/lib/portfolio-diagnostic/v2/_proof_aum.ts && tsx src/lib/portfolio-diagnostic/v2/_proof_montecarlo.ts && tsx src/lib/portfolio-diagnostic/v2/_proof_matcher.ts && tsx src/lib/portfolio-diagnostic/v2/_proof_folio_reconcile.ts",
+    "test:pd": "tsx src/lib/portfolio-diagnostic/v2/_proof_required_return.ts && tsx src/lib/portfolio-diagnostic/v2/_proof_consolidation.ts && tsx src/lib/portfolio-diagnostic/v2/_proof_tax.ts && tsx src/lib/portfolio-diagnostic/v2/_proof_aum.ts && tsx src/lib/portfolio-diagnostic/v2/_proof_montecarlo.ts && tsx src/lib/portfolio-diagnostic/v2/_proof_matcher.ts && tsx src/lib/portfolio-diagnostic/v2/_proof_folio_reconcile.ts && tsx src/lib/portfolio-diagnostic/v2/_proof_reedos_parity.ts",
     "test:pd:live": "tsx src/lib/portfolio-diagnostic/v2/_proof_jaideep.ts && tsx src/lib/portfolio-diagnostic/v2/_proof_nikhil.ts",
     "db:migrate": "node scripts/db-migrate.mjs"
   },

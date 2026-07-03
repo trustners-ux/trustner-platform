@@ -185,7 +185,11 @@ export default function EditPeriodicReviewPage() {
           numGoalsBehind: parseInt(numGoalsBehind, 10) || 0,
           marketSummary: marketSummary || null,
           outlookNextPeriod: outlookNextPeriod || null,
-          actionItems: actionItems.map(({ _key, ...rest }) => rest),
+          actionItems: actionItems.map(({ _key, ...rest }) => ({
+            ...rest,
+            // _key carries the db id for existing rows ("123") vs new rows ("new-…")
+            id: /^\d+$/.test(_key) ? Number(_key) : undefined,
+          })),
         }),
       });
       const data = await res.json();

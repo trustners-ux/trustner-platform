@@ -3,6 +3,8 @@ import path from 'path';
 import { put, list } from '@vercel/blob';
 import { readPrivateJson } from '@/lib/blob/private-store';
 
+const PRIVATE_TOKEN = process.env.PRIVATE_BLOB_READ_WRITE_TOKEN;
+
 export type LeadStatus = 'new' | 'contacted' | 'follow-up' | 'converted' | 'archived';
 
 export interface StoredLead {
@@ -59,11 +61,14 @@ export async function getLeads(): Promise<StoredLead[]> {
 
 async function saveLeads(leads: StoredLead[]): Promise<void> {
   if (isProduction) {
-    // Save to Vercel Blob as a PRIVATE object (PII — audit P0-1).
+    // Save to Vercel Blob as a PRIVATE object (PII — audit P0-1). Written to
+    // the dedicated private store (its store is genuinely private-access;
+    // the original store is public-only and rejects private writes).
     await put(BLOB_KEY, JSON.stringify(leads, null, 2), {
       access: 'private',
       addRandomSuffix: false,
       allowOverwrite: true,
+      token: PRIVATE_TOKEN,
     });
   } else {
     // Save to local file in development

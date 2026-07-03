@@ -262,12 +262,12 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
   if (existingFnf) {
     const { data: updated, error } = await supabase
       .from('hr_fnf').update(fnfRow).eq('id', existingFnf.id).select('id').single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
     fnfId = updated.id as number;
   } else {
     const { data: inserted, error } = await supabase
       .from('hr_fnf').insert(fnfRow).select('id').single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
     fnfId = inserted.id as number;
   }
 

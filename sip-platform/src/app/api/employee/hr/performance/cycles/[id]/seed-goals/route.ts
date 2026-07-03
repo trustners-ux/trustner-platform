@@ -81,7 +81,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     empQuery = supabase.from('hr_employees').select('id').in('id', employee_ids);
   }
   const { data: emps, error: empErr } = await empQuery;
-  if (empErr) return NextResponse.json({ error: empErr.message }, { status: 500 });
+  if (empErr) {
+    console.error('[Seed goals: emp query]', empErr.message);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  }
   const targets = (emps ?? []) as { id: number }[];
   if (targets.length === 0) {
     return NextResponse.json(
@@ -135,14 +138,16 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
                 goal_title: r.goal_title as string,
               });
             } else {
-              errors.push(`emp ${r.employee_id} '${r.goal_title}': ${rowErr.message}`);
+              console.error('[Seed goals: row insert]', rowErr.message);
+              errors.push(`emp ${r.employee_id} '${r.goal_title}': failed`);
             }
           } else {
             inserted++;
           }
         }
       } else {
-        errors.push(insErr.message);
+        console.error('[Seed goals: batch insert]', insErr.message);
+        errors.push('Insert failed');
       }
     } else {
       inserted += (ins ?? []).length;

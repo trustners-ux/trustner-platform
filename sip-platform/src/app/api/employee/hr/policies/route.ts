@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
   if (category) query = query.eq('category', category);
 
   const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ policies: data ?? [] });
 }
 
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
     })
     .select('*')
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ policy: data });
 }
 
@@ -112,6 +112,6 @@ export async function DELETE(req: NextRequest) {
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
 
   const { error } = await supabase.from('hr_policies').update({ status: 'archived' }).eq('id', id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ ok: true });
 }

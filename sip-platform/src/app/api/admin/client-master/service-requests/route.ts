@@ -46,6 +46,6 @@ export async function GET(req: NextRequest) {
   if (q) query = query.or(`subject.ilike.%${q}%,ticket_code.ilike.%${q}%`);
 
   const { data, count, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ ok: true, requests: data || [], total: count ?? 0, limit, offset });
 }

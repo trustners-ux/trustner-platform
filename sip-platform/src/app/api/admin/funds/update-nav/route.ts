@@ -87,7 +87,6 @@ export async function POST(req: NextRequest) {
     console.error('[NAV POST]', err);
     return NextResponse.json({
       error: 'NAV update failed',
-      details: err instanceof Error ? err.message : 'Unknown error',
     }, { status: 500 });
   }
 }

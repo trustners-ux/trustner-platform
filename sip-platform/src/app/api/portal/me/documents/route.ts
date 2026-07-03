@@ -33,7 +33,10 @@ export async function GET(req: NextRequest) {
     .select('id, doc_type, file_name, file_size_bytes, file_mime, verification_status, ocr_status, ocr_mismatch_flags, uploaded_via, uploaded_at')
     .eq('client_id', sess.clientId)
     .order('uploaded_at', { ascending: false });
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error('[Documents]', error.message);
+    return NextResponse.json({ error: 'Failed to load documents' }, { status: 500 });
+  }
   return NextResponse.json({ ok: true, documents: data || [] });
 }
 
@@ -86,7 +89,8 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (insErr || !doc) {
-      return NextResponse.json({ error: `Insert failed: ${insErr?.message || 'unknown'}` }, { status: 500 });
+      console.error('[Documents:Insert]', insErr?.message || 'unknown');
+      return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
     }
 
     // Trigger OCR asynchronously for PAN/Aadhaar
@@ -100,8 +104,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, document: doc });
   } catch (err) {
+    console.error('[Documents:Upload]', err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Upload failed' },
+      { error: 'Upload failed' },
       { status: 500 },
     );
   }

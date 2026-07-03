@@ -76,7 +76,7 @@ export async function POST(request: Request) {
       newPassword,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to reset password';
+    const message = 'Failed to reset password';
     console.error('[Admin Users] Reset password error:', error);
     return NextResponse.json({ error: message }, { status: 400 });
   }

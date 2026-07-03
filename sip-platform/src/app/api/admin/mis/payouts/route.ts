@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('[Payouts API] POST error:', error);
     return NextResponse.json(
-      { error: `Failed to process payout change: ${error instanceof Error ? error.message : 'Unknown error'}` },
+      { error: 'Failed to process payout change' },
       { status: 500 }
     );
   }
@@ -156,6 +156,6 @@ function applyDirectChange(
         return { success: false, error: `Unknown action: ${action}` };
     }
   } catch (err) {
-    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+    return { success: false, error: 'Unknown error' };
   }
 }

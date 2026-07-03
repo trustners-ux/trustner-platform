@@ -58,6 +58,6 @@ export async function GET(req: NextRequest) {
     .lt('log_date', monthEnd)
     .order('log_date');
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ rows: data ?? [] });
 }

@@ -145,7 +145,7 @@ export async function POST(
   } catch (error) {
     console.error('[Approvals API] Review error:', error);
     return NextResponse.json(
-      { error: `Failed to process review: ${error instanceof Error ? error.message : 'Unknown error'}` },
+      { error: 'Failed to process review' },
       { status: 500 }
     );
   }

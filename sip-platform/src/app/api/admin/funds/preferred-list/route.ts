@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 
   const { data, error, count } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
 
   // Also fetch the distinct categories for the filter dropdown — only
   // on page 1 to save round-trips
@@ -118,7 +118,7 @@ export async function PATCH(req: NextRequest) {
     .from('pd_fund_master')
     .update({ trustner_preferred: body.trustner_preferred })
     .eq('amfi_code', body.amfi_code);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
 
   // Audit log (best-effort)
   void supabase.from('app_artefact_views').insert({

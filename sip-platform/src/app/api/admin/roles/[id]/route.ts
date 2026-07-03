@@ -85,7 +85,7 @@ export async function PATCH(
   if (!supabase) return NextResponse.json({ error: 'Database unavailable' }, { status: 500 });
 
   const { error } = await supabase.from('pd_roles').update(update).eq('id', roleId);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ success: true });
 }
 

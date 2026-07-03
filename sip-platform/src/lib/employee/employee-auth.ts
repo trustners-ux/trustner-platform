@@ -5,7 +5,7 @@
  * The directory is the whitelist; this store tracks auth state.
  */
 
-import { put, list, del } from '@vercel/blob';
+import { put, list, del, get } from '@vercel/blob';
 import bcrypt from 'bcryptjs';
 import { findEmployeeByEmail, findEmployeeById, getResetApprovalChain } from './employee-directory';
 import type { Employee, EmployeeRole } from './employee-directory';
@@ -42,6 +42,11 @@ export interface PasswordResetRequest {
 const CREDS_BLOB = 'employee/credentials.json';
 const RESETS_BLOB = 'employee/reset-requests.json';
 
+// Password hashes + reset requests are auth-critical PII — stored in the
+// dedicated PRIVATE store (its own token, since the original project store
+// is public-only and rejects private writes outright).
+const PRIVATE_TOKEN = process.env.PRIVATE_BLOB_READ_WRITE_TOKEN;
+
 // ─── Credential CRUD ─────────────────────────────────────────
 
 // addRandomSuffix=true makes writes produce URLs like
@@ -57,17 +62,14 @@ async function readBlob<T>(path: string, fallback: T[]): Promise<T[]> {
     // blobs by prefix and pick the most-recently-uploaded one. This avoids
     // Vercel Blob's public-CDN-doesn't-invalidate-on-overwrite bug, which
     // can make credential changes invisible for up to 30 days.
-    const result = await list({ prefix: listPrefix(path), limit: 100 });
+    const result = await list({ prefix: listPrefix(path), limit: 100, token: PRIVATE_TOKEN });
     if (result.blobs.length === 0) return fallback;
     // Sort by uploadedAt desc to find the latest
     const latest = result.blobs
       .slice()
       .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime())[0];
-    const res = await fetch(latest.url + '?_=' + Date.now(), {
-      cache: 'no-store',
-      next: { revalidate: 0 },
-    } as RequestInit);
-    if (res.ok) return (await res.json()) as T[];
+    const res = await get(latest.url, { access: 'private', useCache: false, token: PRIVATE_TOKEN });
+    if (res?.stream) return (await new Response(res.stream).json()) as T[];
   } catch (err) {
     console.error(`[EmployeeAuth] Blob read failed for ${path}:`, err);
   }
@@ -81,20 +83,21 @@ async function writeBlob<T>(path: string, data: T[]): Promise<void> {
   // on overwrite). After the write, we delete the older versions so the
   // blob doesn't accumulate.
   const result = await put(path, JSON.stringify(data, null, 2), {
-    access: 'public',
+    access: 'private',
     addRandomSuffix: true,
     contentType: 'application/json',
     cacheControlMaxAge: 0,
+    token: PRIVATE_TOKEN,
   });
 
   // Cleanup: delete prior versions (best-effort; do not fail the write)
   try {
-    const all = await list({ prefix: listPrefix(path), limit: 100 });
+    const all = await list({ prefix: listPrefix(path), limit: 100, token: PRIVATE_TOKEN });
     const toDelete = all.blobs
       .filter((b) => b.url !== result.url)
       .map((b) => b.url);
     if (toDelete.length > 0) {
-      await del(toDelete);
+      await del(toDelete, { token: PRIVATE_TOKEN });
     }
   } catch (err) {
     console.error(`[EmployeeAuth] Cleanup of stale ${path} blobs failed:`, err);

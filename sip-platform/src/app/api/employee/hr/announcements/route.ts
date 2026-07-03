@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
   if (!manage) query = query.eq('status', 'published');
 
   const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ rows: data ?? [], canManage: manage });
 }
 
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
     })
     .select('*')
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
 
   let recipients = 0;
   if (publishNow) {
@@ -105,7 +105,7 @@ export async function PATCH(req: NextRequest) {
   if (becomingPublished) patch.published_at = new Date().toISOString();
 
   const { data, error } = await supabase.from('hr_announcements').update(patch).eq('id', b.id).select('*').single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
 
   let recipients = 0;
   if (becomingPublished) {
@@ -130,6 +130,6 @@ export async function DELETE(req: NextRequest) {
   const id = url.searchParams.get('id');
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
   const { error } = await supabase.from('hr_announcements').delete().eq('id', Number(id));
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ ok: true });
 }

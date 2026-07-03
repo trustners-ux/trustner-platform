@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
     .eq('employee_id', empRow.id)
     .order('applied_at', { ascending: false })
     .limit(100);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ applications: data ?? [] });
 }
 
@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
     .select('*')
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ application: data });
 }
 
@@ -164,7 +164,7 @@ export async function PATCH(req: NextRequest) {
     .eq('id', id)
     .select('*')
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
 
   // If approved, increment used in hr_leave_balances (best-effort)
   if (action === 'approve' && data) {

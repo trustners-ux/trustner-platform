@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
 
   return NextResponse.json({ row: data ?? null });
 }
@@ -165,7 +165,8 @@ export async function POST(req: NextRequest) {
         { status: 409 },
       );
     }
-    return NextResponse.json({ error: insErr?.message ?? 'Insert failed' }, { status: 500 });
+    if (insErr) console.error('[Exit request insert]', insErr.message);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 
   // Seed checklist (best-effort)

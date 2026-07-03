@@ -33,6 +33,7 @@ export async function POST(req: Request) {
     const html = tpl.render(enriched);
     return NextResponse.json({ html, css: LETTER_CSS });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[Letters render]', (e as Error).message);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }

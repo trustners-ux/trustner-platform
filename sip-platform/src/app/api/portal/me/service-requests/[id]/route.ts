@@ -75,7 +75,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     })
     .select('id, author_kind, author_display_name, body, created_at')
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error('[ServiceRequest:Reply]', error.message);
+    return NextResponse.json({ error: 'Failed to load service request' }, { status: 500 });
+  }
 
   // Bump last_activity + auto-flip waiting_on_client back to in_progress
   const newStatus = reqRow.status === 'waiting_on_client' ? 'in_progress' : reqRow.status;

@@ -44,6 +44,6 @@ export async function GET(req: NextRequest) {
     .eq('employee_id', profile.id)
     .order('id', { ascending: false });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ slips: data ?? [] });
 }

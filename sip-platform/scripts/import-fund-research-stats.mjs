@@ -62,6 +62,11 @@ function normalizeName(name) {
   // Strip parentheticals like "(G)", "(IDCW-D)" etc
   s = s.replace(/\([^)]*\)/g, ' ');
 
+  // Feed/AMFI typo + spelling canonicalisations (symmetric on both sides):
+  //  - NGEN feed writes "Balance Advantage" (missing the 'd') for the SEBI
+  //    "Balanced Advantage" category — e.g. Motilal Oswal Balance Advantage.
+  s = s.replace(/\bbalance\s+advantage\b/g, 'balanced advantage');
+
   // Strip common scheme-type tokens.
   // CRITICAL: NGEN uses bare "Regular" / "Reg" / "Regulr" (typo) without
   // "Plan". AMFI uses "Regular Plan" or "- Regular -". We strip ALL bare
@@ -79,8 +84,9 @@ function normalizeName(name) {
     .replace(/\bdividend\s+payout\b|\bdividend\s+reinvest\b|\bdividend\s+option\b/g, '')
     .replace(/\bgrowth\b/g, '')
     .replace(/\boption\b/g, '')
-    // Strip BARE regular / direct / reg / regulr (NGEN abbreviations + typos)
+    // Strip BARE regular / direct / reg / regulr / regulat (NGEN/AMFI typos)
     .replace(/\bregulr\b/g, '')
+    .replace(/\bregulat\b/g, '')
     .replace(/\bregular\b/g, '')
     .replace(/\bdirect\b/g, '')
     .replace(/\breg\b/g, '')
@@ -134,9 +140,13 @@ function normalizeName(name) {
   // Actually: strip ALL "fund" tokens since they're rarely meaningful for disambiguation
   s = s.replace(/\bfund\b/g, '');
 
-  // Collapse all punctuation + whitespace + abbreviations
+  // Collapse all punctuation + whitespace + abbreviations.
+  // Include "_" (junk separator seen in a few AMFI names, e.g. Kotak Focused
+  // "Regular plan _ Growth Option"). Drop the "and" connector so NGEN "Large &
+  // Mid" (& → space) and AMFI "Large and Mid" both reduce to "large mid".
   s = s
-    .replace(/[-–—•·,.&'"/]/g, ' ')
+    .replace(/[-–—•·,._&'"/]/g, ' ')
+    .replace(/\band\b/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 
@@ -320,6 +330,22 @@ function buildFlatIndex(masterRows) {
   return masterRows.map((row) => ({ ...row, norm: normalizeName(row.scheme_name) }));
 }
 
+// Build a DESPACED index: key = normalized name with ALL whitespace removed.
+// This bridges the single biggest class of NGEN↔AMFI mismatch — cap-size word
+// spacing: NGEN writes "Flexi Cap" / "Large and Mid Cap" / "Mid Cap" while AMFI
+// writes "Flexicap" / "Large and Midcap" / "Midcap". Despacing both sides makes
+// "sbi flexi cap" → "sbiflexicap" == AMFI "sbi flexicap" → "sbiflexicap".
+function buildDespacedIndex(masterRows) {
+  const m = new Map();
+  for (const row of masterRows) {
+    const key = normalizeName(row.scheme_name).replace(/\s+/g, '');
+    if (!key) continue;
+    if (!m.has(key)) m.set(key, []);
+    m.get(key).push({ ...row, norm: normalizeName(row.scheme_name) });
+  }
+  return m;
+}
+
 // Pick the "Regular Growth" variant out of multiple plan options for a fund
 function preferRegularGrowth(candidates) {
   // The AMFI scheme names include " - Regular " / " - Direct " / "- Growth"
@@ -336,22 +362,48 @@ function preferRegularGrowth(candidates) {
   return candidates[0];
 }
 
+// Given a matched master row, re-select the REGULAR-Growth sibling that shares
+// its despaced normalised name. The NGEN feed is Regular-plans-only, so any match
+// to a Direct/IDCW code is wrong. This matters when an AMC spells the Regular and
+// Direct plans differently (e.g. Nippon India Vision: Regular "...Midcap...",
+// Direct "...Mid Cap...") — exact-match can land on the Direct twin; this funnels
+// every match back to the Regular-Growth variant of the same fund.
+function finalizeMatch(row, despacedIndex) {
+  if (!row || !despacedIndex) return row;
+  const key = normalizeName(row.scheme_name).replace(/\s+/g, '');
+  const group = despacedIndex.get(key);
+  if (group && group.length > 1) return preferRegularGrowth(group);
+  return row;
+}
+
 // Try to match a NGEN fund to an amfi_code using a multi-stage strategy.
-// Returns the matched master row, or null.
-function matchFund(ngenFund, index, flatIndex) {
+// Returns the matched master row (Regular-Growth), or null.
+function matchFund(ngenFund, index, flatIndex, despacedIndex) {
   const norm = normalizeName(ngenFund.scheme_name_source);
   if (!norm) return null;
 
   // Stage 1: exact normalised name
   const exact = index.get(norm) || [];
-  if (exact.length > 0) return preferRegularGrowth(exact);
+  if (exact.length > 0) return finalizeMatch(preferRegularGrowth(exact), despacedIndex);
+
+  // Stage 1.5: DESPACED exact match — bridges cap-size word spacing
+  // ("Flexi Cap" vs "Flexicap", "Large and Mid Cap" vs "Large and Midcap",
+  //  "Mid Cap" vs "Midcap", "Large Cap" vs "Largecap"). Additive: only fires
+  // when the spaced exact match above already failed, so it cannot regress
+  // any currently-correct match. Recovers SBI/Kotak/Canara/Sundaram Flexicap,
+  // Sundaram/PGIM/ITI Large&Midcap, Groww Largecap, etc.
+  if (despacedIndex) {
+    const dKey = norm.replace(/\s+/g, '');
+    const dArr = despacedIndex.get(dKey);
+    if (dArr && dArr.length > 0) return preferRegularGrowth(dArr);
+  }
 
   // Stage 2: drop the first 1-3 leading tokens (handles unrecognised AMC abbreviation)
   const tokens = norm.split(' ');
   for (let drop = 1; drop <= 3 && drop < tokens.length; drop++) {
     const reduced = tokens.slice(drop).join(' ');
     const arr = index.get(reduced);
-    if (arr && arr.length > 0) return preferRegularGrowth(arr);
+    if (arr && arr.length > 0) return finalizeMatch(preferRegularGrowth(arr), despacedIndex);
   }
 
   // Stage 3: token-set overlap with DISCRIMINATIVE-TOKEN guarding.
@@ -405,14 +457,17 @@ function matchFund(ngenFund, index, flatIndex) {
       best = { row: f, score: adjScore };
     }
   }
-  if (best.row) return best.row;
+  if (best.row) return finalizeMatch(best.row, despacedIndex);
   return null;
 }
 
 // ─── Main ────────────────────────────────────────────────────
 async function main() {
   console.log(`Reading ${xlsxPath}...`);
-  const wb = XLSX.readFile(xlsxPath, { cellDates: true });
+  // Read via node:fs + XLSX.read(buffer) rather than XLSX.readFile(path):
+  // the SheetJS CDN build of `xlsx` doesn't auto-wire Node's fs, so readFile()
+  // throws "Cannot access file". This buffer path works on every xlsx build.
+  const wb = XLSX.read(readFileSync(xlsxPath), { type: 'buffer', cellDates: true });
   console.log(`Sheets: ${wb.SheetNames.join(', ')}`);
 
   const allFunds = [
@@ -436,11 +491,12 @@ async function main() {
   const master = await loadFundMaster();
   const index = buildIndex(master);
   const flatIndex = buildFlatIndex(master);
+  const despacedIndex = buildDespacedIndex(master);
 
   const matched = [];
   const unmatched = [];
   for (const f of allFunds) {
-    const hit = matchFund(f, index, flatIndex);
+    const hit = matchFund(f, index, flatIndex, despacedIndex);
     if (hit) matched.push({ ...f, amfi_code: hit.amfi_code });
     else unmatched.push(f);
   }

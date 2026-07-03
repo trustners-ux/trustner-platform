@@ -6,6 +6,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/db/supabase';
+import { encryptPii, decryptPii } from '@/lib/security/pii-crypto';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -52,7 +53,10 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ token: str
     .eq('onboarding_id', r.record!.id)
     .order('uploaded_at', { ascending: false });
 
-  return NextResponse.json({ onboarding: r.record, documents: docs ?? [] });
+  const record = { ...r.record! };
+  record.aadhaar = decryptPii(record.aadhaar) ?? record.aadhaar;
+  record.account_number = decryptPii(record.account_number) ?? record.account_number;
+  return NextResponse.json({ onboarding: record, documents: docs ?? [] });
 }
 
 export async function PATCH(req: NextRequest, ctx: { params: Promise<{ token: string }> }) {
@@ -85,6 +89,9 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ token: st
   for (const k of allowed) {
     if (k in body) patch[k] = body[k];
   }
+  // Encrypt PII before storage
+  if (typeof patch.aadhaar === 'string') patch.aadhaar = encryptPii(patch.aadhaar);
+  if (typeof patch.account_number === 'string') patch.account_number = encryptPii(patch.account_number);
   // Normalise PAN to uppercase (HR still reviews; we don't hard-reject partial saves)
   if (typeof patch.pan === 'string') patch.pan = patch.pan.trim().toUpperCase();
   // Consents arrive as booleans; persist an audit timestamp when ticked, clear when un-ticked.
@@ -104,6 +111,9 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ token: st
     .eq('token', token)
     .select('*')
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error('[Onboarding]', error.message);
+    return NextResponse.json({ error: 'Operation failed' }, { status: 500 });
+  }
   return NextResponse.json({ onboarding: data });
 }

@@ -34,6 +34,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     const url = await signedClientDocUrl(row.storage_key, 60);
     return NextResponse.json({ ok: true, signed_url: url, file_name: row.file_name });
   } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'signed-url failed' }, { status: 500 });
+    console.error('[DocumentDownload]', err);
+    return NextResponse.json({ error: 'Download failed' }, { status: 500 });
   }
 }

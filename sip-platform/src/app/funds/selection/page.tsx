@@ -8,7 +8,7 @@ import {
   Eye, EyeOff, Trophy, Search, X, Printer, GitCompareArrows,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
-import { CURRENT_TRUSTNER_LIST, getTotalFundCount, getCategoryCount } from '@/data/funds/trustner';
+import { CURRENT_TRUSTNER_LIST, getTotalFundCount, getCategoryCount, getTrackRecord } from '@/data/funds/trustner';
 import { TrustnerCategoryTable } from '@/components/funds/TrustnerCategoryTable';
 import { FundComparePanel } from '@/components/funds/FundComparePanel';
 import { RankBadge } from '@/components/funds/RankBadge';
@@ -32,6 +32,11 @@ const SELECTION_CRITERIA = [
 const ALL_FUNDS = CURRENT_TRUSTNER_LIST.categories.flatMap((cat) =>
   cat.funds.map((f) => ({ ...f, categoryName: cat.name, categoryDisplayName: cat.displayName }))
 );
+
+// Real month-over-month diff of the published shortlist — computed from the
+// actual snapshot data (never hand-authored), so this is a genuine transparency
+// record: what changed on the list, and when.
+const TRACK_RECORD = getTrackRecord();
 
 // ─── Category Quick Stats ───
 function CategoryQuickStat({ fund }: { fund: TrustnerCuratedFund }) {
@@ -104,6 +109,7 @@ function SearchResultCard({
 export default function FundSelectionPage() {
   const [activeCategory, setActiveCategory] = useState<FundCategory>(CATEGORY_ORDER[0]);
   const [methodologyOpen, setMethodologyOpen] = useState(false);
+  const [trackRecordOpen, setTrackRecordOpen] = useState(false);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [compareMode, setCompareMode] = useState(false);
@@ -456,6 +462,73 @@ export default function FundSelectionPage() {
                   <p className="text-xs text-slate-500 leading-relaxed">{item.desc}</p>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Track Record — real diff between the last two published shortlists */}
+          <button
+            onClick={() => setTrackRecordOpen(!trackRecordOpen)}
+            className="w-full flex items-center justify-between card-base p-5 sm:p-6 hover:shadow-elevated transition-all mt-4"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-teal-600" />
+              </div>
+              <div className="text-left">
+                <h2 className="text-lg font-bold text-primary-700">Track Record — What&apos;s Changed</h2>
+                <p className="text-xs text-slate-500">{TRACK_RECORD.fromMonth} → {TRACK_RECORD.toMonth} — every addition/removal, straight from the published lists</p>
+              </div>
+            </div>
+            {trackRecordOpen ? (
+              <ChevronUp className="w-5 h-5 text-slate-400" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-slate-400" />
+            )}
+          </button>
+
+          {trackRecordOpen && (
+            <div className="mt-4 animate-in">
+              <p className="text-xs text-slate-500 mb-4 max-w-3xl">
+                This is a factual diff between the {TRACK_RECORD.fromMonth} and {TRACK_RECORD.toMonth} published
+                shortlists — not a performance track record or a buy/sell signal. Funds move on/off the list based
+                on the same 12-parameter criteria above (AUM comfort zone, expense ratio, risk-adjusted returns,
+                consistency, portfolio quality, skin in the game). We publish every change here as it happens.
+              </p>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {TRACK_RECORD.categoryDiffs.map((diff) => (
+                  <div key={diff.category} className="card-base p-5">
+                    <h3 className="font-bold text-primary-700 text-sm mb-3">{diff.categoryDisplayName}</h3>
+                    {diff.added.length > 0 && (
+                      <div className="mb-2">
+                        <div className="text-[11px] font-semibold text-positive uppercase tracking-wide mb-1">Added</div>
+                        <ul className="text-xs text-slate-600 space-y-0.5">
+                          {diff.added.map((name) => <li key={name}>+ {name}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {diff.removed.length > 0 && (
+                      <div>
+                        <div className="text-[11px] font-semibold text-red-500 uppercase tracking-wide mb-1">Removed</div>
+                        <ul className="text-xs text-slate-600 space-y-0.5">
+                          {diff.removed.map((name) => <li key={name}>− {name}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {TRACK_RECORD.categoriesDropped.map((cat) => (
+                  <div key={cat.name} className="card-base p-5 border-t-2 border-t-red-200">
+                    <h3 className="font-bold text-primary-700 text-sm mb-1">{cat.displayName}</h3>
+                    <p className="text-[11px] text-red-500 font-semibold uppercase tracking-wide mb-1">Category retired from the list</p>
+                    <ul className="text-xs text-slate-600 space-y-0.5">
+                      {cat.funds.map((name) => <li key={name}>− {name}</li>)}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+              {TRACK_RECORD.categoryDiffs.length === 0 && TRACK_RECORD.categoriesDropped.length === 0 && (
+                <p className="text-sm text-slate-500">No changes between these two snapshots.</p>
+              )}
             </div>
           )}
         </div>

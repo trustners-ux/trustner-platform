@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
   else famQ = famQ.order('updated_at', { ascending: false, nullsFirst: false });
 
   const { data: families, error } = await famQ;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
 
   if (!families || families.length === 0) {
     return NextResponse.json({ clients: [], total: 0 });

@@ -5,7 +5,7 @@
  */
 
 import { randomInt } from 'crypto';
-import { put, list, del } from '@vercel/blob';
+import { put, list, del, get } from '@vercel/blob';
 import bcrypt from 'bcryptjs';
 import type { AdminUser, AdminRole } from '@/lib/auth/config';
 
@@ -13,6 +13,11 @@ const BLOB_PATH = 'admin/users.json';
 // addRandomSuffix=true makes writes produce URLs like "admin/users-XXXXXX.json",
 // so the list prefix must NOT include the ".json" extension.
 const BLOB_LIST_PREFIX = 'admin/users';
+
+// Admin password hashes are auth-critical PII — stored in the dedicated
+// PRIVATE store (its own token; the original project store is public-only
+// and rejects private writes outright).
+const PRIVATE_TOKEN = process.env.PRIVATE_BLOB_READ_WRITE_TOKEN;
 
 // ─── Super Admin — cannot be deleted, requires dual OTP ───
 export const SUPER_ADMIN_EMAIL = 'ram@trustner.in';
@@ -42,18 +47,15 @@ export async function getAdminUsersFromBlob(): Promise<AdminUser[]> {
     // most-recently-uploaded blob. This avoids Vercel Blob's
     // public-CDN-doesn't-invalidate-on-overwrite bug, which can make
     // password changes invisible for up to 30 days.
-    const result = await list({ prefix: BLOB_LIST_PREFIX, limit: 100 });
+    const result = await list({ prefix: BLOB_LIST_PREFIX, limit: 100, token: PRIVATE_TOKEN });
 
     if (result.blobs.length > 0) {
       const latest = result.blobs
         .slice()
         .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime())[0];
-      const res = await fetch(latest.url + '?_=' + Date.now(), {
-        cache: 'no-store',
-        next: { revalidate: 0 },
-      } as RequestInit);
-      if (res.ok) {
-        const users = (await res.json()) as AdminUser[];
+      const res = await get(latest.url, { access: 'private', useCache: false, token: PRIVATE_TOKEN });
+      if (res?.stream) {
+        const users = (await new Response(res.stream).json()) as AdminUser[];
         return users;
       }
     }
@@ -95,20 +97,21 @@ async function saveUsers(users: AdminUser[]): Promise<void> {
   // (CDN keys ignore query strings, and the public URL doesn't invalidate
   // on overwrite). After the write, we delete the older versions.
   const result = await put(BLOB_PATH, JSON.stringify(users, null, 2), {
-    access: 'public',
+    access: 'private',
     addRandomSuffix: true,
     contentType: 'application/json',
     cacheControlMaxAge: 0,
+    token: PRIVATE_TOKEN,
   });
 
   // Cleanup older versions (best-effort)
   try {
-    const all = await list({ prefix: BLOB_LIST_PREFIX, limit: 100 });
+    const all = await list({ prefix: BLOB_LIST_PREFIX, limit: 100, token: PRIVATE_TOKEN });
     const toDelete = all.blobs
       .filter((b) => b.url !== result.url)
       .map((b) => b.url);
     if (toDelete.length > 0) {
-      await del(toDelete);
+      await del(toDelete, { token: PRIVATE_TOKEN });
     }
   } catch (err) {
     console.error('[AdminUserStore] Cleanup of stale blobs failed:', err);

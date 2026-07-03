@@ -191,7 +191,10 @@ export async function POST(
     .eq('id', rating.id)
     .select('*')
     .single();
-  if (lockErr) return NextResponse.json({ error: lockErr.message }, { status: 500 });
+  if (lockErr) {
+    console.error('[Finalize lock]', lockErr.message);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  }
 
   // PIP auto-trigger on rating=1
   let pipRow: Record<string, unknown> | null = null;

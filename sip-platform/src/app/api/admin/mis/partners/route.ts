@@ -369,7 +369,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('[Partners API] POST error:', error);
     return NextResponse.json(
-      { error: `Failed: ${error instanceof Error ? error.message : 'Unknown error'}` },
+      { error: 'Internal error' },
       { status: 500 }
     );
   }

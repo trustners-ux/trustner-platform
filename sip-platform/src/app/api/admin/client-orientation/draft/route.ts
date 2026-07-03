@@ -67,7 +67,8 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error || !row) {
-    return NextResponse.json({ error: error?.message ?? 'Failed to create draft' }, { status: 500 });
+    console.error(error?.message ?? 'Failed to create client-orientation draft');
+    return NextResponse.json({ error: 'Failed to create draft' }, { status: 500 });
   }
 
   await writeAuditEvent({

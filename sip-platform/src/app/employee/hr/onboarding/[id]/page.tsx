@@ -278,7 +278,7 @@ export default function OnboardingReviewPage({ params }: { params: Promise<{ id:
                   <div className="text-[11px] text-slate-500 truncate">{d.filename}</div>
                 </div>
                 {d.blob_url && (
-                  <a href={d.blob_url} target="_blank" rel="noopener" className="text-[11px] text-brand font-semibold hover:underline">View</a>
+                  <a href={`/api/employee/hr/onboarding/document/${d.id}`} target="_blank" rel="noopener" className="text-[11px] text-brand font-semibold hover:underline">View</a>
                 )}
               </div>
             ))}

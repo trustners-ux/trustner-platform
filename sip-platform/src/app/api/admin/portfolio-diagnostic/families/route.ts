@@ -63,7 +63,8 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query.limit(10);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error(error);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 
   return NextResponse.json({
@@ -134,7 +135,8 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error(error);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 
   return NextResponse.json({ familyId: data?.id, familyCode });

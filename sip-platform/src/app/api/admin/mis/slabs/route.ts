@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
       } catch (err) {
         console.error('[Slabs API] Super Admin direct update error:', err);
         return NextResponse.json(
-          { error: `Direct update failed: ${err instanceof Error ? err.message : 'Unknown error'}` },
+          { error: 'Direct update failed' },
           { status: 500 }
         );
       }
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('[Slabs API] Create change request error:', error);
     return NextResponse.json(
-      { error: `Failed to create slab change request: ${error instanceof Error ? error.message : 'Unknown error'}` },
+      { error: 'Failed to create slab change request' },
       { status: 500 }
     );
   }

@@ -179,7 +179,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
   const { data, error } = await supabase
     .from('hr_separation').update(update).eq('id', sepId).select('*').single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ row: data });
 }
 
@@ -211,7 +211,7 @@ export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: stri
   }
 
   const { error } = await supabase.from('hr_separation').delete().eq('id', sepId);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
 
   // Roll employee status back to active if no other active case
   const { data: other } = await supabase

@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
   query = query.range((page - 1) * pageSize, page * pageSize - 1);
 
   const { data, error, count } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ rows: data ?? [], total: count ?? 0, page, pageSize });
 }
 
@@ -98,6 +98,6 @@ export async function POST(req: NextRequest) {
     .select(EMPLOYEE_FIELDS)
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ employee: data });
 }

@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     .from('hr_letter_archive')
     .insert(rows)
     .select('id, letter_type, entity, recipient_name, status, generated_at');
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
 
   return NextResponse.json({ created: inserted ?? [], count: inserted?.length ?? 0, entity });
 }

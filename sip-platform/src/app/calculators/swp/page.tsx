@@ -2,12 +2,12 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { IndianRupee, ArrowLeft, AlertTriangle, CheckCircle2, TrendingUp } from 'lucide-react';
+import { IndianRupee, ArrowLeft, AlertTriangle, CheckCircle2, TrendingUp, Percent } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, BarChart, Bar,
 } from 'recharts';
-import { calculateSWP } from '@/lib/utils/calculators';
+import { calculateSWP, calculateSWPWithTax } from '@/lib/utils/calculators';
 import { formatINR, formatNumber } from '@/lib/utils/formatters';
 import { cn } from '@/lib/utils/cn';
 import { DISCLAIMER } from '@/lib/constants/company';
@@ -35,10 +35,27 @@ export default function SWPCalculatorPage() {
   const [stepUpType, setStepUpType] = useState<'percentage' | 'amount'>('percentage');
   const [stepUpValue, setStepUpValue] = useState(6);
 
+  // Tax-Aware Mode state
+  const [taxAwareEnabled, setTaxAwareEnabled] = useState(false);
+  const [fundType, setFundType] = useState<'equity' | 'debt'>('equity');
+  const [debtSlabPct, setDebtSlabPct] = useState(30);
+
   const result = useMemo(
     () => calculateSWP(corpus, monthlyWithdrawal, returnRate, years, stepUpEnabled, stepUpType, stepUpValue),
     [corpus, monthlyWithdrawal, returnRate, years, stepUpEnabled, stepUpType, stepUpValue]
   );
+
+  const taxResult = useMemo(
+    () => taxAwareEnabled
+      ? calculateSWPWithTax(corpus, monthlyWithdrawal, returnRate, years, stepUpEnabled, stepUpType, stepUpValue, fundType, debtSlabPct)
+      : undefined,
+    [taxAwareEnabled, corpus, monthlyWithdrawal, returnRate, years, stepUpEnabled, stepUpType, stepUpValue, fundType, debtSlabPct]
+  );
+
+  const estTotalTax = taxResult?.totalEstTax;
+  const estTotalTaxPercent = (taxResult && result.totalWithdrawn > 0)
+    ? ((taxResult.totalEstTax / result.totalWithdrawn) * 100).toFixed(1)
+    : '0';
 
   const corpusSustainable = result.finalCorpus > 0;
 
@@ -213,6 +230,84 @@ export default function SWPCalculatorPage() {
                     </div>
                   )}
                 </div>
+
+                {/* Tax-Aware Mode Toggle */}
+                <div className="pt-3 border-t border-teal-200">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-medium text-slate-600 flex items-center gap-1.5">
+                      <Percent className="w-3.5 h-3.5 text-teal-600" />
+                      Tax-Aware Mode
+                    </label>
+                    <button
+                      role="switch"
+                      aria-checked={taxAwareEnabled}
+                      onClick={() => setTaxAwareEnabled(!taxAwareEnabled)}
+                      className={cn(
+                        'relative inline-flex h-5 w-9 items-center rounded-full transition-colors',
+                        taxAwareEnabled ? 'bg-teal-600' : 'bg-slate-300'
+                      )}
+                    >
+                      <span className={cn(
+                        'inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform shadow-sm',
+                        taxAwareEnabled ? 'translate-x-[18px]' : 'translate-x-[3px]'
+                      )} />
+                    </button>
+                  </div>
+                  <div className="text-[10px] text-slate-500 mb-2">
+                    See estimated capital-gains tax on your withdrawals
+                  </div>
+
+                  {taxAwareEnabled && (
+                    <div className="space-y-3 mt-2 animate-in fade-in duration-200">
+                      {/* Equity vs Debt Toggle */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setFundType('equity')}
+                          className={cn(
+                            'flex-1 text-[10px] font-semibold py-1.5 rounded-lg border transition-colors',
+                            fundType === 'equity'
+                              ? 'bg-teal-600 text-white border-teal-600'
+                              : 'bg-white text-slate-600 border-slate-300 hover:border-teal-300'
+                          )}
+                        >
+                          Equity-oriented
+                        </button>
+                        <button
+                          onClick={() => setFundType('debt')}
+                          className={cn(
+                            'flex-1 text-[10px] font-semibold py-1.5 rounded-lg border transition-colors',
+                            fundType === 'debt'
+                              ? 'bg-teal-600 text-white border-teal-600'
+                              : 'bg-white text-slate-600 border-slate-300 hover:border-teal-300'
+                          )}
+                        >
+                          Debt-oriented
+                        </button>
+                      </div>
+
+                      {fundType === 'debt' && (
+                        <NumberInput
+                          label="Your Income Tax Slab %"
+                          value={debtSlabPct}
+                          onChange={setDebtSlabPct}
+                          suffix="%"
+                          step={1}
+                          min={0}
+                          max={42.74}
+                          hint="Debt funds bought after 1-Apr-2023 are taxed at your slab rate — no LTCG/STCG."
+                        />
+                      )}
+
+                      <div className="text-[10px] text-teal-700 bg-teal-50 rounded-lg px-3 py-2 border border-teal-200/50">
+                        Assumes this corpus is invested fresh today. Your actual embedded gains may differ — this is an illustration.
+                      </div>
+
+                      <div className="text-[10px] text-slate-500 bg-surface-100 rounded-lg px-3 py-2 border border-surface-300">
+                        Estimated using FY2025-26 India tax rules (post Budget 2024): equity LTCG 12.5% above ₹1.25L/financial-year exemption, STCG 20%; debt-oriented funds taxed at your slab rate. This is an illustration for planning purposes only — please confirm your actual tax liability with your Chartered Accountant before acting.
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Results */}
@@ -254,6 +349,13 @@ export default function SWPCalculatorPage() {
                     <div className="text-[10px] text-slate-400 uppercase tracking-wider">Initial Withdrawal Rate</div>
                     <div className="text-sm font-bold text-primary-700">{withdrawalRate}% p.a.</div>
                   </div>
+                  {taxAwareEnabled && estTotalTax !== undefined && (
+                    <div className="bg-teal-50 rounded-lg p-3 text-center">
+                      <div className="text-[10px] text-teal-600 uppercase tracking-wider">Est. Total Tax</div>
+                      <div className="text-sm font-bold text-teal-700">{formatINR(estTotalTax)}</div>
+                      <div className="text-[10px] text-teal-500 mt-0.5">≈{estTotalTaxPercent}% of total withdrawals</div>
+                    </div>
+                  )}
                   {stepUpEnabled && (
                     <div className="grid grid-cols-2 gap-3">
                       <div className="bg-amber-50 rounded-lg p-3 text-center">
@@ -421,11 +523,19 @@ export default function SWPCalculatorPage() {
                         <th className="text-right py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider">Yr Withdrawn</th>
                         <th className="text-right py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider">Interest</th>
                         <th className="text-right py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider">Remaining</th>
+                        {taxAwareEnabled && (
+                          <>
+                            <th className="text-right py-3 px-4 font-semibold text-teal-600 text-xs uppercase tracking-wider">Gain Realized</th>
+                            <th className="text-right py-3 px-4 font-semibold text-teal-600 text-xs uppercase tracking-wider">Est. Tax</th>
+                          </>
+                        )}
                         <th className="text-right py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider">Status</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {result.yearlyData.map((row) => (
+                      {result.yearlyData.map((row) => {
+                        const taxRow = taxAwareEnabled ? taxResult?.yearlyData.find((t) => t.year === row.year) : undefined;
+                        return (
                         <tr key={row.year} className="border-b border-surface-200 hover:bg-surface-100/50 transition-colors">
                           <td className="py-3 px-4 font-medium text-primary-700">
                             {investorAge !== null ? `Age ${investorAge + row.year}` : `Year ${row.year}`}
@@ -436,6 +546,16 @@ export default function SWPCalculatorPage() {
                           <td className="py-3 px-4 text-right text-secondary-700 font-medium">{formatINR(row.withdrawn)}</td>
                           <td className="py-3 px-4 text-right text-positive">{formatINR(row.interest)}</td>
                           <td className="py-3 px-4 text-right font-semibold text-primary-700">{formatINR(row.remaining)}</td>
+                          {taxAwareEnabled && (
+                            <>
+                              <td className="py-3 px-4 text-right text-teal-700">
+                                {taxRow ? formatINR(taxRow.ltcgGain + taxRow.stcgGain + taxRow.slabGain) : '—'}
+                              </td>
+                              <td className="py-3 px-4 text-right text-teal-700 font-medium">
+                                {taxRow ? formatINR(taxRow.estTax) : '—'}
+                              </td>
+                            </>
+                          )}
                           <td className="py-3 px-4 text-right">
                             <span className={cn(
                               'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
@@ -447,7 +567,8 @@ export default function SWPCalculatorPage() {
                             </span>
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

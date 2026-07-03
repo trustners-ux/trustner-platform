@@ -27,7 +27,10 @@ export async function GET(req: NextRequest) {
     .select('id, ticket_code, category, subject, status, priority, last_activity_at, created_at')
     .eq('client_id', sess.clientId)
     .order('last_activity_at', { ascending: false });
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error('[ServiceRequests]', error.message);
+    return NextResponse.json({ error: 'Failed to load service requests' }, { status: 500 });
+  }
   return NextResponse.json({ ok: true, requests: data || [] });
 }
 
@@ -64,7 +67,10 @@ export async function POST(req: NextRequest) {
     })
     .select('id, ticket_code, category, subject, status, priority, created_at')
     .single();
-  if (error || !data) return NextResponse.json({ error: error?.message || 'create failed' }, { status: 500 });
+  if (error || !data) {
+    console.error('[ServiceRequests:Create]', error?.message || 'create failed');
+    return NextResponse.json({ error: 'Failed to create service request' }, { status: 500 });
+  }
 
   // Initial "system" reply with the description for the activity log
   if (body.description?.trim()) {

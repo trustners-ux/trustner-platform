@@ -35,6 +35,14 @@ export const BRAND = {
   watch: '#B07A2E',
   swap: '#9B2C3A',
   liq: '#6B7280',
+  // Asset-allocation donut sleeves (Investment Proposal) that need more than the
+  // tier-accent set above — three genuinely new, muted tones consistent with the
+  // "no saturated fills" system; the other seven sleeves reuse the tokens above.
+  sleeve: {
+    smallCap: '#5B4A6B',       // muted plum
+    hybrid: '#6B5B3E',         // muted bronze/khaki
+    international: '#3E5B5B',  // muted teal-slate
+  },
 } as const;
 
 /**

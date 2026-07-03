@@ -58,6 +58,6 @@ export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: stri
     .from('hr_letter_archive')
     .update({ is_deleted: true, deleted_at: new Date().toISOString(), deleted_by: actor.email })
     .eq('id', Number(id));
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ ok: true });
 }
