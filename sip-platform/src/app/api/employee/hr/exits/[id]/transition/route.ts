@@ -224,7 +224,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
   const { data, error } = await supabase
     .from('hr_separation').update(update).eq('id', sepId).select('*').single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
 
   // Side effects on terminal states — flip employee status
   if (to === 'closed' || to === 'fnf_disbursed') {

@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
     .from('hr_productivity_summary')
     .select('*')
     .order('avg_roi_6mo');
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
 
   // Layer in real-time DSR + attendance percentages for the last 30 days
   const since = new Date();

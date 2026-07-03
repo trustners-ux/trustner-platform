@@ -57,7 +57,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
 
   const { data, error } = await supabase
     .from('hr_fnf').select('*').eq('separation_id', sepId).maybeSingle();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   if (!data) return NextResponse.json({ error: 'F&F not yet computed' }, { status: 404 });
 
   return NextResponse.json({ row: data });
@@ -98,7 +98,10 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
   const { data: existing, error: exErr } = await supabase
     .from('hr_fnf').select('*').eq('separation_id', sepId).maybeSingle();
-  if (exErr) return NextResponse.json({ error: exErr.message }, { status: 500 });
+  if (exErr) {
+    console.error('[FnF fetch]', exErr.message);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  }
   if (!existing) {
     return NextResponse.json({ error: 'F&F not yet computed' }, { status: 404 });
   }
@@ -151,7 +154,7 @@ export async function PATCH(req: NextRequest, ctx: { params: Promise<{ id: strin
 
   const { data, error } = await supabase
     .from('hr_fnf').update(update).eq('id', existing.id).select('*').single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
 
   return NextResponse.json({ row: data, override_logged: audit_entry });
 }

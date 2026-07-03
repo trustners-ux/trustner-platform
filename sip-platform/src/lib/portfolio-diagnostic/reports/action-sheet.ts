@@ -255,12 +255,22 @@ function renderTransactionRow(h: ReportHolding, idx: number, isLiquidation: bool
 
   const reason = h.rationale ?? (isLiquidation ? 'Immaterial — cleanup' : 'Mid-pack; better alternative exists');
 
+  // Folio-level detail (folio_number/units captured at CAS-parse time) — makes
+  // this a precise redemption instruction rather than just a fund-level amount.
+  // Omitted gracefully when absent (older runs, or a source format without it).
+  const folioBits: string[] = [];
+  if (h.folioNumber) folioBits.push(`Folio ${escapeHtml(h.folioNumber)}`);
+  if (h.units != null) folioBits.push(`${h.units.toLocaleString('en-IN', { maximumFractionDigits: 3 })} units`);
+  const folioLine = folioBits.length
+    ? `<div style="font-size:6.3pt;color:#64748B;">${folioBits.join(' · ')}</div>`
+    : '';
+
   return `
     <tr>
       <td class="ctr">${idx + 1}</td>
       <td class="ctr"><span class="checkbox"></span></td>
       <td>${escapeHtml(h.entityName)}</td>
-      <td>${escapeHtml(h.fundName)}${h.category ? `<div style="font-size:6.5pt;color:#64748B;">${escapeHtml(h.category)}</div>` : ''}</td>
+      <td>${escapeHtml(h.fundName)}${h.category ? `<div style="font-size:6.5pt;color:#64748B;">${escapeHtml(h.category)}</div>` : ''}${folioLine}</td>
       <td class="ctr">${actBadge}</td>
       <td class="amt">${formatInrFull(h.currentValueInr)}</td>
       <td>${replaceWith}</td>
@@ -289,6 +299,7 @@ export function renderActionSheetHtml(data: ReportData, opts?: { showPrintBar?: 
     gainOrLoss: string;
     taxType: string;
     estTax: string;
+    netProceeds: string;
   };
 
   // ── v2 tax-aware path ──────────────────────────────────────
@@ -327,6 +338,13 @@ export function renderActionSheetHtml(data: ReportData, opts?: { showPrintBar?: 
           : ln.estTaxInr > 0
             ? `~${formatInrFull(ln.estTaxInr)}`
             : `${formatInrFull(ln.estTaxInr)} (set-off)`;
+    // Net Proceeds — what the client actually receives after tax. Only computable
+    // when we have both the current value and a numeric estTaxInr (LTCG lines are
+    // deliberately null — the ₹1.25L exemption is applied in aggregate, not per
+    // line — and locked ELSS has no exit at all).
+    const netProceedsStr = ln.locked || h?.currentValueInr == null || ln.estTaxInr == null
+      ? '—'
+      : formatInrFull(h.currentValueInr - ln.estTaxInr);
     return {
       entityName: escapeHtml(h?.entityName ?? '—'),
       fundName: escapeHtml(ln.fundName),
@@ -334,6 +352,7 @@ export function renderActionSheetHtml(data: ReportData, opts?: { showPrintBar?: 
       gainOrLoss: `${ln.gainInr >= 0 ? '+' : ''}${formatInrFull(ln.gainInr)}`,
       taxType: escapeHtml(v2GainType(ln.gainType) + (ln.note ? ` · ${ln.note}` : '')),
       estTax: estTaxStr,
+      netProceeds: netProceedsStr,
     };
   });
 
@@ -360,6 +379,7 @@ export function renderActionSheetHtml(data: ReportData, opts?: { showPrintBar?: 
       gainOrLoss: `${gain >= 0 ? '+' : ''}${formatInrFull(gain)}`,
       taxType,
       estTax: estTax === 0 ? '₹0' : estTax > 0 ? `~${formatInrFull(estTax)}` : `${formatInrFull(estTax)} (set-off)`,
+      netProceeds: formatInrFull(h.currentValueInr - estTax),
     };
   });
 
@@ -570,6 +590,7 @@ export function renderActionSheetHtml(data: ReportData, opts?: { showPrintBar?: 
               <th class="ctr">Gain / Loss</th>
               <th>Tax Type</th>
               <th class="ctr">Estimated Tax</th>
+              <th class="ctr">Net Proceeds</th>
             </tr>
           </thead>
           <tbody>
@@ -582,12 +603,14 @@ export function renderActionSheetHtml(data: ReportData, opts?: { showPrintBar?: 
                   <td class="amt">${t.gainOrLoss}</td>
                   <td>${t.taxType}</td>
                   <td class="amt">${t.estTax}</td>
+                  <td class="amt">${t.netProceeds}</td>
                 </tr>`
               )
               .join('')}
             <tr class="subtotal-row">
               <td colspan="5" style="text-align:right; font-weight:700;">NET ESTIMATED TAX FROM THIS REALIGNMENT</td>
               <td class="amt">${netTax === 0 ? '~ ₹0 (tax-neutral)' : '~' + formatInrFull(netTax)}</td>
+              <td class="amt">${netTax === 0 ? formatInrFull(grandTotal) : '~' + formatInrFull(grandTotal - netTax)}</td>
             </tr>
           </tbody>
         </table>

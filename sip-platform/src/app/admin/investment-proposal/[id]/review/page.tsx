@@ -14,6 +14,7 @@ import { useRouter, useParams } from 'next/navigation';
 import {
   ArrowLeft, CheckCircle2, XCircle, MessageSquare, Send, AlertTriangle, FileText,
 } from 'lucide-react';
+import { ShareWithClientPanel } from '@/components/admin/ShareWithClientPanel';
 
 interface Proposal {
   id: number;
@@ -327,6 +328,12 @@ export default function ReviewInvestmentProposalPage() {
           )}
         </div>
       )}
+
+      <ShareWithClientPanel
+        shareEndpoint={`/api/admin/investment-proposal/${id}/share`}
+        label="Investment Proposal"
+        canShare={proposal.status === 'APPROVED' || proposal.status === 'PUBLISHED'}
+      />
     </div>
   );
 }

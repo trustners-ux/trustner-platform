@@ -105,9 +105,14 @@ export async function PUT(
     if (body[k] !== undefined) update[dbCol] = body[k];
   }
 
-  // Action items: replace all
+  // Action items: true id-based upsert — existing rows are updated in place (so
+  // ids, completed_at/by and ON DELETE CASCADE history survive), genuinely new
+  // rows are inserted, and only the rows the user removed are deleted. The form
+  // round-trips each row's id; rows without an id are new. A description match on
+  // the prior row is kept as a belt-and-suspenders completion-provenance fallback.
   if (Array.isArray(body.actionItems)) {
     const items = body.actionItems as Array<{
+      id?: number;
       description: string;
       owner: 'Client' | 'RM' | 'Both';
       status: 'Open' | 'In Progress' | 'Completed' | 'Blocked';
@@ -115,7 +120,6 @@ export async function PUT(
       notes?: string;
     }>;
 
-    // Need family_id to insert action items
     const { data: existing } = await supabase
       .from('pr_periodic_reviews')
       .select('family_id')
@@ -123,38 +127,52 @@ export async function PUT(
       .maybeSingle();
     const familyId = existing?.family_id as number | undefined;
 
-    // Preserve completion provenance across the replace-all: read existing rows
-    // first, then re-apply completed_at / completed_by on description match (the
-    // edit form does not yet round-trip ids). Every write error is surfaced.
     const { data: prior } = await supabase
       .from('pr_action_items')
-      .select('description, completed_at, completed_by_employee_id')
+      .select('id, description, completed_at, completed_by_employee_id')
       .eq('review_id', numericId);
-    const priorByDesc = new Map(
-      (prior ?? []).map((p) => [String(p.description).trim(), p as { completed_at: string | null; completed_by_employee_id: number | null }])
-    );
+    const priorById = new Map((prior ?? []).map((p) => [p.id as number, p]));
+    const priorByDesc = new Map((prior ?? []).map((p) => [String(p.description).trim(), p]));
 
-    const del = await supabase.from('pr_action_items').delete().eq('review_id', numericId);
-    if (del.error) return NextResponse.json({ error: `Failed to save action items: ${del.error.message}` }, { status: 500 });
+    // IDOR guard: pr_action_items.id is a global SERIAL, not scoped per review, and
+    // upsert(onConflict:'id') will happily UPDATE a row from ANOTHER review/family
+    // if a caller supplies its id. Reject any incoming id this review doesn't own.
+    for (const i of items) {
+      if (i.id != null && !priorById.has(i.id)) {
+        return NextResponse.json(
+          { error: `Action item id ${i.id} does not belong to this review` },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Delete only the rows the user removed.
+    const incomingIds = new Set(items.map((i) => i.id).filter((x): x is number => typeof x === 'number'));
+    const toDelete = (prior ?? []).map((p) => p.id as number).filter((id) => !incomingIds.has(id));
+    if (toDelete.length > 0) {
+      const del = await supabase.from('pr_action_items').delete().in('id', toDelete);
+      if (del.error) { console.error(del.error.message); return NextResponse.json({ error: 'Failed to save action items' }, { status: 500 }); }
+    }
+
     if (items.length > 0 && familyId) {
-      const ins = await supabase.from('pr_action_items').insert(
-        items.map((i) => {
-          const keep = priorByDesc.get(String(i.description).trim());
-          const done = i.status === 'Completed';
-          return {
-            review_id: numericId,
-            family_id: familyId,
-            description: i.description,
-            owner: i.owner,
-            status: i.status,
-            due_date: i.dueDate ?? null,
-            notes: i.notes ?? null,
-            completed_at: done ? (keep?.completed_at ?? new Date().toISOString()) : null,
-            completed_by_employee_id: done ? (keep?.completed_by_employee_id ?? null) : null,
-          };
-        })
-      );
-      if (ins.error) return NextResponse.json({ error: `Failed to save action items: ${ins.error.message}` }, { status: 500 });
+      const rows = items.map((i) => {
+        const done = i.status === 'Completed';
+        const keep = (i.id != null ? priorById.get(i.id) : undefined) ?? priorByDesc.get(String(i.description).trim());
+        return {
+          ...(i.id != null ? { id: i.id } : {}),
+          review_id: numericId,
+          family_id: familyId,
+          description: i.description,
+          owner: i.owner,
+          status: i.status,
+          due_date: i.dueDate ?? null,
+          notes: i.notes ?? null,
+          completed_at: done ? ((keep?.completed_at as string | null) ?? new Date().toISOString()) : null,
+          completed_by_employee_id: done ? ((keep?.completed_by_employee_id as number | null) ?? null) : null,
+        };
+      });
+      const up = await supabase.from('pr_action_items').upsert(rows, { onConflict: 'id' });
+      if (up.error) { console.error(up.error.message); return NextResponse.json({ error: 'Failed to save action items' }, { status: 500 }); }
     }
 
     // Update counts
@@ -174,7 +192,7 @@ export async function PUT(
     .update(update)
     .eq('id', numericId);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
 
   return NextResponse.json({ success: true });
 }

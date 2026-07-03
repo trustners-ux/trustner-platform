@@ -224,7 +224,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     .eq('id', cycleId)
     .select('*')
     .single();
-  if (updErr) return NextResponse.json({ error: updErr.message }, { status: 500 });
+  if (updErr) {
+    console.error('[Cycle transition]', updErr.message);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  }
 
   return NextResponse.json({ row: updated, from, to });
 }

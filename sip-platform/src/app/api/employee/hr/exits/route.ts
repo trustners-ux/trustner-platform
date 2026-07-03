@@ -95,7 +95,7 @@ export async function GET(req: NextRequest) {
   if (to_date) query = query.lte('intent_date', to_date);
 
   const { data, count, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
 
   return NextResponse.json({
     rows: data ?? [],
@@ -216,7 +216,8 @@ export async function POST(req: NextRequest) {
         { status: 409 },
       );
     }
-    return NextResponse.json({ error: insErr?.message ?? 'Insert failed' }, { status: 500 });
+    if (insErr) console.error('[Exits insert]', insErr.message);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 
   // Seed checklist

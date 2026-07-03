@@ -3,7 +3,8 @@
  * Each change request is stored at approvals/{id}.json
  */
 
-import { put, list } from '@vercel/blob';
+import { randomBytes } from 'crypto';
+import { put, list, get } from '@vercel/blob';
 import type {
   ChangeRequest,
   ChangeRequestType,
@@ -14,10 +15,15 @@ import { updateProduct, insertProduct, deleteProduct } from '@/lib/dal/products'
 import { updateEmployee } from '@/lib/dal/employees';
 import { writeAuditLog } from '@/lib/dal/audit';
 
+// Change-request bodies can carry employee PII (salary/personal-detail
+// changes) — stored in the dedicated PRIVATE store (its own token; the
+// original project store is public-only and rejects private writes).
+const PRIVATE_TOKEN = process.env.PRIVATE_BLOB_READ_WRITE_TOKEN;
+
 // ─── ID Generator ───
 function generateRequestId(): string {
   const ts = Date.now();
-  const rand = Math.random().toString(36).substring(2, 8);
+  const rand = randomBytes(6).toString('hex');
   return `cr-${ts}-${rand}`;
 }
 
@@ -50,10 +56,11 @@ export async function createChangeRequest(params: {
   };
 
   await put(`approvals/${id}.json`, JSON.stringify(entry), {
-    access: 'public',
+    access: 'private',
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: 'application/json',
+    token: PRIVATE_TOKEN,
   });
 
   console.log(`[ChangeRequest] Created ${id} — type=${params.type}, by=${params.requestedBy}`);
@@ -75,13 +82,14 @@ export async function getChangeRequests(filter?: {
       prefix: 'approvals/',
       cursor,
       limit: 100,
+      token: PRIVATE_TOKEN,
     });
 
     for (const blob of result.blobs) {
       try {
-        const res = await fetch(blob.url);
-        if (!res.ok) continue;
-        const entry = (await res.json()) as ChangeRequest;
+        const res = await get(blob.url, { access: 'private', useCache: false, token: PRIVATE_TOKEN });
+        if (!res?.stream) continue;
+        const entry = (await new Response(res.stream).json()) as ChangeRequest;
         entries.push(entry);
       } catch {
         console.error(`[ChangeRequest] Failed to parse ${blob.pathname}`);
@@ -115,12 +123,12 @@ export async function getChangeRequests(filter?: {
 // ─── Get Single Change Request ───
 export async function getChangeRequest(id: string): Promise<ChangeRequest | null> {
   try {
-    const result = await list({ prefix: `approvals/${id}.json`, limit: 1 });
+    const result = await list({ prefix: `approvals/${id}.json`, limit: 1, token: PRIVATE_TOKEN });
     if (result.blobs.length === 0) return null;
 
-    const res = await fetch(result.blobs[0].url);
-    if (!res.ok) return null;
-    return (await res.json()) as ChangeRequest;
+    const res = await get(result.blobs[0].url, { access: 'private', useCache: false, token: PRIVATE_TOKEN });
+    if (!res?.stream) return null;
+    return (await new Response(res.stream).json()) as ChangeRequest;
   } catch {
     console.error(`[ChangeRequest] Failed to get entry ${id}`);
     return null;
@@ -138,10 +146,11 @@ export async function updateChangeRequest(
   const updated: ChangeRequest = { ...entry, ...updates, id: entry.id };
 
   await put(`approvals/${id}.json`, JSON.stringify(updated), {
-    access: 'public',
+    access: 'private',
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: 'application/json',
+    token: PRIVATE_TOKEN,
   });
 
   console.log(`[ChangeRequest] Updated ${id} — status=${updated.status}`);

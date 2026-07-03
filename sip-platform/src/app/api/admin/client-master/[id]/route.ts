@@ -95,7 +95,7 @@ export async function PATCH(
     });
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Update failed' },
+      { error: 'Update failed' },
       { status: 400 },
     );
   }

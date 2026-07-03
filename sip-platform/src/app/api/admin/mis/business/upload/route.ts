@@ -222,8 +222,7 @@ export async function PUT(request: NextRequest) {
         imported++;
       } catch (err: unknown) {
         skipped++;
-        const msg = err instanceof Error ? err.message : 'Unknown error';
-        errors.push(`Row ${row.rowIndex}: ${msg}`);
+        errors.push(`Row ${row.rowIndex}: import error`);
       }
     }
 

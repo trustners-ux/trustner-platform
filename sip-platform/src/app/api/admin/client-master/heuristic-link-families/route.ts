@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Heuristic link failed' },
+      { error: 'Heuristic link failed' },
       { status: 500 },
     );
   }

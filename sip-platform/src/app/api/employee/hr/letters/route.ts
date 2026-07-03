@@ -51,7 +51,8 @@ export async function GET(req: NextRequest) {
     .range((page - 1) * pageSize, page * pageSize - 1);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error(error);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
   return NextResponse.json({
     rows: data ?? [],
@@ -112,7 +113,8 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error(error);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
   return NextResponse.json({ row: inserted, css: LETTER_CSS });
 }

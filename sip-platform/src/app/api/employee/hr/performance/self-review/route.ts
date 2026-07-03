@@ -192,7 +192,10 @@ async function upsertCore(
       .eq('id', existing.id)
       .select('*')
       .single();
-    if (updErr) return { error: updErr.message, status: 500 as const };
+    if (updErr) {
+      console.error('[Self-review update]', updErr.message);
+      return { error: 'Internal error', status: 500 as const };
+    }
     row = upd;
   } else if (forceCreate || submit) {
     reviewPayload.status = 'draft';
@@ -201,7 +204,10 @@ async function upsertCore(
       .insert(reviewPayload)
       .select('*')
       .single();
-    if (insErr) return { error: insErr.message, status: 500 as const };
+    if (insErr) {
+      console.error('[Self-review insert]', insErr.message);
+      return { error: 'Internal error', status: 500 as const };
+    }
     row = ins;
   } else {
     return { error: 'No self-review row yet — use POST to create.', status: 404 as const };
@@ -240,7 +246,10 @@ async function upsertCore(
       .eq('id', (row as { id: number }).id)
       .select('*')
       .single();
-    if (subErr) return { error: subErr.message, status: 500 as const };
+    if (subErr) {
+      console.error('[Self-review submit]', subErr.message);
+      return { error: 'Internal error', status: 500 as const };
+    }
     row = subRow;
   }
 

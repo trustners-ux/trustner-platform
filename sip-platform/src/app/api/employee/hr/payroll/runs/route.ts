@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
     .select('id, fy, pay_month, entity, status, total_employees, total_gross, total_net, total_pf, total_tds, approved_by, approved_at, disbursed_at, created_at')
     .order('pay_month', { ascending: false })
     .limit(50);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ rows: data ?? [] });
 }
 
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     .insert({ fy, pay_month, entity, status: 'draft', created_by: actor.email })
     .select('*')
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ run: data });
 }
 
@@ -119,7 +119,7 @@ export async function PATCH(req: NextRequest) {
         total_deductions: totalDed,
       })
       .eq('id', id).select('*').single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
     return NextResponse.json({ run: data });
   }
 
@@ -128,7 +128,7 @@ export async function PATCH(req: NextRequest) {
       .from('hr_salary_runs')
       .update({ status: 'approved', approved_by: actor.email, approved_at: new Date().toISOString() })
       .eq('id', id).select('*').single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
     return NextResponse.json({ run: data });
   }
 
@@ -137,7 +137,7 @@ export async function PATCH(req: NextRequest) {
       .from('hr_salary_runs')
       .update({ status: 'disbursed', disbursed_at: new Date().toISOString() })
       .eq('id', id).select('*').single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
     return NextResponse.json({ run: data });
   }
 

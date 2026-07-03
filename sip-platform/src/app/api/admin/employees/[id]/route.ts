@@ -71,7 +71,7 @@ export async function PATCH(
       .from('employees')
       .update({ reporting_manager_id: body.reportingManagerId, updated_at: new Date().toISOString() })
       .eq('id', targetId);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   }
 
   // ── Update PD role assignment ─────────────────────────────────
@@ -96,7 +96,10 @@ export async function PATCH(
       certifications: body.certifications ?? [],
       is_active: true,
     });
-    if (insErr) return NextResponse.json({ error: insErr.message }, { status: 500 });
+    if (insErr) {
+      console.error(insErr.message);
+      return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    }
 
     // 3. Audit: close the prior open assignment in app_role_assignments
     // and insert a new active one

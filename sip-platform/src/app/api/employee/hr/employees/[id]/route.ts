@@ -40,7 +40,10 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     supabase.from('hr_employee_family').select('*').eq('employee_id', id).order('relation'),
   ]);
 
-  if (e1) return NextResponse.json({ error: e1.message }, { status: 500 });
+  if (e1) {
+    console.error('[Employee fetch]', e1.message);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  }
   if (e2) console.error('Family fetch error:', e2.message);
   return NextResponse.json({ employee, family: family ?? [] });
 }
@@ -63,7 +66,7 @@ export async function PUT(req: NextRequest, ctx: { params: Promise<{ id: string 
     .select('*')
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ employee: data });
 }
 
@@ -82,6 +85,6 @@ export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: stri
     .select('id, status, exit_date')
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ employee: data });
 }

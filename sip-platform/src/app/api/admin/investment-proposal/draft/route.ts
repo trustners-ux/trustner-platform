@@ -25,7 +25,10 @@ import type { RiskProfile, ProposalPurpose, HorizonBand, AssetAllocation } from 
 /**
  * Scale a template allocation so the equity sleeves sum to `targetEq`% and the
  * defensive sleeves (hybrid/debt/gold) make up the rest, preserving each group's
- * relative weights. Rounding drift is absorbed by the largest equity sleeve.
+ * relative weights. Rounding drift is absorbed within the SAME group it came from
+ * (equity drift → an equity sleeve, defensive drift → a defensive sleeve) — never
+ * across groups, so a genuine 0%-equity (fully de-risked) target can't pick up a
+ * stray 1% equity sleeve from the other group's rounding.
  */
 function blendToTargetEquity(a: AssetAllocation, targetEq: number): AssetAllocation {
   const eqKeys: (keyof AssetAllocation)[] = ['largeCap', 'midCap', 'smallCap', 'flexiCap', 'multiCap', 'largeAndMid', 'international'];
@@ -38,10 +41,16 @@ function blendToTargetEquity(a: AssetAllocation, targetEq: number): AssetAllocat
   else out.flexiCap = targetEq;
   if (defSum > 0) for (const k of defKeys) out[k] = Math.round((a[k] / defSum) * defTarget);
   else out.hybrid = defTarget;
-  const tot = (Object.values(out) as number[]).reduce((s, v) => s + v, 0);
-  if (tot !== 100) {
+
+  const eqDrift = targetEq - eqKeys.reduce((s, k) => s + out[k], 0);
+  if (eqDrift !== 0) {
     const big = eqKeys.reduce((m, k) => (out[k] > out[m] ? k : m), eqKeys[0]);
-    out[big] += 100 - tot;
+    out[big] += eqDrift;
+  }
+  const defDrift = defTarget - defKeys.reduce((s, k) => s + out[k], 0);
+  if (defDrift !== 0) {
+    const big = defKeys.reduce((m, k) => (out[k] > out[m] ? k : m), defKeys[0]);
+    out[big] += defDrift;
   }
   return out;
 }
@@ -139,7 +148,8 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error || !row) {
-    return NextResponse.json({ error: error?.message ?? 'Failed to create draft' }, { status: 500 });
+    console.error(error?.message ?? 'Failed to create investment-proposal draft');
+    return NextResponse.json({ error: 'Failed to create draft' }, { status: 500 });
   }
 
   await writeAuditEvent({

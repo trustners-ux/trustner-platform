@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
       .upsert(row, { onConflict: 'employee_id,log_date' })
       .select('*')
       .single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
     return NextResponse.json({ log: data, geofenceWarning });
   }
 
@@ -170,6 +170,6 @@ export async function POST(req: NextRequest) {
     .eq('id', existing.id)
     .select('*')
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ log: data });
 }

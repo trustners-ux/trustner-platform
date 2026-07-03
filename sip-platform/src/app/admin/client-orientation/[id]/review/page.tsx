@@ -12,6 +12,7 @@ import { useParams } from 'next/navigation';
 import {
   ArrowLeft, CheckCircle2, XCircle, MessageSquare, Send, AlertTriangle, FileText,
 } from 'lucide-react';
+import { ShareWithClientPanel } from '@/components/admin/ShareWithClientPanel';
 
 interface Orientation {
   id: number;
@@ -263,6 +264,12 @@ export default function ReviewOrientationPage() {
           )}
         </div>
       )}
+
+      <ShareWithClientPanel
+        shareEndpoint={`/api/admin/client-orientation/${id}/share`}
+        label="Financial Orientation Summary"
+        canShare={orient.status === 'APPROVED' || orient.status === 'PUBLISHED'}
+      />
     </div>
   );
 }

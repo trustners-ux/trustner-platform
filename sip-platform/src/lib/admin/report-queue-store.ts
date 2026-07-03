@@ -9,6 +9,8 @@ import { readPrivateJson } from '@/lib/blob/private-store';
 import type { ReportQueueEntry, ReportStatus } from '@/types/report-queue';
 import type { FinancialPlanningData } from '@/types/financial-planning';
 
+const PRIVATE_TOKEN = process.env.PRIVATE_BLOB_READ_WRITE_TOKEN;
+
 // ─── PII blobs are PRIVATE (audit P0-1) ───
 // The queue metadata (name/email/phone/scores) and the planning DATA json hold
 // client PII and are read only server-side, so they are stored `access:'private'`.
@@ -67,6 +69,7 @@ export async function createReportQueueEntry(
       addRandomSuffix: false,
       allowOverwrite: true,
       contentType: 'application/json',
+      token: PRIVATE_TOKEN,
     }
   );
 
@@ -111,6 +114,7 @@ export async function createReportQueueEntry(
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: 'application/json',
+    token: PRIVATE_TOKEN,
   });
 
   return entry;
@@ -122,26 +126,26 @@ export async function getReportQueue(filter?: {
   search?: string;
 }): Promise<ReportQueueEntry[]> {
   const entries: ReportQueueEntry[] = [];
+  const seenIds = new Set<string>();
 
+  // Pass 1: the private store — where every entry lands going forward.
   let cursor: string | undefined;
   let hasMore = true;
-
   while (hasMore) {
     const result = await list({
       prefix: 'reports/queue/',
       cursor,
       limit: 100,
+      token: PRIVATE_TOKEN,
     });
 
     for (const blob of result.blobs) {
       try {
-        // PRIVATE read first; fall back ONCE to a legacy public object.
-        let entry = await readPrivateJson<ReportQueueEntry>(blob.pathname);
-        if (!entry) {
-          const res = await fetch(blob.url);
-          if (res.ok) entry = (await res.json()) as ReportQueueEntry;
+        const entry = await readPrivateJson<ReportQueueEntry>(blob.pathname);
+        if (entry) {
+          entries.push(entry);
+          seenIds.add(entry.id);
         }
-        if (entry) entries.push(entry);
       } catch {
         console.error(`[ReportQueue] Failed to parse ${blob.pathname}`);
       }
@@ -149,6 +153,30 @@ export async function getReportQueue(filter?: {
 
     hasMore = result.hasMore;
     cursor = result.cursor;
+  }
+
+  // Pass 2: legacy public entries from before the private-store migration.
+  let legacyCursor: string | undefined;
+  let legacyHasMore = true;
+  while (legacyHasMore) {
+    const result = await list({ prefix: 'reports/queue/', cursor: legacyCursor, limit: 100 });
+
+    for (const blob of result.blobs) {
+      try {
+        const res = await fetch(blob.url);
+        if (!res.ok) continue;
+        const entry = (await res.json()) as ReportQueueEntry;
+        if (!seenIds.has(entry.id)) {
+          entries.push(entry);
+          seenIds.add(entry.id);
+        }
+      } catch {
+        console.error(`[ReportQueue] Failed to parse legacy ${blob.pathname}`);
+      }
+    }
+
+    legacyHasMore = result.hasMore;
+    legacyCursor = result.cursor;
   }
 
   // Apply filters
@@ -217,6 +245,7 @@ export async function updateReportEntry(
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: 'application/json',
+    token: PRIVATE_TOKEN,
   });
 
   return updated;
@@ -255,6 +284,7 @@ export async function saveReportPlanningData(
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: 'application/json',
+    token: PRIVATE_TOKEN,
   });
 }
 

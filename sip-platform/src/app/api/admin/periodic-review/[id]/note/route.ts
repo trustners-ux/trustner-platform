@@ -3,15 +3,15 @@
  *
  * GET /api/admin/periodic-review/[id]/note
  * Renders the data-grounded review as a premium, compliance-baked client note.
+ * Accepts either an authenticated employee session, OR a valid ?token=... share
+ * link (see lib/advisory/share.ts) so an unauthenticated client can open it.
  *
  * @owner Trustner Asset Services Pvt. Ltd. | ARN-286886
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { verifyToken, COOKIE_NAME } from '@/lib/auth/jwt';
-import { verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 import { getSupabaseAdmin } from '@/lib/db/supabase';
 import { isAdvisoryRecordInScope } from '@/lib/advisory/visibility';
+import { resolveEmployeeEmail, validateShareToken } from '@/lib/advisory/share';
 import {
   renderPeriodicReviewNoteHtml,
   type PeriodicReviewRow,
@@ -19,12 +19,10 @@ import {
 } from '@/lib/periodic-review/note';
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const email = await resolveEmployeeEmail();
-  if (!email) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
   const supabase = getSupabaseAdmin();
   if (!supabase) return NextResponse.json({ error: 'Database unavailable' }, { status: 500 });
@@ -32,8 +30,17 @@ export async function GET(
   const numericId = parseInt(id, 10);
   if (Number.isNaN(numericId)) return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
 
-  if (!(await isAdvisoryRecordInScope(supabase, 'pr_periodic_reviews', numericId, { employeeEmail: email }))) {
-    return NextResponse.json({ error: 'Not authorised for this review' }, { status: 403 });
+  const token = req.nextUrl.searchParams.get('token');
+  if (token) {
+    if (!(await validateShareToken(supabase, 'periodic_review', numericId, token))) {
+      return NextResponse.json({ error: 'This link is invalid, expired, or has been revoked.' }, { status: 403 });
+    }
+  } else {
+    const email = await resolveEmployeeEmail();
+    if (!email) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    if (!(await isAdvisoryRecordInScope(supabase, 'pr_periodic_reviews', numericId, { employeeEmail: email }))) {
+      return NextResponse.json({ error: 'Not authorised for this review' }, { status: 403 });
+    }
   }
 
   const { data: review, error } = await supabase
@@ -53,26 +60,14 @@ export async function GET(
   const html = renderPeriodicReviewNoteHtml(
     review as unknown as PeriodicReviewRow,
     actionItems,
-    { rmName: rmName ?? undefined, showPrintBar: true }
+    // A client opening via a share token always sees a clean doc — no
+    // print-bar chrome and no DRAFT watermark clutter for a link that was
+    // only ever minted from an already-Approved/Published record.
+    { rmName: rmName ?? undefined, showPrintBar: !token, status: token ? null : (review as { status?: string }).status }
   );
 
   return new NextResponse(html, {
     status: 200,
     headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' },
   });
-}
-
-async function resolveEmployeeEmail(): Promise<string | null> {
-  const cookieStore = await cookies();
-  const adminToken = cookieStore.get(COOKIE_NAME)?.value;
-  if (adminToken) {
-    const p = await verifyToken(adminToken);
-    if (p) return p.email;
-  }
-  const empToken = cookieStore.get(EMPLOYEE_COOKIE)?.value;
-  if (empToken) {
-    const p = await verifyEmployeeToken(empToken);
-    if (p) return p.email;
-  }
-  return null;
 }

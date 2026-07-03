@@ -68,8 +68,9 @@ export async function GET(
     .single();
 
   if (runErr || !run) {
+    console.error(runErr?.message ?? 'Diagnostic not found');
     return NextResponse.json(
-      { error: `Diagnostic not found: ${runErr?.message}` },
+      { error: 'Diagnostic not found' },
       { status: 404 }
     );
   }
@@ -489,7 +490,8 @@ export async function DELETE(
     })
     .eq('id', numericId);
   if (delErr) {
-    return NextResponse.json({ error: delErr.message }, { status: 500 });
+    console.error(delErr.message);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 
   // Immutable audit entry (who / when / why) in the append-only workflow log —

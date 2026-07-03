@@ -36,7 +36,8 @@ export async function POST(req: NextRequest) {
     const result = await runPospCrossCheck({ pan, name, mobile, aadhaar_last4, dob, address });
     return NextResponse.json({ result });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[POSP crosscheck]', (e as Error).message);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }
 
@@ -58,7 +59,7 @@ export async function GET(req: NextRequest) {
   if (status) query = query.eq('status', status);
 
   const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ rows: data ?? [] });
 }
 
@@ -84,6 +85,6 @@ export async function PATCH(req: NextRequest) {
     .eq('id', id)
     .select('*')
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ audit: data });
 }

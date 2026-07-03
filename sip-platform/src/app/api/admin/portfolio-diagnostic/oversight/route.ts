@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
   if (existing?.id) {
     const { error } = await sb.from('pd_review_assignments')
       .update({ is_active: true, note }).eq('id', existing.id);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   } else {
     const { error } = await sb.from('pd_review_assignments').insert({
       reviewer_employee_id: reviewerEmployeeId,
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
       assigned_by_employee_id: (actor?.id as number) ?? null,
       note,
     });
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   }
   return NextResponse.json({ success: true });
 }
@@ -125,6 +125,6 @@ export async function DELETE(request: NextRequest) {
     .update({ is_active: false })
     .eq('reviewer_employee_id', reviewerEmployeeId)
     .eq('subject_employee_id', subjectEmployeeId);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ success: true });
 }

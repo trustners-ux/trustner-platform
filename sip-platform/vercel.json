@@ -1,4 +1,21 @@
 {
+  "git": {
+    "deploymentEnabled": false
+  },
+  "redirects": [
+    {
+      "source": "/:path(.*)",
+      "has": [{ "type": "host", "value": "merasif.com" }],
+      "destination": "https://www.merasip.com/funds/sif",
+      "permanent": true
+    },
+    {
+      "source": "/:path(.*)",
+      "has": [{ "type": "host", "value": "www.merasif.com" }],
+      "destination": "https://www.merasip.com/funds/sif",
+      "permanent": true
+    }
+  ],
   "headers": [
     {
       "source": "/api/(employee|admin)/auth/(.*)",
@@ -40,8 +57,20 @@
       "schedule": "0 23 * * 1-5"
     },
     {
+      "path": "/api/cron/universe-metrics",
+      "schedule": "30 1 * * 2-6"
+    },
+    {
       "path": "/api/cron/health-check",
       "schedule": "0 4 * * 1"
+    },
+    {
+      "path": "/api/cron/pd-data-health",
+      "schedule": "30 2 * * *"
+    },
+    {
+      "path": "/api/cron/pd-holdings-refresh",
+      "schedule": "0 3 12 * *"
     }
   ]
 }

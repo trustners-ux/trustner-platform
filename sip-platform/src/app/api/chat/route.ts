@@ -1011,7 +1011,7 @@ async function getOpenAIResponse(
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);
     console.error('OpenAI API error:', errMsg);
-    // If it's a rate limit or quota error, indicate that
+    // If it's a rate limit or quota error, indicate that (server-side check only)
     if (errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('insufficient')) {
       return 'I\'m currently experiencing high demand. Let me share some helpful resources instead:\n\n' +
         '• Explore our Learning Modules at /learn\n' +

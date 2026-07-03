@@ -192,7 +192,8 @@ export async function POST(
     .eq('id', parseInt(id, 10));
 
   if (updErr) {
-    return NextResponse.json({ error: updErr.message }, { status: 500 });
+    console.error(updErr.message);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 
   // Log workflow event

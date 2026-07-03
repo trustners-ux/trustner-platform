@@ -24,6 +24,7 @@ import {
   formatPct,
   riskNotCapturedBanner,
 } from '../report-data';
+import { renderBacktestSvg } from '../v2/backtest';
 
 function escapeHtml(s: string | null | undefined): string {
   if (!s) return '';
@@ -100,7 +101,108 @@ const STYLES = `
   .no-goal { text-align: center; background: #FEF3C7; border: 2px solid #B45309; padding: 14px; border-radius: 6px; margin: 8px 0; font-size: 9pt; color: #92400E; }
   .compliance { margin-top: 12px; padding-top: 6px; border-top: 1px solid #D6D3D1; font-size: 6.8pt; color: #64748B; line-height: 1.4; text-align: justify; }
   .footer-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding: 6px 10px; background: #1A1A2E; color: white; font-size: 8pt; }
+
+  /* Merged Asset-Type / Category / Fund allocation drill-down (REEDOS-parity) */
+  .alloc-drilldown { width: 100%; border-collapse: collapse; font-size: 7.3pt; margin: 4px 0 10px 0; }
+  .alloc-drilldown th { background: #0c4a6e; color: white; padding: 4px 6px; text-align: center; font-size: 6.8pt; }
+  .alloc-drilldown th.grp { border-right: 2px solid white; }
+  .alloc-drilldown td { padding: 3px 6px; border: 1px solid #D6D3D1; vertical-align: middle; font-size: 7.2pt; }
+  .alloc-drilldown td.amt { text-align: right; white-space: nowrap; }
+  .alloc-drilldown td.change-pos { color: #16A34A; font-weight: 700; }
+  .alloc-drilldown td.change-neg { color: #B45309; font-weight: 700; }
+  .alloc-drilldown td.change-zero { color: #94A3B8; }
+  .alloc-drilldown tr:nth-child(even) td { background: #F8FAFC; }
+  .alloc-drilldown td.grp-cell { font-weight: 700; background: #EFF6FF !important; border-right: 2px solid #0c4a6e; }
+
+  /* Backtest overlay — current vs suggested portfolio, NAV-indexed */
+  .backtest-summary { display: flex; gap: 10px; margin: 4px 0 8px 0; }
+  .backtest-tile { flex: 1; border: 1px solid #D6D3D1; border-radius: 4px; padding: 6px 10px; text-align: center; }
+  .backtest-tile .lbl { font-size: 6.8pt; font-weight: 700; letter-spacing: 0.3px; }
+  .backtest-tile .val { font-size: 13pt; font-weight: 700; margin-top: 2px; }
+  .backtest-tile.cur .lbl { color: #E0115F; } .backtest-tile.cur .val { color: #E0115F; }
+  .backtest-tile.sug .lbl { color: #0D9488; } .backtest-tile.sug .val { color: #0D9488; }
 `;
+
+/** Merged Asset Type → Category → Fund drill-down: Existing vs New vs Change (REEDOS "Scheme-Level Comparison" parity). */
+function renderAllocationDrilldown(data: ReportData): string {
+  const ac = data.allocationComparison;
+  if (!ac.rows.length) return '';
+
+  const changeClass = (n: number) => (n > 0 ? 'change-pos' : n < 0 ? 'change-neg' : 'change-zero');
+  const fmt = (n: number) => formatInrFull(n);
+
+  const bodyRows: string[] = [];
+  for (const at of ac.rows) {
+    const atFundCount = at.categories.reduce((s, c) => s + Math.max(1, c.funds.length), 0);
+    let atFirst = true;
+    for (const cat of at.categories) {
+      const catFundCount = Math.max(1, cat.funds.length);
+      let catFirst = true;
+      for (const f of cat.funds) {
+        bodyRows.push(`<tr>
+          ${atFirst ? `<td class="grp-cell" rowspan="${atFundCount}">${escapeHtml(at.assetType)}</td>` : ''}
+          ${atFirst ? `<td class="amt" rowspan="${atFundCount}">${fmt(at.existingInr)}</td>` : ''}
+          ${atFirst ? `<td class="amt" rowspan="${atFundCount}">${fmt(at.newInr)}</td>` : ''}
+          ${atFirst ? `<td class="amt ${changeClass(at.changeInr)}" rowspan="${atFundCount}">${at.changeInr >= 0 ? '+' : ''}${fmt(at.changeInr)}</td>` : ''}
+          ${catFirst ? `<td rowspan="${catFundCount}">${escapeHtml(cat.category)}</td>` : ''}
+          ${catFirst ? `<td class="amt" rowspan="${catFundCount}">${fmt(cat.existingInr)}</td>` : ''}
+          ${catFirst ? `<td class="amt" rowspan="${catFundCount}">${fmt(cat.newInr)}</td>` : ''}
+          ${catFirst ? `<td class="amt ${changeClass(cat.changeInr)}" rowspan="${catFundCount}">${cat.changeInr >= 0 ? '+' : ''}${fmt(cat.changeInr)}</td>` : ''}
+          <td>${escapeHtml(f.fundName)}</td>
+          <td class="amt">${fmt(f.existingInr)}</td>
+          <td class="amt">${fmt(f.newInr)}</td>
+          <td class="amt ${changeClass(f.changeInr)}">${f.changeInr >= 0 ? '+' : ''}${fmt(f.changeInr)}</td>
+        </tr>`);
+        atFirst = false;
+        catFirst = false;
+      }
+    }
+  }
+
+  return `
+<h2>1b · Allocation Drill-Down — Asset Type → Category → Fund</h2>
+<table class="alloc-drilldown">
+  <thead>
+    <tr>
+      <th class="grp" colspan="4">Asset Type</th>
+      <th class="grp" colspan="4">Category</th>
+      <th colspan="4">Fund</th>
+    </tr>
+    <tr>
+      <th class="grp">Name</th><th>Existing</th><th>New</th><th class="grp">Change</th>
+      <th class="grp">Name</th><th>Existing</th><th>New</th><th class="grp">Change</th>
+      <th>Name</th><th>Existing</th><th>New</th><th>Change</th>
+    </tr>
+  </thead>
+  <tbody>${bodyRows.join('')}</tbody>
+</table>
+`;
+}
+
+/** Back-tested performance overlay — current vs suggested portfolio (REEDOS parity). */
+function renderBacktestSection(data: ReportData): string {
+  const bt = data.backtestOverlay;
+  if (!bt) return '';
+  return `
+<h2>1c · Back-Tested Performance — Current vs Suggested</h2>
+<div style="font-size:7.5pt; color:#64748B; margin-bottom:4px;">
+  Historical simulation, ${new Date(bt.startDate).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })} to ${new Date(bt.endDate).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })} —
+  both baskets indexed to 100 at the start. Assumes static weights held throughout (no trade timing or costs modelled);
+  covers ${bt.currentCoveragePct}% of the current book and ${bt.suggestedCoveragePct}% of the suggested book by value.
+</div>
+${renderBacktestSvg(bt)}
+<div class="backtest-summary">
+  <div class="backtest-tile cur">
+    <div class="lbl">CURRENT PORTFOLIO</div>
+    <div class="val">${bt.currentTotalReturnPct >= 0 ? '+' : ''}${bt.currentTotalReturnPct}%</div>
+  </div>
+  <div class="backtest-tile sug">
+    <div class="lbl">SUGGESTED PORTFOLIO</div>
+    <div class="val">${bt.suggestedTotalReturnPct >= 0 ? '+' : ''}${bt.suggestedTotalReturnPct}%</div>
+  </div>
+</div>
+`;
+}
 
 export function renderInvestmentProposalHtml(data: ReportData, opts?: { showPrintBar?: boolean }): string {
   const showPrintBar = opts?.showPrintBar ?? true;
@@ -217,6 +319,9 @@ ${tgt != null ? `<div class="gap-note ${allocClass}">
   ${allocGap! > 5 ? 'Trimming equity into the targeted mix lowers downside in a correction.' : allocGap! < -5 ? 'Stepping up equity (via the SIP plan below) closes the gap toward your return need.' : 'No major rebalancing of asset-mix needed — focus on the fund-level moves below.'}
 </div>` : `<div class="gap-note">Capture the client's target equity % in the risk profile to show the alignment gap here.</div>`}
 
+${renderAllocationDrilldown(data)}
+${renderBacktestSection(data)}
+
 <h2>2 · The Moves — What Changes</h2>
 ${
   moves.length > 0
@@ -246,7 +351,7 @@ ${
       </table>
       <div style="font-size:8pt; color:#64748B;">
         Total redeployment: <strong>${formatInrShort(data.totalReallocationInr)}</strong>${data.consolidationValueInr > 0 ? `, of which ${formatInrShort(data.consolidationValueInr)} consolidates overlapping funds` : ''}.
-        ${hasTax ? `Estimated exit tax <strong>${formatInrShort(tax!.estTotalTaxInr)}</strong> — confirm with your CA before executing.` : ''}
+        ${hasTax ? `Estimated exit tax <strong>${formatInrShort(tax!.estTotalTaxInr)}</strong> — confirm with your CA before executing. Net proceeds after tax: <strong>${formatInrShort(data.totalReallocationInr - tax!.estTotalTaxInr)}</strong>.` : ''}
         ★ Buy-List = on the Trustner Approved Buy-List.
       </div>`
     : `<div class="gap-note ok">No fund-level switches or exits required — the holdings are sound. The plan below is purely about <strong>funding the goal</strong>.</div>`

@@ -8,7 +8,7 @@ import {
   ArrowRight, MapPin, Phone, Mail, Clock, ExternalLink,
   GraduationCap, TrendingUp, Eye, Handshake, Building2,
   Sparkles, Scale, FileCheck, Star, Layers, Monitor,
-  Lock, BarChart3, FileText, Rocket,
+  Lock, BarChart3, FileText, Rocket, IndianRupee, HelpCircle,
 } from 'lucide-react';
 import { COMPANY, DISCLAIMER } from '@/lib/constants/company';
 import LeadershipCarousel from '@/components/ui/LeadershipCarousel';
@@ -789,6 +789,81 @@ export default function AboutPage() {
               <p className="text-xs text-amber-800 leading-relaxed">
                 <strong>KYC Compliance:</strong> {DISCLAIMER.kyc}
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════ HOW WE'RE PAID ═══════════ */}
+      <section className="section-padding bg-surface-100">
+        <div className="container-custom">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 bg-teal-50 rounded-full px-4 py-1.5 text-xs font-semibold text-teal-700 mb-4">
+                <IndianRupee className="w-3.5 h-3.5" />
+                In Plain English
+              </div>
+              <h2 className="text-display-sm text-primary-700 mb-4">How We&apos;re Regulated &amp; How We&apos;re Paid</h2>
+              <p className="text-slate-500 max-w-2xl mx-auto">
+                Trust starts with clarity about the business model. Here is exactly what Trustner is,
+                what it is not, and how it earns a living.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4 mb-6">
+              <div className="card-base p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-5 h-5 text-brand" />
+                  </div>
+                  <h3 className="font-bold text-primary-700">What Trustner (TAS) is</h3>
+                </div>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  An <strong className="text-primary-700">AMFI Registered Mutual Fund Distributor</strong> ({COMPANY.mfEntity.amfiArn}).
+                  We help you select, execute, and service mutual fund transactions across 40+ AMCs.
+                  We earn a <strong className="text-primary-700">trail commission</strong>, paid to us by the
+                  fund houses (AMCs) out of the fund&apos;s own expense ratio — it is not billed to you separately,
+                  and it is the same commission model that funds ongoing servicing at no extra cost to you.
+                </p>
+              </div>
+              <div className="card-base p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
+                    <HelpCircle className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <h3 className="font-bold text-primary-700">What Trustner is not</h3>
+                </div>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  We are <strong className="text-primary-700">not a SEBI Registered Investment Adviser (RIA)</strong> and
+                  do not charge standalone advisory fees for personalised investment advice. Our fund recommendations
+                  are <strong className="text-primary-700">distribution recommendations</strong>, based on your stated
+                  goals and risk profile — not investment advice as defined under the SEBI (Investment Advisers)
+                  Regulations, 2013. We are also not a Portfolio Manager and do not take discretionary control of your money.
+                </p>
+              </div>
+            </div>
+
+            <div className="card-base p-6">
+              <h3 className="font-bold text-primary-700 mb-3">Why this matters for you</h3>
+              <ul className="space-y-2.5 text-sm text-slate-600">
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-positive shrink-0 mt-0.5" />
+                  <span>You never receive a separate advisory-fee invoice from us — our commission is built into the
+                    Regular-plan expense ratio you&apos;d pay on any platform selling that same fund.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-positive shrink-0 mt-0.5" />
+                  <span>This is why we recommend the <strong className="text-primary-700">Growth option of Regular
+                    plans</strong> — not because Direct plans are inferior, but because Regular includes ongoing
+                    portfolio reviews, behavioural coaching through market cycles, and dedicated RM support, all
+                    funded by that same commission.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-positive shrink-0 mt-0.5" />
+                  <span>Every recommendation is documented with a risk-suitability rationale, so you can always ask
+                    &ldquo;why this fund, for me, right now.&rdquo;</span>
+                </li>
+              </ul>
             </div>
           </div>
         </div>

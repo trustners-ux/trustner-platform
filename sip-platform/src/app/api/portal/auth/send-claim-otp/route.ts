@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({ ok: true, channel: send.channel, login_id_masked: login_id.startsWith('+') ? login_id.replace(/^(\+\d{2})\d{6}/, '$1XXXXXX') : login_id.replace(/^(.{2})[^@]*/, '$1***') });
   } catch (err) {
-    return NextResponse.json({ ok: false, reason: err instanceof Error ? err.message : 'OTP failed' }, { status: 500 });
+    console.error('[SendClaimOtp]', err);
+    return NextResponse.json({ ok: false, reason: 'OTP send failed' }, { status: 500 });
   }
 }

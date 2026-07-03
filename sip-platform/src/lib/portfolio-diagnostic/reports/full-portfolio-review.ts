@@ -20,6 +20,7 @@ import {
   riskNotCapturedBanner,
 } from '../report-data';
 import { REPORT_TABLE_CSS } from './_shared-styles';
+import { renderHealthGaugeSvg } from '../v2/portfolio-health-score';
 
 const STYLES = `
   @page {
@@ -238,6 +239,29 @@ const STYLES = `
   .gt-stcg { background: #F6EEDF; color: #B07A2E; border: 1px solid #B07A2E; }
   .gt-debt { background: #E5E5E5; color: #44403C; border: 1px solid #57534E; }
   .gt-locked { background: #F6E6E9; color: #9B2C3A; border: 1px solid #9B2C3A; }
+
+  /* Portfolio Health Score — top-line gauge panel */
+  .health-panel {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 10px;
+    align-items: center;
+    background: #F4F6F8;
+    border: 1px solid #15233B;
+    border-radius: 4px;
+    padding: 8px 14px;
+    margin-bottom: 6px;
+  }
+  .health-panel .gauge-col { text-align: center; }
+  .health-panel .gauge-title { font-size: 6.5pt; font-weight: 700; letter-spacing: 0.4px; color: #15233B; margin-top: 2px; }
+  .health-components { font-size: 7pt; }
+  .health-components .comp-row { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
+  .health-components .comp-label { width: 130px; color: #15233B; font-weight: 600; }
+  .health-components .comp-bar-track { flex: 1; background: #E5E7EB; border-radius: 3px; height: 8px; overflow: hidden; }
+  .health-components .comp-bar-fill { height: 100%; border-radius: 3px; background: #15233B; }
+  .health-components .comp-val { width: 30px; text-align: right; font-weight: 700; color: #15233B; }
+  .health-rationale { font-size: 6.8pt; color: #64748B; margin-top: 4px; }
+  .health-rationale li { margin: 1px 0; }
 `;
 
 function pctClass(p: number | null | undefined): string {
@@ -463,6 +487,36 @@ function renderTaxSection(data: ReportData): string {
   `;
 }
 
+/** Portfolio Health Score panel — REEDOS-parity top-line gauge + component breakdown. */
+function renderHealthPanel(data: ReportData): string {
+  const h = data.portfolioHealthScore;
+  const compRow = (label: string, val: number) => `
+    <div class="comp-row">
+      <div class="comp-label">${label}</div>
+      <div class="comp-bar-track"><div class="comp-bar-fill" style="width:${Math.max(0, Math.min(100, val))}%;"></div></div>
+      <div class="comp-val">${val}</div>
+    </div>`;
+  return `
+    <div class="health-panel">
+      <div class="gauge-col">
+        ${renderHealthGaugeSvg(h, { size: 180 })}
+        <div class="gauge-title">PORTFOLIO HEALTH SCORE</div>
+      </div>
+      <div>
+        <div class="health-components">
+          ${compRow('Verdict Quality (55%)', h.components.verdictQuality)}
+          ${compRow('Risk Alignment (20%)', h.components.riskAlignment)}
+          ${compRow('Consolidation (15%)', h.components.consolidationEfficiency)}
+          ${compRow('Behaviour Discipline (10%)', h.components.behaviourDiscipline)}
+        </div>
+        <ul class="health-rationale">
+          ${h.rationale.map((r) => `<li>${escapeHtml(r)}</li>`).join('')}
+        </ul>
+      </div>
+    </div>
+  `;
+}
+
 export function renderFullPortfolioReviewHtml(data: ReportData, opts?: { showPrintBar?: boolean }): string {
   const showPrintBar = opts?.showPrintBar ?? true;
   const fyId = `${data.documentId.replace(/-/g, '').slice(-8)}`.toUpperCase();
@@ -618,6 +672,8 @@ export function renderFullPortfolioReviewHtml(data: ReportData, opts?: { showPri
     <div class="tile"><div class="lbl">PANs / ENTITIES</div><div class="val">${data.numEntities}</div></div>
     <div class="tile"><div class="lbl">AMCs</div><div class="val">${data.numAmcs}</div></div>
   </div>
+
+  ${renderHealthPanel(data)}
 
   <div class="legend">
     <span><span class="verdict v-star">★ STAR</span> = best-in-class</span>

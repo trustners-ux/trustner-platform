@@ -109,8 +109,10 @@ export async function PUT(
   // ── Sub-tables: replace-all on each update ──
   // Every delete/insert error is now surfaced (was previously unread, so writes
   // that hit a missing column failed silently and the brief lost its content).
-  const subFail = (label: string, msg: string) =>
-    NextResponse.json({ error: `Failed to save ${label}: ${msg}` }, { status: 500 });
+  const subFail = (label: string, msg: string) => {
+    console.error(`Failed to save ${label}: ${msg}`);
+    return NextResponse.json({ error: `Failed to save ${label}` }, { status: 500 });
+  };
 
   // Action items
   if (Array.isArray(body.actionItems)) {
@@ -251,7 +253,7 @@ export async function PUT(
     .update(update)
     .eq('id', numericId);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
 
   return NextResponse.json({ success: true });
 }

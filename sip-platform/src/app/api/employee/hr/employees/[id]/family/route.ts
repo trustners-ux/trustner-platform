@@ -34,7 +34,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     .select('*')
     .eq('employee_id', id)
     .order('relation');
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ family: data ?? [] });
 }
 
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     .insert({ employee_id: Number(id), relation, name, pan, aadhaar_last4, dob, notes })
     .select('*')
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ member: data });
 }
 
@@ -72,6 +72,6 @@ export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: stri
     .delete()
     .eq('id', fid)
     .eq('employee_id', id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ ok: true });
 }

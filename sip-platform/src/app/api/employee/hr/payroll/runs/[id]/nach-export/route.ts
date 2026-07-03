@@ -157,7 +157,10 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     .eq('id', runId)
     .maybeSingle();
 
-  if (runErr) return NextResponse.json({ error: runErr.message }, { status: 500 });
+  if (runErr) {
+    console.error('[NACH export: run fetch]', runErr.message);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  }
   if (!run) return NextResponse.json({ error: 'Run not found' }, { status: 404 });
 
   const allowed = new Set(['approved', 'disbursed', 'locked']);
@@ -181,7 +184,10 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     .eq('salary_run_id', runId)
     .order('id');
 
-  if (slipsErr) return NextResponse.json({ error: slipsErr.message }, { status: 500 });
+  if (slipsErr) {
+    console.error('[NACH export: slips fetch]', slipsErr.message);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  }
   if (!slips || slips.length === 0) {
     return NextResponse.json({ error: 'No slips on run' }, { status: 422 });
   }

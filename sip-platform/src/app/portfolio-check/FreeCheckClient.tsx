@@ -9,6 +9,7 @@
  */
 
 import { useState, useRef } from 'react';
+import Link from 'next/link';
 import { Upload, ShieldCheck, Lock, ArrowRight, AlertTriangle, CheckCircle2, Sparkles, CreditCard, FileText, HelpCircle, ChevronDown, ChevronUp } from 'lucide-react';
 
 type Tab = 'pan' | 'pdf';
@@ -230,6 +231,14 @@ export default function FreeCheckClient() {
               <span className="text-[9px] font-medium text-slate-400 normal-case leading-none">CDSL demat</span>
             </button>
           </div>
+
+          <p className="text-center text-xs text-slate-400 mb-4">
+            Don&apos;t have your statement handy?{' '}
+            <Link href="/portfolio-check-up" className="font-semibold text-teal-700 hover:underline">
+              Try our 2-minute Portfolio Check-Up
+            </Link>{' '}
+            instead.
+          </p>
 
           {/* Shared fields: name, mobile, consent */}
           <div className="space-y-4">

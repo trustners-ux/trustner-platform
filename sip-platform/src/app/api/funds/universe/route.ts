@@ -126,7 +126,8 @@ export async function GET(req: NextRequest) {
         message: 'Fund research universe is being prepared. Data will appear shortly.',
       });
     }
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('[FundsUniverse]', error.message);
+    return NextResponse.json({ error: 'Failed to load fund data' }, { status: 500 });
   }
 
   // ── Serve OUR SEBI-standard self-computed metrics as the PRIMARY numbers ──

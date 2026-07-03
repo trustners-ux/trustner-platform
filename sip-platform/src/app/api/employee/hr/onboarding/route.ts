@@ -11,6 +11,7 @@ import { verifyEmployeeToken, EMPLOYEE_COOKIE } from '@/lib/auth/employee-jwt';
 import { getEffectivePermissions } from '@/lib/hr/permissions';
 import { generateOnboardingToken } from '@/lib/hr/onboarding-tokens';
 import { sendWhatsAppText } from '@/lib/messaging/whatsapp';
+import { decryptPii } from '@/lib/security/pii-crypto';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -42,7 +43,7 @@ export async function GET(req: NextRequest) {
   if (status) query = query.eq('status', status);
 
   const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ rows: data ?? [] });
 }
 
@@ -82,7 +83,7 @@ export async function POST(req: NextRequest) {
     })
     .select('*')
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
 
   // Try sending WhatsApp invite (best-effort)
   if (phone) {
@@ -171,7 +172,8 @@ export async function PATCH(req: NextRequest) {
       ? fullAddr(existing.curr_address_line1, existing.curr_address_line2, existing.curr_city, existing.curr_state, existing.curr_pin)
       : fullAddr(existing.perm_address_line1, existing.perm_address_line2, existing.perm_city, existing.perm_state, existing.perm_pin);
 
-    const aadhaarLast4 = existing.aadhaar ? String(existing.aadhaar).replace(/\D/g, '').slice(-4) || null : null;
+    const rawAadhaar = decryptPii(existing.aadhaar);
+    const aadhaarLast4 = rawAadhaar ? String(rawAadhaar).replace(/\D/g, '').slice(-4) || null : null;
 
     const { data: emp, error: empErr } = await supabase
       .from('hr_employees')
@@ -215,7 +217,7 @@ export async function PATCH(req: NextRequest) {
         // Bank
         bank_name: existing.bank_name || null,
         bank_branch: existing.bank_branch || null,
-        account_number_encrypted: existing.account_number || null,
+        account_number_encrypted: decryptPii(existing.account_number) || null,
         ifsc: existing.ifsc || null,
         account_type: existing.account_type || null,
         // History (JSONB)
@@ -226,7 +228,8 @@ export async function PATCH(req: NextRequest) {
       .select('id')
       .single();
     if (empErr) {
-      return NextResponse.json({ error: 'Could not create employee: ' + empErr.message }, { status: 500 });
+      console.error('[Onboarding:approve]', empErr.message);
+      return NextResponse.json({ error: 'Could not create employee record' }, { status: 500 });
     }
     createdEmployeeId = emp.id;
     update = { ...update, status: 'approved', employee_id: emp.id };
@@ -242,7 +245,7 @@ export async function PATCH(req: NextRequest) {
     .eq('id', id)
     .select('*')
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
 
   return NextResponse.json({ onboarding: updated, employee_id: createdEmployeeId });
 }

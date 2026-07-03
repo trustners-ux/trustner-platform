@@ -177,6 +177,7 @@ export async function POST(req: NextRequest) {
         .select('*')
         .single();
       if (error) {
+        console.error(error.message);
         results.push({
           employee_id: r.employee_id,
           rating_id: existing.id,
@@ -185,7 +186,7 @@ export async function POST(req: NextRequest) {
           nine_box_quadrant: quadrant,
           compliance_capped: cap.capped,
           compliance_cap_reason: payload.compliance_cap_reason,
-          error: error.message,
+          error: 'Internal error',
         });
         continue;
       }
@@ -197,6 +198,7 @@ export async function POST(req: NextRequest) {
         .select('*')
         .single();
       if (error) {
+        console.error(error.message);
         results.push({
           employee_id: r.employee_id,
           rating_id: null,
@@ -205,7 +207,7 @@ export async function POST(req: NextRequest) {
           nine_box_quadrant: quadrant,
           compliance_capped: cap.capped,
           compliance_cap_reason: payload.compliance_cap_reason,
-          error: error.message,
+          error: 'Internal error',
         });
         continue;
       }

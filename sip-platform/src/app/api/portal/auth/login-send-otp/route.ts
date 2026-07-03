@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
       login_id_masked: looksEmail ? login_id.replace(/^(.{2})[^@]*/, '$1***') : login_id.replace(/^(\+\d{2})\d{6}/, '$1XXXXXX'),
     });
   } catch (err) {
-    return NextResponse.json({ ok: false, reason: err instanceof Error ? err.message : 'OTP failed' }, { status: 500 });
+    console.error('[LoginSendOtp]', err);
+    return NextResponse.json({ ok: false, reason: 'OTP send failed' }, { status: 500 });
   }
 }

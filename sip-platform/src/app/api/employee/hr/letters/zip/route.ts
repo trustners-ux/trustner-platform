@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
   }
 
   const { data: rows, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   if (!rows || rows.length === 0) return NextResponse.json({ error: 'No letters found' }, { status: 404 });
 
   const zip = new JSZip();

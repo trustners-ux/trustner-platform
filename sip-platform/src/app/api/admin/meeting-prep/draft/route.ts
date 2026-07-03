@@ -122,8 +122,9 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error || !row) {
+    console.error(error?.message ?? 'Failed to create meeting-prep draft');
     return NextResponse.json(
-      { error: error?.message ?? 'Failed to create draft' },
+      { error: 'Failed to create draft' },
       { status: 500 }
     );
   }

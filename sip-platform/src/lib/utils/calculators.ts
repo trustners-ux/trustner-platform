@@ -369,6 +369,170 @@ export function calculateSWP(
   };
 }
 
+// ── SWP Calculator — Tax-Aware Mode ────────────
+// Mirrors src/lib/portfolio-diagnostic/v2/tax-engine.ts — keep in sync if India capital-gains rules change.
+const SWP_LTCG_RATE = 0.125;          // equity LTCG 12.5% (held > 12 months)
+const SWP_STCG_RATE = 0.20;           // equity STCG 20% (held <= 12 months)
+const SWP_LTCG_EXEMPTION_INR = 125_000; // ₹1.25 lakh, PER FINANCIAL YEAR, aggregate equity LTCG
+
+export interface SWPYearlyDataWithTax {
+  year: number;
+  remaining: number;
+  withdrawn: number;
+  interest: number;
+  monthlyWithdrawal: number;
+  ltcgGain: number;
+  stcgGain: number;
+  slabGain: number;
+  realizedLoss: number;
+  ltcgExemptionUsed: number;
+  estTax: number;
+  cumulativeTaxPaid: number;
+}
+
+export interface SWPResultWithTax {
+  yearlyData: SWPYearlyDataWithTax[];
+  totalWithdrawn: number;
+  finalCorpus: number;
+  corpusLasts: number;
+  totalCapitalGainsRealized: number;
+  totalEstTax: number;
+  totalLtcgExemptionUsed: number;
+}
+
+// Simulates the same month-by-month SWP as calculateSWP(), but additionally tracks
+// a simplified FIFO capital-gains ledger to estimate capital-gains tax on each
+// withdrawal. Assumes the FULL corpus is invested fresh today (cost basis = corpus,
+// zero embedded gains at day 1) — a disclosed simplifying assumption; a generic
+// calculator cannot know a real portfolio's actual purchase history.
+export function calculateSWPWithTax(
+  corpus: number,
+  monthlyWithdrawal: number,
+  annualReturn: number,
+  years: number,
+  stepUpEnabled: boolean = false,
+  stepUpType: 'percentage' | 'amount' = 'percentage',
+  stepUpValue: number = 5,
+  fundType: 'equity' | 'debt' = 'equity',
+  debtSlabPct: number = 30
+): SWPResultWithTax {
+  const monthlyRate = annualReturn / 100 / 12;
+  let remaining = corpus;
+  let totalWithdrawn = 0;
+  let corpusLasts = years;
+  let currentMonthlyWithdrawal = monthlyWithdrawal;
+
+  // NAV/units bookkeeping — single lumpsum batch, FIFO, constant cost per unit
+  const NAV0 = 100;
+  let nav = NAV0;
+  let unitsHeld = corpus / NAV0;
+  const costPerUnit = NAV0;
+
+  let totalCapitalGainsRealized = 0;
+  let totalEstTax = 0;
+  let totalLtcgExemptionUsed = 0;
+  let cumulativeTaxPaid = 0;
+
+  const yearlyData: SWPYearlyDataWithTax[] = [];
+
+  for (let y = 1; y <= years; y++) {
+    let yearWithdrawn = 0;
+    let yearInterest = 0;
+    let yearLtcgGain = 0;
+    let yearStcgGain = 0;
+    let yearSlabGain = 0;
+    let yearRealizedLoss = 0;
+
+    for (let m = 0; m < 12; m++) {
+      const interest = remaining * monthlyRate;
+      yearInterest += interest;
+      remaining = remaining + interest - currentMonthlyWithdrawal;
+      yearWithdrawn += currentMonthlyWithdrawal;
+      totalWithdrawn += currentMonthlyWithdrawal;
+
+      // NAV grows with the same monthly rate as the corpus
+      nav = nav * (1 + monthlyRate);
+
+      const unitsRedeemed = nav > 0 ? currentMonthlyWithdrawal / nav : 0;
+      const costOfUnitsRedeemed = unitsRedeemed * costPerUnit;
+      const realizedGain = Math.max(0, currentMonthlyWithdrawal - costOfUnitsRedeemed);
+      const realizedLoss = Math.max(0, costOfUnitsRedeemed - currentMonthlyWithdrawal);
+
+      unitsHeld = Math.max(0, unitsHeld - unitsRedeemed);
+      yearRealizedLoss += realizedLoss;
+
+      if (realizedGain > 0) {
+        if (fundType === 'debt') {
+          yearSlabGain += realizedGain;
+        } else {
+          // Equity: classify by holding period in months elapsed since month 0
+          const monthsElapsed = (y - 1) * 12 + (m + 1);
+          if (monthsElapsed > 12) {
+            yearLtcgGain += realizedGain;
+          } else {
+            yearStcgGain += realizedGain;
+          }
+        }
+      }
+
+      if (remaining <= 0) {
+        remaining = 0;
+        corpusLasts = y - 1 + (m + 1) / 12;
+        break;
+      }
+    }
+
+    // Year-end tax aggregation — LTCG exemption renews every simulated year (disclosed approximation)
+    const ltcgExemptionUsed = Math.min(yearLtcgGain, SWP_LTCG_EXEMPTION_INR);
+    const ltcgTaxableThisYear = Math.max(0, yearLtcgGain - SWP_LTCG_EXEMPTION_INR);
+    const ltcgTaxThisYear = ltcgTaxableThisYear * SWP_LTCG_RATE;
+    const stcgTaxThisYear = yearStcgGain * SWP_STCG_RATE;
+    const slabTaxThisYear = yearSlabGain * (debtSlabPct / 100);
+    const yearEstTax = ltcgTaxThisYear + stcgTaxThisYear + slabTaxThisYear;
+
+    totalCapitalGainsRealized += yearLtcgGain + yearStcgGain + yearSlabGain;
+    totalEstTax += yearEstTax;
+    totalLtcgExemptionUsed += ltcgExemptionUsed;
+    cumulativeTaxPaid += yearEstTax;
+
+    yearlyData.push({
+      year: y,
+      remaining: Math.round(Math.max(0, remaining)),
+      withdrawn: Math.round(yearWithdrawn),
+      interest: Math.round(yearInterest),
+      monthlyWithdrawal: Math.round(currentMonthlyWithdrawal),
+      ltcgGain: Math.round(yearLtcgGain),
+      stcgGain: Math.round(yearStcgGain),
+      slabGain: Math.round(yearSlabGain),
+      realizedLoss: Math.round(yearRealizedLoss),
+      ltcgExemptionUsed: Math.round(ltcgExemptionUsed),
+      estTax: Math.round(yearEstTax),
+      cumulativeTaxPaid: Math.round(cumulativeTaxPaid),
+    });
+
+    if (remaining <= 0) break;
+
+    // Step-up withdrawal at year end for next year
+    if (stepUpEnabled && y < years) {
+      if (stepUpType === 'percentage') {
+        currentMonthlyWithdrawal = currentMonthlyWithdrawal * (1 + stepUpValue / 100);
+      } else {
+        currentMonthlyWithdrawal = currentMonthlyWithdrawal + stepUpValue;
+      }
+    }
+  }
+
+  return {
+    yearlyData,
+    totalWithdrawn: Math.round(totalWithdrawn),
+    finalCorpus: Math.round(Math.max(0, remaining)),
+    corpusLasts: Math.round(corpusLasts * 10) / 10,
+    totalCapitalGainsRealized: Math.round(totalCapitalGainsRealized),
+    totalEstTax: Math.round(totalEstTax),
+    totalLtcgExemptionUsed: Math.round(totalLtcgExemptionUsed),
+  };
+}
+
 // ── Retirement SIP Planner — Types ─────────────────────
 export interface RetirementAccumulationYear {
   year: number;

@@ -141,7 +141,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       })
       .select('id')
       .single();
-    if (insErr) return NextResponse.json({ error: insErr.message }, { status: 500 });
+    if (insErr) {
+      console.error('[Policy sign: OTP insert]', insErr.message);
+      return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    }
 
     // Send the OTP
     if (delivery_channel === 'whatsapp') {
@@ -240,7 +243,10 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       })
       .select('*')
       .single();
-    if (ackErr) return NextResponse.json({ error: ackErr.message }, { status: 500 });
+    if (ackErr) {
+      console.error('[Policy sign: ack insert]', ackErr.message);
+      return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    }
 
     return NextResponse.json({ ok: true, ack, audit_hash });
   }

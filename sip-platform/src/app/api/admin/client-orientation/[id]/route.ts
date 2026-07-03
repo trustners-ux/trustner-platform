@@ -115,7 +115,7 @@ export async function PUT(
 
     // Replace responses in sub-table (errors surfaced — was silent before).
     const delR = await supabase.from('co_risk_responses').delete().eq('orientation_id', numericId);
-    if (delR.error) return NextResponse.json({ error: `Failed to save risk responses: ${delR.error.message}` }, { status: 500 });
+    if (delR.error) { console.error(delR.error.message); return NextResponse.json({ error: 'Failed to save risk responses' }, { status: 500 }); }
     if (responses.length > 0) {
       const insR = await supabase.from('co_risk_responses').insert(
         responses.map((r) => ({
@@ -127,7 +127,7 @@ export async function PUT(
           response_order: r.responseOrder ?? null,
         }))
       );
-      if (insR.error) return NextResponse.json({ error: `Failed to save risk responses: ${insR.error.message}` }, { status: 500 });
+      if (insR.error) { console.error(insR.error.message); return NextResponse.json({ error: 'Failed to save risk responses' }, { status: 500 }); }
     }
   }
 
@@ -148,7 +148,7 @@ export async function PUT(
     }>;
 
     const delG = await supabase.from('co_goals').delete().eq('orientation_id', numericId);
-    if (delG.error) return NextResponse.json({ error: `Failed to save goals: ${delG.error.message}` }, { status: 500 });
+    if (delG.error) { console.error(delG.error.message); return NextResponse.json({ error: 'Failed to save goals' }, { status: 500 }); }
     if (goals.length > 0) {
       const insG = await supabase.from('co_goals').insert(
         goals.map((g) => ({
@@ -166,7 +166,7 @@ export async function PUT(
           notes: g.notes ?? null,
         }))
       );
-      if (insG.error) return NextResponse.json({ error: `Failed to save goals: ${insG.error.message}` }, { status: 500 });
+      if (insG.error) { console.error(insG.error.message); return NextResponse.json({ error: 'Failed to save goals' }, { status: 500 }); }
     }
   }
 
@@ -181,7 +181,7 @@ export async function PUT(
     .update(update)
     .eq('id', numericId);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
 
   return NextResponse.json({ success: true });
 }

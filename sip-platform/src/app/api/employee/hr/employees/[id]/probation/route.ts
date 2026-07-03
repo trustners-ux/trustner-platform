@@ -109,7 +109,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     .eq('id', employee_id)
     .select('id, employment_status, probation_end_date, probation_extended_count, confirmation_date')
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
 
   // Best-effort audit log (table may not exist in older deployments — swallow)
   try {

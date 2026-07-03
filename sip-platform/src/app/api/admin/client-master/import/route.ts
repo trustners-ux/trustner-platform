@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, ...result, rows: decoratedRows });
     } catch (err) {
       return NextResponse.json(
-        { error: err instanceof Error ? err.message : 'Parse failed' },
+        { error: 'Parse failed' },
         { status: 400 },
       );
     }
@@ -194,7 +194,7 @@ export async function POST(req: NextRequest) {
         results.push({
           source_row: r.source_row,
           ok: false,
-          error: err instanceof Error ? err.message : 'Create failed',
+          error: 'Create failed',
         });
       }
     }

@@ -155,7 +155,7 @@ export async function POST(req: NextRequest) {
     .from('hr_dsr_entries')
     .upsert(payload, { onConflict: 'employee_id,entry_date' })
     .select('*').single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
 
   // If a miss was previously recorded for this date, mark it resolved.
   await supabase
@@ -194,6 +194,6 @@ export async function PATCH(req: NextRequest) {
     })
     .eq('id', id)
     .select('*').single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ entry: data });
 }

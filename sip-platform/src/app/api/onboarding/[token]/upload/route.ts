@@ -15,6 +15,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
 import { getSupabaseAdmin } from '@/lib/db/supabase';
 
+// KYC scans (PAN/Aadhaar) are real government-ID documents — stored in the
+// dedicated PRIVATE store (its own token; the original project store is
+// public-only and rejects private writes outright).
+const PRIVATE_TOKEN = process.env.PRIVATE_BLOB_READ_WRITE_TOKEN;
+
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const fetchCache = 'force-no-store';
@@ -61,7 +66,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ token: str
   // Path keeps blobs grouped per onboarding record
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 60);
   const key = `hr-onboarding/${rec.id}/${category}-${Date.now()}-${safeName}`;
-  const blob = await put(key, file, { access: 'public', addRandomSuffix: true });
+  const blob = await put(key, file, { access: 'private', addRandomSuffix: true, token: PRIVATE_TOKEN });
 
   // Update onboarding status to in_progress if still 'invited'
   if (rec.status === 'invited') {
@@ -81,6 +86,9 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ token: str
     .select('id, category, filename, uploaded_at, status')
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    console.error('[OnboardingUpload]', error.message);
+    return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
+  }
   return NextResponse.json({ document: data });
 }

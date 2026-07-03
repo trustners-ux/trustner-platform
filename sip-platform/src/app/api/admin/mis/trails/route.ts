@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('[Trails API] GET error:', error);
     return NextResponse.json(
-      { error: `Failed to fetch trail data: ${error instanceof Error ? error.message : 'Unknown error'}` },
+      { error: 'Failed to fetch trail data' },
       { status: 500 }
     );
   }
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('[Trails API] POST error:', error);
     return NextResponse.json(
-      { error: `Failed to process trail action: ${error instanceof Error ? error.message : 'Unknown error'}` },
+      { error: 'Failed to process trail action' },
       { status: 500 }
     );
   }

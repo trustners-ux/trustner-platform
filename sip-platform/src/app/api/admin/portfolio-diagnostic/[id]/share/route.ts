@@ -175,9 +175,10 @@ export async function POST(
     .from('pd_share_links')
     .insert(linkRowsToInsert);
   if (tokenErr) {
+    console.error(`Could not mint share tokens: ${tokenErr.message}. Has migration 011_pd_share_links.sql been applied?`);
     return NextResponse.json(
       {
-        error: `Could not mint share tokens: ${tokenErr.message}. Has migration 011_pd_share_links.sql been applied?`,
+        error: 'Could not mint share tokens',
       },
       { status: 500 }
     );

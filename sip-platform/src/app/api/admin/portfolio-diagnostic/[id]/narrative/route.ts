@@ -197,7 +197,8 @@ export async function PATCH(
     .eq('diagnostic_run_id', numericId);
 
   if (updateErr) {
-    return NextResponse.json({ error: updateErr.message }, { status: 500 });
+    console.error(updateErr.message);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 
   // Fire-and-forget audit log to app_artefact_views (so the audit page

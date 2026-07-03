@@ -10,6 +10,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ArrowLeft, CheckCircle2, XCircle, MessageSquare, Send, AlertTriangle, FileText } from 'lucide-react';
+import { ShareWithClientPanel } from '@/components/admin/ShareWithClientPanel';
 
 interface Review {
   id: number;
@@ -269,6 +270,12 @@ export default function ReviewPeriodicReviewPage() {
           )}
         </div>
       )}
+
+      <ShareWithClientPanel
+        shareEndpoint={`/api/admin/periodic-review/${id}/share`}
+        label="Periodic Review"
+        canShare={review.status === 'APPROVED' || review.status === 'PUBLISHED'}
+      />
     </div>
   );
 }

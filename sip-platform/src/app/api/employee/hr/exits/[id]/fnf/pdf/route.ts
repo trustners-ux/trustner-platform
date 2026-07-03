@@ -68,7 +68,10 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
 
   const { data: fnf, error: fErr } = await supabase
     .from('hr_fnf').select('*').eq('separation_id', sepId).maybeSingle();
-  if (fErr) return NextResponse.json({ error: fErr.message }, { status: 500 });
+  if (fErr) {
+    console.error('[FnF PDF fetch]', fErr.message);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  }
   if (!fnf) return NextResponse.json({ error: 'F&F not yet computed' }, { status: 404 });
 
   // Compose FnFOutput from the row

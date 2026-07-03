@@ -222,9 +222,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
   } catch (error) {
     console.error('[Approvals API] POST error:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: `Failed to process approval action: ${message}` },
+      { error: 'Failed to process approval action' },
       { status: 500 }
     );
   }

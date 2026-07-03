@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
     .eq('employee_id', empId)
     .order('created_at', { ascending: false })
     .limit(100);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   const rows = data ?? [];
   return NextResponse.json({ rows, unread: rows.filter((r) => !r.read_at).length, canBroadcast: !!perms.can_access_engagement });
 }
@@ -57,7 +57,7 @@ export async function PATCH(req: NextRequest) {
     q = q.eq('id', Number(b.id));
   }
   const { error } = await q;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) { console.error(error.message); return NextResponse.json({ error: 'Internal error' }, { status: 500 }); }
   return NextResponse.json({ ok: true });
 }
 
@@ -78,7 +78,8 @@ export async function POST(req: NextRequest) {
       entities, type: 'broadcast', title: b.title, body: b.body || null, link: b.link || null, createdBy: actor.email,
     });
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 });
+    console.error('[Notifications broadcast]', (e as Error).message);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
   return NextResponse.json({ ok: true, notified: recipients });
 }

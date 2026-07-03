@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import {
   BarChart3, TrendingUp, TrendingDown, FlaskConical, BookOpen,
-  ArrowRight, Activity, PieChart, Zap, FileText,
+  ArrowRight, Activity, PieChart, Zap, FileText, Gauge,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
@@ -86,6 +86,20 @@ const researchTopics = [
       'Compare normal vs stressed SIP portfolios',
     ],
     badge: 'Interactive',
+  },
+  {
+    title: 'Nifty 50 Snapshot',
+    slug: 'nifty-snapshot',
+    description: 'An always-current reference — live Nifty 50 chart and genuine, NAV-derived trailing returns. Bookmark for context between newsletter issues. (For weekly commentary, see Market Pulse.)',
+    icon: Gauge,
+    color: 'from-cyan-500 to-teal-600',
+    stats: 'Live data',
+    highlights: [
+      'Live Nifty 50 / Sensex chart',
+      '1Y/3Y/5Y/10Y trailing returns — computed, not hardcoded',
+      'Honest note on where to check current Nifty PE valuation',
+    ],
+    badge: 'Live',
   },
 ];
 

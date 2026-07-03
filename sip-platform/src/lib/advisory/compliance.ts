@@ -155,3 +155,13 @@ export function buildComplianceFooter(opts: ComplianceFooterOpts = {}): string {
 
 const COMPLIANCE_TAX =
   'Tax estimates are indicative — please confirm the final liability with your Chartered Accountant before acting.';
+
+/**
+ * A prominent banner shown on any deliverable whose record is not yet PUBLISHED,
+ * so an RM never sends an unapproved draft to a client. Empty once published.
+ */
+export function draftBanner(status?: string | null): string {
+  if (!status || status.toUpperCase() === 'PUBLISHED') return '';
+  const label = status.replace(/_/g, ' ').toUpperCase();
+  return `<div style="background:#FEF3C7;border:1px solid #F59E0B;color:#92400E;font-size:9pt;font-weight:700;text-align:center;padding:6px 10px;border-radius:4px;margin-bottom:12px;letter-spacing:0.3px">DRAFT · ${label} — not yet approved for client distribution</div>`;
+}
