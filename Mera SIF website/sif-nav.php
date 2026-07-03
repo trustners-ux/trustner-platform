@@ -56,6 +56,38 @@ function ms_get($url) {
 }
 function pct($now, $past) { return (!$past || $past == 0) ? null : round(($now / $past - 1) * 100, 2); }
 
+// ---- derive a fund record from the official AMFI feed (for auto-surfacing newly-listed SIFs) ----
+function ms_derive_cat($catstr) {
+    $c = strtolower($catstr);
+    if (strpos($c, 'ex-top 100') !== false || strpos($c, 'ex top 100') !== false) return 'ex100';
+    if (strpos($c, 'sector rotation') !== false) return 'sector';
+    if (strpos($c, 'active asset allocator') !== false) return 'aaa';
+    if (strpos($c, 'hybrid') !== false) return 'hybrid';
+    if (strpos($c, 'equity') !== false) return 'equity';
+    return null; // unknown category — do not guess; skip auto-surfacing
+}
+function ms_derive_amc($sifname) {
+    $map = array(
+        'altiva sif'=>'Edelweiss','apex sif'=>'Aditya Birla SL','arthaya sif'=>'Union',
+        'arudha sif'=>'Bandhan','diviniti sif'=>'ITI','dynasif sif'=>'360 ONE',
+        'magnum sif'=>'SBI','titanium sif'=>'Tata','isif sif'=>'ICICI Prudential',
+        'qsif sif'=>'Quant','mirae asset mutual fund'=>'Mirae Asset',
+        'franklin templeton mutual fund'=>'Franklin Templeton',
+        'the wealth company mutual fund'=>'The Wealth Company','hsbc mutual fund'=>'HSBC',
+        'infinity sif'=>'Kotak','mpower sif'=>'Mahindra Manulife','summit sif'=>'Invesco',
+        'prism sif'=>'Jio BlackRock',
+    );
+    $k = strtolower(trim($sifname));
+    if (isset($map[$k])) return $map[$k];
+    $a = trim(preg_replace('/\s*(sif|mutual fund)\s*$/i', '', $sifname));
+    return $a !== '' ? $a : 'New AMC';
+}
+function ms_clean_name($navname) {
+    $parts = preg_split('/\s*-\s*(Regular|Direct)\b/i', $navname);
+    $n = preg_replace('/\s{2,}/', ' ', trim($parts[0]));
+    return trim(rtrim($n, " -"));
+}
+
 // ---- official AMFI snapshot (cached 4h; falls back to last good copy) ----
 // CLI (cron) and ?force always re-fetch the latest AMFI NAVs; web hits use the 4h cache.
 $amfi = null;
@@ -234,6 +266,37 @@ foreach ($funds as $id => $f) {
     if ($rec['navDate'] && (!$latest || $rec['navDate'] > $latest)) $latest = $rec['navDate'];
     unset($rec['_series']);
     $out_funds[$id] = $rec;
+}
+
+// Auto-surface: SIFs in the official AMFI feed not yet in the curated master file.
+// Derived live from the feed (no file writes → cannot corrupt the master), so a newly
+// listed SIF appears on the tracker automatically even between curated updates. Marked
+// 'auto' so the weekly agent / owner can promote it with a curated name/AMC/inception.
+if ($amfi && !empty($amfi['data'])) {
+    $known_sd = array();
+    foreach ($funds as $mid => $mf) { if ($mid !== '_comment' && !empty($mf['sd'])) $known_sd[$mf['sd']] = true; }
+    foreach ($amfi['data'] as $t) foreach (($t['categories'] ?? array()) as $c)
+        foreach (($c['groups'] ?? array()) as $g) foreach (($g['schemes'] ?? array()) as $s) {
+            $sd = isset($s['Sd_Id']) ? $s['Sd_Id'] : '';
+            $nn = isset($s['NavName']) ? $s['NavName'] : '';
+            if ($sd === '' || isset($known_sd[$sd])) continue;
+            if (stripos($nn, 'regular') === false || stripos($nn, 'growth') === false) continue;
+            $acat = ms_derive_cat(isset($s['category']) ? $s['category'] : '');
+            if ($acat === null) continue;
+            $known_sd[$sd] = true;
+            $anav = isset($s['NetAssetValue']) ? floatval($s['NetAssetValue']) : 0;
+            $adef = array(
+                'name' => ms_clean_name($nn),
+                'amc'  => ms_derive_amc(isset($g['SIFName']) ? $g['SIFName'] : ''),
+                'cat'  => $acat, 'sd' => $sd, 'face' => ($anav > 100 ? 1000 : 10),
+            );
+            $aid = 'auto-' . strtolower($sd);
+            $arec = build($aid, $adef, $hist, $bySd);
+            unset($arec['_series']);
+            $arec['auto'] = true;
+            if ($arec['navDate'] && (!$latest || $arec['navDate'] > $latest)) $latest = $arec['navDate'];
+            $out_funds[$aid] = $arec;
+        }
 }
 @file_put_contents($HIST_FILE, json_encode($hist, JSON_UNESCAPED_SLASHES));
 
