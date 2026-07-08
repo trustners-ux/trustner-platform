@@ -31,6 +31,19 @@
   @keyframes newsShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
   .news-foot{font-size:12px;color:var(--gray-500);margin-top:22px;font-style:italic;line-height:1.6}
   .news-foot a{color:var(--royal);font-weight:600}
+  .news-statline{font-size:13.5px;color:var(--gray-600);margin-top:5px}
+  .news-statline b{color:var(--navy);font-weight:700}
+  .news-filters{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 22px}
+  .news-chip{cursor:pointer;border:1px solid var(--gray-200);background:#fff;color:var(--gray-700);font-size:12.5px;font-weight:600;padding:7px 14px;border-radius:20px;transition:var(--transition);user-select:none}
+  .news-chip:hover{border-color:rgba(30,64,175,.35)}
+  .news-chip.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .news-chip .c{opacity:.55;font-weight:700;margin-left:4px}
+  .news-cat{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:6px;margin-left:auto;white-space:nowrap}
+  .news-cat.launch{background:rgba(30,64,175,.09);color:var(--royal)}
+  .news-cat.regulatory{background:rgba(220,38,38,.09);color:var(--red)}
+  .news-cat.flows{background:rgba(6,182,212,.12);color:#0E7490}
+  .news-cat.analysis{background:rgba(212,160,23,.16);color:#8A6D0B}
+  .news-cat.update{background:var(--gray-100);color:var(--gray-600)}
 </style>
 </head>
 <body>
@@ -66,10 +79,14 @@
 
 <section>
   <div class="container">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:18px">
-      <h2 style="font-size:22px;font-weight:800;color:var(--navy);letter-spacing:-.4px" id="newsHeading">Latest headlines</h2>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:2px">
+      <div>
+        <h2 style="font-size:22px;font-weight:800;color:var(--navy);letter-spacing:-.4px;margin:0" id="newsHeading">Latest SIF headlines</h2>
+        <div class="news-statline" id="newsStat">Loading the latest coverage…</div>
+      </div>
       <span class="news-live"><span class="nl-dot"></span><span id="newsUpdated">Auto-updated</span></span>
     </div>
+    <div class="news-filters" id="newsFilters"></div>
 
     <div class="news-grid" id="newsGrid">
       <div class="news-skeleton"></div><div class="news-skeleton"></div><div class="news-skeleton"></div>
@@ -134,30 +151,45 @@
 <script src="assets/js/main.js"></script>
 <script>
 (function(){
-  var grid=document.getElementById('newsGrid');
+  var grid=document.getElementById('newsGrid'), statEl=document.getElementById('newsStat'),
+      filtEl=document.getElementById('newsFilters'), updEl=document.getElementById('newsUpdated');
+  var CATS=[['all','All'],['launch','Launches & NFOs'],['regulatory','Regulatory'],['flows','AUM & Flows'],['analysis','Analysis'],['update','Other']];
+  var CATLBL={launch:'Launch',regulatory:'Regulatory',flows:'AUM & Flows',analysis:'Analysis',update:'Update'};
+  var ALL=[], active='all';
   function timeAgo(iso){if(!iso)return '';var d=new Date(iso),s=Math.floor((new Date()-d)/1000);if(isNaN(s))return '';if(s<3600)return Math.max(1,Math.floor(s/60))+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';if(s<604800)return Math.floor(s/86400)+'d ago';return d.toLocaleDateString('en-IN',{day:'numeric',month:'short'});}
   function esc(t){var e=document.createElement('div');e.textContent=t;return e.innerHTML;}
-  var fallback=[
-    {title:'The H1 2026 SIF Coverage Report — every live fund, scored on the Trustner Fund Score.',link:'report.html',internal:true},
-    {title:'Live SIF universe: 25 funds with NAV, 1D/5D/1M/3M/SI returns and AUM.',link:'fund-universe.html',internal:true},
-    {title:'What is a Specialized Investment Fund? SEBI’s ₹10 lakh category, explained.',link:'what-is-sif.html',internal:true},
-    {title:'SIF developments timeline — NFOs, AUM milestones and regulatory updates.',link:'insights.html',internal:true}
-  ];
-  function render(items){
-    grid.innerHTML=items.map(function(it){
-      var meta=it.internal?'Trustner':(esc(it.source||'News')+(it.date?' · '+timeAgo(it.date):''));
-      var more=it.internal?'Read on MeraSIF':'Read on source';
-      var tgt=it.internal?'':' target="_blank" rel="noopener nofollow"';
-      return '<a class="news-card" href="'+esc(it.link)+'"'+tgt+'><div class="news-source"><span class="ns-dot"></span>'+meta+'</div><div class="news-title">'+esc(it.title)+'</div><div class="news-more">'+more+' <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div></a>';
-    }).join('');
+  function card(it){
+    var cat=it.cat||'update';
+    var meta=esc(it.source||'News')+(it.date?' · '+timeAgo(it.date):'');
+    return '<a class="news-card" href="'+esc(it.link)+'" target="_blank" rel="noopener nofollow">'
+      +'<div class="news-source"><span class="ns-dot"></span>'+meta+'<span class="news-cat '+cat+'">'+(CATLBL[cat]||'Update')+'</span></div>'
+      +'<div class="news-title">'+esc(it.title)+'</div>'
+      +'<div class="news-more">Read on source <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div></a>';
   }
+  function draw(){
+    var items=(active==='all')?ALL:ALL.filter(function(x){return (x.cat||'update')===active;});
+    grid.style.display='grid';
+    grid.innerHTML=items.length?items.map(card).join(''):'<p style="grid-column:1/-1;color:var(--gray-500);padding:8px 0">No headlines in this category right now.</p>';
+  }
+  function chips(){
+    filtEl.innerHTML=CATS.map(function(c){
+      var n=(c[0]==='all')?ALL.length:ALL.filter(function(x){return (x.cat||'update')===c[0];}).length;
+      if(c[0]!=='all'&&n===0)return '';
+      return '<span class="news-chip'+(c[0]===active?' active':'')+'" data-cat="'+c[0]+'">'+c[1]+'<span class="c">'+n+'</span></span>';
+    }).join('');
+    Array.prototype.forEach.call(filtEl.querySelectorAll('.news-chip'),function(el){el.onclick=function(){active=el.getAttribute('data-cat');chips();draw();};});
+  }
+  var fallback='<div style="grid-column:1/-1;color:var(--gray-600);font-size:14px;line-height:1.7">Live headlines are momentarily unavailable. In the meantime: the <a href="report.html" style="color:var(--royal);font-weight:600">H1 2026 Coverage Report</a>, the <a href="fund-universe.html" style="color:var(--royal);font-weight:600">live fund universe</a>, and our <a href="insights.html" style="color:var(--royal);font-weight:600">SIF developments timeline</a>.</div>';
   fetch('sif-news.php',{cache:'no-store'}).then(function(r){return r.ok?r.json():Promise.reject();}).then(function(data){
     if(data&&data.items&&data.items.length){
-      render(data.items);
-      document.getElementById('newsHeading').textContent='Latest headlines · '+data.items.length+' stories';
-      if(data.updated) document.getElementById('newsUpdated').textContent='Checked '+timeAgo(data.updated);
-    } else { render(fallback); }
-  }).catch(function(){ render(fallback); });
+      ALL=data.items;
+      var total=data.total||ALL.length;
+      var srcs=data.sources||(function(){var s={};ALL.forEach(function(x){if(x.source)s[x.source]=1;});return Object.keys(s).length;})();
+      statEl.innerHTML='Tracking <b>'+total+'</b> SIF headlines from <b>'+srcs+'</b> sources across India’s financial press — updated automatically.';
+      if(data.updated&&updEl) updEl.textContent='Checked '+timeAgo(data.updated);
+      chips(); draw();
+    } else { filtEl.innerHTML=''; statEl.textContent=''; grid.innerHTML=fallback; }
+  }).catch(function(){ filtEl.innerHTML=''; statEl.textContent=''; grid.innerHTML=fallback; });
 })();
 </script>
 
