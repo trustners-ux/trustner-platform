@@ -12,7 +12,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
 <link rel="icon" type="image/png" href="assets/img/logo.png">
-<link rel="stylesheet" href="assets/css/styles.css">
+<link rel="stylesheet" href="assets/css/styles.css?v=m3">
 <style>
   .fcat-bar{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 24px;padding:6px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:14px}
   .fcat{padding:9px 16px;background:transparent;border:none;border-radius:10px;font-family:inherit;font-size:13px;font-weight:600;color:var(--gray-600);cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;gap:6px}
@@ -102,7 +102,32 @@
   .fund-row.hidden{display:none}
 
   @media (max-width:768px) {
-    .fcat{padding:8px 12px;font-size:12px}
+    /* filter chips: one swipeable row instead of a stacked wrap */
+    .fcat-bar{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .fcat-bar::-webkit-scrollbar{display:none}
+    .fcat{padding:8px 12px;font-size:12px;flex-shrink:0}
+
+    /* denser table + smooth touch scroll */
+    .fund-table-wrap{-webkit-overflow-scrolling:touch}
+    .fund-table{min-width:960px;font-size:12px}
+    .fund-table th{padding:10px 8px}
+    .fund-table td{padding:11px 8px}
+
+    /* fund-name column stays pinned while the numbers scroll */
+    .fund-table thead th:first-child,
+    .fund-table tbody tr:not(.cat-group) td:first-child{
+      position:sticky;left:0;z-index:2;background:#fff;
+      min-width:150px;max-width:170px;
+      box-shadow:6px 0 8px -4px rgba(10,22,40,.12);
+    }
+    .fund-table thead th:first-child{background:var(--gray-50);z-index:3}
+    .fund-table tr:hover td:first-child{background:#fff}
+    .fname-main{font-size:12.5px;white-space:normal}
+    .fname-amc{font-size:10.5px}
+
+    /* keep the category label readable while swiping */
+    .cat-group-name{position:sticky;left:14px;display:inline-block}
+    .cat-group-count{display:none}
   }
 </style>
 </head>
@@ -261,6 +286,7 @@
     </div>
 
     <!-- DATA TABLE -->
+    <div class="swipe-hint">Swipe the table sideways for all columns — the fund name stays pinned</div>
     <div class="fund-table-wrap">
       <table class="fund-table">
         <thead>
