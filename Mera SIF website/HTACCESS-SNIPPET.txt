@@ -1,0 +1,73 @@
+════════════════════════════════════════════════════════════════════════
+  MeraSIF — .htaccess additions (branded 404 + safe security headers)
+════════════════════════════════════════════════════════════════════════
+
+WHY THIS IS A MANUAL STEP
+  The hardened deploy hook (sif-sync.php) deliberately CANNOT write files
+  without an allow-listed extension, and ".htaccess" has none — so it is
+  refused on purpose. This one file must be edited in Hostinger hPanel →
+  File Manager (or FTP). Everything else on the site deploys through the hook.
+
+WHAT IT DOES
+  1. Serves our branded /404.html on broken links, instead of the generic
+     grey Hostinger "This Page Does Not Exist" page (which even loads a
+     stranger's Google Analytics ID — not ours).
+  2. Adds three standard, invisible security headers that raise trust /
+     security-scanner scores. Every directive is wrapped in <IfModule> so a
+     missing Apache module is ignored, never a 500.
+  NOTE: HSTS (Strict-Transport-Security) is intentionally NOT included — it
+  is semi-permanent once a browser caches it and is best enabled only after
+  a deliberate decision. HTTPS is already enforced site-wide via the existing
+  "upgrade-insecure-requests" Content-Security-Policy header.
+
+────────────────────────────────────────────────────────────────────────
+ HOW TO APPLY (safe, reversible — ~2 minutes)
+────────────────────────────────────────────────────────────────────────
+ 1. hPanel → File Manager → open the site's web root (public_html or the
+    merasif domain folder).
+ 2. Turn ON "show hidden / dotfiles" (Settings gear, top-right).
+ 3. If a .htaccess ALREADY exists:
+       - Open it, SELECT-ALL, and COPY its current contents into a scratch
+         note first (this is your rollback copy).
+       - Scroll to the very BOTTOM and paste the block below AFTER the
+         existing lines. Do not delete anything.
+    If NO .htaccess exists:
+       - Create a new file named exactly  .htaccess  and paste the block in.
+ 4. Save.
+ 5. VERIFY IMMEDIATELY in a browser / curl:
+       - https://www.merasif.com/                       → must load (200)
+       - https://www.merasif.com/fund-universe.html     → must load (200)
+       - https://www.merasif.com/sif-nav.php            → must return JSON
+       - https://www.merasif.com/does-not-exist-xyz.html→ now shows the
+         branded blue 404 (title "Page Not Found (404) | Mera SIF")
+ 6. IF ANYTHING SHOWS "500 Internal Server Error": delete the pasted block
+    (or restore your rollback copy) and Save. The site returns to normal
+    instantly — .htaccess changes are not cached.
+
+────────────────────────────────────────────────────────────────────────
+ PASTE THIS BLOCK  (append at the end of .htaccess)
+────────────────────────────────────────────────────────────────────────
+
+# ── MeraSIF: branded error page + security headers (added 2026-07) ──
+ErrorDocument 404 /404.html
+
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
+# Long-cache immutable static assets; let HTML revalidate normally
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/png            "access plus 30 days"
+  ExpiresByType image/jpeg           "access plus 30 days"
+  ExpiresByType image/svg+xml        "access plus 30 days"
+  ExpiresByType image/webp           "access plus 30 days"
+  ExpiresByType image/x-icon         "access plus 30 days"
+  ExpiresByType text/css             "access plus 7 days"
+  ExpiresByType application/javascript "access plus 7 days"
+  ExpiresByType font/woff2           "access plus 30 days"
+</IfModule>
+# ── end MeraSIF block ──

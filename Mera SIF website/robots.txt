@@ -1,5 +1,5 @@
 User-agent: *
 Allow: /
-Disallow: /assets/
 
+# Full rendering allowed — CSS, JS and images must be crawlable for correct indexing.
 Sitemap: https://www.merasif.com/sitemap.xml
