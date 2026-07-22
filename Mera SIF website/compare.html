@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Compare SIF Funds Side by Side — NAV, Returns, TER, AUM | Mera SIF</title>
+<meta name="description" content="Compare up to 3 Specialized Investment Funds side by side on official AMFI NAVs — 1D/5D/1M/3M and since-inception returns, AUM, expense ratio, risk band, and a rebased NAV chart overlay. Every figure sourced, updated daily.">
+<meta name="keywords" content="compare SIF funds, SIF comparison India, SIF vs SIF, qSIF vs Altiva, SIF NAV comparison, best SIF comparison tool, Specialized Investment Fund compare">
+<link rel="canonical" href="https://www.merasif.com/compare.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+<link rel="icon" type="image/png" href="assets/img/logo.png">
+<link rel="stylesheet" href="assets/css/styles.css?v=m4">
+<style>
+  .cmp-hero{background:linear-gradient(150deg,#0A1628 0%,#142642 60%,#1A3155 100%);color:#fff;padding:56px 0 46px;position:relative;overflow:hidden}
+  .cmp-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(700px 320px at 82% 12%,rgba(34,211,238,.14),transparent 70%);pointer-events:none}
+  .cmp-hero h1{font-size:clamp(26px,4vw,38px);font-weight:800;letter-spacing:-.8px;margin:0 0 10px;position:relative}
+  .cmp-hero p{font-size:15px;color:#C7D6EC;max-width:640px;line-height:1.6;margin:0;position:relative}
+
+  /* picker */
+  .cmp-picker{background:#fff;border:1px solid var(--gray-200);border-radius:16px;padding:22px 24px;margin:-30px auto 26px;position:relative;z-index:5;box-shadow:0 10px 34px rgba(10,22,40,.1)}
+  .cmp-picker-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--gray-500);margin-bottom:12px}
+  .cmp-chips{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .cmp-chip{display:inline-flex;align-items:center;gap:9px;background:var(--navy);color:#fff;border-radius:11px;padding:9px 12px 9px 14px;font-size:13px;font-weight:700;max-width:280px}
+  .cmp-chip .cat{font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#8FB4E8;display:block}
+  .cmp-chip button{background:rgba(255,255,255,.15);border:none;color:#fff;width:22px;height:22px;border-radius:7px;cursor:pointer;font-size:13px;line-height:1;flex-shrink:0}
+  .cmp-chip button:hover{background:rgba(255,255,255,.3)}
+  .cmp-addwrap{position:relative;min-width:240px;flex:1;max-width:340px}
+  .cmp-add{width:100%;padding:11px 14px;border:2px dashed var(--gray-300);border-radius:11px;font-family:inherit;font-size:13.5px;color:var(--navy);background:var(--gray-50);outline:none;transition:.2s}
+  .cmp-add:focus{border-color:var(--royal);background:#fff;border-style:solid}
+  .cmp-dd{position:absolute;top:calc(100% + 6px);left:0;right:0;background:#fff;border:1px solid var(--gray-200);border-radius:12px;box-shadow:0 14px 40px rgba(10,22,40,.16);max-height:320px;overflow-y:auto;z-index:50;display:none}
+  .cmp-dd.open{display:block}
+  .cmp-dd-item{display:block;width:100%;text-align:left;padding:11px 14px;border:none;background:none;cursor:pointer;font-family:inherit;border-bottom:1px solid var(--gray-100)}
+  .cmp-dd-item:hover{background:rgba(30,64,175,.05)}
+  .cmp-dd-item .n{font-size:13.5px;font-weight:700;color:var(--navy)}
+  .cmp-dd-item .a{font-size:11.5px;color:var(--gray-500)}
+  .cmp-note{font-size:12px;color:var(--gray-500);margin-top:12px}
+  .cmp-cross{display:none;margin-top:12px;font-size:12.5px;font-weight:600;color:#8A6D0B;background:rgba(212,160,23,.12);border:1px solid rgba(212,160,23,.3);border-radius:10px;padding:9px 14px}
+  .cmp-cross.show{display:block}
+  .cmp-actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+  .cmp-share{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:10px;border:1px solid var(--gray-300);background:#fff;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--navy);cursor:pointer;transition:.2s}
+  .cmp-share:hover{border-color:var(--royal);color:var(--royal)}
+
+  /* highlights */
+  .cmp-high{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:0 0 26px}
+  .cmp-hcard{background:#fff;border:1px solid var(--gray-200);border-radius:14px;padding:18px 20px;border-top:3px solid var(--gold)}
+  .cmp-hcard .k{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--gray-500);margin-bottom:6px}
+  .cmp-hcard .f{font-size:14.5px;font-weight:800;color:var(--navy);line-height:1.3}
+  .cmp-hcard .v{font-size:13px;font-weight:700;color:var(--royal);margin-top:3px}
+  .cmp-high-note{font-size:11.5px;color:var(--gray-500);font-style:italic;margin:-14px 0 26px}
+
+  /* chart */
+  .cmp-chartbox{background:#fff;border:1px solid var(--gray-200);border-radius:16px;padding:24px;margin-bottom:26px}
+  .cmp-chartbox h2{font-size:18px;font-weight:800;color:var(--navy);letter-spacing:-.3px;margin:0 0 4px}
+  .cmp-chartbox .sub{font-size:12px;color:var(--gray-500);margin-bottom:16px}
+  .cmp-legend{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:12px}
+  .cmp-leg{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:var(--navy)}
+  .cmp-leg .sw{width:14px;height:4px;border-radius:2px}
+  .cmp-leg .pct{font-weight:800}
+  .cmp-svgwrap{overflow-x:auto}
+  #cmpChart{width:100%;height:auto;display:block;min-width:520px}
+
+  /* table */
+  .cmp-twrap{background:#fff;border:1px solid var(--gray-200);border-radius:16px;overflow:hidden;margin-bottom:8px;overflow-x:auto}
+  .cmp-table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:640px}
+  .cmp-table th{padding:14px;font-size:12px;font-weight:800;color:var(--navy);text-align:left;border-bottom:2px solid var(--navy);background:var(--gray-50);vertical-align:top}
+  .cmp-table th .amc{display:block;font-size:11px;color:var(--gray-500);font-weight:600;margin-top:2px}
+  .cmp-table td{padding:12px 14px;border-bottom:1px solid var(--gray-100);font-variant-numeric:tabular-nums}
+  .cmp-table tr:last-child td{border-bottom:none}
+  .cmp-table td.lbl{font-weight:700;color:var(--gray-700);background:rgba(212,160,23,.04);white-space:nowrap}
+  .cmp-table td.lbl .hint{display:block;font-size:10px;font-weight:600;color:var(--gray-400);letter-spacing:.3px}
+  .cmp-table tr.grp td{background:linear-gradient(90deg,var(--navy),#16305c);color:#fff;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;padding:9px 14px}
+  .cmp-table td.best{background:rgba(5,150,105,.08);font-weight:800;color:var(--green);position:relative}
+  .cmp-table td.best::after{content:'●';font-size:7px;position:absolute;top:6px;right:8px;color:var(--green)}
+  .cmp-table td .up{color:var(--green);font-weight:700}
+  .cmp-table td .down{color:var(--red);font-weight:700}
+  .cmp-table td .muted{color:var(--gray-400)}
+  @media(max-width:768px){
+    .cmp-table td.lbl{position:sticky;left:0;z-index:2;box-shadow:2px 0 6px rgba(10,22,40,.06)}
+    .cmp-table th:first-child{position:sticky;left:0;background:var(--gray-50);z-index:2}
+  }
+  .cmp-prov{font-size:12px;color:var(--gray-500);line-height:1.65;margin:14px 0 30px;font-style:italic}
+  .cmp-cta{background:linear-gradient(150deg,#0A1628,#142642);border-radius:16px;padding:30px;margin:26px 0 60px;color:#fff;display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between}
+  .cmp-cta h3{font-size:20px;font-weight:800;letter-spacing:-.4px;margin:0 0 5px}
+  .cmp-cta p{font-size:13.5px;color:#C7D6EC;margin:0;max-width:520px;line-height:1.6}
+  .cmp-cta a{display:inline-flex;padding:12px 22px;border-radius:10px;background:linear-gradient(135deg,#22D3EE,#3B82F6);color:#fff;font-size:13.5px;font-weight:700;text-decoration:none;white-space:nowrap}
+</style>
+<!-- social cards -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Mera SIF">
+<meta property="og:title" content="Compare SIF Funds Side by Side — NAV, Returns, TER, AUM | Mera SIF">
+<meta property="og:description" content="Compare up to 3 Specialized Investment Funds side by side on official AMFI NAVs — returns across five windows, AUM, expense ratio, risk band, and a rebased NAV chart overlay.">
+<meta property="og:url" content="https://www.merasif.com/compare.html">
+<meta property="og:image" content="https://www.merasif.com/assets/img/og-share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Mera SIF — India’s Specialized Investment Fund knowledge hub by Trustner">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Compare SIF Funds Side by Side — NAV, Returns, TER, AUM | Mera SIF">
+<meta name="twitter:description" content="Compare up to 3 Specialized Investment Funds side by side on official AMFI NAVs — returns across five windows, AUM, expense ratio, risk band, and a rebased NAV chart overlay.">
+<meta name="twitter:image" content="https://www.merasif.com/assets/img/og-share.png">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.merasif.com/index.html"}, {"@type": "ListItem", "position": 2, "name": "Fund Universe", "item": "https://www.merasif.com/fund-universe.html"}, {"@type": "ListItem", "position": 3, "name": "Compare SIF Funds", "item": "https://www.merasif.com/compare.html"}]}</script>
+</head>
+<body>
+
+<div class="top-bar"><div class="container"><div class="top-bar-left"><span class="top-bar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>AMFI Registered MFD &amp; SIF Distributor</span><span class="top-bar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>APMI Registered PMS Distributor</span><span class="top-bar-item">ARN-286886</span></div><div class="top-bar-right"><a href="tel:+916003903737">📞 +91 60039 03737</a><a href="https://www.merasip.com" target="_blank" rel="noopener">MeraSIP →</a></div></div></div>
+
+<nav class="navbar">
+  <div class="container">
+    <a href="index.html" class="nav-brand"><img src="assets/img/logo.png" alt="Trustner"><div class="nav-brand-text"><span class="nav-brand-name">Mera<span>SIF</span></span><span class="nav-brand-tag">by Trustner Asset Services</span></div></a>
+    <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">☰</button>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="learn.html">Learn</a></li>
+      <li><a href="calculator.html">Calculator</a></li>
+      <li><a href="suitability.html">Suitability</a></li>
+      <li><a href="fund-universe.html">Funds</a></li>
+      <li><a href="compare.html">Compare</a></li>
+      <li><a href="report.html">Report</a></li>
+      <li><a href="insights.html">Insights</a></li>
+      <li><a href="news.html">News</a></li>
+      <li><a href="faq.html">FAQ</a></li>
+      <li><a href="contact.html" class="nav-cta">Talk to Our Team</a></li>
+    </ul>
+  </div>
+</nav>
+
+<section class="cmp-hero">
+  <div class="container">
+    <div class="breadcrumb" style="margin-bottom:16px"><a href="index.html">Home</a><span class="sep">›</span><a href="fund-universe.html">Fund Universe</a><span class="sep">›</span><span>Compare</span></div>
+    <h1>Compare SIF funds, side by side.</h1>
+    <p>Pick up to three Specialized Investment Funds and compare them on official AMFI NAVs — five return windows, AUM, expense ratio, risk band, and a rebased NAV overlay chart. Every figure carries its source and as-of date.</p>
+  </div>
+</section>
+
+<section style="padding:0 0 60px">
+  <div class="container">
+
+    <div class="cmp-picker">
+      <div class="cmp-picker-label">Select up to 3 funds</div>
+      <div class="cmp-chips" id="chips">
+        <div class="cmp-addwrap" id="addWrap">
+          <input type="text" class="cmp-add" id="addInput" placeholder="+ Add a fund — search by name, AMC or category…" autocomplete="off">
+          <div class="cmp-dd" id="dd"></div>
+        </div>
+      </div>
+      <div class="cmp-cross" id="crossNote">Cross-category comparison — these funds run different SEBI strategy types, so their returns aren't like-for-like. For a fair read, compare funds within the same category.</div>
+      <div class="cmp-note" id="statusNote">Loading official AMFI data…</div>
+      <div class="cmp-actions">
+        <button class="cmp-share" id="shareBtn">🔗 Copy comparison link</button>
+        <a class="cmp-share" href="fund-universe.html">← Back to the full tracker</a>
+      </div>
+    </div>
+
+    <div class="cmp-high" id="highCards"></div>
+    <p class="cmp-high-note" id="highNote" style="display:none">Factual highlights computed from the sourced figures below — informational only, not a recommendation. Past performance is not indicative of future returns.</p>
+
+    <div class="cmp-chartbox" id="chartBox" style="display:none">
+      <h2>NAV journeys, overlaid</h2>
+      <div class="sub" id="chartSub"></div>
+      <div class="cmp-legend" id="legend"></div>
+      <div class="cmp-svgwrap"><svg id="cmpChart" viewBox="0 0 900 340" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Rebased NAV comparison chart"></svg></div>
+    </div>
+
+    <div class="cmp-twrap"><table class="cmp-table" id="cmpTable"></table></div>
+    <p class="cmp-prov" id="prov"></p>
+
+    <div class="cmp-cta">
+      <div>
+        <h3>Want to talk through what the numbers mean?</h3>
+        <p>Our team distributes every live SIF and can explain how each strategy works, what the liquidity terms are, and what the paperwork looks like. Education first — no pressure.</p>
+      </div>
+      <a href="contact.html">Talk to Our Team →</a>
+    </div>
+
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-regulatory" style="border-top:none;margin-top:0;padding-top:0">
+      <p class="reg-text"><strong>Trustner Asset Services Pvt. Ltd.</strong> · ARN-286886 · AMFI Registered Mutual Fund Distributor and SIF Distributor; APMI Registered PMS Distributor.</p>
+    </div>
+    <div class="footer-disclaimers">
+      <div class="risk-banner">Mutual Fund and SIF investments are subject to market risks. Read all scheme-related documents carefully before investing.</div>
+      <p class="disc-block"><strong>Comparison disclaimer:</strong> This tool presents sourced, factual data only — official AMFI NAVs (Regular plan, Growth option) and Value Research fund metadata — and is educational. It is not investment advice, a rating, or a recommendation to prefer any scheme. Past performance is not indicative of future returns.</p>
+    </div>
+    <div class="footer-bottom">
+      <div>&copy; <span data-year>2026</span> Trustner Asset Services Pvt. Ltd. All rights reserved.</div>
+      <div class="footer-quick-links"><a href="fund-universe.html">Live tracker</a><a href="compare.html">Compare SIFs</a><a href="newsletter.html">MeraSIF Monthly</a><a href="disclaimer.html">Disclaimer</a></div>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/main.js"></script>
+<script>
+(function(){
+  var CATNAME={hybrid:'Hybrid Long-Short',equity:'Equity Long-Short',ex100:'Equity Ex-Top 100 LS',aaa:'Active Asset Allocator',sector:'Sector Rotation'};
+  var COLORS=['#1E40AF','#0F766E','#D97706'];
+  var FUNDS={}, ORDER=[], SERIES=null, NAVASOF='', VRASOF='';
+  var sel=[];
+
+  function fromURL(){
+    var m=new URLSearchParams(location.search).get('f');
+    return m ? m.split(',').filter(function(s){return FUNDS[s];}).slice(0,3) : [];
+  }
+  function syncURL(){
+    var u=new URL(location.href);
+    if(sel.length) u.searchParams.set('f',sel.join(',')); else u.searchParams.delete('f');
+    history.replaceState(null,'',u);
+  }
+  function fmtD(iso){ if(!iso) return '—'; var d=new Date(iso+'T00:00:00'); return isNaN(d)?'—':d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}); }
+  function pct(v){ if(v==null||isNaN(v)) return '<span class="muted">—</span>'; var n=+v; var c=n>0?'up':(n<0?'down':'muted'); var s=n>0?'▲ ':(n<0?'▼ ':''); return '<span class="'+c+'">'+s+Math.abs(n).toFixed(2)+'%</span>'; }
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+  function defaultSel(){
+    // largest-AUM funds of the largest category (like-for-like by default)
+    var hy=ORDER.filter(function(id){return FUNDS[id].cat==='hybrid' && FUNDS[id].aum!=null;})
+                .sort(function(a,b){return FUNDS[b].aum-FUNDS[a].aum;});
+    if(hy.length>=3) return hy.slice(0,3);
+    return ORDER.filter(function(id){return FUNDS[id].aum!=null;})
+                .sort(function(a,b){return FUNDS[b].aum-FUNDS[a].aum;}).slice(0,3);
+  }
+
+  /* ---------- picker ---------- */
+  var addInput=document.getElementById('addInput'), dd=document.getElementById('dd'), chips=document.getElementById('chips'), addWrap=document.getElementById('addWrap');
+  function renderChips(){
+    chips.querySelectorAll('.cmp-chip').forEach(function(c){c.remove();});
+    sel.forEach(function(id){
+      var f=FUNDS[id];
+      var el=document.createElement('div'); el.className='cmp-chip';
+      el.innerHTML='<span><span class="cat">'+esc(f.amc)+' · '+CATNAME[f.cat]+'</span>'+esc(f.name)+'</span><button aria-label="Remove">✕</button>';
+      el.querySelector('button').addEventListener('click',function(){ sel=sel.filter(function(s){return s!==id;}); update(); });
+      chips.insertBefore(el, addWrap);
+    });
+    addWrap.style.display = sel.length>=3 ? 'none' : '';
+  }
+  function renderDD(){
+    var q=addInput.value.toLowerCase().trim();
+    var items=ORDER.filter(function(id){
+      if(sel.indexOf(id)>=0) return false;
+      var f=FUNDS[id];
+      return !q || (f.name+' '+f.amc+' '+CATNAME[f.cat]).toLowerCase().indexOf(q)>=0;
+    }).slice(0,28);
+    dd.innerHTML=items.map(function(id){
+      var f=FUNDS[id];
+      return '<button class="cmp-dd-item" data-id="'+id+'"><span class="n">'+esc(f.name)+'</span><br><span class="a">'+esc(f.amc)+' · '+CATNAME[f.cat]+'</span></button>';
+    }).join('') || '<div style="padding:14px;font-size:13px;color:var(--gray-500)">No matching fund</div>';
+    dd.classList.toggle('open', items.length>0 || q.length>0);
+    dd.querySelectorAll('.cmp-dd-item').forEach(function(b){
+      b.addEventListener('mousedown',function(e){ e.preventDefault(); if(sel.length<3){ sel.push(b.dataset.id); addInput.value=''; update(); } });
+    });
+  }
+  addInput.addEventListener('focus',renderDD);
+  addInput.addEventListener('input',renderDD);
+  addInput.addEventListener('blur',function(){ setTimeout(function(){dd.classList.remove('open');},150); });
+
+  /* ---------- highlights ---------- */
+  function renderHighlights(){
+    var box=document.getElementById('highCards'), note=document.getElementById('highNote');
+    if(sel.length<2){ box.innerHTML=''; note.style.display='none'; return; }
+    function bestBy(key,dir){
+      var c=sel.filter(function(id){return FUNDS[id][key]!=null;});
+      if(c.length<2) return null;
+      c.sort(function(a,b){ return dir==='max' ? FUNDS[b][key]-FUNDS[a][key] : FUNDS[a][key]-FUNDS[b][key]; });
+      return c[0];
+    }
+    var cards=[];
+    var a=bestBy('si','max'); if(a) cards.push(['Highest since-inception return', a, (+FUNDS[a].si).toFixed(2)+'%']);
+    var b=bestBy('ter','min'); if(b) cards.push(['Lowest expense ratio (TER)', b, (+FUNDS[b].ter).toFixed(2)+'%']);
+    var c=bestBy('aum','max'); if(c) cards.push(['Largest fund by AUM', c, '₹'+Number(FUNDS[c].aum).toLocaleString('en-IN')+' Cr']);
+    box.innerHTML=cards.map(function(x){
+      return '<div class="cmp-hcard"><div class="k">'+x[0]+'</div><div class="f">'+esc(FUNDS[x[1]].name)+'</div><div class="v">'+x[2]+'</div></div>';
+    }).join('');
+    note.style.display=cards.length?'':'none';
+  }
+
+  /* ---------- chart ---------- */
+  function renderChart(){
+    var box=document.getElementById('chartBox');
+    if(!SERIES || sel.length<2){ box.style.display='none'; return; }
+    var hist=sel.map(function(id){
+      var s=SERIES[id];
+      return s && s.history && s.history.length>=2 ? s.history : null;
+    });
+    if(hist.filter(Boolean).length<2){ box.style.display='none'; return; }
+    var start=null;
+    hist.forEach(function(h){ if(h){ var d=h[0].d; if(!start||d>start) start=d; } });
+    var lines=[], allDates={};
+    sel.forEach(function(id,i){
+      var h=hist[i]; if(!h) return;
+      var pts=h.filter(function(p){return p.d>=start;});
+      if(pts.length<2) return;
+      var base=pts[0].nav;
+      lines.push({id:id,color:COLORS[i],pts:pts.map(function(p){ allDates[p.d]=1; return {d:p.d,v:100*p.nav/base}; })});
+    });
+    if(lines.length<2){ box.style.display='none'; return; }
+    var dates=Object.keys(allDates).sort();
+    var min=Infinity,max=-Infinity;
+    lines.forEach(function(l){ l.pts.forEach(function(p){ if(p.v<min)min=p.v; if(p.v>max)max=p.v; }); });
+    var pad=(max-min)*0.1||1; min-=pad; max+=pad;
+    var W=900,H=340,L=52,R=16,T=14,B=34;
+    function X(d){ return L+(W-L-R)*(dates.indexOf(d)/(dates.length-1)); }
+    function Y(v){ return T+(H-T-B)*(1-(v-min)/(max-min)); }
+    var svg='';
+    for(var g=0;g<=4;g++){
+      var gv=min+(max-min)*g/4, gy=Y(gv);
+      svg+='<line x1="'+L+'" y1="'+gy+'" x2="'+(W-R)+'" y2="'+gy+'" stroke="#E2E8F0" stroke-width="1"/>';
+      svg+='<text x="'+(L-8)+'" y="'+(gy+4)+'" text-anchor="end" font-size="11" fill="#94A3B8" font-family="Inter,sans-serif">'+gv.toFixed(1)+'</text>';
+    }
+    svg+='<line x1="'+L+'" y1="'+Y(100)+'" x2="'+(W-R)+'" y2="'+Y(100)+'" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="5 4"/>';
+    lines.forEach(function(l){
+      var d=l.pts.map(function(p,i){ return (i?'L':'M')+X(p.d).toFixed(1)+' '+Y(p.v).toFixed(1); }).join(' ');
+      svg+='<path d="'+d+'" fill="none" stroke="'+l.color+'" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
+      var last=l.pts[l.pts.length-1];
+      svg+='<circle cx="'+X(last.d).toFixed(1)+'" cy="'+Y(last.v).toFixed(1)+'" r="4" fill="'+l.color+'"/>';
+    });
+    svg+='<text x="'+L+'" y="'+(H-8)+'" font-size="11" fill="#94A3B8" font-family="Inter,sans-serif">'+fmtD(dates[0])+'</text>';
+    svg+='<text x="'+(W-R)+'" y="'+(H-8)+'" text-anchor="end" font-size="11" fill="#94A3B8" font-family="Inter,sans-serif">'+fmtD(dates[dates.length-1])+'</text>';
+    document.getElementById('cmpChart').innerHTML=svg;
+    document.getElementById('legend').innerHTML=lines.map(function(l){
+      var last=l.pts[l.pts.length-1].v-100;
+      var sign=last>0?'+':'';
+      return '<span class="cmp-leg"><span class="sw" style="background:'+l.color+'"></span>'+esc(FUNDS[l.id].name)+' <span class="pct" style="color:'+(last>=0?'var(--green)':'var(--red)')+'">'+sign+last.toFixed(2)+'%</span></span>';
+    }).join('');
+    document.getElementById('chartSub').textContent='Each fund rebased to 100 on '+fmtD(dates[0])+' · official AMFI NAVs (Regular-Growth) · history archived daily by our tracker since June 2026';
+    box.style.display='';
+  }
+
+  /* ---------- table ---------- */
+  function renderTable(){
+    var t=document.getElementById('cmpTable');
+    if(sel.length<2){ t.innerHTML='<tr><td style="padding:26px;font-size:14px;color:var(--gray-500)">Select at least two funds above to compare them.</td></tr>'; document.getElementById('prov').textContent=''; return; }
+    var head='<tr><th style="width:190px">Metric</th>'+sel.map(function(id){var f=FUNDS[id];return '<th>'+esc(f.name)+'<span class="amc">'+esc(f.amc)+'</span></th>';}).join('')+'</tr>';
+    function row(label,hint,get,better){
+      var vals=sel.map(function(id){return get(FUNDS[id]);});
+      var bestIdx=-1;
+      if(better){
+        var nums=sel.map(function(id){var v=FUNDS[id][better.key];return v==null?null:+v;});
+        var have=nums.filter(function(v){return v!=null;});
+        if(have.length>=2){
+          var bestVal=better.dir==='max'?Math.max.apply(null,have):Math.min.apply(null,have);
+          bestIdx=nums.indexOf(bestVal);
+        }
+      }
+      return '<tr><td class="lbl">'+label+(hint?'<span class="hint">'+hint+'</span>':'')+'</td>'
+        + vals.map(function(v,i){ return '<td'+(i===bestIdx?' class="best"':'')+'>'+v+'</td>'; }).join('')+'</tr>';
+    }
+    function grp(name){ return '<tr class="grp"><td colspan="'+(sel.length+1)+'">'+name+'</td></tr>'; }
+    var html=head;
+    html+=grp('Snapshot');
+    html+=row('Category','', function(f){return CATNAME[f.cat];});
+    html+=row('AMFI scheme family','', function(f){return f.sd||'<span class="muted">—</span>';});
+    html+=row('Launched','', function(f){return f.incept?fmtD(f.incept):'<span class="muted">—</span>';});
+    html+=row('Latest NAV','official AMFI', function(f){return f.nav!=null?'₹'+(+f.nav).toFixed(4).replace(/0+$/,'').replace(/\.$/,'')+' <span class="muted" style="font-size:11px">('+fmtD(f.navDate)+')</span>':'<span class="muted">—</span>';});
+    html+=row('AUM','Value Research', function(f){return f.aum!=null?'₹'+Number(f.aum).toLocaleString('en-IN')+' Cr':'<span class="muted">—</span>';});
+    html+=row('Risk band','AMC-declared · 1-5', function(f){return f.risk!=null?String(f.risk)+' / 5':'<span class="muted">—</span>';});
+    html+=grp('Performance — official AMFI NAVs');
+    html+=row('1 Day','', function(f){return pct(f.d1);}, {key:'d1',dir:'max'});
+    html+=row('5 Days','', function(f){return pct(f.d5);}, {key:'d5',dir:'max'});
+    html+=row('1 Month','higher is better', function(f){return pct(f.m1);}, {key:'m1',dir:'max'});
+    html+=row('3 Months','higher is better', function(f){return pct(f.m3);}, {key:'m3',dir:'max'});
+    html+=row('Since inception','vs face value', function(f){return pct(f.si);}, {key:'si',dir:'max'});
+    html+=grp('Costs & access');
+    html+=row('Expense ratio (TER)','lower is better · Regular plan', function(f){return f.ter!=null?(+f.ter).toFixed(2)+'%':'<span class="muted">—</span>';}, {key:'ter',dir:'min'});
+    html+=row('Minimum investment','SEBI SIF norm', function(){return '₹10 lakh <span class="muted" style="font-size:11px">(₹1L accredited)</span>';});
+    t.innerHTML=html;
+    document.getElementById('prov').innerHTML='<strong>Sources:</strong> NAV, 1D/5D/1M/3M and since-inception returns computed from official AMFI daily SIF NAV data (Regular plan, Growth option), as of '+fmtD(NAVASOF)+'. AUM, risk band and TER: Value Research'+(VRASOF?' ('+fmtD(VRASOF)+')':'')+'. Missing values shown as “—”, never estimated. Returns are absolute (point-to-point). Past performance is not indicative of future returns. The green highlight marks the numerically best sourced value in each row — a factual marker, not a rating or recommendation.';
+  }
+
+  function renderCross(){
+    var cats={}; sel.forEach(function(id){cats[FUNDS[id].cat]=1;});
+    document.getElementById('crossNote').classList.toggle('show', sel.length>=2 && Object.keys(cats).length>1);
+  }
+
+  function update(){
+    syncURL(); renderChips(); renderCross(); renderHighlights(); renderChart(); renderTable();
+  }
+
+  /* ---------- share ---------- */
+  document.getElementById('shareBtn').addEventListener('click',function(){
+    var b=this;
+    (navigator.clipboard?navigator.clipboard.writeText(location.href):Promise.reject()).then(function(){ b.textContent='✓ Link copied'; setTimeout(function(){b.innerHTML='🔗 Copy comparison link';},1800); }).catch(function(){ prompt('Copy this link:', location.href); });
+  });
+
+  /* ---------- boot ---------- */
+  fetch('sif-nav.php',{cache:'no-store'}).then(function(r){return r.json();}).then(function(j){
+    NAVASOF=j.navAsOf||''; VRASOF=j.vrAsOf||'';
+    Object.keys(j.funds).forEach(function(id){ FUNDS[id]=j.funds[id]; });
+    ORDER=Object.keys(FUNDS).sort(function(a,b){ return (FUNDS[b].aum||0)-(FUNDS[a].aum||0); });
+    document.getElementById('statusNote').innerHTML='Comparing on <strong>official AMFI NAVs</strong> as of <strong>'+fmtD(NAVASOF)+'</strong> · '+ORDER.length+' live SIFs available · selections update the link so you can share any comparison.';
+    sel=fromURL();
+    if(sel.length<2) sel=defaultSel();
+    update();
+    return fetch('sif-nav.php?series',{cache:'no-store'});
+  }).then(function(r){ return r.json(); }).then(function(s){
+    SERIES=s.funds||null;
+    Object.keys(SERIES||{}).forEach(function(id){ if(FUNDS[id]&&SERIES[id].incept) FUNDS[id].incept=SERIES[id].incept; });
+    update();
+  }).catch(function(){
+    document.getElementById('statusNote').textContent='Live data reconnecting — please refresh in a moment.';
+  });
+})();
+</script>
+</body>
+</html>

@@ -182,3 +182,20 @@ manual trigger), publish the approved items, then continue normally.
 - [ ] Editorial staged, not published.
 - [ ] `sif-weekly-status.json` written + email attempted — even if "nothing changed this week."
 - [ ] No fabricated data, no adviser language, no `.php`/disclaimer edits.
+
+## Competitive benchmarking (first run of each month — a standing habit)
+
+On the FIRST weekly run of every calendar month, sweep the competitor set and report findings in the owner digest (do not copy content — we learn features and fix gaps, never plagiarise):
+
+| Site | URL | What to check |
+|---|---|---|
+| SIFPrime | https://sifprime.com | fund count claim, compare tool changes, "Alpha Shield" scoring, monthly scorecard, new tools |
+| SIF360 | https://www.sif360.com | fund/AMC counts, comparison features, AMC partnerships |
+| SIF Bazar | https://www.sifbazar.in | compare tools (incl. SIF-vs-MF), NFO tracker, fund-page data depth |
+| SIFscan | https://sifscan.com | data/methodology pages, pairwise compare pages, scorecard launch status |
+| SIFMF | https://sifmf.in | checkbox-compare scanner, rolling returns, monthly reports |
+| Value Research SIF screener | https://www.valueresearchonline.com/sif-screener/ | whether the mainstream giant is expanding SIF coverage |
+
+For each: (1) anything NEW since last sweep; (2) any feature that beats ours; (3) any data claim larger than ours (fund counts — verify against our AMFI engine before reacting). Digest format: 3-6 bullets, each ending with a concrete "we should / no action" call. Owner approves before any build.
+
+Our comparison tool (compare.html) is the current benchmark to defend: 3-fund compare on official AMFI NAVs, five return windows, rebased NAV overlay chart, factual-highlight cards, same-category guardrail, shareable URLs, checkbox queue on the tracker. Keep it ahead.

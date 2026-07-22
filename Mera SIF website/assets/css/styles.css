@@ -144,6 +144,11 @@ img{max-width:100%;display:block}
 .nav-links{display:flex;align-items:center;gap:2px}
 .nav-links li{position:relative}
 .nav-links a{display:inline-flex;align-items:center;gap:5px;padding:9px 14px;color:rgba(255,255,255,.78);font-size:14px;font-weight:500;border-radius:8px;transition:var(--transition);white-space:nowrap}
+@media (min-width:1025px) and (max-width:1200px){
+  .nav-links a{padding:8px 8px;font-size:13px;gap:3px}
+  .nav-links a.nav-cta{padding:9px 13px}
+  .nav-brand-tag{display:none}
+}
 .nav-links a:hover{color:#fff;background:rgba(255,255,255,.07)}
 .nav-links a.active{color:#fff;background:rgba(59,130,246,.15)}
 
