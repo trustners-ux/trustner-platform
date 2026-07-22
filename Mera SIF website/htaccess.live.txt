@@ -1,0 +1,23 @@
+# This is the LIVE content of public_html/.htaccess on merasif.com
+# (applied 2026-07-13 via hPanel File Manager — the deploy hook cannot write .htaccess).
+# To change server rules: edit the live file in File Manager and APPEND; keep this in sync.
+
+# MeraSIF: branded 404 + security headers (added 2026-07)
+ErrorDocument 404 /404.html
+<IfModule mod_headers.c>
+Header set X-Content-Type-Options "nosniff"
+Header set X-Frame-Options "SAMEORIGIN"
+Header set Referrer-Policy "strict-origin-when-cross-origin"
+Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+<IfModule mod_expires.c>
+ExpiresActive On
+ExpiresByType image/png "access plus 30 days"
+ExpiresByType image/jpeg "access plus 30 days"
+ExpiresByType image/svg+xml "access plus 30 days"
+ExpiresByType image/webp "access plus 30 days"
+ExpiresByType image/x-icon "access plus 30 days"
+ExpiresByType text/css "access plus 7 days"
+ExpiresByType application/javascript "access plus 7 days"
+ExpiresByType font/woff2 "access plus 30 days"
+</IfModule>
