@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Our Methodology &amp; Data Sources — How MeraSIF Is Built | Mera SIF</title>
+<meta name="description" content="How MeraSIF sources, computes and verifies every SIF figure — official AMFI NAVs, Value Research metadata and source-checked news, the update cadence, the no-fabricated-data standard, and our honest limitations.">
+<meta name="keywords" content="MeraSIF methodology, SIF data sources, AMFI SIF NAV, how SIF returns are calculated, SIF data accuracy, Trustner Fund Score methodology">
+<link rel="canonical" href="https://www.merasif.com/methodology.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
+<link rel="icon" type="image/png" href="assets/img/logo.png">
+<link rel="stylesheet" href="assets/css/styles.css?v=m4">
+<style>
+  .mth-hero{background:linear-gradient(150deg,#0A1628 0%,#142642 60%,#1A3155 100%);color:#fff;padding:56px 0 46px;position:relative;overflow:hidden}
+  .mth-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(720px 340px at 82% 10%,rgba(34,211,238,.14),transparent 70%);pointer-events:none}
+  .mth-hero .breadcrumb{margin-bottom:14px;position:relative}
+  .mth-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:#8FB4E8;margin-bottom:12px;position:relative}
+  .mth-hero h1{font-size:clamp(27px,4.2vw,40px);font-weight:800;letter-spacing:-.9px;margin:0 0 12px;position:relative;line-height:1.15}
+  .mth-hero p{font-size:16px;color:#C7D6EC;max-width:680px;line-height:1.65;margin:0;position:relative}
+
+  .mth-cov{background:#fff;border:1px solid var(--gray-200);border-radius:16px;padding:22px 24px;margin:-30px auto 30px;position:relative;z-index:5;box-shadow:0 10px 34px rgba(10,22,40,.1);display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+  .mth-cov .cov{padding:6px 16px;border-right:1px solid var(--gray-200)}
+  .mth-cov .cov:last-child{border-right:none}
+  .mth-cov .n{font-size:26px;font-weight:800;color:var(--navy);letter-spacing:-.6px;line-height:1.1}
+  .mth-cov .n .u{font-size:14px;color:var(--royal);font-weight:700}
+  .mth-cov .l{font-size:11px;font-weight:600;color:var(--gray-500);margin-top:4px;line-height:1.4}
+  @media(max-width:640px){.mth-cov .cov{border-right:none;border-bottom:1px solid var(--gray-100)}}
+
+  .mth-sec{margin:44px 0 0}
+  .mth-sec h2{font-size:22px;font-weight:800;color:var(--navy);letter-spacing:-.5px;margin:0 0 6px}
+  .mth-sec .lead{font-size:14.5px;color:var(--gray-600);margin:0 0 18px;max-width:720px;line-height:1.65}
+  .mth-prose{font-size:15.5px;line-height:1.75;color:var(--gray-800);max-width:760px}
+  .mth-prose p{margin:0 0 14px}.mth-prose strong{color:var(--navy)}
+
+  .mth-standard{background:linear-gradient(150deg,#0A1628,#142642);border-radius:16px;padding:30px 32px;color:#fff;margin:8px 0 0}
+  .mth-standard .k{font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:#FCD34D;margin-bottom:10px}
+  .mth-standard h2{color:#fff;font-size:23px;margin:0 0 12px}
+  .mth-standard p{color:#C7D6EC;font-size:15px;line-height:1.7;margin:0 0 12px;max-width:720px}
+  .mth-standard p:last-child{margin-bottom:0}
+  .mth-standard strong{color:#fff}
+
+  .mth-twrap{background:#fff;border:1px solid var(--gray-200);border-radius:16px;overflow:hidden;overflow-x:auto;margin:6px 0}
+  .mth-table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:680px}
+  .mth-table th{padding:13px 16px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-500);text-align:left;border-bottom:2px solid var(--navy);background:var(--gray-50)}
+  .mth-table td{padding:14px 16px;border-bottom:1px solid var(--gray-100);vertical-align:top;line-height:1.5}
+  .mth-table tr:last-child td{border-bottom:none}
+  .mth-table td.dp{font-weight:700;color:var(--navy);white-space:nowrap}
+  .mth-src{display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;letter-spacing:.2px}
+  .mth-src.official{background:rgba(5,150,105,.1);color:var(--green)}
+  .mth-src.computed{background:rgba(30,64,175,.09);color:var(--royal)}
+  .mth-src.vr{background:rgba(212,160,23,.14);color:#8A6D0B}
+  .mth-src.desk{background:var(--gray-100);color:var(--gray-600)}
+
+  .mth-cad{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:6px 0 0}
+  .mth-cadcard{background:#fff;border:1px solid var(--gray-200);border-radius:14px;padding:20px;border-left:3px solid var(--royal)}
+  .mth-cadcard .when{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--royal);margin-bottom:6px}
+  .mth-cadcard .what{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:4px}
+  .mth-cadcard .d{font-size:12.5px;color:var(--gray-600);line-height:1.55}
+
+  .mth-lim{background:#FFF9EC;border:1px solid rgba(212,160,23,.3);border-radius:14px;padding:22px 26px;margin:6px 0 0}
+  .mth-lim ul{margin:0;padding-left:20px}
+  .mth-lim li{font-size:14px;color:var(--gray-800);line-height:1.65;margin-bottom:10px}
+  .mth-lim li:last-child{margin-bottom:0}
+  .mth-lim strong{color:var(--navy)}
+
+  .mth-cta{background:#F8FAFC;border:1px solid var(--gray-200);border-radius:16px;padding:24px 26px;margin:36px 0 0;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
+  .mth-cta div h3{font-size:16px;font-weight:800;color:var(--navy);margin:0 0 4px}
+  .mth-cta div p{font-size:13.5px;color:var(--gray-600);margin:0;line-height:1.5}
+  .mth-cta a{display:inline-flex;padding:11px 20px;border-radius:10px;background:var(--navy);color:#fff;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap}
+</style>
+<!-- social cards -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Mera SIF">
+<meta property="og:title" content="Our Methodology &amp; Data Sources — How MeraSIF Is Built">
+<meta property="og:description" content="How MeraSIF sources, computes and verifies every SIF figure — official AMFI NAVs, Value Research metadata and source-checked news, the update cadence and our honest limitations.">
+<meta property="og:url" content="https://www.merasif.com/methodology.html">
+<meta property="og:image" content="https://www.merasif.com/assets/img/og-share.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Mera SIF — India’s Specialized Investment Fund knowledge hub by Trustner">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Our Methodology &amp; Data Sources — How MeraSIF Is Built">
+<meta name="twitter:description" content="How MeraSIF sources, computes and verifies every SIF figure — official AMFI NAVs, Value Research metadata and source-checked news, plus our honest limitations.">
+<meta name="twitter:image" content="https://www.merasif.com/assets/img/og-share.png">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.merasif.com/index.html"}, {"@type": "ListItem", "position": 2, "name": "Methodology & Data Sources", "item": "https://www.merasif.com/methodology.html"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Our Methodology & Data Sources — How MeraSIF Is Built","description":"How MeraSIF sources, computes and verifies every Specialized Investment Fund figure, the update cadence, the no-fabricated-data standard and its limitations.","url":"https://www.merasif.com/methodology.html","publisher":{"@type":"Organization","name":"Trustner Asset Services Pvt. Ltd.","url":"https://www.merasif.com"},"about":{"@type":"Thing","name":"Specialized Investment Fund data methodology"},"lastReviewed":"2026-07-23"}</script>
+</head>
+<body>
+
+<div class="top-bar"><div class="container"><div class="top-bar-left"><span class="top-bar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>AMFI Registered MFD &amp; SIF Distributor</span><span class="top-bar-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>APMI Registered PMS Distributor</span><span class="top-bar-item">ARN-286886</span></div><div class="top-bar-right"><a href="tel:+916003903737">📞 +91 60039 03737</a><a href="https://www.merasip.com" target="_blank" rel="noopener">MeraSIP →</a></div></div></div>
+
+<nav class="navbar">
+  <div class="container">
+    <a href="index.html" class="nav-brand"><img src="assets/img/logo.png" alt="Trustner"><div class="nav-brand-text"><span class="nav-brand-name">Mera<span>SIF</span></span><span class="nav-brand-tag">by Trustner Asset Services</span></div></a>
+    <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">☰</button>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="learn.html">Learn</a></li>
+      <li><a href="calculator.html">Calculator</a></li>
+      <li><a href="suitability.html">Suitability</a></li>
+      <li><a href="fund-universe.html">Funds</a></li>
+      <li><a href="compare.html">Compare</a></li>
+      <li><a href="report.html">Report</a></li>
+      <li><a href="insights.html">Insights</a></li>
+      <li><a href="news.html">News</a></li>
+      <li><a href="faq.html">FAQ</a></li>
+      <li><a href="contact.html" class="nav-cta">Talk to Our Team</a></li>
+    </ul>
+  </div>
+</nav>
+
+<section class="mth-hero">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">›</span><span>Methodology &amp; Data Sources</span></div>
+    <span class="mth-eyebrow">Trust &amp; transparency</span>
+    <h1>How MeraSIF is built.</h1>
+    <p>Every figure on this site is real and traceable. This page documents exactly where each number comes from, how often it updates, the standard we hold ourselves to, and — just as importantly — what our data cannot yet tell you.</p>
+  </div>
+</section>
+
+<section style="padding:0 0 60px">
+  <div class="container">
+
+    <!-- LIVE COVERAGE -->
+    <div class="mth-cov" id="covPanel">
+      <div class="cov"><div class="n" id="covFunds">28</div><div class="l">Live SIFs tracked</div></div>
+      <div class="cov"><div class="n" id="covOfficial">28</div><div class="l">On official AMFI NAVs</div></div>
+      <div class="cov"><div class="n" id="covAmc">15</div><div class="l">Fund houses (AMCs)</div></div>
+      <div class="cov"><div class="n" id="covAsOf">—</div><div class="l">NAVs as of</div></div>
+    </div>
+
+    <!-- THE STANDARD -->
+    <div class="mth-standard">
+      <div class="k">The one rule everything follows</div>
+      <h2>We never publish a number we can't source.</h2>
+      <p>The SIF category is new, and in a young market it is tempting to fill gaps with estimates. We don't. Every performance figure is computed from official data or attributed to a named source. Where a fund hasn't disclosed something yet — an AUM, an expense ratio — we show a dash, not a guess.</p>
+      <p>This is not just a style choice. Trustner is an <strong>AMFI-registered Mutual Fund &amp; SIF distributor</strong>, and the same discipline that governs how we deal with clients governs what we publish: <strong>real, sourced, or clearly labelled — never fabricated.</strong></p>
+    </div>
+
+    <!-- WHERE NUMBERS COME FROM -->
+    <div class="mth-sec">
+      <h2>Where every number comes from</h2>
+      <p class="lead">Four kinds of data power the site. Each is sourced differently, and we label which is which.</p>
+      <div class="mth-twrap"><table class="mth-table">
+        <thead><tr><th>Data point</th><th>Source</th><th>How we get it</th><th>Updated</th></tr></thead>
+        <tbody>
+          <tr><td class="dp">NAV<br><span style="font-weight:400;font-size:11.5px;color:var(--gray-500)">Regular plan, Growth</span></td><td><span class="mth-src official">Official AMFI</span></td><td>Pulled directly from AMFI's official SIF NAV service and matched to each fund by scheme code.</td><td>Every trading day</td></tr>
+          <tr><td class="dp">Since-inception return</td><td><span class="mth-src computed">Computed</span></td><td>The latest official NAV measured against the fund's NFO face value (₹10; ₹1,000 for Diviniti and Sapphire). Exact, not estimated.</td><td>Every trading day</td></tr>
+          <tr><td class="dp">1-day &amp; 5-day return</td><td><span class="mth-src computed">Computed</span></td><td>From our own growing archive of official daily AMFI NAVs.</td><td>Every trading day</td></tr>
+          <tr><td class="dp">1-month &amp; 3-month return</td><td><span class="mth-src vr">Value Research</span> <span class="mth-src computed">→ Computed</span></td><td>Value Research's SIF screener today; these switch to official-NAV computation automatically once our archive spans the full window.</td><td>As VR publishes / daily</td></tr>
+          <tr><td class="dp">AUM, risk band, expense ratio (TER)</td><td><span class="mth-src vr">Value Research</span></td><td>Regular-plan figures from Value Research's SIF screener. Risk bands are the AMC-declared riskometer level, not our assessment.</td><td>As VR publishes</td></tr>
+          <tr><td class="dp">Industry news</td><td><span class="mth-src desk">Public press</span></td><td>Aggregated from eight public news feeds, filtered for SIF relevance, deduplicated and categorised. Headlines link to their original source; we don't rewrite them.</td><td>Twice a day</td></tr>
+          <tr><td class="dp">Trustner Fund Score (TFS)</td><td><span class="mth-src desk">Research Desk</span></td><td>Our own qualitative seven-pillar framework — an educational view, not a rating or recommendation. <a href="report.html#sec9" style="color:var(--royal);font-weight:600">Full TFS methodology →</a></td><td>Reviewed monthly</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <!-- CADENCE -->
+    <div class="mth-sec">
+      <h2>How the site keeps itself current</h2>
+      <p class="lead">MeraSIF updates on a schedule, automatically — not whenever someone remembers to. Five things run on their own:</p>
+      <div class="mth-cad">
+        <div class="mth-cadcard"><div class="when">Daily · ~6 AM IST</div><div class="what">NAV engine</div><div class="d">Fetches the day's official AMFI SIF NAVs, recomputes returns, and archives them for future window calculations.</div></div>
+        <div class="mth-cadcard"><div class="when">Twice daily</div><div class="what">News archive</div><div class="d">Refreshes the SIF newsroom from public feeds, keeping a rolling, deduplicated archive of recent headlines.</div></div>
+        <div class="mth-cadcard"><div class="when">Weekly · Monday</div><div class="what">Industry update</div><div class="d">Reviews the week's SIF developments and reconciles fund counts and timeline entries across the site.</div></div>
+        <div class="mth-cadcard"><div class="when">Monthly · 15th</div><div class="what">MeraSIF Monthly</div><div class="d">Publishes a new edition of the <a href="newsletter.html" style="color:var(--royal);font-weight:600">newsletter</a> — performance, launches, the regulatory record and one educational essay.</div></div>
+        <div class="mth-cadcard"><div class="when">Continuous</div><div class="what">New-fund detection</div><div class="d">When a new SIF appears in AMFI's data, it's surfaced on the tracker automatically — no manual entry needed.</div></div>
+      </div>
+    </div>
+
+    <!-- COMPUTE VS SOURCE -->
+    <div class="mth-sec">
+      <h2>What we compute vs what we source</h2>
+      <div class="mth-prose">
+        <p><strong>We compute</strong> the returns you can verify from public NAVs: since-inception (NAV against face value) and short-window changes (1-day, 5-day) from our archive of official daily NAVs. The arithmetic is point-to-point and absolute — no annualisation dressing-up, no smoothing.</p>
+        <p><strong>We source</strong> the things only a data vendor or the fund house publishes: AUM, the riskometer band, the expense ratio, and — for now — the 1-month and 3-month returns, which come from Value Research until our own NAV archive is long enough to compute them from official data directly. Every sourced figure carries its origin and its as-of date on the page, so you always know how fresh it is.</p>
+      </div>
+    </div>
+
+    <!-- LIMITATIONS -->
+    <div class="mth-sec">
+      <h2>What our data can't tell you (yet)</h2>
+      <p class="lead">Honesty about the gaps is part of the standard. Here is where the data stops.</p>
+      <div class="mth-lim"><ul>
+        <li><strong>The category is young.</strong> India's first SIFs launched only from late 2025, so no fund yet has a one-year — let alone a multi-year — track record. Short histories can flatter or punish a strategy; treat every return here as an early data point, not a verdict.</li>
+        <li><strong>Some funds haven't disclosed everything.</strong> The newest SIFs may not have published an AUM or expense ratio. We show "—" for those rather than fill them in.</li>
+        <li><strong>Vendor data updates on its own schedule.</strong> AUM, risk band and TER come from Value Research and refresh when Value Research publishes, so they can trail the latest NAV. The as-of date is always shown.</li>
+        <li><strong>Official NAVs can lag a day or two.</strong> AMFI occasionally publishes a fund's NAV with a short delay; we display the genuine as-of date rather than carry forward a stale one silently.</li>
+        <li><strong>Risk bands are the AMC's, not ours.</strong> The 1–5 riskometer level is self-declared by each fund house under SEBI rules.</li>
+        <li><strong>Holdings come only from official disclosures.</strong> SEBI requires SIFs to disclose portfolios periodically; we add holdings only when a fund actually publishes them.</li>
+        <li><strong>The Trustner Fund Score is an opinion.</strong> It is our educational, qualitative view — not a SEBI-registered research rating and not a recommendation to buy or sell.</li>
+      </ul></div>
+    </div>
+
+    <!-- CORRECTIONS -->
+    <div class="mth-cta">
+      <div>
+        <h3>Spotted something that looks wrong?</h3>
+        <p>Tell us. We correct sourced errors promptly — accuracy matters more to us than being unchallenged.</p>
+      </div>
+      <a href="mailto:wecare@trustner.in?subject=MeraSIF%20data%20correction">Report a data issue →</a>
+    </div>
+
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-regulatory" style="border-top:none;margin-top:0;padding-top:0">
+      <p class="reg-text"><strong>Trustner Asset Services Pvt. Ltd.</strong> · ARN-286886 · AMFI Registered Mutual Fund Distributor and SIF Distributor; APMI Registered PMS Distributor.</p>
+    </div>
+    <div class="footer-disclaimers">
+      <div class="risk-banner">Mutual Fund and SIF investments are subject to market risks. Read all scheme-related documents carefully before investing.</div>
+      <p class="disc-block"><strong>Disclaimer:</strong> This page describes how MeraSIF is compiled. Nothing on this site is investment advice, a research rating or a recommendation to buy or sell any scheme. Past performance is not indicative of future returns. Trustner is a distributor, not an investment adviser.</p>
+    </div>
+    <div class="footer-bottom">
+      <div>&copy; <span data-year>2026</span> Trustner Asset Services Pvt. Ltd. All rights reserved.</div>
+      <div class="footer-quick-links"><a href="fund-universe.html">Live tracker</a><a href="compare.html">Compare</a><a href="newsletter.html">MeraSIF Monthly</a><a href="disclaimer.html">Disclaimer</a></div>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/main.js"></script>
+<script>
+(function(){
+  function fmtD(iso){ if(!iso) return '—'; var d=new Date(iso+'T00:00:00'); return isNaN(d)?'—':d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}); }
+  fetch('sif-nav.php',{cache:'no-store'}).then(function(r){return r.json();}).then(function(j){
+    if(!j||!j.funds) return;
+    var ids=Object.keys(j.funds), official=0, amcs={};
+    ids.forEach(function(id){ var f=j.funds[id]; if(f.source==='amfi') official++; if(f.amc) amcs[f.amc]=1; });
+    document.getElementById('covFunds').textContent=ids.length;
+    document.getElementById('covOfficial').textContent=official;
+    document.getElementById('covAmc').textContent=Object.keys(amcs).length;
+    document.getElementById('covAsOf').innerHTML='<span class="u">'+fmtD(j.navAsOf)+'</span>';
+  }).catch(function(){});
+})();
+</script>
+</body>
+</html>
