@@ -26,6 +26,9 @@
   .fund-table thead{background:var(--gray-50)}
   .fund-table th{padding:13px 12px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-500);text-align:left;border-bottom:1px solid var(--gray-200);white-space:nowrap}
   .fund-table th.num{text-align:right}
+  .fund-table th.sortable{cursor:pointer;user-select:none}
+  .fund-table th.sortable:hover{color:var(--royal)}
+  .fund-table th .sar{display:inline-block;min-width:8px;font-size:9px;margin-left:2px;color:var(--royal)}
   .fund-table td{padding:16px 12px;border-bottom:1px solid var(--gray-100);vertical-align:middle}
   .fund-table tr:hover td{background:rgba(30,64,175,.025)}
   .fund-table tbody tr:last-child td{border-bottom:none}
@@ -204,10 +207,10 @@
 <section class="compact bg-light" style="padding:24px 0">
   <div class="container">
     <div class="grid-4 reveal">
-      <div class="stat-card"><div class="stat-value">27</div><div class="stat-label">Live SIFs we cover</div></div>
-      <div class="stat-card"><div class="stat-value">14</div><div class="stat-label">AMCs live</div></div>
-      <div class="stat-card"><div class="stat-value">₹13,179<span class="unit">Cr</span></div><div class="stat-label">Combined AUM, disclosed (VR)</div></div>
-      <div class="stat-card"><div class="stat-value">+11.5<span class="unit">%</span></div><div class="stat-label">Best 3M return (qSIF Ex-100)</div></div>
+      <div class="stat-card"><div class="stat-value" id="hsFunds">27</div><div class="stat-label">Live SIFs we cover</div></div>
+      <div class="stat-card"><div class="stat-value" id="hsAmc">14</div><div class="stat-label">AMCs live</div></div>
+      <div class="stat-card"><div class="stat-value" id="hsAum">₹13,179<span class="unit">Cr</span></div><div class="stat-label">Combined AUM, disclosed (VR)</div></div>
+      <div class="stat-card"><div class="stat-value" id="hsBest3M">+11.5<span class="unit">%</span></div><div class="stat-label" id="hsBest3Ml">Best 3M return (qSIF Ex-100)</div></div>
     </div>
     <p style="font-size:12.5px;color:var(--gray-600);text-align:center;margin:16px auto 0;max-width:760px;line-height:1.6">We track every SIF with an official AMFI NAV. Just launched and joining as their NAVs publish: <strong>Kotak Infinity</strong>, <strong>Mahindra Manulife MPOWER</strong>, <strong>Invesco Summit</strong> and <strong>Jio BlackRock Prism</strong> — taking the category past <strong>16 AMCs</strong> and <strong>~₹13,800 Cr</strong> in assets (industry data, mid-2026). <a href="insights.html" style="color:var(--royal);font-weight:600">See what's new →</a></p>
   </div>
@@ -293,17 +296,23 @@
     <div style="display:flex;justify-content:space-between;align-items:end;flex-wrap:wrap;gap:14px;margin-bottom:8px">
       <div>
         <h2 style="font-size:22px;font-weight:800;color:var(--navy);letter-spacing:-.4px">Every live SIF · grouped by category, ranked by Trustner Fund Score</h2>
-        <p style="font-size:14px;color:var(--gray-600);margin-top:4px">Sectioned by SEBI strategy category, each fund shown with its launch date. Use the chips to focus a category. Returns are absolute (point-to-point), Regular-Growth plan. Click "Discuss" for a 1:1 with a Trustner relationship manager.</p>
+        <p style="font-size:14px;color:var(--gray-600);margin-top:4px">Sectioned by SEBI strategy category, each fund shown with its launch date. Use the chips to focus a category. Returns are absolute (point-to-point), Regular-Growth plan. Tap any column header to sort ascending/descending, or switch off grouping to rank every fund together.</p>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;font-size:12px;color:var(--gray-500)">
-        <span>Sort:</span>
+      <div style="display:flex;gap:12px;align-items:center;font-size:12px;color:var(--gray-500);flex-wrap:wrap">
+        <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none"><input type="checkbox" id="groupToggle" checked style="accent-color:var(--royal)"> Group by category</label>
+        <span style="display:inline-flex;align-items:center;gap:6px"><span>Sort:</span>
         <select id="sortBy" style="padding:7px 12px;border:1px solid var(--gray-300);border-radius:8px;font-family:inherit;font-size:12px;color:var(--navy);background:#fff;cursor:pointer">
-          <option value="tfs">TFS (highest first)</option>
+          <option value="tfs">TFS score</option>
+          <option value="si">Since inception</option>
           <option value="m3">3-Month return</option>
           <option value="m1">1-Month return</option>
-          <option value="aum">AUM (largest first)</option>
-          <option value="ter">TER (lowest first)</option>
-        </select>
+          <option value="d5">5-Day return</option>
+          <option value="d1">1-Day return</option>
+          <option value="nav">NAV</option>
+          <option value="aum">AUM</option>
+          <option value="risk">Risk band</option>
+          <option value="ter">TER</option>
+        </select></span>
       </div>
     </div>
 
@@ -328,16 +337,16 @@
           <tr>
             <th class="cmp-th" title="Select to compare"></th>
             <th style="width:22%">Fund</th>
-            <th class="num">NAV</th>
-            <th class="num">1D</th>
-            <th class="num">5D</th>
-            <th class="num">1M</th>
-            <th class="num">3M</th>
-            <th class="num">SI</th>
-            <th class="num">AUM</th>
-            <th class="num">Risk</th>
-            <th class="num">TER</th>
-            <th class="num">TFS</th>
+            <th class="num sortable" data-sort="nav" title="Sort by NAV">NAV<span class="sar"></span></th>
+            <th class="num sortable" data-sort="d1" title="Sort by 1-day return">1D<span class="sar"></span></th>
+            <th class="num sortable" data-sort="d5" title="Sort by 5-day return">5D<span class="sar"></span></th>
+            <th class="num sortable" data-sort="m1" title="Sort by 1-month return">1M<span class="sar"></span></th>
+            <th class="num sortable" data-sort="m3" title="Sort by 3-month return">3M<span class="sar"></span></th>
+            <th class="num sortable" data-sort="si" title="Sort by since-inception">SI<span class="sar"></span></th>
+            <th class="num sortable" data-sort="aum" title="Sort by AUM">AUM<span class="sar"></span></th>
+            <th class="num sortable" data-sort="risk" title="Sort by risk band">Risk<span class="sar"></span></th>
+            <th class="num sortable" data-sort="ter" title="Sort by TER">TER<span class="sar"></span></th>
+            <th class="num sortable" data-sort="tfs" title="Sort by Trustner Fund Score">TFS<span class="sar"></span></th>
             <th class="num">Verdict</th>
             <th></th>
           </tr>
@@ -515,7 +524,8 @@
   var body = document.getElementById('fundBody');
   var statusEl = document.getElementById('navStatus');
   var sortSelect = document.getElementById('sortBy');
-  var activeCat = 'all', sortKey = 'tfs';
+  var groupToggle = document.getElementById('groupToggle');
+  var activeCat = 'all', sortKey = 'tfs', sortDir = -1, grouped = true;  // sortDir: -1 desc, 1 asc
   var CMP = [];
   function cmpSync(){
     var bar=document.getElementById('cmpBar');
@@ -569,19 +579,34 @@
     return '<div class="fname"><div class="fname-main">'+nm+'</div><div class="fname-amc">'+f.amc+launch+'</div><span class="fname-tag '+f.cat+'">'+TAG[f.cat]+'</span></div>';
   }
 
-  function sortVal(d){
+  function rawVal(d){
     var v = (sortKey==='tfs') ? d.meta.tfs : d[sortKey];
-    if(v===null||v===undefined||isNaN(v)) return -1e9;
-    return (sortKey==='ter') ? -Number(v) : Number(v);
+    return (v===null||v===undefined||isNaN(v)) ? null : Number(v);
+  }
+  function cmpRows(a,b){
+    var va=rawVal(a), vb=rawVal(b);
+    if(va===null && vb===null) return 0;
+    if(va===null) return 1;      // missing values always sort to the bottom
+    if(vb===null) return -1;
+    if(va===vb) return 0;
+    return (va-vb) * sortDir;    // sortDir: 1 ascending, -1 descending
+  }
+  function defaultDir(k){ return (k==='ter'||k==='risk') ? 1 : -1; }
+  function updateArrows(){
+    document.querySelectorAll('.fund-table th.sortable').forEach(function(th){
+      var sar=th.querySelector('.sar'); if(!sar) return;
+      if(th.dataset.sort===sortKey){ sar.textContent = (sortDir===1 ? '▲' : '▼'); th.style.color='var(--royal)'; }
+      else { sar.textContent=''; th.style.color=''; }
+    });
   }
 
   // Category-wise sections (fixed order), each mapped to its SEBI-disclosed benchmark family.
   var CATORDER = [
-    ['hybrid','Hybrid Long-Short','Benchmark: Nifty 50 Hybrid Composite Debt (per SID)'],
-    ['equity','Equity Long-Short','Benchmark: Nifty 500 TRI'],
-    ['ex100','Equity Ex-Top 100 Long-Short','Benchmark: Nifty MidSmallcap 400 TRI'],
-    ['aaa','Active Asset Allocator','Benchmark: dynamic multi-asset (per SID)'],
-    ['sector','Sector Rotation','Benchmark: Nifty 500 TRI (per SID)']
+    ['hybrid','Hybrid Long-Short','Benchmark varies by scheme (per each SID)'],
+    ['equity','Equity Long-Short','Benchmark varies by scheme (per each SID)'],
+    ['ex100','Equity Ex-Top 100 Long-Short','Benchmark varies by scheme (per each SID)'],
+    ['aaa','Active Asset Allocator','Benchmark: multi-asset (per each SID)'],
+    ['sector','Sector Rotation','Benchmark: per SID']
   ];
   var NCOLS = 14;
 
@@ -607,25 +632,30 @@
 
   function render(){
     var html = '';
-    CATORDER.forEach(function(c){
-      var cat = c[0];
-      if(activeCat !== 'all' && activeCat !== cat) return;
-      var rows = DATA.filter(function(d){ return d.meta.cat===cat; })
-                     .sort(function(a,b){ return sortVal(b)-sortVal(a); });
-      if(!rows.length) return;
-      html += '<tr class="cat-group"><td colspan="'+NCOLS+'">'
-            + '<span class="cat-group-name">'+c[1]+'</span>'
-            + '<span class="cat-group-count">'+rows.length+' fund'+(rows.length>1?'s':'')+'</span>'
-            + '<span class="cat-group-bench">'+c[2]+'</span>'
-            + '</td></tr>';
+    if(grouped){
+      CATORDER.forEach(function(c){
+        var cat = c[0];
+        if(activeCat !== 'all' && activeCat !== cat) return;
+        var rows = DATA.filter(function(d){ return d.meta.cat===cat; }).sort(cmpRows);
+        if(!rows.length) return;
+        html += '<tr class="cat-group"><td colspan="'+NCOLS+'">'
+              + '<span class="cat-group-name">'+c[1]+'</span>'
+              + '<span class="cat-group-count">'+rows.length+' fund'+(rows.length>1?'s':'')+'</span>'
+              + '<span class="cat-group-bench">'+c[2]+'</span>'
+              + '</td></tr>';
+        html += rows.map(rowHtml).join('');
+      });
+    } else {
+      var rows = DATA.filter(function(d){ return activeCat==='all' || d.meta.cat===activeCat; }).sort(cmpRows);
       html += rows.map(rowHtml).join('');
-    });
+    }
     body.innerHTML = html;
     var counts={all:DATA.length};
     DATA.forEach(function(d){ counts[d.meta.cat]=(counts[d.meta.cat]||0)+1; });
     document.querySelectorAll('.fcat').forEach(function(b){
       var c=b.querySelector('.count'); if(c) c.textContent = counts[b.dataset.cat]!=null ? counts[b.dataset.cat] : 0;
     });
+    updateArrows();
     if(typeof CMP!=='undefined') cmpSync();
   }
 
@@ -649,7 +679,16 @@
       btn.classList.add('active'); activeCat = btn.dataset.cat; render();
     });
   });
-  sortSelect.addEventListener('change', function(){ sortKey = sortSelect.value; render(); });
+  document.querySelectorAll('.fund-table th.sortable').forEach(function(th){
+    th.addEventListener('click', function(){
+      var k=th.dataset.sort;
+      if(sortKey===k){ sortDir = -sortDir; } else { sortKey=k; sortDir=defaultDir(k); }
+      if(sortSelect && sortSelect.querySelector('option[value="'+k+'"]')) sortSelect.value=k;
+      render();
+    });
+  });
+  sortSelect.addEventListener('change', function(){ sortKey = sortSelect.value; sortDir = defaultDir(sortKey); render(); });
+  groupToggle.addEventListener('change', function(){ grouped = groupToggle.checked; render(); });
 
   // pull live NAVs/returns from the engine and merge
   fetch('sif-nav.php', {cache:'no-store'})
@@ -686,5 +725,21 @@
 })();
 </script>
 
+<script>
+(function(){
+  fetch('sif-nav.php',{cache:'no-store'}).then(function(r){return r.json();}).then(function(j){
+    if(!j||!j.funds) return; var F=j.funds, ids=Object.keys(F);
+    var amcs={}, aum=0, best=null;
+    ids.forEach(function(id){var f=F[id]; if(f.amc)amcs[f.amc]=1; if(f.aum!=null)aum+=Number(f.aum);
+      if(f.m3!=null && (best===null || f.m3>best.m3)) best={m3:f.m3,name:f.name};});
+    var set=function(i,v){var e=document.getElementById(i); if(e)e.textContent=v;};
+    set('hsFunds', ids.length);
+    set('hsAmc', Object.keys(amcs).length);
+    var au=document.getElementById('hsAum'); if(au) au.innerHTML='₹'+Number(Math.round(aum)).toLocaleString('en-IN')+'<span class="unit">Cr</span>';
+    if(best){ var b=document.getElementById('hsBest3M'); if(b) b.innerHTML=(best.m3>=0?'+':'')+best.m3.toFixed(1)+'<span class="unit">%</span>';
+      var bl=document.getElementById('hsBest3Ml'); if(bl) bl.textContent='Best 3M return ('+best.name+')'; }
+  }).catch(function(){});
+})();
+</script>
 </body>
 </html>
