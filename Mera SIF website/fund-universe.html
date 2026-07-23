@@ -347,7 +347,7 @@
             <th class="num sortable" data-sort="risk" title="Sort by risk band">Risk<span class="sar"></span></th>
             <th class="num sortable" data-sort="ter" title="Sort by TER">TER<span class="sar"></span></th>
             <th class="num sortable" data-sort="tfs" title="Sort by Trustner Fund Score">TFS<span class="sar"></span></th>
-            <th class="num">Verdict</th>
+            <th class="num">Band</th>
             <th></th>
           </tr>
         </thead>
@@ -356,7 +356,7 @@
     </div>
 
     <p style="font-size:12px;color:var(--gray-500);margin-top:14px;font-style:italic">
-      <strong>Every figure here is real and sourced.</strong> <strong>NAV</strong> is the official AMFI SIF NAV (Regular-Growth plan), refreshed daily from AMFI&#39;s SIF NAV service; <strong>SI</strong> is exact — NAV vs the fund&#39;s NFO face value (₹10; ₹1,000 for Diviniti and Sapphire). <strong>1D/5D</strong> compute from our archive of official daily NAVs and appear as the archive builds (1D from the second trading day onward). <strong>1M &amp; 3M returns, AUM, risk band and TER</strong> are Regular-plan figures from <strong>Value Research</strong> (SIF screener) until the official archive spans those windows, after which they switch to official-NAV computations automatically. We never display indicative or estimated numbers. <strong>TFS</strong> is the Trustner Research Desk&#39;s proprietary qualitative view, reviewed monthly — read the <a href="report.html#sec9" style="color:var(--royal);font-weight:600">full TFS methodology</a>. See also <a href="methodology.html" style="color:var(--royal);font-weight:600">our full data methodology &amp; sources</a>.
+      <strong>Every figure here is real and sourced.</strong> <strong>NAV</strong> is the official AMFI SIF NAV (Regular-Growth plan), refreshed daily from AMFI&#39;s SIF NAV service; <strong>SI</strong> is exact — NAV vs the fund&#39;s NFO face value (₹10; ₹1,000 for Diviniti and Sapphire). <strong>1D/5D</strong> compute from our archive of official daily NAVs and appear as the archive builds (1D from the second trading day onward). <strong>1M &amp; 3M returns, AUM, risk band and TER</strong> are Regular-plan figures from <strong>Value Research</strong> (SIF screener) until the official archive spans those windows, after which they switch to official-NAV computations automatically. We never display indicative or estimated numbers. The <strong>Band</strong> is an educational tier of the Trustner Fund Score (0&ndash;100) &mdash; not a buy/sell recommendation. <strong>TFS</strong> is the Trustner Research Desk&#39;s proprietary qualitative view, reviewed monthly — read the <a href="report.html#sec9" style="color:var(--royal);font-weight:600">full TFS methodology</a>. See also <a href="methodology.html" style="color:var(--royal);font-weight:600">our full data methodology &amp; sources</a>.
     </p>
   </div>
 </section>
@@ -488,31 +488,31 @@
   // seed values here are the fallback shown if the engine is unreachable.
   var TAG = {hybrid:'Hybrid LS', equity:'Equity LS', ex100:'Equity Ex-Top 100 LS', aaa:'Active Asset Allocator', sector:'Sector Rotation LS'};
   var FUNDS = [
-    {id:'isif-hybrid',incept:'2026-02-04',cat:'hybrid',name:'iSIF Hybrid Long-Short',amc:'ICICI Prudential MF',tfs:78,tfsCls:'tfs-buy',v:'★ Buy',vCls:'v-buy',link:'funds/isif-hybrid.html',seed:{m1:1.55,m3:4.08,aum:844,risk:5,ter:2.64}},
-    {id:'altiva-hybrid',incept:'2025-10-22',cat:'hybrid',name:'Altiva Hybrid Long-Short',amc:'Edelweiss MF',tfs:76,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:'funds/altiva-hybrid.html',seed:{m1:1.52,m3:4.01,aum:4466,risk:1,ter:2.18}},
-    {id:'magnum-hybrid',incept:'2025-10-20',cat:'hybrid',name:'Magnum Hybrid Long-Short',amc:'SBI MF',tfs:75,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:'funds/magnum-hybrid.html',seed:{m1:0.9,m3:2.09,aum:3462,risk:1,ter:2.06}},
-    {id:'isif-equity-ex-top-100',incept:'2026-02-04',cat:'ex100',name:'iSIF Equity Ex-Top 100 LS',amc:'ICICI Prudential MF',tfs:74,tfsCls:'tfs-buy',v:'★ Buy (sat.)',vCls:'v-buy',link:'funds/isif-equity-ex-top-100.html',seed:{m1:0.82,m3:4.89,aum:1707,risk:5,ter:2.86}},
-    {id:'titanium-hybrid',incept:'2025-12-11',cat:'hybrid',name:'Titanium Hybrid Long-Short',amc:'Tata MF',tfs:70,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:1.08,m3:2.13,aum:483,risk:5,ter:2.53}},
-    {id:'dynasif-equity',incept:'2026-02-25',cat:'equity',name:'DynaSIF Equity Long-Short',amc:'360 ONE Asset',tfs:70,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:0.48,m3:3.18,aum:277,risk:5,ter:3.68}},
-    {id:'apex-hybrid',incept:'2026-03-25',cat:'hybrid',name:'Apex Hybrid Long-Short',amc:'Aditya Birla SL MF',tfs:68,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:1.1,m3:null,aum:76,risk:2,ter:4.15}},
-    {id:'arudha-hybrid',incept:'2026-01-28',cat:'hybrid',name:'Arudha Hybrid Long-Short',amc:'Bandhan MF',tfs:66,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:0.75,m3:1.43,aum:130,risk:1,ter:0.73}},
-    {id:'dynasif-aaa',incept:'2026-03-25',cat:'aaa',name:'DynaSIF Active Asset Allocator',amc:'360 ONE Asset',tfs:65,tfsCls:'tfs-acc',v:'Accumulate',vCls:'v-acc',link:null,seed:{m1:-0.35,m3:null,aum:195,risk:3,ter:2.67}},
-    {id:'qsif-hybrid',incept:'2025-10-15',cat:'hybrid',name:'qSIF Hybrid Long-Short',amc:'Quant MF',tfs:64,tfsCls:'tfs-hold',v:'Hold',vCls:'v-hold',link:null,seed:{m1:0.24,m3:5.74,aum:158,risk:3,ter:2.86}},
-    {id:'qsif-equity',incept:'2025-10-07',cat:'equity',name:'qSIF Equity Long-Short',amc:'Quant MF',tfs:62,tfsCls:'tfs-hold',v:'Hold',vCls:'v-hold',link:null,seed:{m1:3.07,m3:10.37,aum:484,risk:4,ter:2.99}},
-    {id:'diviniti',incept:'2025-12-01',cat:'equity',name:'Diviniti Equity Long-Short',amc:'ITI MF',tfs:57,tfsCls:'tfs-hold',v:'Hold',vCls:'v-hold',link:null,seed:{m1:0.06,m3:-3.98,aum:402,risk:3,ter:3.34}},
-    {id:'qsif-ex-top-100',incept:'2025-11-12',cat:'ex100',name:'qSIF Equity Ex-Top 100',amc:'Quant MF',tfs:63,tfsCls:'tfs-hold',v:'Hold',vCls:'v-hold',link:null,seed:{m1:1.32,m3:11.52,aum:233,risk:4,ter:2.68}},
-    {id:'qsif-aaa',incept:'2026-04-21',cat:'aaa',name:'qSIF Active Asset Allocator',amc:'Quant MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:2.02,m3:null,aum:64,risk:3,ter:3.19}},
-    {id:'titanium-equity',incept:'2026-05-14',cat:'equity',name:'Titanium Equity Long-Short',amc:'Tata MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:4.09}},
-    {id:'arudha-equity',incept:'2026-03-24',cat:'equity',name:'Arudha Equity Long-Short',amc:'Bandhan MF',tfs:61,tfsCls:'tfs-hold',v:'Hold',vCls:'v-hold',link:null,seed:{m1:0.17,m3:null,aum:81,risk:5,ter:2.43}},
-    {id:'sapphire',incept:'2026-04-29',cat:'equity',name:'Sapphire Equity Long-Short',amc:'Franklin Templeton',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:1.08,m3:null,aum:null,risk:5,ter:3.9}},
-    {id:'wsif-equity',incept:'2026-05-06',cat:'equity',name:'WSIF Equity Long-Short',amc:'The Wealth Company MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:1.45,m3:null,aum:null,risk:5,ter:6.67}},
-    {id:'wsif-ex-top-100',incept:'2026-05-06',cat:'ex100',name:'WSIF Equity Ex-Top 100',amc:'The Wealth Company MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:1.92,m3:null,aum:null,risk:5,ter:6.64}},
-    {id:'arthaya-equity',incept:'2026-05-25',cat:'equity',name:'Arthaya Equity Long-Short',amc:'Union MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:117,risk:1,ter:3.14}},
-    {id:'altiva-ex-top-100',incept:'2026-06-08',cat:'ex100',name:'Altiva Equity Ex-Top 100 LS',amc:'Edelweiss MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:null}},
-    {id:'isif-equity',incept:'2026-06-05',cat:'equity',name:'iSIF Equity Long-Short',amc:'ICICI Prudential MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:2.46}},
-    {id:'isif-aaa',incept:'2026-06-05',cat:'aaa',name:'iSIF Active Asset Allocator',amc:'ICICI Prudential MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:2.17}},
-    {id:'platinum-hybrid',incept:'2026-06-09',cat:'hybrid',name:'Platinum Hybrid Long-Short',amc:'Mirae Asset MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:2,ter:1.53}},
-    {id:'qsif-sector-rotation',incept:'2026-05-15',cat:'sector',name:'qSIF Sector Rotation LS',amc:'Quant MF',tfs:null,v:'Monitor',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:3.46}}
+    {id:'isif-hybrid',incept:'2026-02-04',cat:'hybrid',name:'iSIF Hybrid Long-Short',amc:'ICICI Prudential MF',tfs:78,tfsCls:'tfs-buy',v:'High',vCls:'v-buy',link:'funds/isif-hybrid.html',seed:{m1:1.55,m3:4.08,aum:844,risk:5,ter:2.64}},
+    {id:'altiva-hybrid',incept:'2025-10-22',cat:'hybrid',name:'Altiva Hybrid Long-Short',amc:'Edelweiss MF',tfs:76,tfsCls:'tfs-acc',v:'Solid',vCls:'v-acc',link:'funds/altiva-hybrid.html',seed:{m1:1.52,m3:4.01,aum:4466,risk:1,ter:2.18}},
+    {id:'magnum-hybrid',incept:'2025-10-20',cat:'hybrid',name:'Magnum Hybrid Long-Short',amc:'SBI MF',tfs:75,tfsCls:'tfs-acc',v:'Solid',vCls:'v-acc',link:'funds/magnum-hybrid.html',seed:{m1:0.9,m3:2.09,aum:3462,risk:1,ter:2.06}},
+    {id:'isif-equity-ex-top-100',incept:'2026-02-04',cat:'ex100',name:'iSIF Equity Ex-Top 100 LS',amc:'ICICI Prudential MF',tfs:74,tfsCls:'tfs-buy',v:'High',vCls:'v-buy',link:'funds/isif-equity-ex-top-100.html',seed:{m1:0.82,m3:4.89,aum:1707,risk:5,ter:2.86}},
+    {id:'titanium-hybrid',incept:'2025-12-11',cat:'hybrid',name:'Titanium Hybrid Long-Short',amc:'Tata MF',tfs:70,tfsCls:'tfs-acc',v:'Solid',vCls:'v-acc',link:null,seed:{m1:1.08,m3:2.13,aum:483,risk:5,ter:2.53}},
+    {id:'dynasif-equity',incept:'2026-02-25',cat:'equity',name:'DynaSIF Equity Long-Short',amc:'360 ONE Asset',tfs:70,tfsCls:'tfs-acc',v:'Solid',vCls:'v-acc',link:null,seed:{m1:0.48,m3:3.18,aum:277,risk:5,ter:3.68}},
+    {id:'apex-hybrid',incept:'2026-03-25',cat:'hybrid',name:'Apex Hybrid Long-Short',amc:'Aditya Birla SL MF',tfs:68,tfsCls:'tfs-acc',v:'Solid',vCls:'v-acc',link:null,seed:{m1:1.1,m3:null,aum:76,risk:2,ter:4.15}},
+    {id:'arudha-hybrid',incept:'2026-01-28',cat:'hybrid',name:'Arudha Hybrid Long-Short',amc:'Bandhan MF',tfs:66,tfsCls:'tfs-acc',v:'Solid',vCls:'v-acc',link:null,seed:{m1:0.75,m3:1.43,aum:130,risk:1,ter:0.73}},
+    {id:'dynasif-aaa',incept:'2026-03-25',cat:'aaa',name:'DynaSIF Active Asset Allocator',amc:'360 ONE Asset',tfs:65,tfsCls:'tfs-acc',v:'Solid',vCls:'v-acc',link:null,seed:{m1:-0.35,m3:null,aum:195,risk:3,ter:2.67}},
+    {id:'qsif-hybrid',incept:'2025-10-15',cat:'hybrid',name:'qSIF Hybrid Long-Short',amc:'Quant MF',tfs:64,tfsCls:'tfs-hold',v:'Fair',vCls:'v-hold',link:null,seed:{m1:0.24,m3:5.74,aum:158,risk:3,ter:2.86}},
+    {id:'qsif-equity',incept:'2025-10-07',cat:'equity',name:'qSIF Equity Long-Short',amc:'Quant MF',tfs:62,tfsCls:'tfs-hold',v:'Fair',vCls:'v-hold',link:null,seed:{m1:3.07,m3:10.37,aum:484,risk:4,ter:2.99}},
+    {id:'diviniti',incept:'2025-12-01',cat:'equity',name:'Diviniti Equity Long-Short',amc:'ITI MF',tfs:57,tfsCls:'tfs-hold',v:'Fair',vCls:'v-hold',link:null,seed:{m1:0.06,m3:-3.98,aum:402,risk:3,ter:3.34}},
+    {id:'qsif-ex-top-100',incept:'2025-11-12',cat:'ex100',name:'qSIF Equity Ex-Top 100',amc:'Quant MF',tfs:63,tfsCls:'tfs-hold',v:'Fair',vCls:'v-hold',link:null,seed:{m1:1.32,m3:11.52,aum:233,risk:4,ter:2.68}},
+    {id:'qsif-aaa',incept:'2026-04-21',cat:'aaa',name:'qSIF Active Asset Allocator',amc:'Quant MF',tfs:null,v:'Early-stage',vCls:'v-monitor',link:null,seed:{m1:2.02,m3:null,aum:64,risk:3,ter:3.19}},
+    {id:'titanium-equity',incept:'2026-05-14',cat:'equity',name:'Titanium Equity Long-Short',amc:'Tata MF',tfs:null,v:'Early-stage',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:4.09}},
+    {id:'arudha-equity',incept:'2026-03-24',cat:'equity',name:'Arudha Equity Long-Short',amc:'Bandhan MF',tfs:61,tfsCls:'tfs-hold',v:'Fair',vCls:'v-hold',link:null,seed:{m1:0.17,m3:null,aum:81,risk:5,ter:2.43}},
+    {id:'sapphire',incept:'2026-04-29',cat:'equity',name:'Sapphire Equity Long-Short',amc:'Franklin Templeton',tfs:null,v:'Early-stage',vCls:'v-monitor',link:null,seed:{m1:1.08,m3:null,aum:null,risk:5,ter:3.9}},
+    {id:'wsif-equity',incept:'2026-05-06',cat:'equity',name:'WSIF Equity Long-Short',amc:'The Wealth Company MF',tfs:null,v:'Early-stage',vCls:'v-monitor',link:null,seed:{m1:1.45,m3:null,aum:null,risk:5,ter:6.67}},
+    {id:'wsif-ex-top-100',incept:'2026-05-06',cat:'ex100',name:'WSIF Equity Ex-Top 100',amc:'The Wealth Company MF',tfs:null,v:'Early-stage',vCls:'v-monitor',link:null,seed:{m1:1.92,m3:null,aum:null,risk:5,ter:6.64}},
+    {id:'arthaya-equity',incept:'2026-05-25',cat:'equity',name:'Arthaya Equity Long-Short',amc:'Union MF',tfs:null,v:'Early-stage',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:117,risk:1,ter:3.14}},
+    {id:'altiva-ex-top-100',incept:'2026-06-08',cat:'ex100',name:'Altiva Equity Ex-Top 100 LS',amc:'Edelweiss MF',tfs:null,v:'Early-stage',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:null}},
+    {id:'isif-equity',incept:'2026-06-05',cat:'equity',name:'iSIF Equity Long-Short',amc:'ICICI Prudential MF',tfs:null,v:'Early-stage',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:2.46}},
+    {id:'isif-aaa',incept:'2026-06-05',cat:'aaa',name:'iSIF Active Asset Allocator',amc:'ICICI Prudential MF',tfs:null,v:'Early-stage',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:2.17}},
+    {id:'platinum-hybrid',incept:'2026-06-09',cat:'hybrid',name:'Platinum Hybrid Long-Short',amc:'Mirae Asset MF',tfs:null,v:'Early-stage',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:2,ter:1.53}},
+    {id:'qsif-sector-rotation',incept:'2026-05-15',cat:'sector',name:'qSIF Sector Rotation LS',amc:'Quant MF',tfs:null,v:'Early-stage',vCls:'v-monitor',link:null,seed:{m1:null,m3:null,aum:null,risk:5,ter:3.46}}
   ];
 
   // working dataset = metadata + live/seed values
@@ -565,7 +565,7 @@
     return '<span class="aum" style="color:var(--gray-600)">'+Number(t).toFixed(2)+'%</span>';
   }
   function tfsTxt(f){
-    if(!f.tfs) return '<span class="tfs-monitor">Mon-ID</span>';
+    if(!f.tfs) return '<span class="tfs-monitor">New</span>';
     return '<span class="tfs-pill '+f.tfsCls+'">'+f.tfs+'</span>';
   }
   function actionTxt(f){
@@ -700,7 +700,7 @@
         if(DATA.some(function(d){ return d.meta.id===id; })) return;
         var L=j.funds[id];
         var cat = TAG[L.cat] ? L.cat : 'equity';
-        DATA.push({meta:{id:id,name:L.name,amc:L.amc,cat:cat,tfs:null,v:'Monitor',vCls:'v-monitor',link:null,incept:null},
+        DATA.push({meta:{id:id,name:L.name,amc:L.amc,cat:cat,tfs:null,v:'Early-stage',vCls:'v-monitor',link:null,incept:null},
                    nav:null,navDate:null,d1:null,d5:null,si:null,m1:null,m3:null,aum:null,risk:null,ter:null,source:'vr'});
       });
       var officialCount = 0;
